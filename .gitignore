@@ -1,0 +1,14 @@
+## Ignore temp files
+*~
+
+## Ignore project files
+.pydevproject
+.settings/*
+
+## Ignore generated files
+gen/*
+bin/*
+
+## Ignore log files
+logs/*
+
