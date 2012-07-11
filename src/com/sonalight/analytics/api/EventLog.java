@@ -19,7 +19,10 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
@@ -47,7 +50,7 @@ public class EventLog {
 
     PackageInfo packageInfo;
     versionCode = -1;
-    versionName = "";
+    versionName = "NOT_SET";
     try {
       packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
       versionCode = packageInfo.versionCode;
@@ -103,7 +106,18 @@ public class EventLog {
     event.put("phone_brand", phoneBrand);
     event.put("phone_manufacturer", phoneManufacturer);
     event.put("phone_model", phoneModel);
-    event.put("properties", new JSONObject());
+
+    JSONObject properties = new JSONObject();
+
+    Location location = getMostRecentLocation();
+    if (location != null) {
+      JSONObject JSONLocation = new JSONObject();
+      JSONLocation.put("lat", location.getLatitude());
+      JSONLocation.put("lng", location.getLongitude());
+      properties.put("location", JSONLocation);
+    }
+
+    event.put("properties", properties);
   }
 
   private static void updateServer() {
@@ -114,7 +128,7 @@ public class EventLog {
       Pair<Long, JSONArray> pair = dbHelper.getEvents();
       maxId = pair.first;
       JSONArray events = pair.second;
-      
+
       success = makePostRequest(Constants.EVENT_LOG_URL, events.toString(), events.length());
     } catch (Exception e) {
       Log.e(TAG, e.toString());
@@ -143,6 +157,34 @@ public class EventLog {
     JSONObject result = new JSONObject(stringResult);
 
     return result.optLong("added", 0) == numEvents;
+  }
+
+  private static Location getMostRecentLocation() {
+    LocationManager locationManager = (LocationManager) context
+        .getSystemService(Context.LOCATION_SERVICE);
+    List<String> providers = locationManager.getProviders(true);
+    List<Location> locations = new ArrayList<Location>();
+    for (String provider : providers) {
+      Location location = locationManager.getLastKnownLocation(provider);
+      if (location != null) {
+        locations.add(location);
+      }
+    }
+
+    long maximumTimestamp = -1;
+    Location bestLocation = null;
+    for (Location location : locations) {
+      if (location.getTime() > maximumTimestamp) {
+        maximumTimestamp = location.getTime();
+        bestLocation = location;
+      }
+    }
+
+    return bestLocation;
+  }
+
+  private static boolean permissionGranted(String permission) {
+    return context.checkCallingOrSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
   }
 
 }
