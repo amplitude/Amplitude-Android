@@ -48,6 +48,8 @@ public class EventLog {
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
 
+  private static boolean updateScheduled = false;
+
   public static void initialize(Context context, String ApiKey, String userId) {
     if (context == null) {
       throw new IllegalArgumentException("Context cannot be null");
@@ -105,6 +107,8 @@ public class EventLog {
 
         if (dbHelper.getNumberRows() >= Constants.EVENT_BATCH_SIZE) {
           updateServer();
+        } else {
+          updateServerLater();
         }
       }
     });
@@ -215,6 +219,19 @@ public class EventLog {
       dbHelper.removeEvents(maxId);
     } else {
       Log.w(TAG, "Upload failed, post request not successful");
+    }
+  }
+
+  private static void updateServerLater() {
+    if (!updateScheduled) {
+      updateScheduled = true;
+
+      LogThread.postDelayed(new Runnable() {
+        public void run() {
+          updateScheduled = false;
+          updateServer();
+        }
+      }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
     }
   }
 

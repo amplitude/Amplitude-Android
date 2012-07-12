@@ -37,4 +37,16 @@ public class LogThread extends Thread {
     }
     instance.handler.post(r);
   }
+
+  public static void postDelayed(Runnable r, long delayMillis) {
+    while (instance.handler == null) {
+      synchronized (instance) {
+        try {
+          instance.wait();
+        } catch (InterruptedException e) {
+        }
+      }
+    }
+    instance.handler.postDelayed(r, delayMillis);
+  }
 }
