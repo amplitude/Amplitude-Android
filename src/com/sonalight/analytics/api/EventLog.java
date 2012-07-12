@@ -18,12 +18,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
 
@@ -43,8 +45,18 @@ public class EventLog {
   private static String phoneManufacturer;
   private static String phoneModel;
 
+  private static long sessionId = -1;
+  private static boolean sessionStarted = false;
+
   public static void initialize(Context context, String ApiKey, String userId) {
-    EventLog.context = context;
+    if (context == null) {
+      throw new IllegalArgumentException("Context cannot be null");
+    }
+    if (ApiKey == null || ApiKey.equals("")) {
+      throw new IllegalArgumentException("ApiKey cannot be null or blank");
+    }
+
+    EventLog.context = context.getApplicationContext();
     EventLog.ApiKey = ApiKey;
     EventLog.userId = userId;
 
@@ -64,11 +76,22 @@ public class EventLog {
     phoneModel = Build.MODEL;
   }
 
-  public static void logEvent(String name, JSONObject params) {
+  public static void logEvent(String name) {
+    logEvent(name, null);
+  }
+
+  public static void logEvent(String name, JSONObject customProperties) {
+    logEvent(name, customProperties, null);
+  }
+
+  private static void logEvent(String name, JSONObject customProperties, JSONObject properties) {
+
     final JSONObject event = new JSONObject();
     try {
       event.put("name", (name == null) ? JSONObject.NULL : name);
-      event.put("custom_properties", (params == null) ? JSONObject.NULL : params);
+      event.put("custom_properties", (customProperties == null) ? new JSONObject()
+          : customProperties);
+      event.put("properties", (properties == null) ? new JSONObject() : properties);
       addBoilerplate(event);
     } catch (JSONException e) {
       Log.e(TAG, e.toString());
@@ -87,7 +110,7 @@ public class EventLog {
     });
   }
 
-  public static void cleanupSession() {
+  public static void uploadEvents() {
     LogThread.post(new Runnable() {
       public void run() {
         updateServer();
@@ -95,10 +118,62 @@ public class EventLog {
     });
   }
 
+  public static void startSession() {
+    if (!sessionStarted) {
+      // Session has not been started yet, check overlap
+
+      long now = System.currentTimeMillis();
+
+      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+      long previousSessionTime = preferences.getLong(Constants.PREFKEY_LAST_SESSION_TIME, -1);
+
+      if (now - previousSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+        // Sessions close enough, set sessionId to previous sessionId
+        sessionId = preferences.getLong(Constants.PREFKEY_LAST_SESSION_ID, now);
+      } else {
+        // Sessions not close enough, create new sessionId
+        sessionId = now;
+        preferences.edit().putLong(Constants.PREFKEY_LAST_SESSION_ID, sessionId).commit();
+      }
+
+      // Session now started
+      sessionStarted = true;
+    }
+
+    // Log session start in events
+    JSONObject properties = new JSONObject();
+    try {
+      properties.put("special", "session_start");
+    } catch (JSONException e) {
+    }
+    logEvent("session_start", null, properties);
+  }
+
+  public static void endSession() {
+    // Log session end in events
+    JSONObject properties = new JSONObject();
+    try {
+      properties.put("special", "session_end");
+    } catch (JSONException e) {
+    }
+    logEvent("session_end", null, properties);
+
+    // Session stopped
+    sessionStarted = false;
+    sessionId = -1;
+  }
+
+  private static void refreshSessionTime() {
+    long now = System.currentTimeMillis();
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    preferences.edit().putLong(Constants.PREFKEY_LAST_SESSION_TIME, now).commit();
+  }
+
   private static void addBoilerplate(JSONObject event) throws JSONException {
     long timestamp = System.currentTimeMillis();
     event.put("timestamp", timestamp);
     event.put("user", userId);
+    event.put("session_id", sessionId);
     event.put("version_code", versionCode);
     event.put("version_name", versionName);
     event.put("build_version_sdk", buildVersionSdk);
@@ -107,7 +182,7 @@ public class EventLog {
     event.put("phone_manufacturer", phoneManufacturer);
     event.put("phone_model", phoneModel);
 
-    JSONObject properties = new JSONObject();
+    JSONObject properties = event.getJSONObject("properties");
 
     Location location = getMostRecentLocation();
     if (location != null) {
@@ -117,7 +192,9 @@ public class EventLog {
       properties.put("location", JSONLocation);
     }
 
-    event.put("properties", properties);
+    if (sessionStarted) {
+      refreshSessionTime();
+    }
   }
 
   private static void updateServer() {
