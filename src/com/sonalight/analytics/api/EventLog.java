@@ -3,6 +3,7 @@ package com.sonalight.analytics.api;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -17,6 +18,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -26,6 +29,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
@@ -36,6 +41,7 @@ public class EventLog {
   private static Context context;
   private static String ApiKey;
   private static String userId;
+  private static String deviceId;
 
   private static int versionCode;
   private static String versionName;
@@ -50,17 +56,22 @@ public class EventLog {
 
   private static boolean updateScheduled = false;
 
+  public static void initialize(Context context, String ApiKey) {
+    initialize(context, ApiKey, null);
+  }
+
   public static void initialize(Context context, String ApiKey, String userId) {
     if (context == null) {
       throw new IllegalArgumentException("Context cannot be null");
     }
-    if (ApiKey == null || ApiKey.equals("")) {
+    if (TextUtils.isEmpty(ApiKey)) {
       throw new IllegalArgumentException("ApiKey cannot be null or blank");
     }
 
     EventLog.context = context.getApplicationContext();
     EventLog.ApiKey = ApiKey;
-    EventLog.userId = userId;
+    EventLog.userId = TextUtils.isEmpty(userId) ? "NOT_SET" : userId;
+    EventLog.deviceId = getDeviceId();
 
     PackageInfo packageInfo;
     versionCode = -1;
@@ -176,7 +187,8 @@ public class EventLog {
   private static void addBoilerplate(JSONObject event) throws JSONException {
     long timestamp = System.currentTimeMillis();
     event.put("timestamp", timestamp);
-    event.put("user", userId);
+    event.put("user_id", userId);
+    event.put("device_id", deviceId);
     event.put("session_id", sessionId);
     event.put("version_code", versionCode);
     event.put("version_name", versionName);
@@ -251,6 +263,74 @@ public class EventLog {
     JSONObject result = new JSONObject(stringResult);
 
     return result.optLong("added", 0) == numEvents;
+  }
+
+  public static void setUserId(String userId) {
+    EventLog.userId = userId;
+  }
+
+  // Returns a unique identifier for tracking within the analytics system
+  private static String getDeviceId() {
+
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+    if (!TextUtils.isEmpty(deviceId)) {
+      return deviceId;
+    }
+
+    // Android ID
+    // Issues on 2.2, some phones have same Android ID due to manufacturer error
+    String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
+        android.provider.Settings.Secure.ANDROID_ID);
+    if (!(TextUtils.isEmpty(androidId) || androidId.equals("9774d56d682e549c"))) {
+      preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
+      return androidId;
+    }
+
+    // Serial number
+    // Guaranteed to be on all non phones in 2.3+
+    try {
+      String serialNumber = (String) Build.class.getField("SERIAL").get(null);
+      if (!TextUtils.isEmpty(serialNumber)) {
+        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
+        return serialNumber;
+      }
+    } catch (Exception e) {
+    }
+
+    // Telephony ID
+    // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
+    if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
+        && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
+      String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
+          .getDeviceId();
+      if (!TextUtils.isEmpty(telephonyId)) {
+        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
+        return telephonyId;
+      }
+    }
+
+    // Account name
+    // Requires GET_ACCOUNTS permission
+    if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
+      AccountManager accountManager = (AccountManager) context
+          .getSystemService(Context.ACCOUNT_SERVICE);
+      Account[] accounts = accountManager.getAccountsByType("com.google");
+      for (Account account : accounts) {
+        String accountName = account.name;
+        if (!TextUtils.isEmpty(accountName)) {
+          preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, accountName).commit();
+          return accountName;
+        }
+      }
+    }
+
+    // If this still fails, generate random identifier that does not persist
+    // across installations
+    String randomId = UUID.randomUUID().toString();
+    preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
+    return randomId;
+
   }
 
   private static Location getMostRecentLocation() {

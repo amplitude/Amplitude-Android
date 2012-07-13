@@ -19,9 +19,12 @@ public class Constants {
 
   public static final String PREFKEY_LAST_SESSION_TIME = PACKAGE_NAME + ".previousSessionEnd";
   public static final String PREFKEY_LAST_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
+  public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
 
   public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 10 * 1000; // ten seconds
 
+  public static final String PERMISSION_GET_ACCOUNTS = "android.permission.GET_ACCOUNTS";
+  public static final String PERMISSION_READ_PHONE_STATE = "android.permission.READ_PHONE_STATE";
   public static final String PERMISSION_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
   public static final String PERMISSION_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
 
