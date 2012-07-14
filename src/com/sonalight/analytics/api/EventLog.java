@@ -18,8 +18,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -70,7 +68,14 @@ public class EventLog {
 
     EventLog.context = context.getApplicationContext();
     EventLog.ApiKey = ApiKey;
-    EventLog.userId = userId;
+    if (userId != null) {
+      EventLog.userId = userId;
+      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+      preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+    } else {
+      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+      EventLog.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
+    }
     EventLog.deviceId = getDeviceId();
 
     PackageInfo packageInfo;
@@ -99,7 +104,7 @@ public class EventLog {
 
     final JSONObject event = new JSONObject();
     try {
-      event.put("event_type", (eventType == null) ? JSONObject.NULL : eventType);
+      event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
       event.put("properties", (properties == null) ? new JSONObject() : properties);
@@ -185,16 +190,16 @@ public class EventLog {
   private static void addBoilerplate(JSONObject event) throws JSONException {
     long timestamp = System.currentTimeMillis();
     event.put("timestamp", timestamp);
-    event.put("user_id", userId);
-    event.put("device_id", deviceId);
+    event.put("user_id", replaceWithJSONNull(userId));
+    event.put("device_id", replaceWithJSONNull(deviceId));
     event.put("session_id", sessionId);
     event.put("version_code", versionCode);
-    event.put("version_name", versionName);
+    event.put("version_name", replaceWithJSONNull(versionName));
     event.put("build_version_sdk", buildVersionSdk);
-    event.put("build_version_release", buildVersionRelease);
-    event.put("phone_brand", phoneBrand);
-    event.put("phone_manufacturer", phoneManufacturer);
-    event.put("phone_model", phoneModel);
+    event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
+    event.put("phone_brand", replaceWithJSONNull(phoneBrand));
+    event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
+    event.put("phone_model", replaceWithJSONNull(phoneModel));
 
     JSONObject properties = event.getJSONObject("properties");
 
@@ -265,6 +270,8 @@ public class EventLog {
 
   public static void setUserId(String userId) {
     EventLog.userId = userId;
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
   }
 
   // Returns a unique identifier for tracking within the analytics system
@@ -310,18 +317,16 @@ public class EventLog {
 
     // Account name
     // Requires GET_ACCOUNTS permission
-    /*if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
-      AccountManager accountManager = (AccountManager) context
-          .getSystemService(Context.ACCOUNT_SERVICE);
-      Account[] accounts = accountManager.getAccountsByType("com.google");
-      for (Account account : accounts) {
-        String accountName = account.name;
-        if (!TextUtils.isEmpty(accountName)) {
-          preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, accountName).commit();
-          return accountName;
-        }
-      }
-    }*/
+    /*
+     * if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
+     * AccountManager accountManager = (AccountManager) context
+     * .getSystemService(Context.ACCOUNT_SERVICE); Account[] accounts =
+     * accountManager.getAccountsByType("com.google"); for (Account account :
+     * accounts) { String accountName = account.name; if
+     * (!TextUtils.isEmpty(accountName)) {
+     * preferences.edit().putString(Constants.PREFKEY_DEVICE_ID,
+     * accountName).commit(); return accountName; } } }
+     */
 
     // If this still fails, generate random identifier that does not persist
     // across installations
@@ -357,6 +362,10 @@ public class EventLog {
 
   private static boolean permissionGranted(String permission) {
     return context.checkCallingOrSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+  }
+
+  private static Object replaceWithJSONNull(Object obj) {
+    return obj == null ? JSONObject.NULL : obj;
   }
 
 }
