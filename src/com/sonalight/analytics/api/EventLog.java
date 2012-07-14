@@ -70,12 +70,10 @@ public class EventLog {
 
     EventLog.context = context.getApplicationContext();
     EventLog.ApiKey = ApiKey;
-    EventLog.userId = TextUtils.isEmpty(userId) ? "NOT_SET" : userId;
+    EventLog.userId = userId;
     EventLog.deviceId = getDeviceId();
 
     PackageInfo packageInfo;
-    versionCode = -1;
-    versionName = "NOT_SET";
     try {
       packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
       versionCode = packageInfo.versionCode;
@@ -89,19 +87,19 @@ public class EventLog {
     phoneModel = Build.MODEL;
   }
 
-  public static void logEvent(String name) {
-    logEvent(name, null);
+  public static void logEvent(String eventType) {
+    logEvent(eventType, null);
   }
 
-  public static void logEvent(String name, JSONObject customProperties) {
-    logEvent(name, customProperties, null);
+  public static void logEvent(String eventType, JSONObject customProperties) {
+    logEvent(eventType, customProperties, null);
   }
 
-  private static void logEvent(String name, JSONObject customProperties, JSONObject properties) {
+  private static void logEvent(String eventType, JSONObject customProperties, JSONObject properties) {
 
     final JSONObject event = new JSONObject();
     try {
-      event.put("name", (name == null) ? JSONObject.NULL : name);
+      event.put("event_type", (eventType == null) ? JSONObject.NULL : eventType);
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
       event.put("properties", (properties == null) ? new JSONObject() : properties);
@@ -312,7 +310,7 @@ public class EventLog {
 
     // Account name
     // Requires GET_ACCOUNTS permission
-    if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
+    /*if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
       AccountManager accountManager = (AccountManager) context
           .getSystemService(Context.ACCOUNT_SERVICE);
       Account[] accounts = accountManager.getAccountsByType("com.google");
@@ -323,7 +321,7 @@ public class EventLog {
           return accountName;
         }
       }
-    }
+    }*/
 
     // If this still fails, generate random identifier that does not persist
     // across installations
