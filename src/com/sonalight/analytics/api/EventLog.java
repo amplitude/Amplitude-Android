@@ -49,8 +49,11 @@ public class EventLog {
   private static String phoneManufacturer;
   private static String phoneModel;
 
+  private static JSONObject globalProperties;
+
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
+  private static Runnable setSessionIdRunnable;
 
   private static boolean updateScheduled = false;
 
@@ -108,6 +111,8 @@ public class EventLog {
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
       event.put("properties", (properties == null) ? new JSONObject() : properties);
+      event.put("global_properties", (globalProperties == null) ? new JSONObject()
+          : globalProperties);
       addBoilerplate(event);
     } catch (JSONException e) {
       Log.e(TAG, e.toString());
@@ -137,6 +142,9 @@ public class EventLog {
   }
 
   public static void startSession() {
+    // Remove setSessionId callback
+    LogThread.removeCallbacks(setSessionIdRunnable);
+
     if (!sessionStarted) {
       // Session has not been started yet, check overlap
 
@@ -178,7 +186,11 @@ public class EventLog {
 
     // Session stopped
     sessionStarted = false;
-    sessionId = -1;
+    turnOffSessionLater();
+  }
+
+  public static void setGlobalUserProperties(JSONObject globalProperties) {
+    EventLog.globalProperties = globalProperties;
   }
 
   private static void refreshSessionTime() {
@@ -200,6 +212,7 @@ public class EventLog {
     event.put("phone_brand", replaceWithJSONNull(phoneBrand));
     event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
     event.put("phone_model", replaceWithJSONNull(phoneModel));
+    event.put("client", "android");
 
     JSONObject properties = event.getJSONObject("properties");
 
@@ -248,6 +261,17 @@ public class EventLog {
         }
       }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
     }
+  }
+
+  private static void turnOffSessionLater() {
+    setSessionIdRunnable = new Runnable() {
+      public void run() {
+        if (!sessionStarted) {
+          sessionId = -1;
+        }
+      }
+    };
+    LogThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
   }
 
   private static boolean makePostRequest(String url, String events, long numEvents)

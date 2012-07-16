@@ -49,4 +49,8 @@ public class LogThread extends Thread {
     }
     instance.handler.postDelayed(r, delayMillis);
   }
+
+  public static void removeCallbacks(Runnable r) {
+    instance.handler.removeCallbacks(r);
+  }
 }
