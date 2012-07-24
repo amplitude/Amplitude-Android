@@ -27,18 +27,21 @@ public class LogThread extends Thread {
   }
 
   public static void post(Runnable r) {
-    while (instance.handler == null) {
-      synchronized (instance) {
-        try {
-          instance.wait();
-        } catch (InterruptedException e) {
-        }
-      }
-    }
+    waitForHandlerInitialization();
     instance.handler.post(r);
   }
 
   public static void postDelayed(Runnable r, long delayMillis) {
+    waitForHandlerInitialization();
+    instance.handler.postDelayed(r, delayMillis);
+  }
+
+  public static void removeCallbacks(Runnable r) {
+    waitForHandlerInitialization();
+    instance.handler.removeCallbacks(r);
+  }
+  
+  private static void waitForHandlerInitialization() {
     while (instance.handler == null) {
       synchronized (instance) {
         try {
@@ -47,10 +50,5 @@ public class LogThread extends Thread {
         }
       }
     }
-    instance.handler.postDelayed(r, delayMillis);
-  }
-
-  public static void removeCallbacks(Runnable r) {
-    instance.handler.removeCallbacks(r);
   }
 }
