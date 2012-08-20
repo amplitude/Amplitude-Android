@@ -37,7 +37,7 @@ public class EventLog {
   public static final String TAG = "com.sonalight.analytics.api.EventLog";
 
   private static Context context;
-  private static String ApiKey;
+  private static String apiKey;
   private static String userId;
   private static String deviceId;
 
@@ -48,6 +48,7 @@ public class EventLog {
   private static String phoneBrand;
   private static String phoneManufacturer;
   private static String phoneModel;
+  private static String phoneCarrier;
 
   private static JSONObject globalProperties;
 
@@ -57,20 +58,20 @@ public class EventLog {
 
   private static boolean updateScheduled = false;
 
-  public static void initialize(Context context, String ApiKey) {
-    initialize(context, ApiKey, null);
+  public static void initialize(Context context, String apiKey) {
+    initialize(context, apiKey, null);
   }
 
-  public static void initialize(Context context, String ApiKey, String userId) {
+  public static void initialize(Context context, String apiKey, String userId) {
     if (context == null) {
       throw new IllegalArgumentException("Context cannot be null");
     }
-    if (TextUtils.isEmpty(ApiKey)) {
+    if (TextUtils.isEmpty(apiKey)) {
       throw new IllegalArgumentException("ApiKey cannot be null or blank");
     }
 
     EventLog.context = context.getApplicationContext();
-    EventLog.ApiKey = ApiKey;
+    EventLog.apiKey = apiKey;
     if (userId != null) {
       EventLog.userId = userId;
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -93,6 +94,8 @@ public class EventLog {
     phoneBrand = Build.BRAND;
     phoneManufacturer = Build.MANUFACTURER;
     phoneModel = Build.MODEL;
+    TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+    phoneCarrier = manager.getNetworkOperatorName();
   }
 
   public static void logEvent(String eventType) {
@@ -103,14 +106,14 @@ public class EventLog {
     logEvent(eventType, customProperties, null);
   }
 
-  private static void logEvent(String eventType, JSONObject customProperties, JSONObject properties) {
+  private static void logEvent(String eventType, JSONObject customProperties, JSONObject apiProperties) {
 
     final JSONObject event = new JSONObject();
     try {
       event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
-      event.put("properties", (properties == null) ? new JSONObject() : properties);
+      event.put("properties", (apiProperties == null) ? new JSONObject() : apiProperties); //TODO rename properties to api_properties
       event.put("global_properties", (globalProperties == null) ? new JSONObject()
           : globalProperties);
       addBoilerplate(event);
@@ -167,22 +170,22 @@ public class EventLog {
     }
 
     // Log session start in events
-    JSONObject properties = new JSONObject();
+    JSONObject apiProperties = new JSONObject();
     try {
-      properties.put("special", "session_start");
+      apiProperties.put("special", "session_start");
     } catch (JSONException e) {
     }
-    logEvent("session_start", null, properties);
+    logEvent("session_start", null, apiProperties);
   }
 
   public static void endSession() {
     // Log session end in events
-    JSONObject properties = new JSONObject();
+    JSONObject apiProperties = new JSONObject();
     try {
-      properties.put("special", "session_end");
+      apiProperties.put("special", "session_end");
     } catch (JSONException e) {
     }
-    logEvent("session_end", null, properties);
+    logEvent("session_end", null, apiProperties);
 
     // Session stopped
     sessionStarted = false;
@@ -212,16 +215,17 @@ public class EventLog {
     event.put("phone_brand", replaceWithJSONNull(phoneBrand));
     event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
     event.put("phone_model", replaceWithJSONNull(phoneModel));
+    event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
     event.put("client", "android");
 
-    JSONObject properties = event.getJSONObject("properties");
+    JSONObject apiProperties = event.getJSONObject("properties");
 
     Location location = getMostRecentLocation();
     if (location != null) {
       JSONObject JSONLocation = new JSONObject();
       JSONLocation.put("lat", location.getLatitude());
       JSONLocation.put("lng", location.getLongitude());
-      properties.put("location", JSONLocation);
+      apiProperties.put("location", JSONLocation);
     }
 
     if (sessionStarted) {
@@ -279,7 +283,7 @@ public class EventLog {
     HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
     postParams.add(new BasicNameValuePair("e", events));
-    postParams.add(new BasicNameValuePair("client", ApiKey));
+    postParams.add(new BasicNameValuePair("client", apiKey));
 
     postRequest.setEntity(new UrlEncodedFormEntity(postParams));
 
