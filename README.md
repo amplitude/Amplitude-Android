@@ -20,9 +20,13 @@
 
 8. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent in your app, you will immediately see data appear on Giraffe Graph.
 
+# Tracking Events #
+
+It's important to think about what types of events you care about as a developer. You should aim to track at least 5 and no more than 50 types of events within your app. Common event types are different screens within the app, actions the user initiates (such as pressing a button), and events you want the user to complete (such as filling out a form, completing a level, or making a payment). Shoot me an email if you want to talk about what would be best for you to track.
+
 # Tracking Sessions #
 
-To track session lengths, add the following to each onResume() in every activity in your app:
+A session is the period of time that a user has the app in the foreground. Sessions within 10 seconds of each other are merged into a single session. To track sessions, add the following to each onResume() in every activity in your app:
 
     EventLog.startSession() 
 
@@ -30,7 +34,7 @@ and the following to each onPause() in every activity in your app:
 
     EventLog.endSession()
 
-# Custom user IDs #
+# Custom User IDs #
 
 If your app has its own login system that you want to track users with, you can call the following at any time:
 
@@ -40,7 +44,33 @@ You can also add the user ID as an argument to the initialize call:
 
     EventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
+# Setting Custom Properties #
+
+You can attach additional data to any event by passing a JSONObject as the second argument to logEvent():
+
+    JSONObject customProperties = new JSONObject();
+    try {
+      customProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
+    } catch (JSONException exception) {
+    }
+    EventLog.logEvent(Action.OPEN.toString(), customProperties);
+
+You will need to add the following imports to the code:
+
+    import org.json.JSONException;
+    import org.json.JSONObject;
+
+To add properties that are tracked in every event, you can set global properties for a user:
+
+    JSONObject globalProperties = new JSONObject();
+    try {
+      globalProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
+    } catch (JSONException exception) {
+    }
+    EventLog.setGlobalUserProperties(globalProperties);
+
 # Advanced #
 
-Download the source files as a zip here: giraffegraph.com/static/downloads/giraffegraph-android.zip
-Copy the four source .java files into your Android project.
+If you want to use the source files directly, you can [download them as a here](giraffegraph.com/static/downloads/giraffegraph-android.zip). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
+
+If your app has multiple entry points/exit points, you should make a `EventLog.initialize()` at every onCreate() entry point and a `EventLog.uploadEvents()` at every onDestroy() exit point.
