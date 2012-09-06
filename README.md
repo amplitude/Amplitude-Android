@@ -6,11 +6,11 @@
 
         import package com.giraffegraph.api;
 
-5. In the onCreate of your main activity call:
+5. In the onCreate of your main activity you need to initialize the SDK:
 
         EventLog.initialize(this, "YOUR_API_KEY_HERE");
 
-6. In the onDestroy of your main activity call:
+6. In the onDestroy of your main activity you need to upload events before the app is destroyed:
 
         EventLog.uploadEvents();
 
@@ -22,7 +22,7 @@
 
 # Tracking Events #
 
-It's important to think about what types of events you care about as a developer. You should aim to track at least 5 and no more than 50 types of events within your app. Common event types are different screens within the app, actions the user initiates (such as pressing a button), and events you want the user to complete (such as filling out a form, completing a level, or making a payment). Shoot me an email if you want to find out what would be best for you to track.
+It's important to think about what types of events you care about as a developer. You should aim to track at least 5 and no more than 50 types of events within your app. Common event types are different screens within the app, actions the user initiates (such as pressing a button), and events you want the user to complete (such as filling out a form, completing a level, or making a payment). Shoot me an email if you want assistance determining what would be best for you to track.
 
 # Tracking Sessions #
 
@@ -77,4 +77,6 @@ If you want to use the source files directly, you can [download them here](giraf
 
 If your app has multiple entry points/exit points, you should make a `EventLog.initialize()` at every onCreate() entry point and a `EventLog.uploadEvents()` at every onDestroy() exit point.
 
-This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the app will also grab the last known location of the user (this will not consume any extra battery, as it does not poll for a new location). User IDs are uniquely generated if not specified based on device specific identifiers.
+This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of the user (this will not consume any extra battery, as it does not poll for a new location).
+
+User IDs are automatically generated based on device specific identifiers if not specified.
