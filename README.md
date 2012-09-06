@@ -6,11 +6,11 @@
 
         import package com.giraffegraph.api;
 
-5. In the onCreate of your main activity you need to initialize the SDK:
+5. In the onCreate() of your main activity you need to initialize the SDK:
 
         EventLog.initialize(this, "YOUR_API_KEY_HERE");
 
-6. In the onDestroy of your main activity you need to upload events before the app is destroyed:
+6. In the onDestroy() of your main activity you need to upload events before the app is destroyed:
 
         EventLog.uploadEvents();
 
@@ -44,7 +44,7 @@ You can also add the user ID as an argument to the initialize call:
 
     EventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
-Users data will be merged on the backend so that any events up to that point will be tracked under the same user.
+Users data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
 # Setting Custom Properties #
 
