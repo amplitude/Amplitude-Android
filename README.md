@@ -76,3 +76,5 @@ To add properties that are tracked in every event, you can set global properties
 If you want to use the source files directly, you can [download them here](giraffegraph.com/static/downloads/giraffegraph-android.zip). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
 
 If your app has multiple entry points/exit points, you should make a `EventLog.initialize()` at every onCreate() entry point and a `EventLog.uploadEvents()` at every onDestroy() exit point.
+
+This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the app will also grab the last known location of the user (this will not consume any extra battery, as it does not poll for a new location). User IDs are uniquely generated if not specified based on device specific identifiers.
