@@ -18,12 +18,29 @@
 
         EventLog.logEvent("EVENT_IDENTIFIER_HERE");
 
-8. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent in your app, you will immediately see data pop up on Giraffe Graph.
+8. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent in your app, you will immediately see data appear on Giraffe Graph.
+
+# Tracking Sessions #
+
+To track session lengths, add the following to each onResume() in every activity in your app:
+
+    EventLog.startSession() 
+
+and the following to each onPause() in every activity in your app:
+
+    EventLog.endSession()
+
+# Custom user IDs #
+
+If your app has its own login system that you want to track users with, you can call the following at any time:
+
+    EventLog.setUserId("USER_ID_HERE");
+
+You can also add the user ID as an argument to the initialize call:
+
+    EventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
 # Advanced #
 
 Download the source files as a zip here: giraffegraph.com/static/downloads/giraffegraph-android.zip
 Copy the four source .java files into your Android project.
-
-
-Finally, in order to track sessions, include EventLog.startSession() in every onResume() in every activity and EventLog.endSession() in every onPause() in every activity in your app.
