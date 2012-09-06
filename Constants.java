@@ -1,7 +1,7 @@
 package com.giraffegraph.api;
 
 public class Constants {
-  public static final String EVENT_LOG_URL = "http://analytics.snlt.co/event/";
+  public static final String EVENT_LOG_URL = "http://api.giraffegraph.com/";
 
   public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
