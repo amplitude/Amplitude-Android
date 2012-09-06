@@ -1,11 +1,11 @@
 # Setup #
-1. If you haven't already, go to giraffegraph.com and register for an account. You will receive an API Key.
+1. If you haven't already, go to http://giraffegraph.com and register for an account. You will receive an API Key.
 2. [Download the jar.](http://giraffegraph.com/static/downloads/giraffegraph-android.jar)
 3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older version of Android build, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
 4. In the onCreate of your main activity you need to call:
-```EventLog.initialize(this, "YOUR_API_KEY_HERE");```
-
-You also need to "import package com.sonalight.analytics.api;" at the top
+    EventLog.initialize(this, "YOUR_API_KEY_HERE")
+You also need to place a ```import package com.sonalight.analytics.api;``` call at the top
+5. You will 
 
 Every time you want to track something, call EventLog.logEvent("EVENT_IDENTIFIER_HERE");
 You also need to "import package com.sonalight.analytics.api;" at the top of every file you call this in.
