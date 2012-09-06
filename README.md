@@ -2,11 +2,9 @@
 1. If you haven't already, go to http://giraffegraph.com and register for an account. You will receive an API Key.
 2. [Download the jar](http://giraffegraph.com/static/downloads/giraffegraph-android.jar).
 3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older version of Android build, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
-4. In every file that uses analytics, you will need to place
+4. In every file that uses analytics, you will need to place the following at the top:
 
-        import package com.sonalight.analytics.api;
-
-at the top.
+        import package com.giraffegraph.api;
 
 5. In the onCreate of your main activity call:
 
