@@ -13,12 +13,12 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 import android.util.Pair;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+class DatabaseHelper extends SQLiteOpenHelper {
 
   private static DatabaseHelper instance;
-  public static final String TAG = "com.sonalight.analytics.api.DatabaseHelper";
+  static final String TAG = "com.sonalight.analytics.api.DatabaseHelper";
 
-  public static DatabaseHelper getDatabaseHelper(Context context) {
+  static DatabaseHelper getDatabaseHelper(Context context) {
     if (instance == null) {
       instance = new DatabaseHelper(context);
     }
@@ -42,7 +42,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
   }
 
-  public void addEvent(String event) {
+  void addEvent(String event) {
     synchronized (this) {
       SQLiteDatabase db = getWritableDatabase();
       ContentValues contentValues = new ContentValues();
@@ -55,7 +55,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
   }
 
-  public long getNumberRows() {
+  long getNumberRows() {
     SQLiteDatabase db = getWritableDatabase();
     String query = "SELECT COUNT(*) FROM " + Constants.EVENT_TABLE_NAME;
     SQLiteStatement statement = db.compileStatement(query);
@@ -64,7 +64,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     return numberRows;
   }
 
-  public Pair<Long, JSONArray> getEvents() throws JSONException {
+  Pair<Long, JSONArray> getEvents() throws JSONException {
 
     SQLiteDatabase db = getWritableDatabase();
     Cursor cursor = db.query(Constants.EVENT_TABLE_NAME, Constants.TABLE_FIELD_NAMES, null, null,
@@ -88,7 +88,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     return new Pair<Long, JSONArray>(maxId, events);
   }
 
-  public void removeEvents(long maxId) {
+  void removeEvents(long maxId) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(Constants.EVENT_TABLE_NAME, Constants.ID_FIELD + " <= " + maxId, null);
     db.close();
