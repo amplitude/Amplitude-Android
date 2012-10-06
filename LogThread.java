@@ -40,7 +40,7 @@ public class LogThread extends Thread {
     waitForHandlerInitialization();
     instance.handler.removeCallbacks(r);
   }
-  
+
   private static void waitForHandlerInitialization() {
     while (instance.handler == null) {
       synchronized (instance) {

@@ -94,7 +94,8 @@ public class EventLog {
     phoneBrand = Build.BRAND;
     phoneManufacturer = Build.MANUFACTURER;
     phoneModel = Build.MODEL;
-    TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+    TelephonyManager manager = (TelephonyManager) context
+        .getSystemService(Context.TELEPHONY_SERVICE);
     phoneCarrier = manager.getNetworkOperatorName();
   }
 
@@ -106,14 +107,16 @@ public class EventLog {
     logEvent(eventType, customProperties, null);
   }
 
-  private static void logEvent(String eventType, JSONObject customProperties, JSONObject apiProperties) {
+  private static void logEvent(String eventType, JSONObject customProperties,
+      JSONObject apiProperties) {
 
     final JSONObject event = new JSONObject();
     try {
       event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
-      event.put("properties", (apiProperties == null) ? new JSONObject() : apiProperties); //TODO rename properties to api_properties
+      // TODO rename properties to api_properties
+      event.put("properties", (apiProperties == null) ? new JSONObject() : apiProperties);
       event.put("global_properties", (globalProperties == null) ? new JSONObject()
           : globalProperties);
       addBoilerplate(event);
