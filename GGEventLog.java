@@ -58,6 +58,9 @@ public class GGEventLog {
 
   private static boolean updateScheduled = false;
 
+  private GGEventLog() {
+  }
+
   public static void initialize(Context context, String apiKey) {
     initialize(context, apiKey, null);
   }
