@@ -13,20 +13,20 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 import android.util.Pair;
 
-class DatabaseHelper extends SQLiteOpenHelper {
+class GGDatabaseHelper extends SQLiteOpenHelper {
 
-  private static DatabaseHelper instance;
+  private static GGDatabaseHelper instance;
   static final String TAG = "com.sonalight.analytics.api.DatabaseHelper";
 
-  static DatabaseHelper getDatabaseHelper(Context context) {
+  static GGDatabaseHelper getDatabaseHelper(Context context) {
     if (instance == null) {
-      instance = new DatabaseHelper(context);
+      instance = new GGDatabaseHelper(context);
     }
     return instance;
   }
 
-  private DatabaseHelper(Context context) {
-    super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
+  private GGDatabaseHelper(Context context) {
+    super(context, GGConstants.DATABASE_NAME, null, GGConstants.DATABASE_VERSION);
   }
 
   @Override
@@ -34,8 +34,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
     // INTEGER PRIMARY KEY AUTOINCREMENT guarantees that all generated values
     // for the field will be monotonically increasing and unique over the
     // lifetime of the table, even if rows get removed
-    db.execSQL("CREATE TABLE IF NOT EXISTS " + Constants.EVENT_TABLE_NAME
-        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, " + Constants.EVENT_FIELD + " TEXT);");
+    db.execSQL("CREATE TABLE IF NOT EXISTS " + GGConstants.EVENT_TABLE_NAME
+        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, " + GGConstants.EVENT_FIELD + " TEXT);");
   }
 
   @Override
@@ -46,8 +46,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
     synchronized (this) {
       SQLiteDatabase db = getWritableDatabase();
       ContentValues contentValues = new ContentValues();
-      contentValues.put(Constants.EVENT_FIELD, event);
-      long result = db.insert(Constants.EVENT_TABLE_NAME, null, contentValues);
+      contentValues.put(GGConstants.EVENT_FIELD, event);
+      long result = db.insert(GGConstants.EVENT_TABLE_NAME, null, contentValues);
       if (result == -1) {
         Log.w(TAG, "Insert failed");
       }
@@ -57,7 +57,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
   long getNumberRows() {
     SQLiteDatabase db = getWritableDatabase();
-    String query = "SELECT COUNT(*) FROM " + Constants.EVENT_TABLE_NAME;
+    String query = "SELECT COUNT(*) FROM " + GGConstants.EVENT_TABLE_NAME;
     SQLiteStatement statement = db.compileStatement(query);
     long numberRows = statement.simpleQueryForLong();
     db.close();
@@ -67,8 +67,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
   Pair<Long, JSONArray> getEvents() throws JSONException {
 
     SQLiteDatabase db = getWritableDatabase();
-    Cursor cursor = db.query(Constants.EVENT_TABLE_NAME, Constants.TABLE_FIELD_NAMES, null, null,
-        null, null, Constants.ID_FIELD + " ASC");
+    Cursor cursor = db.query(GGConstants.EVENT_TABLE_NAME, GGConstants.TABLE_FIELD_NAMES, null, null,
+        null, null, GGConstants.ID_FIELD + " ASC");
 
     long maxId = -1;
     JSONArray events = new JSONArray();
@@ -90,7 +90,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
   void removeEvents(long maxId) {
     SQLiteDatabase db = getWritableDatabase();
-    db.delete(Constants.EVENT_TABLE_NAME, Constants.ID_FIELD + " <= " + maxId, null);
+    db.delete(GGConstants.EVENT_TABLE_NAME, GGConstants.ID_FIELD + " <= " + maxId, null);
     db.close();
   }
 

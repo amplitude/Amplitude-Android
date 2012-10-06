@@ -1,9 +1,9 @@
 package com.giraffegraph.api;
 
-public class Constants {
+public class GGConstants {
   public static final String EVENT_LOG_URL = "http://api.giraffegraph.com/";
 
-  public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
+  public static final String PACKAGE_NAME = GGConstants.class.getPackage().getName();
 
   public static final String DATABASE_NAME = PACKAGE_NAME;
   public static final int DATABASE_VERSION = 1;

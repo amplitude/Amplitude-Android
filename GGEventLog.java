@@ -32,7 +32,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
-public class EventLog {
+public class GGEventLog {
 
   public static final String TAG = "com.sonalight.analytics.api.EventLog";
 
@@ -70,17 +70,17 @@ public class EventLog {
       throw new IllegalArgumentException("ApiKey cannot be null or blank");
     }
 
-    EventLog.context = context.getApplicationContext();
-    EventLog.apiKey = apiKey;
+    GGEventLog.context = context.getApplicationContext();
+    GGEventLog.apiKey = apiKey;
     if (userId != null) {
-      EventLog.userId = userId;
+      GGEventLog.userId = userId;
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-      preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+      preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
     } else {
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-      EventLog.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
+      GGEventLog.userId = preferences.getString(GGConstants.PREFKEY_USER_ID, null);
     }
-    EventLog.deviceId = getDeviceId();
+    GGEventLog.deviceId = getDeviceId();
 
     PackageInfo packageInfo;
     try {
@@ -124,13 +124,13 @@ public class EventLog {
       Log.e(TAG, e.toString());
     }
 
-    LogThread.post(new Runnable() {
+    GGLogThread.post(new Runnable() {
       public void run() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
 
         dbHelper.addEvent(event.toString());
 
-        if (dbHelper.getNumberRows() >= Constants.EVENT_BATCH_SIZE) {
+        if (dbHelper.getNumberRows() >= GGConstants.EVENT_BATCH_SIZE) {
           updateServer();
         } else {
           updateServerLater();
@@ -140,7 +140,7 @@ public class EventLog {
   }
 
   public static void uploadEvents() {
-    LogThread.post(new Runnable() {
+    GGLogThread.post(new Runnable() {
       public void run() {
         updateServer();
       }
@@ -149,7 +149,7 @@ public class EventLog {
 
   public static void startSession() {
     // Remove setSessionId callback
-    LogThread.removeCallbacks(setSessionIdRunnable);
+    GGLogThread.removeCallbacks(setSessionIdRunnable);
 
     if (!sessionStarted) {
       // Session has not been started yet, check overlap
@@ -157,15 +157,15 @@ public class EventLog {
       long now = System.currentTimeMillis();
 
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-      long previousSessionTime = preferences.getLong(Constants.PREFKEY_LAST_SESSION_TIME, -1);
+      long previousSessionTime = preferences.getLong(GGConstants.PREFKEY_LAST_SESSION_TIME, -1);
 
-      if (now - previousSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+      if (now - previousSessionTime < GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
         // Sessions close enough, set sessionId to previous sessionId
-        sessionId = preferences.getLong(Constants.PREFKEY_LAST_SESSION_ID, now);
+        sessionId = preferences.getLong(GGConstants.PREFKEY_LAST_SESSION_ID, now);
       } else {
         // Sessions not close enough, create new sessionId
         sessionId = now;
-        preferences.edit().putLong(Constants.PREFKEY_LAST_SESSION_ID, sessionId).commit();
+        preferences.edit().putLong(GGConstants.PREFKEY_LAST_SESSION_ID, sessionId).commit();
       }
 
       // Session now started
@@ -196,13 +196,13 @@ public class EventLog {
   }
 
   public static void setGlobalUserProperties(JSONObject globalProperties) {
-    EventLog.globalProperties = globalProperties;
+    GGEventLog.globalProperties = globalProperties;
   }
 
   private static void refreshSessionTime() {
     long now = System.currentTimeMillis();
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-    preferences.edit().putLong(Constants.PREFKEY_LAST_SESSION_TIME, now).commit();
+    preferences.edit().putLong(GGConstants.PREFKEY_LAST_SESSION_TIME, now).commit();
   }
 
   private static void addBoilerplate(JSONObject event) throws JSONException {
@@ -239,13 +239,13 @@ public class EventLog {
   private static void updateServer() {
     boolean success = false;
     long maxId = 0;
-    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+    GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
     try {
       Pair<Long, JSONArray> pair = dbHelper.getEvents();
       maxId = pair.first;
       JSONArray events = pair.second;
 
-      success = makePostRequest(Constants.EVENT_LOG_URL, events.toString(), events.length());
+      success = makePostRequest(GGConstants.EVENT_LOG_URL, events.toString(), events.length());
     } catch (Exception e) {
       Log.e(TAG, e.toString());
     }
@@ -261,12 +261,12 @@ public class EventLog {
     if (!updateScheduled) {
       updateScheduled = true;
 
-      LogThread.postDelayed(new Runnable() {
+      GGLogThread.postDelayed(new Runnable() {
         public void run() {
           updateScheduled = false;
           updateServer();
         }
-      }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
+      }, GGConstants.EVENT_UPLOAD_PERIOD_MILLIS);
     }
   }
 
@@ -278,7 +278,7 @@ public class EventLog {
         }
       }
     };
-    LogThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
+    GGLogThread.postDelayed(setSessionIdRunnable, GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
   }
 
   private static boolean makePostRequest(String url, String events, long numEvents)
@@ -300,16 +300,16 @@ public class EventLog {
   }
 
   public static void setUserId(String userId) {
-    EventLog.userId = userId;
+    GGEventLog.userId = userId;
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-    preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+    preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
   }
 
   // Returns a unique identifier for tracking within the analytics system
   private static String getDeviceId() {
 
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-    String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+    String deviceId = preferences.getString(GGConstants.PREFKEY_DEVICE_ID, null);
     if (!TextUtils.isEmpty(deviceId)) {
       return deviceId;
     }
@@ -319,7 +319,7 @@ public class EventLog {
     String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
         android.provider.Settings.Secure.ANDROID_ID);
     if (!(TextUtils.isEmpty(androidId) || androidId.equals("9774d56d682e549c"))) {
-      preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
+      preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, androidId).commit();
       return androidId;
     }
 
@@ -328,7 +328,7 @@ public class EventLog {
     try {
       String serialNumber = (String) Build.class.getField("SERIAL").get(null);
       if (!TextUtils.isEmpty(serialNumber)) {
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
+        preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, serialNumber).commit();
         return serialNumber;
       }
     } catch (Exception e) {
@@ -336,12 +336,12 @@ public class EventLog {
 
     // Telephony ID
     // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
-    if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
+    if (permissionGranted(GGConstants.PERMISSION_READ_PHONE_STATE)
         && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
       String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .getDeviceId();
       if (!TextUtils.isEmpty(telephonyId)) {
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
+        preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, telephonyId).commit();
         return telephonyId;
       }
     }
@@ -362,7 +362,7 @@ public class EventLog {
     // If this still fails, generate random identifier that does not persist
     // across installations
     String randomId = UUID.randomUUID().toString();
-    preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
+    preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, randomId).commit();
     return randomId;
 
   }

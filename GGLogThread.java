@@ -3,9 +3,9 @@ package com.giraffegraph.api;
 import android.os.Handler;
 import android.os.Looper;
 
-class LogThread extends Thread {
+class GGLogThread extends Thread {
 
-  static LogThread instance = new LogThread();
+  static GGLogThread instance = new GGLogThread();
 
   static {
     instance.start();
@@ -13,7 +13,7 @@ class LogThread extends Thread {
 
   private Handler handler;
 
-  private LogThread() {
+  private GGLogThread() {
   }
 
   @Override
