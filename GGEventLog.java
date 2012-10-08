@@ -249,6 +249,8 @@ public class GGEventLog {
       JSONArray events = pair.second;
 
       success = makePostRequest(GGConstants.EVENT_LOG_URL, events.toString(), events.length());
+    } catch (java.net.UnknownHostException e) {
+      //Log.w(TAG, "No internet connection found, unable to upload events");
     } catch (Exception e) {
       Log.e(TAG, e.toString());
     }
