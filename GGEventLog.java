@@ -249,17 +249,21 @@ public class GGEventLog {
       JSONArray events = pair.second;
 
       success = makePostRequest(GGConstants.EVENT_LOG_URL, events.toString(), events.length());
+
+      if (success) {
+        dbHelper.removeEvents(maxId);
+      } else {
+        Log.w(TAG, "Upload failed, post request not successful");
+      }
+
+    } catch (org.apache.http.conn.HttpHostConnectException e) {
+      //Log.w(TAG, "No internet connection found, unable to upload events " + e.toString());
     } catch (java.net.UnknownHostException e) {
-      //Log.w(TAG, "No internet connection found, unable to upload events");
+      //Log.w(TAG, "No internet connection found, unable to upload events " + e.toString());
     } catch (Exception e) {
       Log.e(TAG, e.toString());
     }
 
-    if (success) {
-      dbHelper.removeEvents(maxId);
-    } else {
-      Log.w(TAG, "Upload failed, post request not successful");
-    }
   }
 
   private static void updateServerLater() {
