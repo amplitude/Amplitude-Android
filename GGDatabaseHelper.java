@@ -16,7 +16,7 @@ import android.util.Pair;
 class GGDatabaseHelper extends SQLiteOpenHelper {
 
   private static GGDatabaseHelper instance;
-  static final String TAG = "com.sonalight.analytics.api.DatabaseHelper";
+  static final String TAG = "com.giraffegraph.api.GGDatabaseHelper";
 
   static GGDatabaseHelper getDatabaseHelper(Context context) {
     if (instance == null) {

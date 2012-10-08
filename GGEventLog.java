@@ -34,7 +34,7 @@ import android.util.Pair;
 
 public class GGEventLog {
 
-  public static final String TAG = "com.sonalight.analytics.api.EventLog";
+  public static final String TAG = "com.giraffegraph.api.GGEventLog";
 
   private static Context context;
   private static String apiKey;
