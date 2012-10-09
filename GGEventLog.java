@@ -3,6 +3,7 @@ package com.giraffegraph.api;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.apache.http.HttpResponse;
@@ -49,6 +50,8 @@ public class GGEventLog {
   private static String phoneManufacturer;
   private static String phoneModel;
   private static String phoneCarrier;
+  private static String country;
+  private static String language;
 
   private static JSONObject globalProperties;
 
@@ -102,6 +105,8 @@ public class GGEventLog {
     TelephonyManager manager = (TelephonyManager) context
         .getSystemService(Context.TELEPHONY_SERVICE);
     phoneCarrier = manager.getNetworkOperatorName();
+    country = Locale.getDefault().getDisplayCountry();
+    language = Locale.getDefault().getDisplayLanguage();
   }
 
   public static void logEvent(String eventType) {
@@ -243,6 +248,8 @@ public class GGEventLog {
     event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
     event.put("phone_model", replaceWithJSONNull(phoneModel));
     event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
+    event.put("country", replaceWithJSONNull(country));
+    event.put("language", replaceWithJSONNull(language));
     event.put("client", "android");
 
     JSONObject apiProperties = event.getJSONObject("properties");
@@ -317,6 +324,7 @@ public class GGEventLog {
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
     postParams.add(new BasicNameValuePair("e", events));
     postParams.add(new BasicNameValuePair("client", apiKey));
+    postParams.add(new BasicNameValuePair("upload_time", "" + System.currentTimeMillis()));
 
     postRequest.setEntity(new UrlEncodedFormEntity(postParams));
 
