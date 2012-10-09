@@ -67,10 +67,12 @@ public class GGEventLog {
 
   public static void initialize(Context context, String apiKey, String userId) {
     if (context == null) {
-      throw new IllegalArgumentException("Context cannot be null");
+      Log.e(TAG, "Argument context cannot be null in initialize()");
+      return;
     }
     if (TextUtils.isEmpty(apiKey)) {
-      throw new IllegalArgumentException("ApiKey cannot be null or blank");
+      Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
+      return;
     }
 
     GGEventLog.context = context.getApplicationContext();
@@ -112,6 +114,13 @@ public class GGEventLog {
 
   private static void logEvent(String eventType, JSONObject customProperties,
       JSONObject apiProperties) {
+    if (TextUtils.isEmpty(eventType)) {
+      Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
+      return;
+    }
+    if (!contextAndApiKeySet("logEvent()")) {
+      return;
+    }
 
     final JSONObject event = new JSONObject();
     try {
@@ -143,6 +152,10 @@ public class GGEventLog {
   }
 
   public static void uploadEvents() {
+    if (!contextAndApiKeySet("uploadEvents()")) {
+      return;
+    }
+
     GGLogThread.post(new Runnable() {
       public void run() {
         updateServer();
@@ -151,6 +164,10 @@ public class GGEventLog {
   }
 
   public static void startSession() {
+    if (!contextAndApiKeySet("startSession()")) {
+      return;
+    }
+
     // Remove setSessionId callback
     GGLogThread.removeCallbacks(setSessionIdRunnable);
 
@@ -185,6 +202,10 @@ public class GGEventLog {
   }
 
   public static void endSession() {
+    if (!contextAndApiKeySet("endSession()")) {
+      return;
+    }
+
     // Log session end in events
     JSONObject apiProperties = new JSONObject();
     try {
@@ -257,9 +278,9 @@ public class GGEventLog {
       }
 
     } catch (org.apache.http.conn.HttpHostConnectException e) {
-      //Log.w(TAG, "No internet connection found, unable to upload events " + e.toString());
+      // Log.w(TAG, "No internet connection found, unable to upload events");
     } catch (java.net.UnknownHostException e) {
-      //Log.w(TAG, "No internet connection found, unable to upload events " + e.toString());
+      // Log.w(TAG, "No internet connection found, unable to upload events");
     } catch (Exception e) {
       Log.e(TAG, e.toString());
     }
@@ -406,6 +427,20 @@ public class GGEventLog {
 
   private static Object replaceWithJSONNull(Object obj) {
     return obj == null ? JSONObject.NULL : obj;
+  }
+
+  private static boolean contextAndApiKeySet(String methodName) {
+    if (context == null) {
+      Log.e(TAG, "context cannot be null, set context with initialize() before calling "
+          + methodName);
+      return false;
+    }
+    if (TextUtils.isEmpty(apiKey)) {
+      Log.e(TAG, "apiKey cannot be null or empty, set apiKey with initialize() before calling "
+          + methodName);
+      return false;
+    }
+    return true;
   }
 
 }
