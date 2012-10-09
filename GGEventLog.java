@@ -132,8 +132,9 @@ public class GGEventLog {
       event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
-      // TODO rename properties to api_properties
+      // TODO remove properties on backend
       event.put("properties", (apiProperties == null) ? new JSONObject() : apiProperties);
+      event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
       event.put("global_properties", (globalProperties == null) ? new JSONObject()
           : globalProperties);
       addBoilerplate(event);
@@ -252,14 +253,21 @@ public class GGEventLog {
     event.put("language", replaceWithJSONNull(language));
     event.put("client", "android");
 
-    JSONObject apiProperties = event.getJSONObject("properties");
-
+    JSONObject apiProperties = event.getJSONObject("api_properties");
     Location location = getMostRecentLocation();
     if (location != null) {
       JSONObject JSONLocation = new JSONObject();
       JSONLocation.put("lat", location.getLatitude());
       JSONLocation.put("lng", location.getLongitude());
       apiProperties.put("location", JSONLocation);
+    }
+
+    JSONObject properties = event.getJSONObject("properties");
+    if (location != null) {
+      JSONObject JSONLocation = new JSONObject();
+      JSONLocation.put("lat", location.getLatitude());
+      JSONLocation.put("lng", location.getLongitude());
+      properties.put("location", JSONLocation);
     }
 
     if (sessionStarted) {
