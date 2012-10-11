@@ -130,7 +130,7 @@ public class GGEventLog {
 
             JSONObject fingerprint = new JSONObject();
             fingerprint.put("device_id", replaceWithJSONNull(deviceId));
-            fingerprint.put("platform", "android");
+            fingerprint.put("client", "android");
             fingerprint.put("country", replaceWithJSONNull(country));
             fingerprint.put("language", replaceWithJSONNull(language));
             fingerprint.put("device", replaceWithJSONNull(Build.DEVICE));
