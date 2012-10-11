@@ -8,15 +8,15 @@
 
 5. In the onCreate() of your main activity you need to initialize the SDK:
 
-        EventLog.initialize(this, "YOUR_API_KEY_HERE");
+        GGEventLog.initialize(this, "YOUR_API_KEY_HERE");
 
 6. In the onDestroy() of your main activity you need to upload events before the app is destroyed:
 
-        EventLog.uploadEvents();
+        GGEventLog.uploadEvents();
 
 7. To track an event anywhere in the app, call:
 
-        EventLog.logEvent("EVENT_IDENTIFIER_HERE");
+        GGEventLog.logEvent("EVENT_IDENTIFIER_HERE");
 
 8. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent in your app, you will immediately see data appear on Giraffe Graph.
 
@@ -28,21 +28,21 @@ It's important to think about what types of events you care about as a developer
 
 A session is a period of time that a user has the app in the foreground. Sessions within 10 seconds of each other are merged into a single session. To track sessions, add the following to each onResume() in every activity in your app:
 
-    EventLog.startSession() 
+    GGEventLog.startSession() 
 
 and the following to each onPause() in every activity in your app:
 
-    EventLog.endSession()
+    GGEventLog.endSession()
 
 # Settings Custom User IDs #
 
 If your app has its own login system that you want to track users with, you can call the following at any time:
 
-    EventLog.setUserId("USER_ID_HERE");
+    GGEventLog.setUserId("USER_ID_HERE");
 
 You can also add the user ID as an argument to the initialize call:
 
-    EventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
+    GGEventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
 Users data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
@@ -55,7 +55,7 @@ You can attach additional data to any event by passing a JSONObject as the secon
       customProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
     } catch (JSONException exception) {
     }
-    EventLog.logEvent(Action.OPEN.toString(), customProperties);
+    GGEventLog.logEvent(Action.OPEN.toString(), customProperties);
 
 You will need to add the following imports to the code:
 
@@ -69,13 +69,13 @@ To add properties that are tracked in every event, you can set global properties
       globalProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
     } catch (JSONException exception) {
     }
-    EventLog.setGlobalUserProperties(globalProperties);
+    GGEventLog.setGlobalUserProperties(globalProperties);
 
 # Advanced #
 
 If you want to use the source files directly, you can [download them here](giraffegraph.com/static/downloads/giraffegraph-android.zip). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
 
-If your app has multiple entry points/exit points, you should make a `EventLog.initialize()` at every onCreate() entry point and a `EventLog.uploadEvents()` at every onDestroy() exit point.
+If your app has multiple entry points/exit points, you should make a `GGEventLog.initialize()` at every onCreate() entry point and a `GGEventLog.uploadEvents()` at every onDestroy() exit point.
 
 This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of the user (this will not consume any extra battery, as it does not poll for a new location).
 
