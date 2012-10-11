@@ -27,7 +27,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -55,6 +54,8 @@ public class GGEventLog {
 
   private static JSONObject globalProperties;
 
+  private static String campaignInformation;
+
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
   private static Runnable setSessionIdRunnable;
@@ -80,15 +81,17 @@ public class GGEventLog {
 
     GGEventLog.context = context.getApplicationContext();
     GGEventLog.apiKey = apiKey;
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
     if (userId != null) {
       GGEventLog.userId = userId;
-      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
       preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
     } else {
-      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
       GGEventLog.userId = preferences.getString(GGConstants.PREFKEY_USER_ID, null);
     }
     GGEventLog.deviceId = getDeviceId();
+    GGEventLog.campaignInformation = preferences.getString(
+        GGConstants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
 
     PackageInfo packageInfo;
     try {
@@ -107,6 +110,71 @@ public class GGEventLog {
     phoneCarrier = manager.getNetworkOperatorName();
     country = Locale.getDefault().getDisplayCountry();
     language = Locale.getDefault().getDisplayLanguage();
+  }
+
+  public static void trackCampaignSource() {
+    if (!contextAndApiKeySet("trackCampaignSource()")) {
+      return;
+    }
+
+    SharedPreferences sharedPreferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
+    boolean hasTrackedCampaign = sharedPreferences.getBoolean(
+        GGConstants.PREFKEY_HAS_TRACKED_CAMPAIGN, false);
+
+    if (!hasTrackedCampaign) {
+
+      GGLogThread.post(new Runnable() {
+        public void run() {
+          try {
+
+            JSONObject fingerprint = new JSONObject();
+            fingerprint.put("device_id", replaceWithJSONNull(deviceId));
+            fingerprint.put("platform", "android");
+            fingerprint.put("country", replaceWithJSONNull(country));
+            fingerprint.put("language", replaceWithJSONNull(language));
+            fingerprint.put("device", replaceWithJSONNull(Build.DEVICE));
+            fingerprint.put("display", replaceWithJSONNull(Build.DISPLAY));
+            fingerprint.put("product", replaceWithJSONNull(Build.PRODUCT));
+            fingerprint.put("brand", replaceWithJSONNull(Build.BRAND));
+            fingerprint.put("model", replaceWithJSONNull(Build.MODEL));
+            fingerprint.put("manufacturer", replaceWithJSONNull(Build.MANUFACTURER));
+
+            // If this returns with a JSONObject then request was successful
+            JSONObject campaignTrackingResult = makeCampaignTrackingPostRequest(
+                GGConstants.CAMPAIGN_TRACKING_URL, fingerprint.toString());
+
+            // Save successful campaign tracking
+            SharedPreferences sharedPreferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean(GGConstants.PREFKEY_HAS_TRACKED_CAMPAIGN, true);
+            editor.putString(GGConstants.PREFKEY_CAMPAIGN_INFORMATION,
+                campaignTrackingResult.toString());
+            editor.commit();
+
+            campaignInformation = campaignTrackingResult.toString();
+
+          } catch (org.apache.http.conn.HttpHostConnectException e) {
+            // Log.w(TAG,
+            // "No internet connection found, unable to track campaign");
+          } catch (java.net.UnknownHostException e) {
+            // Log.w(TAG,
+            // "No internet connection found, unable to track campaign");
+          } catch (Exception e) {
+            Log.e(TAG, e.toString());
+          }
+
+        }
+      });
+    }
+  }
+
+  public static JSONObject getCampaignInformation() throws JSONException {
+    if (!contextAndApiKeySet("getCampaignInformation()")) {
+      return null;
+    }
+    return new JSONObject(campaignInformation);
   }
 
   public static void logEvent(String eventType) {
@@ -182,7 +250,8 @@ public class GGEventLog {
 
       long now = System.currentTimeMillis();
 
-      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+      SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+          Context.MODE_PRIVATE);
       long previousSessionTime = preferences.getLong(GGConstants.PREFKEY_LAST_SESSION_TIME, -1);
 
       if (now - previousSessionTime < GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
@@ -231,7 +300,8 @@ public class GGEventLog {
 
   private static void refreshSessionTime() {
     long now = System.currentTimeMillis();
-    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
     preferences.edit().putLong(GGConstants.PREFKEY_LAST_SESSION_TIME, now).commit();
   }
 
@@ -284,7 +354,8 @@ public class GGEventLog {
       maxId = pair.first;
       JSONArray events = pair.second;
 
-      success = makePostRequest(GGConstants.EVENT_LOG_URL, events.toString(), events.length());
+      success = makeEventUploadPostRequest(GGConstants.EVENT_LOG_URL, events.toString(),
+          events.length());
 
       if (success) {
         dbHelper.removeEvents(maxId);
@@ -326,7 +397,25 @@ public class GGEventLog {
     GGLogThread.postDelayed(setSessionIdRunnable, GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
   }
 
-  private static boolean makePostRequest(String url, String events, long numEvents)
+  private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
+      throws ClientProtocolException, IOException, JSONException {
+    HttpPost postRequest = new HttpPost(url);
+    List<NameValuePair> postParams = new ArrayList<NameValuePair>();
+    postParams.add(new BasicNameValuePair("key", apiKey));
+    postParams.add(new BasicNameValuePair("fingerprint", fingerprint));
+
+    postRequest.setEntity(new UrlEncodedFormEntity(postParams));
+
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(postRequest);
+    String stringResult = EntityUtils.toString(response.getEntity());
+
+    JSONObject result = new JSONObject(stringResult);
+
+    return result;
+  }
+
+  private static boolean makeEventUploadPostRequest(String url, String events, long numEvents)
       throws ClientProtocolException, IOException, JSONException {
     HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
@@ -346,15 +435,21 @@ public class GGEventLog {
   }
 
   public static void setUserId(String userId) {
+    if (!contextAndApiKeySet("setUserId()")) {
+      return;
+    }
+
     GGEventLog.userId = userId;
-    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
     preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
   }
 
   // Returns a unique identifier for tracking within the analytics system
   private static String getDeviceId() {
 
-    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
     String deviceId = preferences.getString(GGConstants.PREFKEY_DEVICE_ID, null);
     if (!TextUtils.isEmpty(deviceId)) {
       return deviceId;
@@ -457,6 +552,10 @@ public class GGEventLog {
       return false;
     }
     return true;
+  }
+
+  private static String getSharedPreferencesName() {
+    return GGConstants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
   }
 
 }
