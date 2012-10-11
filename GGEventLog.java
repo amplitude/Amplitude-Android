@@ -252,15 +252,15 @@ public class GGEventLog {
 
       SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
           Context.MODE_PRIVATE);
-      long previousSessionTime = preferences.getLong(GGConstants.PREFKEY_LAST_SESSION_TIME, -1);
+      long previousSessionTime = preferences.getLong(GGConstants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
 
       if (now - previousSessionTime < GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
         // Sessions close enough, set sessionId to previous sessionId
-        sessionId = preferences.getLong(GGConstants.PREFKEY_LAST_SESSION_ID, now);
+        sessionId = preferences.getLong(GGConstants.PREFKEY_PREVIOUS_SESSION_ID, now);
       } else {
         // Sessions not close enough, create new sessionId
         sessionId = now;
-        preferences.edit().putLong(GGConstants.PREFKEY_LAST_SESSION_ID, sessionId).commit();
+        preferences.edit().putLong(GGConstants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
       }
 
       // Session now started
@@ -302,7 +302,7 @@ public class GGEventLog {
     long now = System.currentTimeMillis();
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    preferences.edit().putLong(GGConstants.PREFKEY_LAST_SESSION_TIME, now).commit();
+    preferences.edit().putLong(GGConstants.PREFKEY_PREVIOUS_SESSION_TIME, now).commit();
   }
 
   private static void addBoilerplate(JSONObject event) throws JSONException {
