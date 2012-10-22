@@ -55,6 +55,7 @@ public class GGEventLog {
   private static JSONObject globalProperties;
 
   private static String campaignInformation;
+  private static boolean isCurrentlyTrackingCampaign = false;
 
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
@@ -122,7 +123,9 @@ public class GGEventLog {
     boolean hasTrackedCampaign = sharedPreferences.getBoolean(
         GGConstants.PREFKEY_HAS_TRACKED_CAMPAIGN, false);
 
-    if (!hasTrackedCampaign) {
+    if (!hasTrackedCampaign && !isCurrentlyTrackingCampaign) {
+
+      isCurrentlyTrackingCampaign = true;
 
       GGLogThread.post(new Runnable() {
         public void run() {
@@ -164,6 +167,8 @@ public class GGEventLog {
           } catch (Exception e) {
             Log.e(TAG, e.toString());
           }
+
+          isCurrentlyTrackingCampaign = false;
 
         }
       });
