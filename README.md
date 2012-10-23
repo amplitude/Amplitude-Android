@@ -1,8 +1,8 @@
 # Setup #
 1. If you haven't already, go to http://giraffegraph.com and register for an account. You will receive an API Key.
-2. [Download the jar](http://giraffegraph.com/static/downloads/giraffegraph-android.jar).
-3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older version of Android build, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
-4. In every file that uses analytics, you will need to place the following at the top:
+2. [Download the jar](https://dl.dropbox.com/s/zjto9bxse7mstrr/GiraffeGraph.jar?dl=1).
+3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
+4. In every file that uses analytics, you will need to import com.giraffegraph.api at the top:
 
         import package com.giraffegraph.api;
 
@@ -26,21 +26,21 @@ It's important to think about what types of events you care about as a developer
 
 # Tracking Sessions #
 
-A session is a period of time that a user has the app in the foreground. Sessions within 10 seconds of each other are merged into a single session. To track sessions, add the following to each onResume() in every activity in your app:
+A session is a period of time that a user has the app in the foreground. Sessions within 10 seconds of each other are merged into a single session. To track sessions, add a startSession() call to each onResume() in every activity in your app:
 
     GGEventLog.startSession() 
 
-and the following to each onPause() in every activity in your app:
+and an endSession() call to each onPause() in every activity in your app:
 
     GGEventLog.endSession()
 
 # Settings Custom User IDs #
 
-If your app has its own login system that you want to track users with, you can call the following at any time:
+If your app has its own login system that you want to track users with, you can call setUserId() at any time:
 
     GGEventLog.setUserId("USER_ID_HERE");
 
-You can also add the user ID as an argument to the initialize call:
+You can also add the user ID as an argument to the initialize() call:
 
     GGEventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
@@ -57,7 +57,7 @@ You can attach additional data to any event by passing a JSONObject as the secon
     }
     GGEventLog.logEvent(Action.OPEN.toString(), customProperties);
 
-You will need to add the following imports to the code:
+You will need to add two JSONObject imports to the code:
 
     import org.json.JSONException;
     import org.json.JSONObject;
@@ -71,9 +71,21 @@ To add properties that are tracked in every event, you can set global properties
     }
     GGEventLog.setGlobalUserProperties(globalProperties);
 
+# Campaign Tracking #
+
+Set up links for each of your campaigns on the campaigns tab at http://giraffegraph.com.
+
+To track installs from each campaign source in your app, call initialize() with an extra boolean argument to turn on campaign tracking:
+
+    GGEventLog.initialize(this, "YOUR_API_KEY_HERE", true);
+
+If you are not using analytics, and only want campaign tracking, call enableCampaignTracking() instead of initialize() in the  onCreate() of your main activity:
+
+    GGEventLog.enableCampaignTracking(this, "YOUR_API_KEY_HERE")
+
 # Advanced #
 
-If you want to use the source files directly, you can [download them here](giraffegraph.com/static/downloads/giraffegraph-android.zip). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
+If you want to use the source files directly, you can [download them here](https://dl.dropbox.com/s/98u3dnna5qq3e76/GiraffeGraph-Android.zip?dl=1). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
 
 If your app has multiple entry points/exit points, you should make a `GGEventLog.initialize()` at every onCreate() entry point and a `GGEventLog.uploadEvents()` at every onDestroy() exit point.
 
