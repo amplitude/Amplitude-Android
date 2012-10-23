@@ -2,15 +2,15 @@
 1. If you haven't already, go to http://giraffegraph.com and register for an account. You will receive an API Key.
 2. [Download the jar](https://dl.dropbox.com/s/zjto9bxse7mstrr/GiraffeGraph.jar?dl=1).
 3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
-4. In every file that uses analytics, you will need to import com.giraffegraph.api at the top:
+4. In every file that uses analytics, import com.giraffegraph.api at the top:
 
         import package com.giraffegraph.api;
 
-5. In the onCreate() of your main activity you need to initialize the SDK:
+5. In the onCreate() of your main activity, initialize the SDK:
 
         GGEventLog.initialize(this, "YOUR_API_KEY_HERE");
 
-6. In the onDestroy() of your main activity you need to upload events before the app is destroyed:
+6. In the onDestroy() of your main activity, call uploadEvents() before the app is destroyed:
 
         GGEventLog.uploadEvents();
 
@@ -40,11 +40,11 @@ If your app has its own login system that you want to track users with, you can 
 
     GGEventLog.setUserId("USER_ID_HERE");
 
+A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
+
 You can also add the user ID as an argument to the initialize() call:
 
     GGEventLog.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
-
-Users data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
 # Setting Custom Properties #
 
@@ -82,6 +82,12 @@ To track installs from each campaign source in your app, call initialize() with 
 If you are not using analytics, and only want campaign tracking, call enableCampaignTracking() instead of initialize() in the  onCreate() of your main activity:
 
     GGEventLog.enableCampaignTracking(this, "YOUR_API_KEY_HERE")
+
+You can retrieve the campaign information associated with a user by calling getCampaignInformation() after you've called initialize() or enableCampaignTracking():
+
+    GGEventLog.getCampaignInformation();
+
+If the SDK has successfully pinged the server and saved the result, the "tracked" key in the returned JSONObject will be set to true. You can then get the details of the campaign from the fields of the returned JSONObject.
 
 # Advanced #
 
