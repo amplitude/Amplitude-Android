@@ -142,7 +142,6 @@ public class GGEventLog {
         Context.MODE_PRIVATE);
     GGEventLog.campaignInformation = preferences.getString(
         GGConstants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
-    GGEventLog.deviceId = getDeviceId();
 
     trackCampaignSource();
   }
