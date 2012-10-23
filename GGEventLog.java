@@ -74,6 +74,10 @@ public class GGEventLog {
     initialize(context, apiKey, userId, false);
   }
 
+  public static void initialize(Context context, String apiKey, boolean trackCampaignSource) {
+    initialize(context, apiKey, null, trackCampaignSource);
+  }
+
   public static void initialize(Context context, String apiKey, String userId,
       boolean trackCampaignSource) {
     if (context == null) {
