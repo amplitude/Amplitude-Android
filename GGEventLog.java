@@ -74,7 +74,8 @@ public class GGEventLog {
     initialize(context, apiKey, userId, false);
   }
 
-  public static void initialize(Context context, String apiKey, String userId, boolean trackCampaignSource) {
+  public static void initialize(Context context, String apiKey, String userId,
+      boolean trackCampaignSource) {
     if (context == null) {
       Log.e(TAG, "Argument context cannot be null in initialize()");
       return;
@@ -159,8 +160,10 @@ public class GGEventLog {
             JSONObject fingerprint = new JSONObject();
             fingerprint.put("device_id", replaceWithJSONNull(getDeviceId()));
             fingerprint.put("client", "android");
-            fingerprint.put("country", replaceWithJSONNull(Locale.getDefault().getDisplayCountry()));
-            fingerprint.put("language", replaceWithJSONNull(Locale.getDefault().getDisplayLanguage()));
+            fingerprint
+                .put("country", replaceWithJSONNull(Locale.getDefault().getDisplayCountry()));
+            fingerprint.put("language", replaceWithJSONNull(Locale.getDefault()
+                .getDisplayLanguage()));
             fingerprint.put("device", replaceWithJSONNull(Build.DEVICE));
             fingerprint.put("display", replaceWithJSONNull(Build.DISPLAY));
             fingerprint.put("product", replaceWithJSONNull(Build.PRODUCT));
