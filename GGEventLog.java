@@ -71,6 +71,10 @@ public class GGEventLog {
   }
 
   public static void initialize(Context context, String apiKey, String userId) {
+    initialize(context, apiKey, userId, false);
+  }
+
+  public static void initialize(Context context, String apiKey, String userId, boolean trackCampaignSource) {
     if (context == null) {
       Log.e(TAG, "Argument context cannot be null in initialize()");
       return;
@@ -111,13 +115,34 @@ public class GGEventLog {
     phoneCarrier = manager.getNetworkOperatorName();
     country = Locale.getDefault().getDisplayCountry();
     language = Locale.getDefault().getDisplayLanguage();
+
+    if (trackCampaignSource) {
+      trackCampaignSource();
+    }
   }
 
-  public static void trackCampaignSource() {
-    if (!contextAndApiKeySet("trackCampaignSource()")) {
+  public static void enableCampaignTracking(Context context, String apiKey) {
+    if (context == null) {
+      Log.e(TAG, "Argument context cannot be null in enableCampaignTracking()");
+      return;
+    }
+    if (TextUtils.isEmpty(apiKey)) {
+      Log.e(TAG, "Argument apiKey cannot be null or blank in enableCampaignTracking()");
       return;
     }
 
+    GGEventLog.context = context.getApplicationContext();
+    GGEventLog.apiKey = apiKey;
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
+    GGEventLog.campaignInformation = preferences.getString(
+        GGConstants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
+    GGEventLog.deviceId = getDeviceId();
+
+    trackCampaignSource();
+  }
+
+  private static void trackCampaignSource() {
     SharedPreferences sharedPreferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
     boolean hasTrackedCampaign = sharedPreferences.getBoolean(
@@ -132,10 +157,10 @@ public class GGEventLog {
           try {
 
             JSONObject fingerprint = new JSONObject();
-            fingerprint.put("device_id", replaceWithJSONNull(deviceId));
+            fingerprint.put("device_id", replaceWithJSONNull(getDeviceId()));
             fingerprint.put("client", "android");
-            fingerprint.put("country", replaceWithJSONNull(country));
-            fingerprint.put("language", replaceWithJSONNull(language));
+            fingerprint.put("country", replaceWithJSONNull(Locale.getDefault().getDisplayCountry()));
+            fingerprint.put("language", replaceWithJSONNull(Locale.getDefault().getDisplayLanguage()));
             fingerprint.put("device", replaceWithJSONNull(Build.DEVICE));
             fingerprint.put("display", replaceWithJSONNull(Build.DISPLAY));
             fingerprint.put("product", replaceWithJSONNull(Build.PRODUCT));
