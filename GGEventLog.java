@@ -14,6 +14,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -445,7 +446,7 @@ public class GGEventLog {
     postParams.add(new BasicNameValuePair("key", apiKey));
     postParams.add(new BasicNameValuePair("fingerprint", fingerprint));
 
-    postRequest.setEntity(new UrlEncodedFormEntity(postParams));
+    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(postRequest);
@@ -464,7 +465,7 @@ public class GGEventLog {
     postParams.add(new BasicNameValuePair("client", apiKey));
     postParams.add(new BasicNameValuePair("upload_time", "" + System.currentTimeMillis()));
 
-    postRequest.setEntity(new UrlEncodedFormEntity(postParams));
+    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(postRequest);
