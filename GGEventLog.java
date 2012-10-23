@@ -175,11 +175,16 @@ public class GGEventLog {
     }
   }
 
-  public static JSONObject getCampaignInformation() throws JSONException {
+  public static JSONObject getCampaignInformation() {
     if (!contextAndApiKeySet("getCampaignInformation()")) {
-      return null;
+      return new JSONObject();
     }
-    return new JSONObject(campaignInformation);
+    try {
+      return new JSONObject(campaignInformation);
+    } catch (JSONException e) {
+      Log.e(TAG, e.toString());
+    }
+    return new JSONObject();
   }
 
   public static void logEvent(String eventType) {
