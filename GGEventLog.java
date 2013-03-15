@@ -1,6 +1,8 @@
 package com.giraffegraph.api;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -388,7 +390,8 @@ public class GGEventLog {
   }
 
   private static void updateServer() {
-    boolean success = false;
+    Log.w(TAG, "starting upload...");
+
     long maxId = 0;
     GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
     try {
@@ -396,13 +399,19 @@ public class GGEventLog {
       maxId = pair.first;
       JSONArray events = pair.second;
 
-      success = makeEventUploadPostRequest(GGConstants.EVENT_LOG_URL, events.toString(),
-          events.length());
+      String response = makeEventUploadPostRequest(GGConstants.EVENT_LOG_URL, events.toString());
 
-      if (success) {
+      if (response.equals("success")) {
         dbHelper.removeEvents(maxId);
+        Log.w(TAG, "upload success!");
+      } else if (response.equals("invalid_api_key")) {
+        Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+      } else if (response.equals("bad_checksum")) {
+        Log.w(TAG, "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+      } else if (response.equals("request_db_write_failed")) {
+        Log.w(TAG, "Couldn't write to request database on server, will attempt to reupload later");
       } else {
-        Log.w(TAG, "Upload failed, post request not successful");
+        Log.w(TAG, "Upload failed, " + response + ", will attempt to reupload later");
       }
 
     } catch (org.apache.http.conn.HttpHostConnectException e) {
@@ -457,23 +466,37 @@ public class GGEventLog {
     return result;
   }
 
-  private static boolean makeEventUploadPostRequest(String url, String events, long numEvents)
+  private static String makeEventUploadPostRequest(String url, String events)
       throws ClientProtocolException, IOException, JSONException {
     HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
-    postParams.add(new BasicNameValuePair("e", events));
+
+    String apiVersionString = "" + GGConstants.API_VERSION;
+    String timestampString = "" + System.currentTimeMillis();
+
+    String checksumString = "";
+    try {
+      String preimage = apiVersionString + apiKey + events + timestampString;
+      checksumString = bytesToHexString(MessageDigest.getInstance("MD5").digest(
+          preimage.getBytes("UTF-8")));
+    } catch (NoSuchAlgorithmException e) {
+      // According to people on the internet, this will never be thrown
+      e.printStackTrace();
+    }
+
+    postParams.add(new BasicNameValuePair("v", apiVersionString));
     postParams.add(new BasicNameValuePair("client", apiKey));
-    postParams.add(new BasicNameValuePair("upload_time", "" + System.currentTimeMillis()));
+    postParams.add(new BasicNameValuePair("e", events));
+    postParams.add(new BasicNameValuePair("upload_time", timestampString));
+    postParams.add(new BasicNameValuePair("checksum", checksumString));
 
     postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(postRequest);
-    String stringResult = EntityUtils.toString(response.getEntity());
+    String stringResponse = EntityUtils.toString(response.getEntity());
 
-    JSONObject result = new JSONObject(stringResult);
-
-    return result.optLong("added", 0) == numEvents;
+    return stringResponse;
   }
 
   public static void setUserId(String userId) {
@@ -600,4 +623,16 @@ public class GGEventLog {
     return GGConstants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
   }
 
+  public static String bytesToHexString(byte[] bytes) {
+    final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+        'e', 'f' };
+    char[] hexChars = new char[bytes.length * 2];
+    int v;
+    for (int j = 0; j < bytes.length; j++) {
+      v = bytes[j] & 0xFF;
+      hexChars[j * 2] = hexArray[v >>> 4];
+      hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    }
+    return new String(hexChars);
+  }
 }

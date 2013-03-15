@@ -6,6 +6,8 @@ public class GGConstants {
 
   public static final String PACKAGE_NAME = GGConstants.class.getPackage().getName();
 
+  public static final int API_VERSION = 2;
+
   public static final String DATABASE_NAME = PACKAGE_NAME;
   public static final int DATABASE_VERSION = 1;
 
