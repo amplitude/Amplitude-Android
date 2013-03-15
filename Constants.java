@@ -1,10 +1,10 @@
-package com.giraffegraph.api;
+package com.amplitude.api;
 
-public class GGConstants {
-  public static final String EVENT_LOG_URL = "http://api.giraffegraph.com/";
-  public static final String CAMPAIGN_TRACKING_URL = "http://ref.giraffegraph.com/install";
+public class Constants {
+  public static final String EVENT_LOG_URL = "http://api.amplitude.com/";
+  public static final String CAMPAIGN_TRACKING_URL = "http://ref.amplitude.com/install";
 
-  public static final String PACKAGE_NAME = GGConstants.class.getPackage().getName();
+  public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
   public static final int API_VERSION = 2;
 

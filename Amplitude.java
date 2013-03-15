@@ -1,4 +1,4 @@
-package com.giraffegraph.api;
+package com.amplitude.api;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -35,9 +35,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
-public class GGEventLog {
+public class Amplitude {
 
-  public static final String TAG = "com.giraffegraph.api.GGEventLog";
+  public static final String TAG = "com.amplitude.api.Amplitude";
 
   private static Context context;
   private static String apiKey;
@@ -66,7 +66,7 @@ public class GGEventLog {
 
   private static boolean updateScheduled = false;
 
-  private GGEventLog() {
+  private Amplitude() {
   }
 
   public static void initialize(Context context, String apiKey) {
@@ -92,19 +92,19 @@ public class GGEventLog {
       return;
     }
 
-    GGEventLog.context = context.getApplicationContext();
-    GGEventLog.apiKey = apiKey;
+    Amplitude.context = context.getApplicationContext();
+    Amplitude.apiKey = apiKey;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
     if (userId != null) {
-      GGEventLog.userId = userId;
-      preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
+      Amplitude.userId = userId;
+      preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
     } else {
-      GGEventLog.userId = preferences.getString(GGConstants.PREFKEY_USER_ID, null);
+      Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
     }
-    GGEventLog.deviceId = getDeviceId();
-    GGEventLog.campaignInformation = preferences.getString(
-        GGConstants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
+    Amplitude.deviceId = getDeviceId();
+    Amplitude.campaignInformation = preferences.getString(
+        Constants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
 
     PackageInfo packageInfo;
     try {
@@ -139,12 +139,12 @@ public class GGEventLog {
       return;
     }
 
-    GGEventLog.context = context.getApplicationContext();
-    GGEventLog.apiKey = apiKey;
+    Amplitude.context = context.getApplicationContext();
+    Amplitude.apiKey = apiKey;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    GGEventLog.campaignInformation = preferences.getString(
-        GGConstants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
+    Amplitude.campaignInformation = preferences.getString(
+        Constants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
 
     trackCampaignSource();
   }
@@ -153,13 +153,13 @@ public class GGEventLog {
     SharedPreferences sharedPreferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
     boolean hasTrackedCampaign = sharedPreferences.getBoolean(
-        GGConstants.PREFKEY_HAS_TRACKED_CAMPAIGN, false);
+        Constants.PREFKEY_HAS_TRACKED_CAMPAIGN, false);
 
     if (!hasTrackedCampaign && !isCurrentlyTrackingCampaign) {
 
       isCurrentlyTrackingCampaign = true;
 
-      GGLogThread.post(new Runnable() {
+      LogThread.post(new Runnable() {
         public void run() {
           try {
 
@@ -179,14 +179,14 @@ public class GGEventLog {
 
             // If this returns with a JSONObject then request was successful
             JSONObject campaignTrackingResult = makeCampaignTrackingPostRequest(
-                GGConstants.CAMPAIGN_TRACKING_URL, fingerprint.toString());
+                Constants.CAMPAIGN_TRACKING_URL, fingerprint.toString());
 
             // Save successful campaign tracking
             SharedPreferences sharedPreferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean(GGConstants.PREFKEY_HAS_TRACKED_CAMPAIGN, true);
-            editor.putString(GGConstants.PREFKEY_CAMPAIGN_INFORMATION,
+            editor.putBoolean(Constants.PREFKEY_HAS_TRACKED_CAMPAIGN, true);
+            editor.putString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
                 campaignTrackingResult.toString());
             editor.commit();
 
@@ -252,13 +252,13 @@ public class GGEventLog {
       Log.e(TAG, e.toString());
     }
 
-    GGLogThread.post(new Runnable() {
+    LogThread.post(new Runnable() {
       public void run() {
-        GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 
         dbHelper.addEvent(event.toString());
 
-        if (dbHelper.getNumberRows() >= GGConstants.EVENT_BATCH_SIZE) {
+        if (dbHelper.getNumberRows() >= Constants.EVENT_BATCH_SIZE) {
           updateServer();
         } else {
           updateServerLater();
@@ -272,7 +272,7 @@ public class GGEventLog {
       return;
     }
 
-    GGLogThread.post(new Runnable() {
+    LogThread.post(new Runnable() {
       public void run() {
         updateServer();
       }
@@ -285,7 +285,7 @@ public class GGEventLog {
     }
 
     // Remove setSessionId callback
-    GGLogThread.removeCallbacks(setSessionIdRunnable);
+    LogThread.removeCallbacks(setSessionIdRunnable);
 
     if (!sessionStarted) {
       // Session has not been started yet, check overlap
@@ -294,15 +294,15 @@ public class GGEventLog {
 
       SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
           Context.MODE_PRIVATE);
-      long previousSessionTime = preferences.getLong(GGConstants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
+      long previousSessionTime = preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
 
-      if (now - previousSessionTime < GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+      if (now - previousSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
         // Sessions close enough, set sessionId to previous sessionId
-        sessionId = preferences.getLong(GGConstants.PREFKEY_PREVIOUS_SESSION_ID, now);
+        sessionId = preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, now);
       } else {
         // Sessions not close enough, create new sessionId
         sessionId = now;
-        preferences.edit().putLong(GGConstants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
       }
 
       // Session now started
@@ -337,14 +337,14 @@ public class GGEventLog {
   }
 
   public static void setGlobalUserProperties(JSONObject globalProperties) {
-    GGEventLog.globalProperties = globalProperties;
+    Amplitude.globalProperties = globalProperties;
   }
 
   private static void refreshSessionTime() {
     long now = System.currentTimeMillis();
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    preferences.edit().putLong(GGConstants.PREFKEY_PREVIOUS_SESSION_TIME, now).commit();
+    preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, now).commit();
   }
 
   private static void addBoilerplate(JSONObject event) throws JSONException {
@@ -389,13 +389,13 @@ public class GGEventLog {
 
   private static void updateServer() {
     long maxId = 0;
-    GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
+    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
     try {
       Pair<Long, JSONArray> pair = dbHelper.getEvents();
       maxId = pair.first;
       JSONArray events = pair.second;
 
-      String response = makeEventUploadPostRequest(GGConstants.EVENT_LOG_URL, events.toString());
+      String response = makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString());
 
       if (response.equals("success")) {
         dbHelper.removeEvents(maxId);
@@ -423,12 +423,12 @@ public class GGEventLog {
     if (!updateScheduled) {
       updateScheduled = true;
 
-      GGLogThread.postDelayed(new Runnable() {
+      LogThread.postDelayed(new Runnable() {
         public void run() {
           updateScheduled = false;
           updateServer();
         }
-      }, GGConstants.EVENT_UPLOAD_PERIOD_MILLIS);
+      }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
     }
   }
 
@@ -440,7 +440,7 @@ public class GGEventLog {
         }
       }
     };
-    GGLogThread.postDelayed(setSessionIdRunnable, GGConstants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
+    LogThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
   }
 
   private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
@@ -466,7 +466,7 @@ public class GGEventLog {
     HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
 
-    String apiVersionString = "" + GGConstants.API_VERSION;
+    String apiVersionString = "" + Constants.API_VERSION;
     String timestampString = "" + System.currentTimeMillis();
 
     String checksumString = "";
@@ -499,10 +499,10 @@ public class GGEventLog {
       return;
     }
 
-    GGEventLog.userId = userId;
+    Amplitude.userId = userId;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    preferences.edit().putString(GGConstants.PREFKEY_USER_ID, userId).commit();
+    preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
   }
 
   // Returns a unique identifier for tracking within the analytics system
@@ -510,7 +510,7 @@ public class GGEventLog {
 
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    String deviceId = preferences.getString(GGConstants.PREFKEY_DEVICE_ID, null);
+    String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
     if (!TextUtils.isEmpty(deviceId)) {
       return deviceId;
     }
@@ -520,7 +520,7 @@ public class GGEventLog {
     String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
         android.provider.Settings.Secure.ANDROID_ID);
     if (!(TextUtils.isEmpty(androidId) || androidId.equals("9774d56d682e549c"))) {
-      preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, androidId).commit();
+      preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
       return androidId;
     }
 
@@ -529,7 +529,7 @@ public class GGEventLog {
     try {
       String serialNumber = (String) Build.class.getField("SERIAL").get(null);
       if (!TextUtils.isEmpty(serialNumber)) {
-        preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, serialNumber).commit();
+        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
         return serialNumber;
       }
     } catch (Exception e) {
@@ -537,12 +537,12 @@ public class GGEventLog {
 
     // Telephony ID
     // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
-    if (permissionGranted(GGConstants.PERMISSION_READ_PHONE_STATE)
+    if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
         && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
       String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
           .getDeviceId();
       if (!TextUtils.isEmpty(telephonyId)) {
-        preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, telephonyId).commit();
+        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
         return telephonyId;
       }
     }
@@ -563,7 +563,7 @@ public class GGEventLog {
     // If this still fails, generate random identifier that does not persist
     // across installations
     String randomId = UUID.randomUUID().toString();
-    preferences.edit().putString(GGConstants.PREFKEY_DEVICE_ID, randomId).commit();
+    preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
     return randomId;
 
   }
@@ -615,7 +615,7 @@ public class GGEventLog {
   }
 
   private static String getSharedPreferencesName() {
-    return GGConstants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+    return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
   }
 
   public static String bytesToHexString(byte[] bytes) {

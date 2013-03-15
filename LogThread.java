@@ -1,11 +1,11 @@
-package com.giraffegraph.api;
+package com.amplitude.api;
 
 import android.os.Handler;
 import android.os.Looper;
 
-class GGLogThread extends Thread {
+class LogThread extends Thread {
 
-  static GGLogThread instance = new GGLogThread();
+  static LogThread instance = new LogThread();
 
   static {
     instance.start();
@@ -13,7 +13,7 @@ class GGLogThread extends Thread {
 
   private Handler handler;
 
-  private GGLogThread() {
+  private LogThread() {
   }
 
   @Override
