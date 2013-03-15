@@ -244,8 +244,6 @@ public class GGEventLog {
       event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (customProperties == null) ? new JSONObject()
           : customProperties);
-      // TODO remove properties on backend
-      event.put("properties", (apiProperties == null) ? new JSONObject() : apiProperties);
       event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
       event.put("global_properties", (globalProperties == null) ? new JSONObject()
           : globalProperties);
@@ -390,8 +388,6 @@ public class GGEventLog {
   }
 
   private static void updateServer() {
-    Log.w(TAG, "starting upload...");
-
     long maxId = 0;
     GGDatabaseHelper dbHelper = GGDatabaseHelper.getDatabaseHelper(context);
     try {
@@ -403,11 +399,11 @@ public class GGEventLog {
 
       if (response.equals("success")) {
         dbHelper.removeEvents(maxId);
-        Log.w(TAG, "upload success!");
       } else if (response.equals("invalid_api_key")) {
         Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
       } else if (response.equals("bad_checksum")) {
-        Log.w(TAG, "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+        Log.w(TAG,
+            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
       } else if (response.equals("request_db_write_failed")) {
         Log.w(TAG, "Couldn't write to request database on server, will attempt to reupload later");
       } else {
@@ -421,7 +417,6 @@ public class GGEventLog {
     } catch (Exception e) {
       Log.e(TAG, e.toString());
     }
-
   }
 
   private static void updateServerLater() {
