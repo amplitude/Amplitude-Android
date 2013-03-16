@@ -336,6 +336,22 @@ public class Amplitude {
     turnOffSessionLater();
   }
 
+  public static void logRevenue(double amount) {
+    // Amount is in dollars
+    if (!contextAndApiKeySet("logRevenue()")) {
+      return;
+    }
+
+    // Log revenue in events
+    JSONObject apiProperties = new JSONObject();
+    try {
+      apiProperties.put("special", "revenue_amount");
+      apiProperties.put("revenue", amount);
+    } catch (JSONException e) {
+    }
+    logEvent("revenue_amount", null, apiProperties);
+  }
+
   public static void setGlobalUserProperties(JSONObject globalProperties) {
     Amplitude.globalProperties = globalProperties;
   }
