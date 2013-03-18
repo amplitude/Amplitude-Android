@@ -103,8 +103,8 @@ public class Amplitude {
       Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
     }
     Amplitude.deviceId = getDeviceId();
-    Amplitude.campaignInformation = preferences.getString(
-        Constants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
+    Amplitude.campaignInformation = preferences.getString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
+        "{\"tracked\": false}");
 
     PackageInfo packageInfo;
     try {
@@ -143,8 +143,8 @@ public class Amplitude {
     Amplitude.apiKey = apiKey;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    Amplitude.campaignInformation = preferences.getString(
-        Constants.PREFKEY_CAMPAIGN_INFORMATION, "{\"tracked\": false}");
+    Amplitude.campaignInformation = preferences.getString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
+        "{\"tracked\": false}");
 
     trackCampaignSource();
   }
@@ -338,6 +338,7 @@ public class Amplitude {
 
   public static void logRevenue(double amount) {
     // Amount is in dollars
+    // ex. $3.99 would be pass as logRevenue(3.99)
     if (!contextAndApiKeySet("logRevenue()")) {
       return;
     }
