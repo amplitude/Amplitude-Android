@@ -88,6 +88,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
     return new Pair<Long, JSONArray>(maxId, events);
   }
 
+  long getNthEventId(long n) {
+    SQLiteDatabase db = getWritableDatabase();
+    String query = "SELECT MAX(" + Constants.ID_FIELD + ") FROM " + Constants.EVENT_TABLE_NAME
+        + " LIMIT " + n;
+    SQLiteStatement statement = db.compileStatement(query);
+    long nthEventId = statement.simpleQueryForLong();
+    db.close();
+    return nthEventId;
+  }
+
   void removeEvents(long maxId) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(Constants.EVENT_TABLE_NAME, Constants.ID_FIELD + " <= " + maxId, null);

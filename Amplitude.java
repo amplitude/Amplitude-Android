@@ -258,7 +258,11 @@ public class Amplitude {
 
         dbHelper.addEvent(event.toString());
 
-        if (dbHelper.getNumberRows() >= Constants.EVENT_BATCH_SIZE) {
+        if (dbHelper.getNumberRows() >= Constants.EVENT_MAX_COUNT) {
+          dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        }
+
+        if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_BATCH_SIZE) {
           updateServer();
         } else {
           updateServerLater();
