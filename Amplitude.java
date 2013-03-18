@@ -391,14 +391,6 @@ public class Amplitude {
       apiProperties.put("location", JSONLocation);
     }
 
-    JSONObject properties = event.getJSONObject("properties");
-    if (location != null) {
-      JSONObject JSONLocation = new JSONObject();
-      JSONLocation.put("lat", location.getLatitude());
-      JSONLocation.put("lng", location.getLongitude());
-      properties.put("location", JSONLocation);
-    }
-
     if (sessionStarted) {
       refreshSessionTime();
     }
