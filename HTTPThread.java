@@ -3,9 +3,9 @@ package com.amplitude.api;
 import android.os.Handler;
 import android.os.Looper;
 
-class LogThread extends Thread {
+class HTTPThread extends Thread {
 
-  static LogThread instance = new LogThread();
+  static HTTPThread instance = new HTTPThread();
 
   static {
     instance.start();
@@ -13,7 +13,7 @@ class LogThread extends Thread {
 
   private Handler handler;
 
-  private LogThread() {
+  private HTTPThread() {
   }
 
   @Override

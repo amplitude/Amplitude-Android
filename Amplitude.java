@@ -1,12 +1,14 @@
 package com.amplitude.api;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -65,6 +67,7 @@ public class Amplitude {
   private static Runnable setSessionIdRunnable;
 
   private static boolean updateScheduled = false;
+  private static AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
   private Amplitude() {
   }
@@ -159,7 +162,7 @@ public class Amplitude {
 
       isCurrentlyTrackingCampaign = true;
 
-      LogThread.post(new Runnable() {
+      DatabaseThread.post(new Runnable() {
         public void run() {
           try {
 
@@ -252,7 +255,7 @@ public class Amplitude {
       Log.e(TAG, e.toString());
     }
 
-    LogThread.post(new Runnable() {
+    DatabaseThread.post(new Runnable() {
       public void run() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 
@@ -276,7 +279,7 @@ public class Amplitude {
       return;
     }
 
-    LogThread.post(new Runnable() {
+    DatabaseThread.post(new Runnable() {
       public void run() {
         updateServer();
       }
@@ -289,7 +292,7 @@ public class Amplitude {
     }
 
     // Remove setSessionId callback
-    LogThread.removeCallbacks(setSessionIdRunnable);
+    DatabaseThread.removeCallbacks(setSessionIdRunnable);
 
     if (!sessionStarted) {
       // Session has not been started yet, check overlap
@@ -401,34 +404,19 @@ public class Amplitude {
   }
 
   private static void updateServer() {
-    long maxId = 0;
-    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-    try {
-      Pair<Long, JSONArray> pair = dbHelper.getEvents();
-      maxId = pair.first;
-      JSONArray events = pair.second;
 
-      String response = makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString());
-
-      if (response.equals("success")) {
-        dbHelper.removeEvents(maxId);
-      } else if (response.equals("invalid_api_key")) {
-        Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-      } else if (response.equals("bad_checksum")) {
-        Log.w(TAG,
-            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-      } else if (response.equals("request_db_write_failed")) {
-        Log.w(TAG, "Couldn't write to request database on server, will attempt to reupload later");
-      } else {
-        Log.w(TAG, "Upload failed, " + response + ", will attempt to reupload later");
+    if (!uploadingCurrently.getAndSet(true)) {
+      long maxId = 0;
+      DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+      try {
+        Pair<Long, JSONArray> pair = dbHelper.getEvents();
+        maxId = pair.first;
+        JSONArray events = pair.second;
+        makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString(), maxId);
+      } catch (JSONException e) {
+        uploadingCurrently.set(false);
+        Log.e(TAG, e.toString());
       }
-
-    } catch (org.apache.http.conn.HttpHostConnectException e) {
-      // Log.w(TAG, "No internet connection found, unable to upload events");
-    } catch (java.net.UnknownHostException e) {
-      // Log.w(TAG, "No internet connection found, unable to upload events");
-    } catch (Exception e) {
-      Log.e(TAG, e.toString());
     }
   }
 
@@ -436,7 +424,7 @@ public class Amplitude {
     if (!updateScheduled) {
       updateScheduled = true;
 
-      LogThread.postDelayed(new Runnable() {
+      DatabaseThread.postDelayed(new Runnable() {
         public void run() {
           updateScheduled = false;
           updateServer();
@@ -453,7 +441,7 @@ public class Amplitude {
         }
       }
     };
-    LogThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
+    DatabaseThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
   }
 
   private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
@@ -474,9 +462,8 @@ public class Amplitude {
     return result;
   }
 
-  private static String makeEventUploadPostRequest(String url, String events)
-      throws ClientProtocolException, IOException, JSONException {
-    HttpPost postRequest = new HttpPost(url);
+  private static void makeEventUploadPostRequest(String url, String events, final long maxId) {
+    final HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
 
     String apiVersionString = "" + Constants.API_VERSION;
@@ -490,6 +477,9 @@ public class Amplitude {
     } catch (NoSuchAlgorithmException e) {
       // According to people on the internet, this will never be thrown
       e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // According to people on the internet, this will never be thrown
+      Log.e(TAG, e.toString());
     }
 
     postParams.add(new BasicNameValuePair("v", apiVersionString));
@@ -498,13 +488,58 @@ public class Amplitude {
     postParams.add(new BasicNameValuePair("upload_time", timestampString));
     postParams.add(new BasicNameValuePair("checksum", checksumString));
 
-    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
+    try {
+      postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
+    } catch (UnsupportedEncodingException e) {
+      // According to people on the internet, this will never be thrown
+      Log.e(TAG, e.toString());
+    }
 
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(postRequest);
-    String stringResponse = EntityUtils.toString(response.getEntity());
+    final HttpClient client = new DefaultHttpClient();
+    HTTPThread.post(new Runnable() {
+      public void run() {
+        boolean uploadSuccess = false;
+        try {
+          HttpResponse response = client.execute(postRequest);
+          String stringResponse = EntityUtils.toString(response.getEntity());
+          if (stringResponse.equals("success")) {
+            uploadSuccess = true;
+            DatabaseThread.post(new Runnable() {
+              public void run() {
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                dbHelper.removeEvents(maxId);
+                uploadingCurrently.set(false);
+              }
+            });
+          } else if (stringResponse.equals("invalid_api_key")) {
+            Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+          } else if (stringResponse.equals("bad_checksum")) {
+            Log.w(TAG,
+                "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+          } else if (stringResponse.equals("request_db_write_failed")) {
+            Log.w(TAG,
+                "Couldn't write to request database on server, will attempt to reupload later");
+          } else {
+            Log.w(TAG, "Upload failed, " + stringResponse + ", will attempt to reupload later");
+          }
+        } catch (org.apache.http.conn.HttpHostConnectException e) {
+          // Log.w(TAG,
+          // "No internet connection found, unable to upload events");
+        } catch (java.net.UnknownHostException e) {
+          // Log.w(TAG,
+          // "No internet connection found, unable to upload events");
+        } catch (ClientProtocolException e) {
+          Log.e(TAG, e.toString());
+        } catch (IOException e) {
+          Log.e(TAG, e.toString());
+        }
 
-    return stringResponse;
+        if (!uploadSuccess) {
+          uploadingCurrently.set(false);
+        }
+
+      }
+    });
   }
 
   public static void setUserId(String userId) {
