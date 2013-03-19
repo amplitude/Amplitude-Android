@@ -274,6 +274,38 @@ public class Amplitude {
     });
   }
 
+  private static void addBoilerplate(JSONObject event) throws JSONException {
+    long timestamp = System.currentTimeMillis();
+    event.put("timestamp", timestamp);
+    event.put("user_id", replaceWithJSONNull(userId));
+    event.put("device_id", replaceWithJSONNull(deviceId));
+    event.put("session_id", sessionId);
+    event.put("version_code", versionCode);
+    event.put("version_name", replaceWithJSONNull(versionName));
+    event.put("build_version_sdk", buildVersionSdk);
+    event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
+    event.put("phone_brand", replaceWithJSONNull(phoneBrand));
+    event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
+    event.put("phone_model", replaceWithJSONNull(phoneModel));
+    event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
+    event.put("country", replaceWithJSONNull(country));
+    event.put("language", replaceWithJSONNull(language));
+    event.put("client", "android");
+
+    JSONObject apiProperties = event.getJSONObject("api_properties");
+    Location location = getMostRecentLocation();
+    if (location != null) {
+      JSONObject JSONLocation = new JSONObject();
+      JSONLocation.put("lat", location.getLatitude());
+      JSONLocation.put("lng", location.getLongitude());
+      apiProperties.put("location", JSONLocation);
+    }
+
+    if (sessionStarted) {
+      refreshSessionTime();
+    }
+  }
+
   public static void uploadEvents() {
     if (!contextAndApiKeySet("uploadEvents()")) {
       return;
@@ -284,6 +316,19 @@ public class Amplitude {
         updateServer();
       }
     });
+  }
+
+  private static void updateServerLater() {
+    if (!updateScheduled) {
+      updateScheduled = true;
+
+      DatabaseThread.postDelayed(new Runnable() {
+        public void run() {
+          updateScheduled = false;
+          updateServer();
+        }
+      }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
+    }
   }
 
   public static void startSession() {
@@ -343,6 +388,24 @@ public class Amplitude {
     turnOffSessionLater();
   }
 
+  private static void refreshSessionTime() {
+    long now = System.currentTimeMillis();
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
+    preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, now).commit();
+  }
+
+  private static void turnOffSessionLater() {
+    setSessionIdRunnable = new Runnable() {
+      public void run() {
+        if (!sessionStarted) {
+          sessionId = -1;
+        }
+      }
+    };
+    DatabaseThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
+  }
+
   public static void logRevenue(double amount) {
     // Amount is in dollars
     // ex. $3.99 would be pass as logRevenue(3.99)
@@ -364,43 +427,15 @@ public class Amplitude {
     Amplitude.globalProperties = globalProperties;
   }
 
-  private static void refreshSessionTime() {
-    long now = System.currentTimeMillis();
+  public static void setUserId(String userId) {
+    if (!contextAndApiKeySet("setUserId()")) {
+      return;
+    }
+
+    Amplitude.userId = userId;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
-    preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, now).commit();
-  }
-
-  private static void addBoilerplate(JSONObject event) throws JSONException {
-    long timestamp = System.currentTimeMillis();
-    event.put("timestamp", timestamp);
-    event.put("user_id", replaceWithJSONNull(userId));
-    event.put("device_id", replaceWithJSONNull(deviceId));
-    event.put("session_id", sessionId);
-    event.put("version_code", versionCode);
-    event.put("version_name", replaceWithJSONNull(versionName));
-    event.put("build_version_sdk", buildVersionSdk);
-    event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
-    event.put("phone_brand", replaceWithJSONNull(phoneBrand));
-    event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
-    event.put("phone_model", replaceWithJSONNull(phoneModel));
-    event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
-    event.put("country", replaceWithJSONNull(country));
-    event.put("language", replaceWithJSONNull(language));
-    event.put("client", "android");
-
-    JSONObject apiProperties = event.getJSONObject("api_properties");
-    Location location = getMostRecentLocation();
-    if (location != null) {
-      JSONObject JSONLocation = new JSONObject();
-      JSONLocation.put("lat", location.getLatitude());
-      JSONLocation.put("lng", location.getLongitude());
-      apiProperties.put("location", JSONLocation);
-    }
-
-    if (sessionStarted) {
-      refreshSessionTime();
-    }
+    preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
   }
 
   private static void updateServer() {
@@ -418,48 +453,6 @@ public class Amplitude {
         Log.e(TAG, e.toString());
       }
     }
-  }
-
-  private static void updateServerLater() {
-    if (!updateScheduled) {
-      updateScheduled = true;
-
-      DatabaseThread.postDelayed(new Runnable() {
-        public void run() {
-          updateScheduled = false;
-          updateServer();
-        }
-      }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
-    }
-  }
-
-  private static void turnOffSessionLater() {
-    setSessionIdRunnable = new Runnable() {
-      public void run() {
-        if (!sessionStarted) {
-          sessionId = -1;
-        }
-      }
-    };
-    DatabaseThread.postDelayed(setSessionIdRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS);
-  }
-
-  private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
-      throws ClientProtocolException, IOException, JSONException {
-    HttpPost postRequest = new HttpPost(url);
-    List<NameValuePair> postParams = new ArrayList<NameValuePair>();
-    postParams.add(new BasicNameValuePair("key", apiKey));
-    postParams.add(new BasicNameValuePair("fingerprint", fingerprint));
-
-    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
-
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(postRequest);
-    String stringResult = EntityUtils.toString(response.getEntity());
-
-    JSONObject result = new JSONObject(stringResult);
-
-    return result;
   }
 
   private static void makeEventUploadPostRequest(String url, String events, final long maxId) {
@@ -542,15 +535,22 @@ public class Amplitude {
     });
   }
 
-  public static void setUserId(String userId) {
-    if (!contextAndApiKeySet("setUserId()")) {
-      return;
-    }
+  private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
+      throws ClientProtocolException, IOException, JSONException {
+    HttpPost postRequest = new HttpPost(url);
+    List<NameValuePair> postParams = new ArrayList<NameValuePair>();
+    postParams.add(new BasicNameValuePair("key", apiKey));
+    postParams.add(new BasicNameValuePair("fingerprint", fingerprint));
 
-    Amplitude.userId = userId;
-    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
-        Context.MODE_PRIVATE);
-    preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
+
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(postRequest);
+    String stringResult = EntityUtils.toString(response.getEntity());
+
+    JSONObject result = new JSONObject(stringResult);
+
+    return result;
   }
 
   // Returns a unique identifier for tracking within the analytics system
