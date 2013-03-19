@@ -66,7 +66,7 @@ public class Amplitude {
   private static boolean sessionStarted = false;
   private static Runnable setSessionIdRunnable;
 
-  private static boolean updateScheduled = false;
+  private static AtomicBoolean updateScheduled = new AtomicBoolean(false);
   private static AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
   private Amplitude() {
@@ -319,12 +319,11 @@ public class Amplitude {
   }
 
   private static void updateServerLater() {
-    if (!updateScheduled) {
-      updateScheduled = true;
+    if (!updateScheduled.getAndSet(true)) {
 
       DatabaseThread.postDelayed(new Runnable() {
         public void run() {
-          updateScheduled = false;
+          updateScheduled.set(false);
           updateServer();
         }
       }, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
