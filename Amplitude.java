@@ -258,14 +258,13 @@ public class Amplitude {
     DatabaseThread.post(new Runnable() {
       public void run() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-
         dbHelper.addEvent(event.toString());
 
         if (dbHelper.getNumberRows() >= Constants.EVENT_MAX_COUNT) {
           dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_BATCH_SIZE) {
+        if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_THRESHOLD) {
           updateServer();
         } else {
           updateServerLater();
@@ -438,15 +437,22 @@ public class Amplitude {
   }
 
   private static void updateServer() {
+    updateServer(true);
+  }
 
+  // Always call this from DatabaseThread
+  private static void updateServer(boolean limit) {
     if (!uploadingCurrently.getAndSet(true)) {
-      long maxId = 0;
       DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
       try {
-        Pair<Long, JSONArray> pair = dbHelper.getEvents();
-        maxId = pair.first;
-        JSONArray events = pair.second;
-        makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString(), maxId);
+        Pair<Long, JSONArray> pair = dbHelper.getEvents(limit);
+        final long maxId = pair.first;
+        final JSONArray events = pair.second;
+        HTTPThread.post(new Runnable() {
+          public void run() {
+            makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString(), maxId);
+          }
+        });
       } catch (JSONException e) {
         uploadingCurrently.set(false);
         Log.e(TAG, e.toString());
@@ -455,7 +461,7 @@ public class Amplitude {
   }
 
   private static void makeEventUploadPostRequest(String url, String events, final long maxId) {
-    final HttpPost postRequest = new HttpPost(url);
+    HttpPost postRequest = new HttpPost(url);
     List<NameValuePair> postParams = new ArrayList<NameValuePair>();
 
     String apiVersionString = "" + Constants.API_VERSION;
@@ -468,7 +474,7 @@ public class Amplitude {
           preimage.getBytes("UTF-8")));
     } catch (NoSuchAlgorithmException e) {
       // According to people on the internet, this will never be thrown
-      e.printStackTrace();
+      Log.e(TAG, e.toString());
     } catch (UnsupportedEncodingException e) {
       // According to people on the internet, this will never be thrown
       Log.e(TAG, e.toString());
@@ -487,51 +493,53 @@ public class Amplitude {
       Log.e(TAG, e.toString());
     }
 
-    final HttpClient client = new DefaultHttpClient();
-    HTTPThread.post(new Runnable() {
-      public void run() {
-        boolean uploadSuccess = false;
-        try {
-          HttpResponse response = client.execute(postRequest);
-          String stringResponse = EntityUtils.toString(response.getEntity());
-          if (stringResponse.equals("success")) {
-            uploadSuccess = true;
-            DatabaseThread.post(new Runnable() {
-              public void run() {
-                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-                dbHelper.removeEvents(maxId);
-                uploadingCurrently.set(false);
-              }
-            });
-          } else if (stringResponse.equals("invalid_api_key")) {
-            Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-          } else if (stringResponse.equals("bad_checksum")) {
-            Log.w(TAG,
-                "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-          } else if (stringResponse.equals("request_db_write_failed")) {
-            Log.w(TAG,
-                "Couldn't write to request database on server, will attempt to reupload later");
-          } else {
-            Log.w(TAG, "Upload failed, " + stringResponse + ", will attempt to reupload later");
+    boolean uploadSuccess = false;
+    HttpClient client = new DefaultHttpClient();
+    try {
+      HttpResponse response = client.execute(postRequest);
+      String stringResponse = EntityUtils.toString(response.getEntity());
+      if (stringResponse.equals("success")) {
+        uploadSuccess = true;
+        DatabaseThread.post(new Runnable() {
+          public void run() {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            dbHelper.removeEvents(maxId);
+            uploadingCurrently.set(false);
+            if (dbHelper.getNumberRows() > 0) {
+              DatabaseThread.post(new Runnable() {
+                public void run() {
+                  updateServer(false);
+                }
+              });
+            }
           }
-        } catch (org.apache.http.conn.HttpHostConnectException e) {
-          // Log.w(TAG,
-          // "No internet connection found, unable to upload events");
-        } catch (java.net.UnknownHostException e) {
-          // Log.w(TAG,
-          // "No internet connection found, unable to upload events");
-        } catch (ClientProtocolException e) {
-          Log.e(TAG, e.toString());
-        } catch (IOException e) {
-          Log.e(TAG, e.toString());
-        }
-
-        if (!uploadSuccess) {
-          uploadingCurrently.set(false);
-        }
-
+        });
+      } else if (stringResponse.equals("invalid_api_key")) {
+        Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+      } else if (stringResponse.equals("bad_checksum")) {
+        Log.w(TAG,
+            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+      } else if (stringResponse.equals("request_db_write_failed")) {
+        Log.w(TAG, "Couldn't write to request database on server, will attempt to reupload later");
+      } else {
+        Log.w(TAG, "Upload failed, " + stringResponse + ", will attempt to reupload later");
       }
-    });
+    } catch (org.apache.http.conn.HttpHostConnectException e) {
+      // Log.w(TAG,
+      // "No internet connection found, unable to upload events");
+    } catch (java.net.UnknownHostException e) {
+      // Log.w(TAG,
+      // "No internet connection found, unable to upload events");
+    } catch (ClientProtocolException e) {
+      Log.e(TAG, e.toString());
+    } catch (IOException e) {
+      Log.e(TAG, e.toString());
+    }
+
+    if (!uploadSuccess) {
+      uploadingCurrently.set(false);
+    }
+
   }
 
   private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)

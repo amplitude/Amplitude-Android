@@ -17,7 +17,8 @@ public class Constants {
   public static final String EVENT_FIELD = "event";
   public static final String[] TABLE_FIELD_NAMES = { ID_FIELD, EVENT_FIELD };
 
-  public static final int EVENT_UPLOAD_BATCH_SIZE = 10;
+  public static final int EVENT_UPLOAD_THRESHOLD = 10;
+  public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;
   public static final int EVENT_MAX_COUNT = 1020;
   public static final int EVENT_REMOVE_BATCH_SIZE = 20;
   // ten seconds

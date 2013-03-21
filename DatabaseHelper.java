@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
@@ -64,11 +65,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
     return numberRows;
   }
 
-  Pair<Long, JSONArray> getEvents() throws JSONException {
+  Pair<Long, JSONArray> getEvents(boolean limit) throws JSONException {
 
     SQLiteDatabase db = getWritableDatabase();
     Cursor cursor = db.query(Constants.EVENT_TABLE_NAME, Constants.TABLE_FIELD_NAMES, null, null,
-        null, null, Constants.ID_FIELD + " ASC");
+        null, null, Constants.ID_FIELD + " ASC", limit ? "" + Constants.EVENT_UPLOAD_MAX_BATCH_SIZE
+            : null);
 
     long maxId = -1;
     JSONArray events = new JSONArray();
@@ -90,10 +92,14 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
   long getNthEventId(long n) {
     SQLiteDatabase db = getWritableDatabase();
-    String query = "SELECT MAX(" + Constants.ID_FIELD + ") FROM " + Constants.EVENT_TABLE_NAME
-        + " LIMIT " + n;
+    String query = "SELECT " + Constants.ID_FIELD + " FROM " + Constants.EVENT_TABLE_NAME
+        + " LIMIT 1 OFFSET " + (n - 1);
     SQLiteStatement statement = db.compileStatement(query);
-    long nthEventId = statement.simpleQueryForLong();
+    long nthEventId = -1;
+    try {
+      nthEventId = statement.simpleQueryForLong();
+    } catch (SQLiteDoneException e) {
+    }
     db.close();
     return nthEventId;
   }
