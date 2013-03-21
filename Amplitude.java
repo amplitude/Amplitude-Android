@@ -277,7 +277,7 @@ public class Amplitude {
   private static void addBoilerplate(JSONObject event) throws JSONException {
     long timestamp = System.currentTimeMillis();
     event.put("timestamp", timestamp);
-    event.put("user_id", replaceWithJSONNull(userId));
+    event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId) : replaceWithJSONNull(userId));
     event.put("device_id", replaceWithJSONNull(deviceId));
     event.put("session_id", sessionId);
     event.put("version_code", versionCode);
