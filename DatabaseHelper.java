@@ -86,6 +86,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
       maxId = eventId;
     }
 
+    cursor.close();
     db.close();
     return new Pair<Long, JSONArray>(maxId, events);
   }
