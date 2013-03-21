@@ -142,7 +142,8 @@ public class Amplitude {
       return;
     }
 
-    Amplitude.context = context.getApplicationContext();
+    context = context.getApplicationContext();
+    Amplitude.context = context;
     Amplitude.apiKey = apiKey;
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
