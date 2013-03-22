@@ -367,6 +367,8 @@ public class Amplitude {
     } catch (JSONException e) {
     }
     logEvent("session_start", null, apiProperties);
+
+    uploadEvents();
   }
 
   public static void endSession() {
@@ -385,6 +387,8 @@ public class Amplitude {
     // Session stopped
     sessionStarted = false;
     turnOffSessionLater();
+
+    uploadEvents();
   }
 
   private static void refreshSessionTime() {

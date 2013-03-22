@@ -10,29 +10,29 @@
 
         Amplitude.initialize(this, "YOUR_API_KEY_HERE");
 
-6. In the onDestroy() of your main activity, call uploadEvents() before the app is destroyed:
+6. Add a startSession() call to each onResume() in every activity in your app:
 
-        Amplitude.uploadEvents();
+        Amplitude.startSession();
 
-7. To track an event anywhere in the app, call:
+7. Add an endSession() call to each onPause() in every activity in your app. This call also ensures data is uploaded before the app closes:
+
+        Amplitude.endSession();
+
+8. To track an event anywhere in the app, call:
 
         Amplitude.logEvent("EVENT_IDENTIFIER_HERE");
 
-8. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling logEvent() in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
-It's important to think about what types of events you care about as a developer. You should aim to track between 5 and 50 types of events within your app. Common event types are different screens within the app, actions the user initiates (such as pressing a button), and events you want the user to complete (such as filling out a form, completing a level, or making a payment). Contact us if you want assistance determining what would be best for you to track.
+It's important to think about what types of events you care about as a developer. You should aim to track between 5 and 50 types of events within your app. Common event types are different screens within the app, actions a user initiates (such as pressing a button), and events you want a user to complete (such as filling out a form, completing a level, or making a payment). Contact us if you want assistance determining what would be best for you to track.
 
 # Tracking Sessions #
 
-A session is a period of time that a user has the app in the foreground. Sessions within 10 seconds of each other are merged into a single session. To track sessions, add a startSession() call to each onResume() in every activity in your app:
+A session is a period of time that a user has the app in the foreground. Calls to startSession() and endSession() track the duration of a session. Sessions within 10 seconds of each other are merged into a single session when they are reported in Amplitude.
 
-    Amplitude.startSession() 
-
-and an endSession() call to each onPause() in every activity in your app:
-
-    Amplitude.endSession()
+Calling startSession() in onResume() will generate a start session event every time the app regains focus or comes out of a locked screen. Calling endSession() in onPause() will generate an end session event every time the foreground activity loses focus or the screen becomes locked. If you'd prefer to only log session starts and ends when the app is no longer visible, instead of no longer in focus, you can place the startSession() and endSession() calls in onStart() and onStop(), respectively. Note that onStart() and onStop() are not called when a user unlocks and locks the screen.
 
 # Settings Custom User IDs #
 
@@ -42,7 +42,7 @@ If your app has its own login system that you want to track users with, you can 
 
 A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
-You can also add the user ID as an argument to the initialize() call:
+You can also add a user ID as an argument to the initialize() call:
 
     Amplitude.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
@@ -91,7 +91,7 @@ If the SDK has successfully contacted our servers and saved the result, the "tra
 
 # Tracking Revenue #
 
-To track revenue from a user, call Amplitude.logRevenue(3.99) each time the user generates revenue. logRevenue() takes in an a double with the dollar amount of the sale as the only argument. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
+To track revenue from a user, call Amplitude.logRevenue(3.99) each time a user generates revenue. logRevenue() takes in an a double with the dollar amount of the sale as the only argument. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
 
 # Advanced #
 
@@ -99,6 +99,6 @@ If you want to use the source files directly, you can [download them here](https
 
 If your app has multiple entry points/exit points, you should make a Amplitude.initialize() at every onCreate() entry point and a Amplitude.uploadEvents() at every onDestroy() exit point.
 
-This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of the user (this will not consume any extra battery, as it does not poll for a new location).
+This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of a user (this will not consume any extra battery, as it does not poll for a new location).
 
 User IDs are automatically generated based on device specific identifiers if not specified.
