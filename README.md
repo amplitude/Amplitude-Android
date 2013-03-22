@@ -91,7 +91,7 @@ If the SDK has successfully contacted our servers and saved the result, the "tra
 
 # Tracking Revenue #
 
-To track revenue from a user, call logRevenue each time a user generates revenue. For example:
+To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
 
     Amplitude.logRevenue(3.99);
     
@@ -99,7 +99,7 @@ To track revenue from a user, call logRevenue each time a user generates revenue
 
 # Advanced #
 
-If you want to use the source files directly, you can [download them here](https://dl.dropbox.com/s/mmxibcdv3u7it29/Amplitude-Android.zip?dl=1). To include them in your project, extract the files, and then copy the four *.java files into your Android project.
+If you want to use the source files directly, you can [download them here](https://dl.dropbox.com/s/mmxibcdv3u7it29/Amplitude-Android.zip?dl=1). To include them in your project, extract the files, and then copy the five *.java files into your Android project.
 
 If your app has multiple entry points/exit points, you should make a `Amplitude.initialize()` at every `onCreate()` entry point.
 
