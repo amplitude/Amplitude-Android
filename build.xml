@@ -1,5 +1,5 @@
 <project
-    name="Amplitude Android Native Crash Reporting"
+    name="Amplitude Android SDK"
     basedir="."
     default="dist" >
 
@@ -39,7 +39,17 @@
         <jar
             basedir="${bin}"
             destfile="amplitude.jar"
-            includes="**/*.class" />
+            includes="com/amplitude/api/*.class" />
+    </target>
+
+    <target
+        name="unity"
+        depends="build" >
+        <jar
+            destfile="amplitude-unity-plugin.jar">
+          <fileset dir="${bin}" includes="com/amplitude/api/*.class" />
+          <fileset dir="${bin}" includes="com/amplitude/unity/plugins/*.class" />
+        </jar>
     </target>
 
 </project>
