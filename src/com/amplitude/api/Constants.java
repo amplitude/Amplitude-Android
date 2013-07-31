@@ -31,6 +31,7 @@ public class Constants {
   public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
   public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
   public static final String PREFKEY_USER_ID = PACKAGE_NAME + ".userId";
+  public static final String PREFKEY_CLIENT_API_KEY = PACKAGE_NAME + ".clientApiKey";
 
   // ten seconds
   public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 10 * 1000;

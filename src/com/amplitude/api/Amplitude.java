@@ -45,6 +45,7 @@ public class Amplitude {
   private static String apiKey;
   private static String userId;
   private static String deviceId;
+  private static String clientApiKey;
 
   private static int versionCode;
   private static String versionName;
@@ -82,6 +83,11 @@ public class Amplitude {
 
   public static void initialize(Context context, String apiKey, boolean trackCampaignSource) {
     initialize(context, apiKey, null, trackCampaignSource);
+  }
+
+  public static void initializeWithClientApiKey(Context context, String apiKey, String clientApiKey) {
+    initialize(context, apiKey, null, false);
+    setClientApiKey(clientApiKey);
   }
 
   public static void initialize(Context context, String apiKey, String userId,
@@ -441,6 +447,17 @@ public class Amplitude {
     preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
   }
 
+  public static void setClientApiKey(String clientApiKey) {
+    if (!contextAndApiKeySet("setClientApiKey()")) {
+      return;
+    }
+
+    Amplitude.clientApiKey = clientApiKey;
+    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+        Context.MODE_PRIVATE);
+    preferences.edit().putString(Constants.PREFKEY_CLIENT_API_KEY, clientApiKey).commit();
+  }
+
   private static void updateServer() {
     updateServer(true);
   }
@@ -473,8 +490,14 @@ public class Amplitude {
     String timestampString = "" + System.currentTimeMillis();
 
     String checksumString = "";
+
+    // Make checksum generation work correctly
+    if (clientApiKey == null) {
+        clientApiKey = "";
+    }
+
     try {
-      String preimage = apiVersionString + apiKey + events + timestampString;
+      String preimage = apiVersionString + apiKey + clientApiKey + events + timestampString;
       checksumString = bytesToHexString(MessageDigest.getInstance("MD5").digest(
           preimage.getBytes("UTF-8")));
     } catch (NoSuchAlgorithmException e) {
@@ -487,6 +510,9 @@ public class Amplitude {
 
     postParams.add(new BasicNameValuePair("v", apiVersionString));
     postParams.add(new BasicNameValuePair("client", apiKey));
+    if (clientApiKey.length() > 0) { // this is optional
+        postParams.add(new BasicNameValuePair("client_api_key", clientApiKey));
+    }
     postParams.add(new BasicNameValuePair("e", events));
     postParams.add(new BasicNameValuePair("upload_time", timestampString));
     postParams.add(new BasicNameValuePair("checksum", checksumString));
