@@ -2,9 +2,9 @@
 1. If you haven't already, go to https://amplitude.com and register for an account. You will receive an API Key.
 2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude.jar).
 3. Copy the jar into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
-4. In every file that uses analytics, import com.amplitude.api at the top:
+4. In every file that uses analytics, import Amplitude at the top:
 
-        import package com.amplitude.api;
+        import com.amplitude.api.*;
 
 5. In the `onCreate()` of your main activity, initialize the SDK:
 
