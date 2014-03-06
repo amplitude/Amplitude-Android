@@ -46,30 +46,30 @@ You can also add a user ID as an argument to the `initialize()` call:
 
     Amplitude.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 
-# Setting Custom Properties #
+# Setting Event Properties #
 
 You can attach additional data to any event by passing a JSONObject as the second argument to `logEvent()`:
 
-    JSONObject customProperties = new JSONObject();
+    JSONObject eventProperties = new JSONObject();
     try {
-      customProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
+      eventProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
     } catch (JSONException exception) {
     }
-    Amplitude.logEvent(Action.OPEN.toString(), customProperties);
+    Amplitude.logEvent("Sent Message", eventProperties);
 
 You will need to add two JSONObject imports to the code:
 
     import org.json.JSONException;
     import org.json.JSONObject;
 
-To add properties that are tracked in every event, you can set global properties for a user:
+To add properties that are associated with a user, you can set user properties:
 
-    JSONObject globalProperties = new JSONObject();
+    JSONObject userProperties = new JSONObject();
     try {
-      globalProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
+      userProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
     } catch (JSONException exception) {
     }
-    Amplitude.setGlobalUserProperties(globalProperties);
+    Amplitude.setUserProperties(userProperties);
 
 # Tracking Revenue #
 

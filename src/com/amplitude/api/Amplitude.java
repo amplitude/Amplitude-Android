@@ -57,7 +57,7 @@ public class Amplitude {
   private static String country;
   private static String language;
 
-  private static JSONObject globalProperties;
+  private static JSONObject userProperties;
 
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
@@ -119,11 +119,11 @@ public class Amplitude {
     logEvent(eventType, null);
   }
 
-  public static void logEvent(String eventType, JSONObject customProperties) {
-    logEvent(eventType, customProperties, null);
+  public static void logEvent(String eventType, JSONObject eventProperties) {
+    logEvent(eventType, eventProperties, null);
   }
 
-  private static void logEvent(String eventType, JSONObject customProperties,
+  private static void logEvent(String eventType, JSONObject eventProperties,
       JSONObject apiProperties) {
     if (TextUtils.isEmpty(eventType)) {
       Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
@@ -136,11 +136,11 @@ public class Amplitude {
     final JSONObject event = new JSONObject();
     try {
       event.put("event_type", replaceWithJSONNull(eventType));
-      event.put("custom_properties", (customProperties == null) ? new JSONObject()
-          : customProperties);
+      event.put("custom_properties", (eventProperties == null) ? new JSONObject()
+          : eventProperties);
       event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
-      event.put("global_properties", (globalProperties == null) ? new JSONObject()
-          : globalProperties);
+      event.put("global_properties", (userProperties == null) ? new JSONObject()
+          : userProperties);
       addBoilerplate(event);
     } catch (JSONException e) {
       Log.e(TAG, e.toString());
@@ -316,8 +316,8 @@ public class Amplitude {
     logEvent("revenue_amount", null, apiProperties);
   }
 
-  public static void setGlobalUserProperties(JSONObject globalProperties) {
-    Amplitude.globalProperties = globalProperties;
+  public static void setUserProperties(JSONObject userProperties) {
+    Amplitude.userProperties = userProperties;
   }
 
   public static void setUserId(String userId) {
