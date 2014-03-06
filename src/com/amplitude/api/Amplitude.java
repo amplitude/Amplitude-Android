@@ -368,10 +368,10 @@ public class Amplitude {
       checksumString = bytesToHexString(MessageDigest.getInstance("MD5").digest(
           preimage.getBytes("UTF-8")));
     } catch (NoSuchAlgorithmException e) {
-      // According to people on the internet, this will never be thrown
+      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
       Log.e(TAG, e.toString());
     } catch (UnsupportedEncodingException e) {
-      // According to people on the internet, this will never be thrown
+      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
       Log.e(TAG, e.toString());
     }
 
@@ -384,7 +384,7 @@ public class Amplitude {
     try {
       postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
     } catch (UnsupportedEncodingException e) {
-      // According to people on the internet, this will never be thrown
+      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
       Log.e(TAG, e.toString());
     }
 
