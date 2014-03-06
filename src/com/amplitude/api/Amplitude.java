@@ -59,9 +59,6 @@ public class Amplitude {
 
   private static JSONObject globalProperties;
 
-  private static String campaignInformation;
-  private static boolean isCurrentlyTrackingCampaign = false;
-
   private static long sessionId = -1;
   private static boolean sessionStarted = false;
   private static Runnable setSessionIdRunnable;
@@ -77,15 +74,6 @@ public class Amplitude {
   }
 
   public static void initialize(Context context, String apiKey, String userId) {
-    initialize(context, apiKey, userId, false);
-  }
-
-  public static void initialize(Context context, String apiKey, boolean trackCampaignSource) {
-    initialize(context, apiKey, null, trackCampaignSource);
-  }
-
-  public static void initialize(Context context, String apiKey, String userId,
-      boolean trackCampaignSource) {
     if (context == null) {
       Log.e(TAG, "Argument context cannot be null in initialize()");
       return;
@@ -106,8 +94,6 @@ public class Amplitude {
       Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
     }
     Amplitude.deviceId = getDeviceId();
-    Amplitude.campaignInformation = preferences.getString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
-        "{\"tracked\": false}");
 
     PackageInfo packageInfo;
     try {
@@ -127,102 +113,6 @@ public class Amplitude {
     country = Locale.getDefault().getDisplayCountry();
     language = Locale.getDefault().getDisplayLanguage();
 
-    if (trackCampaignSource) {
-      trackCampaignSource();
-    }
-  }
-
-  public static void enableCampaignTracking(Context context, String apiKey) {
-    if (context == null) {
-      Log.e(TAG, "Argument context cannot be null in enableCampaignTracking()");
-      return;
-    }
-    if (TextUtils.isEmpty(apiKey)) {
-      Log.e(TAG, "Argument apiKey cannot be null or blank in enableCampaignTracking()");
-      return;
-    }
-
-    context = context.getApplicationContext();
-    Amplitude.context = context;
-    Amplitude.apiKey = apiKey;
-    SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
-        Context.MODE_PRIVATE);
-    Amplitude.campaignInformation = preferences.getString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
-        "{\"tracked\": false}");
-
-    trackCampaignSource();
-  }
-
-  private static void trackCampaignSource() {
-    SharedPreferences sharedPreferences = context.getSharedPreferences(getSharedPreferencesName(),
-        Context.MODE_PRIVATE);
-    boolean hasTrackedCampaign = sharedPreferences.getBoolean(
-        Constants.PREFKEY_HAS_TRACKED_CAMPAIGN, false);
-
-    if (!hasTrackedCampaign && !isCurrentlyTrackingCampaign) {
-
-      isCurrentlyTrackingCampaign = true;
-
-      DatabaseThread.post(new Runnable() {
-        public void run() {
-          try {
-
-            JSONObject fingerprint = new JSONObject();
-            fingerprint.put("device_id", replaceWithJSONNull(getDeviceId()));
-            fingerprint.put("client", "android");
-            fingerprint
-                .put("country", replaceWithJSONNull(Locale.getDefault().getDisplayCountry()));
-            fingerprint.put("language", replaceWithJSONNull(Locale.getDefault()
-                .getDisplayLanguage()));
-            fingerprint.put("device", replaceWithJSONNull(Build.DEVICE));
-            fingerprint.put("display", replaceWithJSONNull(Build.DISPLAY));
-            fingerprint.put("product", replaceWithJSONNull(Build.PRODUCT));
-            fingerprint.put("brand", replaceWithJSONNull(Build.BRAND));
-            fingerprint.put("model", replaceWithJSONNull(Build.MODEL));
-            fingerprint.put("manufacturer", replaceWithJSONNull(Build.MANUFACTURER));
-
-            // If this returns with a JSONObject then request was successful
-            JSONObject campaignTrackingResult = makeCampaignTrackingPostRequest(
-                Constants.CAMPAIGN_TRACKING_URL, fingerprint.toString());
-
-            // Save successful campaign tracking
-            SharedPreferences sharedPreferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean(Constants.PREFKEY_HAS_TRACKED_CAMPAIGN, true);
-            editor.putString(Constants.PREFKEY_CAMPAIGN_INFORMATION,
-                campaignTrackingResult.toString());
-            editor.commit();
-
-            campaignInformation = campaignTrackingResult.toString();
-
-          } catch (org.apache.http.conn.HttpHostConnectException e) {
-            // Log.w(TAG,
-            // "No internet connection found, unable to track campaign");
-          } catch (java.net.UnknownHostException e) {
-            // Log.w(TAG,
-            // "No internet connection found, unable to track campaign");
-          } catch (Exception e) {
-            Log.e(TAG, e.toString());
-          }
-
-          isCurrentlyTrackingCampaign = false;
-
-        }
-      });
-    }
-  }
-
-  public static JSONObject getCampaignInformation() {
-    if (!contextAndApiKeySet("getCampaignInformation()")) {
-      return new JSONObject();
-    }
-    try {
-      return new JSONObject(campaignInformation);
-    } catch (JSONException e) {
-      Log.e(TAG, e.toString());
-    }
-    return new JSONObject();
   }
 
   public static void logEvent(String eventType) {
@@ -545,24 +435,6 @@ public class Amplitude {
       uploadingCurrently.set(false);
     }
 
-  }
-
-  private static JSONObject makeCampaignTrackingPostRequest(String url, String fingerprint)
-      throws ClientProtocolException, IOException, JSONException {
-    HttpPost postRequest = new HttpPost(url);
-    List<NameValuePair> postParams = new ArrayList<NameValuePair>();
-    postParams.add(new BasicNameValuePair("key", apiKey));
-    postParams.add(new BasicNameValuePair("fingerprint", fingerprint));
-
-    postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
-
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(postRequest);
-    String stringResult = EntityUtils.toString(response.getEntity());
-
-    JSONObject result = new JSONObject(stringResult);
-
-    return result;
   }
 
   // Returns a unique identifier for tracking within the analytics system

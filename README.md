@@ -71,24 +71,6 @@ To add properties that are tracked in every event, you can set global properties
     }
     Amplitude.setGlobalUserProperties(globalProperties);
 
-# Campaign Tracking #
-
-Set up links for each of your campaigns on the campaigns tab at https://amplitude.com.
-
-To track installs from each campaign source in your app, call `initialize()` with an extra boolean argument to turn on campaign tracking:
-
-    Amplitude.initialize(this, "YOUR_API_KEY_HERE", true);
-
-If you are not using analytics, and only want campaign tracking, call `enableCampaignTracking()` instead of `initialize()` in the `onCreate()` of your main activity:
-
-    Amplitude.enableCampaignTracking(this, "YOUR_API_KEY_HERE")
-
-You can retrieve the campaign information associated with a user by calling `getCampaignInformation()` after you've called `initialize()` or `enableCampaignTracking()`:
-
-    Amplitude.getCampaignInformation();
-
-If the SDK has successfully contacted our servers and saved the result, the "tracked" key in the returned JSONObject will be set to true. You can then get the details of the campaign from the fields of the returned JSONObject. If the SDK has not contacted our servers yet, all fields will be empty and "tracked" will be set to false. Only fields set in links you create will be set in the returned JSONObject. For example, if you set "campaign" in the link, but do not set "source", "medium", "term", or "content", only the "campaign" field will be present in the returned JSONObject.
-
 # Tracking Revenue #
 
 To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
