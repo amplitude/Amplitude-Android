@@ -99,7 +99,7 @@ To track revenue from a user, call `logRevenue()` each time a user generates rev
 
 # Advanced #
 
-If you want to use the source files directly, you can [download them here](https://dl.dropbox.com/s/mmxibcdv3u7it29/Amplitude-Android.zip?dl=1). To include them in your project, extract the files, and then copy the five *.java files into your Android project.
+If you want to use the source files directly, you can [download them here](https://github.com/amplitude/Amplitude-Android/archive/master.zip). To include them in your project, extract the files, and then copy the five *.java files into your Android project.
 
 If your app has multiple entry points/exit points, you should make a `Amplitude.initialize()` at every `onCreate()` entry point.
 
