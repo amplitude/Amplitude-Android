@@ -17,12 +17,12 @@ public class Constants {
   public static final String EVENT_FIELD = "event";
   public static final String[] TABLE_FIELD_NAMES = { ID_FIELD, EVENT_FIELD };
 
-  public static final int EVENT_UPLOAD_THRESHOLD = 10;
+  public static final int EVENT_UPLOAD_THRESHOLD = 30;
   public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;
-  public static final int EVENT_MAX_COUNT = 1020;
+  public static final int EVENT_MAX_COUNT = 1000;
   public static final int EVENT_REMOVE_BATCH_SIZE = 20;
-  // ten seconds
-  public static final long EVENT_UPLOAD_PERIOD_MILLIS = 10 * 1000;
+  // 30 seconds
+  public static final long EVENT_UPLOAD_PERIOD_MILLIS = 30 * 1000;
 
   public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
   public static final String PREFKEY_HAS_TRACKED_CAMPAIGN = PACKAGE_NAME + ".hasTrackedCampaign";
@@ -32,7 +32,7 @@ public class Constants {
   public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
   public static final String PREFKEY_USER_ID = PACKAGE_NAME + ".userId";
 
-  // ten seconds
+  // 10 seconds
   public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 10 * 1000;
 
   public static final String PERMISSION_GET_ACCOUNTS = "android.permission.GET_ACCOUNTS";

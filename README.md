@@ -22,7 +22,7 @@
 
         Amplitude.logEvent("EVENT_IDENTIFIER_HERE");
 
-9. Events are saved locally. Uploads are batched to occur every 10 events and every 10 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
