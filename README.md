@@ -26,7 +26,7 @@
 
 # Tracking Events #
 
-It's important to think about what types of events you care about as a developer. You should aim to track between 5 and 50 types of events within your app. Common event types are different screens within the app, actions a user initiates (such as pressing a button), and events you want a user to complete (such as filling out a form, completing a level, or making a payment). Contact us if you want assistance determining what would be best for you to track.
+It's important to think about what types of events you care about as a developer. You should aim to track between 20 and 200 types of events within your app. Common event types are different screens within the app, actions a user initiates (such as pressing a button), and events you want a user to complete (such as filling out a form, completing a level, or making a payment). Contact us if you want assistance determining what would be best for you to track.
 
 # Tracking Sessions #
 
@@ -61,6 +61,8 @@ You will need to add two JSONObject imports to the code:
 
     import org.json.JSONException;
     import org.json.JSONObject;
+
+# Setting User Properties #
 
 To add properties that are associated with a user, you can set user properties:
 
