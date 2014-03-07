@@ -107,8 +107,7 @@ public class Amplitude {
     phoneBrand = Build.BRAND;
     phoneManufacturer = Build.MANUFACTURER;
     phoneModel = Build.MODEL;
-    TelephonyManager manager = (TelephonyManager) context
-        .getSystemService(Context.TELEPHONY_SERVICE);
+    TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
     phoneCarrier = manager.getNetworkOperatorName();
     country = Locale.getDefault().getDisplayCountry();
     language = Locale.getDefault().getDisplayLanguage();
@@ -136,11 +135,9 @@ public class Amplitude {
     final JSONObject event = new JSONObject();
     try {
       event.put("event_type", replaceWithJSONNull(eventType));
-      event.put("custom_properties", (eventProperties == null) ? new JSONObject()
-          : eventProperties);
+      event.put("custom_properties", (eventProperties == null) ? new JSONObject() : eventProperties);
       event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
-      event.put("global_properties", (userProperties == null) ? new JSONObject()
-          : userProperties);
+      event.put("global_properties", (userProperties == null) ? new JSONObject() : userProperties);
       addBoilerplate(event);
     } catch (JSONException e) {
       Log.e(TAG, e.toString());
@@ -167,7 +164,8 @@ public class Amplitude {
   private static void addBoilerplate(JSONObject event) throws JSONException {
     long timestamp = System.currentTimeMillis();
     event.put("timestamp", timestamp);
-    event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId) : replaceWithJSONNull(userId));
+    event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
+        : replaceWithJSONNull(userId));
     event.put("device_id", replaceWithJSONNull(deviceId));
     event.put("session_id", sessionId);
     event.put("version_code", versionCode);
@@ -368,10 +366,14 @@ public class Amplitude {
       checksumString = bytesToHexString(MessageDigest.getInstance("MD5").digest(
           preimage.getBytes("UTF-8")));
     } catch (NoSuchAlgorithmException e) {
-      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
+      // According to
+      // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
+      // this will never be thrown
       Log.e(TAG, e.toString());
     } catch (UnsupportedEncodingException e) {
-      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
+      // According to
+      // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
+      // this will never be thrown
       Log.e(TAG, e.toString());
     }
 
@@ -384,7 +386,9 @@ public class Amplitude {
     try {
       postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
     } catch (UnsupportedEncodingException e) {
-      // According to http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible, this will never be thrown
+      // According to
+      // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
+      // this will never be thrown
       Log.e(TAG, e.toString());
     }
 
@@ -471,8 +475,7 @@ public class Amplitude {
     // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
     if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
         && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
-      String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE))
-          .getDeviceId();
+      String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
       if (!TextUtils.isEmpty(telephonyId)) {
         preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
         return telephonyId;
@@ -501,8 +504,7 @@ public class Amplitude {
   }
 
   private static Location getMostRecentLocation() {
-    LocationManager locationManager = (LocationManager) context
-        .getSystemService(Context.LOCATION_SERVICE);
+    LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     List<String> providers = locationManager.getProviders(true);
     List<Location> locations = new ArrayList<Location>();
     for (String provider : providers) {
