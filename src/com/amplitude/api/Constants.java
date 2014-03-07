@@ -2,7 +2,6 @@ package com.amplitude.api;
 
 public class Constants {
   public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
-  public static final String CAMPAIGN_TRACKING_URL = "http://ref.amplitude.com/install";
 
   public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
@@ -25,8 +24,6 @@ public class Constants {
   public static final long EVENT_UPLOAD_PERIOD_MILLIS = 30 * 1000;
 
   public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
-  public static final String PREFKEY_HAS_TRACKED_CAMPAIGN = PACKAGE_NAME + ".hasTrackedCampaign";
-  public static final String PREFKEY_CAMPAIGN_INFORMATION = PACKAGE_NAME + ".campaignInformation";
   public static final String PREFKEY_PREVIOUS_SESSION_TIME = PACKAGE_NAME + ".previousSessionTime";
   public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
   public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";

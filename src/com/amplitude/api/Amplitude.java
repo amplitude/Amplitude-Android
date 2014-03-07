@@ -417,7 +417,7 @@ public class Amplitude {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             dbHelper.removeEvents(maxId);
             uploadingCurrently.set(false);
-            if (dbHelper.getNumberRows() > 0) {
+            if (dbHelper.getNumberRows() > Constants.EVENT_UPLOAD_THRESHOLD) {
               DatabaseThread.post(new Runnable() {
                 public void run() {
                   updateServer(false);
