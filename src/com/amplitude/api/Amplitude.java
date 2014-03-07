@@ -124,6 +124,11 @@ public class Amplitude {
 
   private static void logEvent(String eventType, JSONObject eventProperties,
       JSONObject apiProperties) {
+    logEvent(eventType, eventProperties, null, false, 0);
+  }
+  
+  private static void logEvent(String eventType, JSONObject eventProperties,
+      JSONObject apiProperties, boolean useTimestamp, long timestamp) {
     if (TextUtils.isEmpty(eventType)) {
       Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
       return;
@@ -132,13 +137,17 @@ public class Amplitude {
       return;
     }
 
+    if (!useTimestamp) {
+      timestamp = System.currentTimeMillis();
+    }
+
     final JSONObject event = new JSONObject();
     try {
       event.put("event_type", replaceWithJSONNull(eventType));
       event.put("custom_properties", (eventProperties == null) ? new JSONObject() : eventProperties);
       event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
       event.put("global_properties", (userProperties == null) ? new JSONObject() : userProperties);
-      addBoilerplate(event);
+      addBoilerplate(event, timestamp);
     } catch (JSONException e) {
       Log.e(TAG, e.toString());
     }
@@ -161,8 +170,7 @@ public class Amplitude {
     });
   }
 
-  private static void addBoilerplate(JSONObject event) throws JSONException {
-    long timestamp = System.currentTimeMillis();
+  private static void addBoilerplate(JSONObject event, long timestamp) throws JSONException {
     event.put("timestamp", timestamp);
     event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
         : replaceWithJSONNull(userId));
@@ -225,11 +233,14 @@ public class Amplitude {
 
     // Remove setSessionId callback
     DatabaseThread.removeCallbacks(setSessionIdRunnable);
+    long now = 0;
+    boolean useTimestamp = false;
 
     if (!sessionStarted) {
       // Session has not been started yet, check overlap
 
-      long now = System.currentTimeMillis();
+      now = System.currentTimeMillis();
+      useTimestamp = true;
 
       SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
           Context.MODE_PRIVATE);
@@ -254,7 +265,7 @@ public class Amplitude {
       apiProperties.put("special", "session_start");
     } catch (JSONException e) {
     }
-    logEvent("session_start", null, apiProperties);
+    logEvent("session_start", null, apiProperties, useTimestamp, now);
 
     uploadEvents();
   }
