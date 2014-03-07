@@ -5,8 +5,10 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -454,11 +456,15 @@ public class Amplitude {
 
   // Returns a unique identifier for tracking within the analytics system
   private static String getDeviceId() {
+    Set<String> invalidIds = new HashSet<String>();
+    invalidIds.add("");
+    invalidIds.add("9774d56d682e549c");
+    invalidIds.add("unknown");
 
     SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
         Context.MODE_PRIVATE);
     String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
-    if (!TextUtils.isEmpty(deviceId)) {
+    if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
       return deviceId;
     }
 
@@ -466,7 +472,7 @@ public class Amplitude {
     // Issues on 2.2, some phones have same Android ID due to manufacturer error
     String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
         android.provider.Settings.Secure.ANDROID_ID);
-    if (!(TextUtils.isEmpty(androidId) || androidId.equals("9774d56d682e549c"))) {
+    if (!(TextUtils.isEmpty(androidId) || invalidIds.contains(androidId))) {
       preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
       return androidId;
     }
@@ -475,7 +481,7 @@ public class Amplitude {
     // Guaranteed to be on all non phones in 2.3+
     try {
       String serialNumber = (String) Build.class.getField("SERIAL").get(null);
-      if (!TextUtils.isEmpty(serialNumber)) {
+      if (!(TextUtils.isEmpty(serialNumber) || invalidIds.contains(serialNumber))) {
         preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
         return serialNumber;
       }
@@ -487,24 +493,11 @@ public class Amplitude {
     if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
         && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
       String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-      if (!TextUtils.isEmpty(telephonyId)) {
+      if (!(TextUtils.isEmpty(telephonyId) || invalidIds.contains(telephonyId))) {
         preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
         return telephonyId;
       }
     }
-
-    // Account name
-    // Requires GET_ACCOUNTS permission
-    /*
-     * if (permissionGranted(Constants.PERMISSION_GET_ACCOUNTS)) {
-     * AccountManager accountManager = (AccountManager) context
-     * .getSystemService(Context.ACCOUNT_SERVICE); Account[] accounts =
-     * accountManager.getAccountsByType("com.google"); for (Account account :
-     * accounts) { String accountName = account.name; if
-     * (!TextUtils.isEmpty(accountName)) {
-     * preferences.edit().putString(Constants.PREFKEY_DEVICE_ID,
-     * accountName).commit(); return accountName; } } }
-     */
 
     // If this still fails, generate random identifier that does not persist
     // across installations
