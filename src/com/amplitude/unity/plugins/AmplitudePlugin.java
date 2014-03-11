@@ -44,7 +44,7 @@ public class AmplitudePlugin {
         Amplitude.setUserId(userId);
     }
     
-    public static void setGlobalUserProperties(String jsonProperties) {
+    public static void setUserProperties(String jsonProperties) {
         JSONObject properties = null;
         try {
             properties = new JSONObject(jsonProperties);
@@ -52,7 +52,7 @@ public class AmplitudePlugin {
             e.printStackTrace();
         }
         
-        Amplitude.setGlobalUserProperties(properties);
+        Amplitude.setUserProperties(properties);
     }
     
     public static void logRevenue(double amount) {
