@@ -446,6 +446,10 @@ public class Amplitude {
       Log.e(TAG, e.toString());
     } catch (IOException e) {
       Log.e(TAG, e.toString());
+    } finally {
+        if (client.getConnectionManager() != null) {
+            client.getConnectionManager().shutdown();
+        }
     }
 
     if (!uploadSuccess) {
