@@ -46,7 +46,7 @@
         name="unity"
         depends="build" >
         <jar
-            destfile="amplitude-unity-plugin.jar">
+            destfile="amplitude-unity.jar">
           <fileset dir="${bin}" includes="com/amplitude/api/*.class" />
           <fileset dir="${bin}" includes="com/amplitude/unity/plugins/*.class" />
         </jar>
