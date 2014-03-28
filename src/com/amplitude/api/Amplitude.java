@@ -126,7 +126,7 @@ public class Amplitude {
 
   private static void logEvent(String eventType, JSONObject eventProperties,
       JSONObject apiProperties) {
-    logEvent(eventType, eventProperties, null, false, 0);
+    logEvent(eventType, eventProperties, apiProperties, false, 0);
   }
   
   private static void logEvent(String eventType, JSONObject eventProperties,
