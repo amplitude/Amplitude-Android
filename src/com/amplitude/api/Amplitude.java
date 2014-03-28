@@ -121,14 +121,9 @@ public class Amplitude {
   }
 
   public static void logEvent(String eventType, JSONObject eventProperties) {
-    logEvent(eventType, eventProperties, null);
+    logEvent(eventType, eventProperties, null, false, 0);
   }
 
-  private static void logEvent(String eventType, JSONObject eventProperties,
-      JSONObject apiProperties) {
-    logEvent(eventType, eventProperties, apiProperties, false, 0);
-  }
-  
   private static void logEvent(String eventType, JSONObject eventProperties,
       JSONObject apiProperties, boolean useTimestamp, long timestamp) {
     if (TextUtils.isEmpty(eventType)) {
@@ -283,7 +278,7 @@ public class Amplitude {
       apiProperties.put("special", "session_end");
     } catch (JSONException e) {
     }
-    logEvent("session_end", null, apiProperties);
+    logEvent("session_end", null, apiProperties, false, 0);
 
     // Session stopped
     sessionStarted = false;
@@ -324,7 +319,7 @@ public class Amplitude {
       apiProperties.put("revenue", amount);
     } catch (JSONException e) {
     }
-    logEvent("revenue_amount", null, apiProperties);
+    logEvent("revenue_amount", null, apiProperties, false, 0);
   }
 
   public static void setUserProperties(JSONObject userProperties) {
