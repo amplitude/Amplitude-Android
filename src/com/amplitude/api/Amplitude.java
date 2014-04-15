@@ -47,6 +47,7 @@ public class Amplitude {
   private static String apiKey;
   private static String userId;
   private static String deviceId;
+  private static boolean newDeviceIdPerInstall = false;
 
   private static int versionCode;
   private static String versionName;
@@ -114,6 +115,10 @@ public class Amplitude {
     country = Locale.getDefault().getDisplayCountry();
     language = Locale.getDefault().getDisplayLanguage();
 
+  }
+
+  public static void enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
+	  Amplitude.newDeviceIdPerInstall = newDeviceIdPerInstall;
   }
 
   public static void logEvent(String eventType) {
@@ -467,35 +472,37 @@ public class Amplitude {
       return deviceId;
     }
 
-    // Android ID
-    // Issues on 2.2, some phones have same Android ID due to manufacturer error
-    String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
-        android.provider.Settings.Secure.ANDROID_ID);
-    if (!(TextUtils.isEmpty(androidId) || invalidIds.contains(androidId))) {
-      preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
-      return androidId;
-    }
+    if (newDeviceIdPerInstall) {
+	    // Android ID
+	    // Issues on 2.2, some phones have same Android ID due to manufacturer error
+	    String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
+	        android.provider.Settings.Secure.ANDROID_ID);
+	    if (!(TextUtils.isEmpty(androidId) || invalidIds.contains(androidId))) {
+	      preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
+	      return androidId;
+	    }
 
-    // Serial number
-    // Guaranteed to be on all non phones in 2.3+
-    try {
-      String serialNumber = (String) Build.class.getField("SERIAL").get(null);
-      if (!(TextUtils.isEmpty(serialNumber) || invalidIds.contains(serialNumber))) {
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
-        return serialNumber;
-      }
-    } catch (Exception e) {
-    }
+	    // Serial number
+	    // Guaranteed to be on all non phones in 2.3+
+	    try {
+	      String serialNumber = (String) Build.class.getField("SERIAL").get(null);
+	      if (!(TextUtils.isEmpty(serialNumber) || invalidIds.contains(serialNumber))) {
+	        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber).commit();
+	        return serialNumber;
+	      }
+	    } catch (Exception e) {
+	    }
 
-    // Telephony ID
-    // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
-    if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
-        && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
-      String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-      if (!(TextUtils.isEmpty(telephonyId) || invalidIds.contains(telephonyId))) {
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
-        return telephonyId;
-      }
+	    // Telephony ID
+	    // Guaranteed to be on all phones, requires READ_PHONE_STATE permission
+	    if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
+	        && context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
+	      String telephonyId = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
+	      if (!(TextUtils.isEmpty(telephonyId) || invalidIds.contains(telephonyId))) {
+	        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
+	        return telephonyId;
+	      }
+	    }
     }
 
     // If this still fails, generate random identifier that does not persist
