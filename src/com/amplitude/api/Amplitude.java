@@ -472,7 +472,7 @@ public class Amplitude {
       return deviceId;
     }
 
-    if (newDeviceIdPerInstall) {
+    if (!newDeviceIdPerInstall) {
 	    // Android ID
 	    // Issues on 2.2, some phones have same Android ID due to manufacturer error
 	    String androidId = android.provider.Settings.Secure.getString(context.getContentResolver(),
