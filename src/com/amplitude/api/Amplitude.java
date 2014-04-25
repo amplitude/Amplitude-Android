@@ -589,31 +589,6 @@ public class Amplitude {
 				preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
 				return androidId;
 			}
-
-			// Serial number
-			// Guaranteed to be on all non phones in 2.3+
-			try {
-				String serialNumber = (String) Build.class.getField("SERIAL").get(null);
-				if (!(TextUtils.isEmpty(serialNumber) || invalidIds.contains(serialNumber))) {
-					preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, serialNumber)
-							.commit();
-					return serialNumber;
-				}
-			} catch (Exception e) {
-			}
-
-			// Telephony ID
-			// Guaranteed to be on all phones, requires READ_PHONE_STATE
-			// permission
-			if (permissionGranted(Constants.PERMISSION_READ_PHONE_STATE)
-					&& context.getPackageManager().hasSystemFeature("android.hardware.telephony")) {
-				String telephonyId = ((TelephonyManager) context
-						.getSystemService(Context.TELEPHONY_SERVICE)).getDeviceId();
-				if (!(TextUtils.isEmpty(telephonyId) || invalidIds.contains(telephonyId))) {
-					preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, telephonyId).commit();
-					return telephonyId;
-				}
-			}
 		}
 
 		// If this still fails, generate random identifier that does not persist
@@ -675,7 +650,7 @@ public class Amplitude {
 		return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
 	}
 
-	public static String bytesToHexString(byte[] bytes) {
+	private static String bytesToHexString(byte[] bytes) {
 		final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
 				'd', 'e', 'f' };
 		char[] hexChars = new char[bytes.length * 2];
