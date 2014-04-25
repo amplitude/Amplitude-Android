@@ -52,4 +52,9 @@
         </jar>
     </target>
 
+    <target name="dist" >
+        <antcall target="jar" />
+        <antcall target="unity" />
+    </target>
+
 </project>
