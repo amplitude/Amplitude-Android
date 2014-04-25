@@ -424,7 +424,7 @@ public class Amplitude {
 			apiProperties.put("revenue", amount);
 		} catch (JSONException e) {
 		}
-		checkedLogEvent(REVENUE_EVENT, null, apiProperties, 0, true);
+		checkedLogEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
 	}
 
 	public static void setUserProperties(JSONObject userProperties) {
