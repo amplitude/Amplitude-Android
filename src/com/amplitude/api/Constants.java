@@ -27,6 +27,10 @@ public class Constants {
 	public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
 	public static final String PREFKEY_PREVIOUS_SESSION_TIME = PACKAGE_NAME
 			+ ".previousSessionTime";
+	public static final String PREFKEY_PREVIOUS_END_SESSION_TIME = PACKAGE_NAME
+			+ ".previousEndSessionTime";
+	public static final String PREFKEY_PREVIOUS_END_SESSION_ID = PACKAGE_NAME
+			+ ".previousEndSessionId";
 	public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
 	public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
 	public static final String PREFKEY_USER_ID = PACKAGE_NAME + ".userId";

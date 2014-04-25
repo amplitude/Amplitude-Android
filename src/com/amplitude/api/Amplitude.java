@@ -63,17 +63,22 @@ public class Amplitude {
 	private static JSONObject userProperties;
 
 	private static long sessionId = -1;
-	private static boolean sessionStarted = false;
+	private static boolean sessionOpen = false;
 	private static long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
+	private static Runnable endSessionRunnable;
 
 	private static AtomicBoolean updateScheduled = new AtomicBoolean(false);
 	private static AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
-	static WorkerThread databaseThread = new WorkerThread("databaseThread");
+	public static final String START_SESSION_EVENT = "session_start";
+	public static final String END_SESSION_EVENT = "session_end";
+	public static final String REVENUE_EVENT = "revenue_amount";
+
+	static WorkerThread logThread = new WorkerThread("logThread");
 	static WorkerThread httpThread = new WorkerThread("httpThread");
 
 	static {
-		databaseThread.start();
+		logThread.start();
 		httpThread.start();
 	}
 
@@ -120,9 +125,8 @@ public class Amplitude {
 		TelephonyManager manager = (TelephonyManager) context
 				.getSystemService(Context.TELEPHONY_SERVICE);
 		phoneCarrier = manager.getNetworkOperatorName();
-		country = Locale.getDefault().getDisplayCountry();
-		language = Locale.getDefault().getDisplayLanguage();
-
+		country = Locale.getDefault().getCountry();
+		language = Locale.getDefault().getLanguage();
 	}
 
 	public static void enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
@@ -138,11 +142,11 @@ public class Amplitude {
 	}
 
 	public static void logEvent(String eventType, JSONObject eventProperties) {
-		logEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
+		checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
 	}
 
-	private static void logEvent(String eventType, JSONObject eventProperties,
-			JSONObject apiProperties, long timestamp, boolean checkSession) {
+	private static void checkedLogEvent(final String eventType, final JSONObject eventProperties,
+			final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
 		if (TextUtils.isEmpty(eventType)) {
 			Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
 			return;
@@ -150,12 +154,22 @@ public class Amplitude {
 		if (!contextAndApiKeySet("logEvent()")) {
 			return;
 		}
+		runOnLogThread(new Runnable() {
+			@Override
+			public void run() {
+				logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
+			}
+		});
+	}
+
+	private static long logEvent(String eventType, JSONObject eventProperties,
+			JSONObject apiProperties, long timestamp, boolean checkSession) {
 		if (checkSession) {
 			startNewSessionIfNeeded(timestamp);
 		}
 		setLastEventTime(timestamp);
-		
-		final JSONObject event = new JSONObject();
+
+		JSONObject event = new JSONObject();
 		try {
 			event.put("event_type", replaceWithJSONNull(eventType));
 			event.put("custom_properties", (eventProperties == null) ? new JSONObject()
@@ -168,22 +182,31 @@ public class Amplitude {
 			Log.e(TAG, e.toString());
 		}
 
-		databaseThread.post(new Runnable() {
-			public void run() {
-				DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-				dbHelper.addEvent(event.toString());
+		return logEvent(event);
+	}
 
-				if (dbHelper.getNumberRows() >= Constants.EVENT_MAX_COUNT) {
-					dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
-				}
+	private static long logEvent(JSONObject event) {
+		DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+		long eventId = dbHelper.addEvent(event.toString());
 
-				if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_THRESHOLD) {
-					updateServer();
-				} else {
-					updateServerLater();
-				}
-			}
-		});
+		if (dbHelper.getNumberRows() >= Constants.EVENT_MAX_COUNT) {
+			dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+		}
+
+		if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_THRESHOLD) {
+			updateServer();
+		} else {
+			updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
+		}
+		return eventId;
+	}
+
+	private static void runOnLogThread(Runnable r) {
+		if (Thread.currentThread() != logThread) {
+			logThread.post(r);
+		} else {
+			r.run();
+		}
 	}
 
 	private static void addBoilerplate(JSONObject event, long timestamp) throws JSONException {
@@ -219,22 +242,22 @@ public class Amplitude {
 			return;
 		}
 
-		databaseThread.post(new Runnable() {
+		logThread.post(new Runnable() {
 			public void run() {
 				updateServer();
 			}
 		});
 	}
 
-	private static void updateServerLater() {
+	private static void updateServerLater(long delayMillis) {
 		if (!updateScheduled.getAndSet(true)) {
 
-			databaseThread.postDelayed(new Runnable() {
+			logThread.postDelayed(new Runnable() {
 				public void run() {
 					updateScheduled.set(false);
 					updateServer();
 				}
-			}, Constants.EVENT_UPLOAD_PERIOD_MILLIS);
+			}, delayMillis);
 		}
 	}
 
@@ -249,86 +272,142 @@ public class Amplitude {
 				Context.MODE_PRIVATE);
 		preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
 	}
-	
-	private static void startNewSessionIfNeeded(long timestamp) {
-		long lastEventTime = getLastEventTime();
+
+	private static void clearEndSession() {
 		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
 				Context.MODE_PRIVATE);
-		if (!sessionStarted) {
-			// Session now started
-			sessionStarted = true;
+		preferences.edit().remove(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME)
+				.remove(Constants.PREFKEY_PREVIOUS_END_SESSION_ID).commit();
+	}
 
-			if (timestamp - lastEventTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+	private static long getEndSessionTime() {
+		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+				Context.MODE_PRIVATE);
+		return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, -1);
+	}
+
+	private static long getEndSessionId() {
+		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+				Context.MODE_PRIVATE);
+		return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1);
+	}
+	
+	private static void openSession() {
+		clearEndSession();
+		sessionOpen = true;		
+	}
+	
+	private static void closeSession() {
+		// Close the session. Events within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
+		// will stay in the session. 
+		// A startSession call within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
+		// will reopen the session.
+		sessionOpen = false;
+	}
+
+	private static void startNewSession(long timestamp) {
+		// Log session start in events
+		openSession();
+		sessionId = timestamp;
+		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+				Context.MODE_PRIVATE);
+		preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
+		JSONObject apiProperties = new JSONObject();
+		try {
+			apiProperties.put("special", START_SESSION_EVENT);
+		} catch (JSONException e) {
+		}
+		logEvent(START_SESSION_EVENT, null, apiProperties, timestamp, false);
+	}
+
+	private static void startNewSessionIfNeeded(long timestamp) {
+		if (!sessionOpen) {
+			long lastEndSessionTime = getEndSessionTime();
+			if (timestamp - lastEndSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
 				// Sessions close enough, set sessionId to previous sessionId
-				long previousSessionId = preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp);
-				
+
+				SharedPreferences preferences = context.getSharedPreferences(
+						getSharedPreferencesName(), Context.MODE_PRIVATE);
+				long previousSessionId = preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID,
+						timestamp);
+
 				if (previousSessionId == -1) {
 					// Invalid session Id, create new sessionId
-					sessionId = timestamp;
-					preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
-					logStartSession(timestamp);
+					startNewSession(timestamp);
 				} else {
 					sessionId = previousSessionId;
 				}
 			} else {
 				// Sessions not close enough, create new sessionId
-				sessionId = timestamp;
-				preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
-
-				// Log session start in events
-				logStartSession(timestamp);
+				startNewSession(timestamp);
 			}
 		} else {
+			long lastEventTime = getLastEventTime();
 			if (timestamp - lastEventTime > sessionTimeoutMillis || sessionId == -1) {
-				sessionId = timestamp;
-				preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
-				logStartSession(timestamp);
+				startNewSession(timestamp);
 			}
 		}
-	}
-	
-	private static void logStartSession(long timestamp) {
-		// Log session start in events
-		JSONObject apiProperties = new JSONObject();
-		try {
-			apiProperties.put("special", "session_start");
-		} catch (JSONException e) {
-		}
-		logEvent("session_start", null, apiProperties, timestamp, false);
 	}
 
 	public static void startSession() {
 		if (!contextAndApiKeySet("startSession()")) {
 			return;
 		}
+		final long now = System.currentTimeMillis();
 
-		long now = System.currentTimeMillis();
+		runOnLogThread(new Runnable() {
+			@Override
+			public void run() {
+				logThread.removeCallbacks(endSessionRunnable);
+				long previousEndSessionId = getEndSessionId();
+				if (previousEndSessionId != -1) {
+					DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+					dbHelper.removeEvent(previousEndSessionId);
+				}
+				startNewSessionIfNeeded(now);
+				openSession();
 
-		startNewSessionIfNeeded(now);
+				// Update last event time
+				setLastEventTime(now);
 
-		// Update last event time
-		setLastEventTime(now);
-
-		uploadEvents();
+				uploadEvents();
+			}
+		});
 	}
 
 	public static void endSession() {
 		if (!contextAndApiKeySet("endSession()")) {
 			return;
 		}
+		final long timestamp = System.currentTimeMillis();
+		runOnLogThread(new Runnable() {
+			@Override
+			public void run() {
+				JSONObject apiProperties = new JSONObject();
+				try {
+					apiProperties.put("special", END_SESSION_EVENT);
+				} catch (JSONException e) {
+				}
+				long eventId = logEvent(END_SESSION_EVENT, null, apiProperties, timestamp, false);
 
-		// Log session end in events
-		JSONObject apiProperties = new JSONObject();
-		try {
-			apiProperties.put("special", "session_end");
-		} catch (JSONException e) {
-		}
-		logEvent("session_end", null, apiProperties, System.currentTimeMillis(), false);
+				SharedPreferences preferences = context.getSharedPreferences(
+						getSharedPreferencesName(), Context.MODE_PRIVATE);
+				preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, eventId)
+						.putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, timestamp).commit();
 
-		// Session stopped
-		sessionStarted = false;
-
-		uploadEvents();
+				closeSession();
+			}
+		});
+		// Queue up upload events 16 seconds later
+		logThread.removeCallbacks(endSessionRunnable);
+		endSessionRunnable = new Runnable() {
+			@Override
+			public void run() {
+				clearEndSession();
+				uploadEvents();
+			}
+		};
+		logThread.postDelayed(endSessionRunnable, Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS + 1000);
 	}
 
 	public static void logRevenue(double amount) {
@@ -341,11 +420,11 @@ public class Amplitude {
 		// Log revenue in events
 		JSONObject apiProperties = new JSONObject();
 		try {
-			apiProperties.put("special", "revenue_amount");
+			apiProperties.put("special", REVENUE_EVENT);
 			apiProperties.put("revenue", amount);
 		} catch (JSONException e) {
 		}
-		logEvent("revenue_amount", null, apiProperties, 0, true);
+		checkedLogEvent(REVENUE_EVENT, null, apiProperties, 0, true);
 	}
 
 	public static void setUserProperties(JSONObject userProperties) {
@@ -367,12 +446,14 @@ public class Amplitude {
 		updateServer(true);
 	}
 
-	// Always call this from databaseThread
+	// Always call this from logThread
 	private static void updateServer(boolean limit) {
 		if (!uploadingCurrently.getAndSet(true)) {
 			DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 			try {
-				Pair<Long, JSONArray> pair = dbHelper.getEvents(limit);
+				long endSessionId = getEndSessionId();
+				Pair<Long, JSONArray> pair = dbHelper.getEvents(endSessionId,
+						limit ? Constants.EVENT_UPLOAD_MAX_BATCH_SIZE : -1);
 				final long maxId = pair.first;
 				final JSONArray events = pair.second;
 				httpThread.post(new Runnable() {
@@ -434,13 +515,13 @@ public class Amplitude {
 			String stringResponse = EntityUtils.toString(response.getEntity());
 			if (stringResponse.equals("success")) {
 				uploadSuccess = true;
-				databaseThread.post(new Runnable() {
+				logThread.post(new Runnable() {
 					public void run() {
 						DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 						dbHelper.removeEvents(maxId);
 						uploadingCurrently.set(false);
 						if (dbHelper.getNumberRows() > Constants.EVENT_UPLOAD_THRESHOLD) {
-							databaseThread.post(new Runnable() {
+							logThread.post(new Runnable() {
 								public void run() {
 									updateServer(false);
 								}
@@ -487,6 +568,9 @@ public class Amplitude {
 		invalidIds.add("");
 		invalidIds.add("9774d56d682e549c");
 		invalidIds.add("unknown");
+		invalidIds.add("000000000000000"); // Common Serial Number
+		invalidIds.add("Android");
+		invalidIds.add("DEFACE");
 
 		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
 				Context.MODE_PRIVATE);

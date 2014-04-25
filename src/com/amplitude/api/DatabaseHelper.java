@@ -43,7 +43,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
 
-	void addEvent(String event) {
+	long addEvent(String event) {
 		synchronized (this) {
 			SQLiteDatabase db = getWritableDatabase();
 			ContentValues contentValues = new ContentValues();
@@ -53,6 +53,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 				Log.w(TAG, "Insert failed");
 			}
 			db.close();
+			return result;
 		}
 	}
 
@@ -65,12 +66,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		return numberRows;
 	}
 
-	Pair<Long, JSONArray> getEvents(boolean limit) throws JSONException {
+	Pair<Long, JSONArray> getEvents(long lessThanId, int limit) throws JSONException {
 
 		SQLiteDatabase db = getWritableDatabase();
-		Cursor cursor = db.query(Constants.EVENT_TABLE_NAME, Constants.TABLE_FIELD_NAMES, null,
-				null, null, null, Constants.ID_FIELD + " ASC", limit ? ""
-						+ Constants.EVENT_UPLOAD_MAX_BATCH_SIZE : null);
+		Cursor cursor = db.query(Constants.EVENT_TABLE_NAME, Constants.TABLE_FIELD_NAMES,
+				lessThanId >= 0 ? Constants.ID_FIELD + " < " + lessThanId : null,
+				null, null, null, Constants.ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
 		long maxId = -1;
 		JSONArray events = new JSONArray();
@@ -108,6 +109,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	void removeEvents(long maxId) {
 		SQLiteDatabase db = getWritableDatabase();
 		db.delete(Constants.EVENT_TABLE_NAME, Constants.ID_FIELD + " <= " + maxId, null);
+		db.close();
+	}
+
+	void removeEvent(long id) {
+		SQLiteDatabase db = getWritableDatabase();
+		db.delete(Constants.EVENT_TABLE_NAME, Constants.ID_FIELD + " = " + id, null);
 		db.close();
 	}
 
