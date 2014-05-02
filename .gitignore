@@ -1,2 +1,5 @@
 *.class
 .DS_Store
+*~
+dist/
+*.asc
