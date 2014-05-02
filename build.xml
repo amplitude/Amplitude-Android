@@ -17,7 +17,7 @@
 
     <property name="groupId" value="com.amplitude" />
     <property name="artifactId" value="android-sdk" />
-    <property name="version" value="1.1" />
+    <property name="version" value="1.2" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
@@ -45,17 +45,15 @@
     </target>
 
     <target name="jar" depends="build" >
-        <jar jarfile="${jar}" basedir="${build}">
-            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
-        </jar>
+        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class" />
     </target>
 
     <target name="unity" depends="build" >
         <jar destfile="amplitude-unity.jar">
-          <fileset dir="${build}" includes="com/amplitude/api/*.class" />
-          <fileset dir="${src}" includes="com/amplitude/api/*.java" />
-          <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
-          <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
+            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
+            <fileset dir="${src}" includes="com/amplitude/api/*.java" />
+            <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
+            <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
         </jar>
     </target>
 
