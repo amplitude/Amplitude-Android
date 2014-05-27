@@ -29,7 +29,6 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.location.LocationManager;
@@ -189,11 +188,11 @@ public class Amplitude {
 		DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 		long eventId = dbHelper.addEvent(event.toString());
 
-		if (dbHelper.getNumberRows() >= Constants.EVENT_MAX_COUNT) {
+		if (dbHelper.getEventCount() >= Constants.EVENT_MAX_COUNT) {
 			dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
 		}
 
-		if (dbHelper.getNumberRows() >= Constants.EVENT_UPLOAD_THRESHOLD) {
+		if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD) {
 			updateServer();
 		} else {
 			updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
@@ -520,7 +519,7 @@ public class Amplitude {
 						DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 						dbHelper.removeEvents(maxId);
 						uploadingCurrently.set(false);
-						if (dbHelper.getNumberRows() > Constants.EVENT_UPLOAD_THRESHOLD) {
+						if (dbHelper.getEventCount() > Constants.EVENT_UPLOAD_THRESHOLD) {
 							logThread.post(new Runnable() {
 								public void run() {
 									updateServer(false);
@@ -550,6 +549,12 @@ public class Amplitude {
 			Log.e(TAG, e.toString());
 		} catch (IOException e) {
 			Log.e(TAG, e.toString());
+		} catch (AssertionError e) {
+			// This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
+			Log.e(TAG, "Exception:", e);
+		} catch (Exception e) {
+			// Just log any other exception so things don't crash on upload
+			Log.e(TAG, "Exception:", e);
 		} finally {
 			if (client.getConnectionManager() != null) {
 				client.getConnectionManager().shutdown();
@@ -621,10 +626,6 @@ public class Amplitude {
 		}
 
 		return bestLocation;
-	}
-
-	private static boolean permissionGranted(String permission) {
-		return context.checkCallingOrSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
 	}
 
 	private static Object replaceWithJSONNull(Object obj) {

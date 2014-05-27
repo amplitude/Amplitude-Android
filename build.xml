@@ -16,8 +16,8 @@
     <property name="android-target" value="${env.ANDROID_TARGET}" />
 
     <property name="groupId" value="com.amplitude" />
-    <property name="artifactId" value="android-sdk" />
-    <property name="version" value="1.2" />
+    <property name="artifactId" value="amplitude-android" />
+    <property name="version" value="1.3" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
@@ -38,18 +38,21 @@
     </target>
 
     <target name="build" depends="init" >
+        <echo message="Building for android target ${android-target}" />
+        <echo message="Java version: ${java.version}"/>
+        <echo message="Android SDK Path: ${toString:project.class.path}" />
         <javac classpathref="project.class.path"
                srcdir="${src}"
                destdir="${build}"
                includeantruntime="false" />
     </target>
 
-    <target name="jar" depends="build" >
+    <target name="jar" depends="build">
         <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class" />
     </target>
 
-    <target name="unity" depends="build" >
-        <jar destfile="amplitude-unity.jar">
+    <target name="unity" depends="build" description="creates jar for unity plugin">
+        <jar destfile="amplitude-unity-${version}.jar">
             <fileset dir="${build}" includes="com/amplitude/api/*.class" />
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
             <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
@@ -57,7 +60,7 @@
         </jar>
     </target>
 
-    <target name="dist" depends="jar">
+    <target name="dist" depends="jar" description="creates release jar with javadoc and sources">
         <javadoc classpathref="project.class.path" sourcepath="${src}" destdir="${dist}/javadoc">
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
         </javadoc>
