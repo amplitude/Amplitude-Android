@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 public class Constants {
+
     public static final String VERSION = "1.3";
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
@@ -11,12 +12,6 @@ public class Constants {
 
     public static final String DATABASE_NAME = PACKAGE_NAME;
     public static final int DATABASE_VERSION = 1;
-
-    public static final String EVENT_TABLE_NAME = "events";
-
-    public static final String ID_FIELD = "id";
-    public static final String EVENT_FIELD = "event";
-    public static final String[] TABLE_FIELD_NAMES = { ID_FIELD, EVENT_FIELD };
 
     public static final int EVENT_UPLOAD_THRESHOLD = 30;
     public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;
@@ -36,10 +31,5 @@ public class Constants {
     public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
     public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
     public static final String PREFKEY_USER_ID = PACKAGE_NAME + ".userId";
-
-    public static final String PERMISSION_GET_ACCOUNTS = "android.permission.GET_ACCOUNTS";
-    public static final String PERMISSION_READ_PHONE_STATE = "android.permission.READ_PHONE_STATE";
-    public static final String PERMISSION_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
-    public static final String PERMISSION_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
 
 }
