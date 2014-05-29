@@ -568,7 +568,7 @@ public class Amplitude {
 	}
 
 	// Returns a unique identifier for tracking within the analytics system
-	private static String getDeviceId() {
+	public static String getDeviceId() {
 		Set<String> invalidIds = new HashSet<String>();
 		invalidIds.add("");
 		invalidIds.add("9774d56d682e549c");
