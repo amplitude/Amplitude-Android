@@ -410,20 +410,32 @@ public class Amplitude {
 	}
 
 	public static void logRevenue(double amount) {
-		// Amount is in dollars
-		// ex. $3.99 would be pass as logRevenue(3.99)
-		if (!contextAndApiKeySet("logRevenue()")) {
-			return;
-		}
+        // Amount is in dollars
+        // ex. $3.99 would be pass as logRevenue(3.99)
+	    logRevenue(null, 1, amount);
+	}
 
-		// Log revenue in events
-		JSONObject apiProperties = new JSONObject();
-		try {
-			apiProperties.put("special", REVENUE_EVENT);
-			apiProperties.put("revenue", amount);
-		} catch (JSONException e) {
-		}
-		checkedLogEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
+	public static void logRevenue(String productId, int quantity, double price) {
+        logRevenue(productId, quantity, price, null, null);
+    }
+
+	public static void logRevenue(String productId, int quantity, double price, String receipt, String receiptSignature) {
+        if (!contextAndApiKeySet("logRevenue()")) {
+            return;
+        }
+
+        // Log revenue in events
+        JSONObject apiProperties = new JSONObject();
+        try {
+            apiProperties.put("special", REVENUE_EVENT);
+            apiProperties.put("productId", productId);
+            apiProperties.put("quantity", quantity);
+            apiProperties.put("price", price);
+            apiProperties.put("receipt", receipt);
+            apiProperties.put("receiptSig", receiptSignature);
+        } catch (JSONException e) {
+        }
+        checkedLogEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
 	}
 
 	public static void setUserProperties(JSONObject userProperties) {
