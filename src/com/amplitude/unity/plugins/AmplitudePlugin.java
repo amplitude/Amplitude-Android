@@ -58,4 +58,12 @@ public class AmplitudePlugin {
     public static void logRevenue(double amount) {
         Amplitude.logRevenue(amount);
     }
+    
+    public static void logRevenue(String productId, int quantity, double price) {
+        Amplitude.logRevenue(productId, quantity, price);
+    }
+    
+    public static void logRevenue(String productId, int quantity, double price, String receipt, String receiptSignature) {
+        Amplitude.logRevenue(productId, quantity, price, receipt, receiptSignature);
+    }
 }
