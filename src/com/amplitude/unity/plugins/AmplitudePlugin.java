@@ -66,4 +66,8 @@ public class AmplitudePlugin {
     public static void logRevenue(String productId, int quantity, double price, String receipt, String receiptSignature) {
         Amplitude.logRevenue(productId, quantity, price, receipt, receiptSignature);
     }
+    
+    public static String getDeviceId() {
+        return Amplitude.getDeviceId();
+    }
 }
