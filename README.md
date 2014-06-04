@@ -97,7 +97,7 @@ Amplitude.setUserProperties(userProperties);
 
 To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
 
-```
+```java
 Amplitude.logRevenue("com.company.productid", 1, 3.99);
 ```
     
