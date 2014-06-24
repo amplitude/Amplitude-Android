@@ -5,13 +5,13 @@
 
 3. Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C1.3%7Cjar) using the following configuration in your pom.xml:
 
-```
-<dependency>
-  <groupId>com.amplitude</groupId>
-  <artifactId>android-sdk</artifactId>
-  <version>1.3</version>
-</dependency>
-```
+    ```
+    <dependency>
+      <groupId>com.amplitude</groupId>
+      <artifactId>android-sdk</artifactId>
+      <version>1.3</version>
+    </dependency>
+    ```
 
 4. In every file that uses analytics, import com.amplitude.api at the top:
 
