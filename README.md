@@ -1,45 +1,49 @@
 # Setup #
 1. If you haven't already, go to https://amplitude.com/signup and register for an account. Then, add an app. You will receive an API Key.
-2a. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-1.3.jar) and copy it into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
-2b. Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C1.3%7Cjar) using the following configuration in your pom.xml:
 
-    <dependency>
-      <groupId>com.amplitude</groupId>
-      <artifactId>android-sdk</artifactId>
-      <version>1.3</version>
-    </dependency>
+2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-1.3.jar) and copy it into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
 
-3. In every file that uses analytics, import com.amplitude.api at the top:
+3. Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C1.3%7Cjar) using the following configuration in your pom.xml:
+
+```
+<dependency>
+  <groupId>com.amplitude</groupId>
+  <artifactId>android-sdk</artifactId>
+  <version>1.3</version>
+</dependency>
+```
+
+4. In every file that uses analytics, import com.amplitude.api at the top:
 
     ```java
     import package com.amplitude.api;
     ```
 
-4. In the `onCreate()` of your main activity, initialize the SDK:
+5. In the `onCreate()` of your main activity, initialize the SDK:
 
     ```java
     Amplitude.initialize(this, "YOUR_API_KEY_HERE");
     ```
 
-5. Add a `startSession()` call to each `onResume()` in every activity in your app:
+6. Add a `startSession()` call to each `onResume()` in every activity in your app:
 
     ```java
     Amplitude.startSession();
     ```
 
-6. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
+7. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
 
     ```java
     Amplitude.endSession();
     ```
 
-7. To track an event anywhere in the app, call:
+8. To track an event anywhere in the app, call:
 
     ```java
     Amplitude.logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-8. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
