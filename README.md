@@ -13,10 +13,10 @@
     </dependency>
     ```
 
-4. In every file that uses analytics, import com.amplitude.api at the top:
+4. In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
 
     ```java
-    import package com.amplitude.api;
+    import com.amplitude.api.Amplitude;
     ```
 
 5. In the `onCreate()` of your main activity, initialize the SDK:
