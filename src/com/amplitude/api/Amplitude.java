@@ -48,17 +48,7 @@ public class Amplitude {
 	private static String deviceId;
 	private static boolean newDeviceIdPerInstall = false;
 
-	private static int versionCode;
-	private static String versionName;
-	private static int buildVersionSdk;
-	private static String buildVersionRelease;
-	private static String phoneBrand;
-	private static String phoneManufacturer;
-	private static String phoneModel;
-	private static String phoneCarrier;
-	private static String country;
-	private static String language;
-
+	private static DeviceInfo deviceInfo;
 	private static JSONObject userProperties;
 
 	private static long sessionId = -1;
@@ -108,24 +98,7 @@ public class Amplitude {
 			Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
 		}
 		Amplitude.deviceId = getDeviceId();
-
-		PackageInfo packageInfo;
-		try {
-			packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-			versionCode = packageInfo.versionCode;
-			versionName = packageInfo.versionName;
-		} catch (NameNotFoundException e) {
-		}
-		buildVersionSdk = Build.VERSION.SDK_INT;
-		buildVersionRelease = Build.VERSION.RELEASE;
-		phoneBrand = Build.BRAND;
-		phoneManufacturer = Build.MANUFACTURER;
-		phoneModel = Build.MODEL;
-		TelephonyManager manager = (TelephonyManager) context
-				.getSystemService(Context.TELEPHONY_SERVICE);
-		phoneCarrier = manager.getNetworkOperatorName();
-		country = Locale.getDefault().getCountry();
-		language = Locale.getDefault().getLanguage();
+		Amplitude.deviceInfo = new DeviceInfo(context);
 	}
 
 	public static void enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
@@ -214,20 +187,20 @@ public class Amplitude {
 				: replaceWithJSONNull(userId));
 		event.put("device_id", replaceWithJSONNull(deviceId));
 		event.put("session_id", sessionId);
-		event.put("version_code", versionCode);
-		event.put("version_name", replaceWithJSONNull(versionName));
-		event.put("build_version_sdk", buildVersionSdk);
-		event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
-		event.put("phone_brand", replaceWithJSONNull(phoneBrand));
-		event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
-		event.put("phone_model", replaceWithJSONNull(phoneModel));
-		event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
-		event.put("country", replaceWithJSONNull(country));
-		event.put("language", replaceWithJSONNull(language));
+		event.put("version_code", deviceInfo.getVersionCode());
+		event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
+		event.put("build_version_sdk", deviceInfo.getBuildVersionSdk());
+		event.put("build_version_release", replaceWithJSONNull(deviceInfo.getBuildVersionRelease()));
+		event.put("phone_brand", replaceWithJSONNull(deviceInfo.getPhoneBrand()));
+		event.put("phone_manufacturer", replaceWithJSONNull(deviceInfo.getPhoneManufacturer()));
+		event.put("phone_model", replaceWithJSONNull(deviceInfo.getPhoneModel()));
+		event.put("phone_carrier", replaceWithJSONNull(deviceInfo.getPhoneCarrier()));
+		event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
+		event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
 		event.put("client", "android");
 
 		JSONObject apiProperties = event.getJSONObject("api_properties");
-		Location location = getMostRecentLocation();
+		Location location = deviceInfo.getMostRecentLocation();
 		if (location != null) {
 			JSONObject JSONLocation = new JSONObject();
 			JSONLocation.put("lat", location.getLatitude());
@@ -614,30 +587,6 @@ public class Amplitude {
 		preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
 		return randomId;
 
-	}
-
-	private static Location getMostRecentLocation() {
-		LocationManager locationManager = (LocationManager) context
-				.getSystemService(Context.LOCATION_SERVICE);
-		List<String> providers = locationManager.getProviders(true);
-		List<Location> locations = new ArrayList<Location>();
-		for (String provider : providers) {
-			Location location = locationManager.getLastKnownLocation(provider);
-			if (location != null) {
-				locations.add(location);
-			}
-		}
-
-		long maximumTimestamp = -1;
-		Location bestLocation = null;
-		for (Location location : locations) {
-			if (location.getTime() > maximumTimestamp) {
-				maximumTimestamp = location.getTime();
-				bestLocation = location;
-			}
-		}
-
-		return bestLocation;
 	}
 
 	private static Object replaceWithJSONNull(Object obj) {
