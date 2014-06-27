@@ -1,9 +1,11 @@
 package com.amplitude.api;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -12,115 +14,144 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 public class DeviceInfo {
 
+    public static final String TAG = "com.amplitude.api.DeviceInfo";
+
     private Context context;
     
-    private int versionCode;
-    private String versionName;
-    private int buildVersionSdk;
-    private String buildVersionRelease;
-    private String phoneBrand;
-    private String phoneManufacturer;
-    private String phoneModel;
-    private String phoneCarrier;
-    private String geocodeCountry;
-    private String networkCountry;
-    private String localeCountry;
-    private String language;
-
+    // Cached properties, since fetching these take time
+    private String advertisingId;
+    private String country;
+    
     public DeviceInfo(Context context) {
         this.context = context;
-
-        // Get version information
+    }
+    
+    public int getVersionCode() {
         PackageInfo packageInfo;
         try {
             packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            versionCode = packageInfo.versionCode;
-            versionName = packageInfo.versionName;
+            return packageInfo.versionCode;
         } catch (NameNotFoundException e) {
         }
-        buildVersionSdk = Build.VERSION.SDK_INT;
-        buildVersionRelease = Build.VERSION.RELEASE;
-        
-        // Device information
-        phoneBrand = Build.BRAND;
-        phoneManufacturer = Build.MANUFACTURER;
-        phoneModel = Build.MODEL;
-        
-        TelephonyManager manager = (TelephonyManager) context
-                .getSystemService(Context.TELEPHONY_SERVICE);
-
-        // Carrier
-        phoneCarrier = manager.getNetworkOperatorName();
-        
-        // Country
-        new AsyncGeocoder().execute();
-        if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
-            networkCountry = manager.getNetworkCountryIso();
-            if (networkCountry != null) {
-                networkCountry = networkCountry.toUpperCase(Locale.US);
-            }
-        }
-        localeCountry = Locale.getDefault().getCountry();
-        
-        // Language
-        language = Locale.getDefault().getLanguage();
-    }
-
-    public int getVersionCode() {
-        return versionCode;
+        return 0;
     }
 
     public String getVersionName() {
-        return versionName;
+        PackageInfo packageInfo;
+        try {
+            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return packageInfo.versionName;
+        } catch (NameNotFoundException e) {
+        }
+        return null;
     }
 
     public int getBuildVersionSdk() {
-        return buildVersionSdk;
+        return Build.VERSION.SDK_INT;
     }
 
     public String getBuildVersionRelease() {
-        return buildVersionRelease;
+        return Build.VERSION.RELEASE;
     }
 
     public String getPhoneBrand() {
-        return phoneBrand;
+        return Build.BRAND;
     }
 
     public String getPhoneManufacturer() {
-        return phoneManufacturer;
+        return Build.MANUFACTURER;
     }
 
     public String getPhoneModel() {
-        return phoneModel;
+        return Build.MODEL;
     }
 
     public String getPhoneCarrier() {
-        return phoneCarrier;
+        TelephonyManager manager = (TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        return manager.getNetworkOperatorName();
+    }
+    
+    public String getCountry() {
+        if (country == null) {
+            country = getCountryUncached();
+        }
+        return country;
     }
 
-    public String getCountry() {
-        //   Prioritize reverse geocode, but until we have a result from that,
-        //   we try to grab the country from the network, and finally the locale
-        if (geocodeCountry != null) {
-            return geocodeCountry;
+    private String getCountryUncached() {
+        // This should not be called on the main thread.
+
+        // Prioritize reverse geocode, but until we have a result from that,
+        // we try to grab the country from the network, and finally the locale
+        Location recent = getMostRecentLocation(context);
+        if (recent != null) {
+            try {
+                Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(
+                        recent.getLatitude(), recent.getLongitude(), 1);
+                if (addresses != null) {
+                    for (Address address : addresses) {
+                        if (address != null) {
+                            return address.getCountryCode();
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                // Failed to reverse geocode location
+            }
         }
-        if (networkCountry != null) {
-            return networkCountry;
+
+        TelephonyManager manager = (TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
+            String country = manager.getNetworkCountryIso();
+            if (country != null) {
+                return country.toUpperCase(Locale.US);
+            }
         }
-        return localeCountry;
+        return Locale.getDefault().getCountry();
     }
 
     public String getLanguage() {
-        return language;
+        return Locale.getDefault().getLanguage();
+    }
+    
+    public String getAdvertisingId() {
+        // This should not be called on the main thread.
+        if (advertisingId == null) {
+            try {
+                Class AdvertisingIdClient = Class.forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
+                Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo", Context.class);
+                Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
+                Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod("isLimitAdTrackingEnabled");
+                Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled.invoke(advertisingInfo);
+
+                if (limitAdTrackingEnabled) {
+                    return null;
+                }
+                Method getId = advertisingInfo.getClass().getMethod("getId");
+                advertisingId = (String) getId.invoke(advertisingInfo);
+            } catch (ClassNotFoundException e) {
+              Log.w(TAG, "Google Play Services SDK not found!");  
+            } catch (Exception e) {
+              Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
+            }
+        }
+        return advertisingId;
+    }
+    
+    public String generateUUID() {
+        return UUID.randomUUID().toString();
     }
 
-    public Location getMostRecentLocation() {
+    public static Location getMostRecentLocation(Context context) {
         LocationManager locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
@@ -143,38 +174,5 @@ public class DeviceInfo {
 
         return bestLocation;
     }
-    
-    class AsyncGeocoder extends AsyncTask<Void, Void, String> {
 
-        @Override
-        protected String doInBackground(Void... params) {
-            Location recent = getMostRecentLocation();
-            if (recent != null) {
-                try {
-                    Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-                    List<Address> addresses = geocoder.getFromLocation(
-                            recent.getLatitude(), recent.getLongitude(), 1);
-                    if (addresses != null) {
-                        for (Address address : addresses) {
-                            if (address != null) {
-                                return address.getCountryCode();
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    // Failed to reverse geocode location
-                }
-            }
-            return null;
-        }
-        
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null) {
-                geocodeCountry = result.toUpperCase(Locale.US);
-            }
-        }
-        
-    }
-    
 }

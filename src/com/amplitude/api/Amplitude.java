@@ -7,9 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.HttpResponse;
@@ -28,12 +26,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -47,8 +40,22 @@ public class Amplitude {
 	private static String userId;
 	private static String deviceId;
 	private static boolean newDeviceIdPerInstall = false;
+	private static boolean useAdvertisingIdForDeviceId = false;
+	private static boolean initialized = false;
 
 	private static DeviceInfo deviceInfo;
+	private static String advertisingId;
+	private static int versionCode;
+	private static String versionName;
+	private static int buildVersionSdk;
+	private static String buildVersionRelease;
+	private static String phoneBrand;
+	private static String phoneManufacturer;
+	private static String phoneModel;
+	private static String phoneCarrier;
+	private static String country;
+	private static String language;
+
 	private static JSONObject userProperties;
 
 	private static long sessionId = -1;
@@ -77,7 +84,7 @@ public class Amplitude {
 		initialize(context, apiKey, null);
 	}
 
-	public static void initialize(Context context, String apiKey, String userId) {
+	public synchronized static void initialize(Context context, String apiKey, String userId) {
 		if (context == null) {
 			Log.e(TAG, "Argument context cannot be null in initialize()");
 			return;
@@ -86,23 +93,50 @@ public class Amplitude {
 			Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
 			return;
 		}
-
-		Amplitude.context = context.getApplicationContext();
-		Amplitude.apiKey = apiKey;
-		SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
-				Context.MODE_PRIVATE);
-		if (userId != null) {
-			Amplitude.userId = userId;
-			preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
-		} else {
-			Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
+		if (!initialized) {
+            Amplitude.context = context.getApplicationContext();
+            Amplitude.apiKey = apiKey;
+            initializeDeviceInfo();
+            SharedPreferences preferences = context.getSharedPreferences(getSharedPreferencesName(),
+                    Context.MODE_PRIVATE);
+            if (userId != null) {
+                Amplitude.userId = userId;
+                preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+            } else {
+                Amplitude.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
+            }
+            initialized = true;
 		}
-		Amplitude.deviceId = getDeviceId();
-		Amplitude.deviceInfo = new DeviceInfo(context);
+	}
+
+	private static void initializeDeviceInfo() {
+	    deviceInfo = new DeviceInfo(context);
+	    runOnLogThread(new Runnable() {
+
+            @Override
+            public void run() {
+                deviceId = initializeDeviceId();
+                advertisingId = deviceInfo.getAdvertisingId();
+                versionCode = deviceInfo.getVersionCode();
+                versionName = deviceInfo.getVersionName();
+                buildVersionSdk = deviceInfo.getBuildVersionSdk();
+                buildVersionRelease = deviceInfo.getBuildVersionRelease();
+                phoneBrand = deviceInfo.getPhoneBrand();
+                phoneManufacturer = deviceInfo.getPhoneManufacturer();
+                phoneModel = deviceInfo.getPhoneModel();
+                phoneCarrier = deviceInfo.getPhoneCarrier();
+                country = deviceInfo.getCountry();
+                language = deviceInfo.getLanguage();
+            }
+	    });
 	}
 
 	public static void enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
 		Amplitude.newDeviceIdPerInstall = newDeviceIdPerInstall;
+	}
+
+	public static void useAdvertisingIdForDeviceId() {
+	    Amplitude.useAdvertisingIdForDeviceId = true;
 	}
 
 	public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
@@ -144,12 +178,38 @@ public class Amplitude {
 		JSONObject event = new JSONObject();
 		try {
 			event.put("event_type", replaceWithJSONNull(eventType));
-			event.put("custom_properties", (eventProperties == null) ? new JSONObject()
-					: eventProperties);
-			event.put("api_properties", (apiProperties == null) ? new JSONObject() : apiProperties);
-			event.put("global_properties", (userProperties == null) ? new JSONObject()
-					: userProperties);
-			addBoilerplate(event, timestamp);
+
+	        event.put("timestamp", timestamp);
+	        event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
+	                : replaceWithJSONNull(userId));
+	        event.put("device_id", replaceWithJSONNull(deviceId));
+	        event.put("session_id", sessionId);
+	        event.put("version_code", versionCode);
+	        event.put("version_name", replaceWithJSONNull(versionName));
+	        event.put("build_version_sdk", buildVersionSdk);
+	        event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
+	        event.put("phone_brand", replaceWithJSONNull(phoneBrand));
+	        event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
+	        event.put("phone_model", replaceWithJSONNull(phoneModel));
+	        event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
+	        event.put("country", replaceWithJSONNull(country));
+	        event.put("language", replaceWithJSONNull(language));
+	        event.put("client", "android");
+
+	        apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
+	        Location location = DeviceInfo.getMostRecentLocation(context);
+	        if (location != null) {
+	            JSONObject locationJSON = new JSONObject();
+	            locationJSON.put("lat", location.getLatitude());
+	            locationJSON.put("lng", location.getLongitude());
+	            apiProperties.put("location", locationJSON);
+	        }
+
+            event.put("api_properties", apiProperties);
+            event.put("custom_properties", (eventProperties == null) ? new JSONObject()
+                    : eventProperties);
+            event.put("global_properties", (userProperties == null) ? new JSONObject()
+                    : userProperties);
 		} catch (JSONException e) {
 			Log.e(TAG, e.toString());
 		}
@@ -181,41 +241,14 @@ public class Amplitude {
 		}
 	}
 
-	private static void addBoilerplate(JSONObject event, long timestamp) throws JSONException {
-		event.put("timestamp", timestamp);
-		event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
-				: replaceWithJSONNull(userId));
-		event.put("device_id", replaceWithJSONNull(deviceId));
-		event.put("session_id", sessionId);
-		event.put("version_code", deviceInfo.getVersionCode());
-		event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
-		event.put("build_version_sdk", deviceInfo.getBuildVersionSdk());
-		event.put("build_version_release", replaceWithJSONNull(deviceInfo.getBuildVersionRelease()));
-		event.put("phone_brand", replaceWithJSONNull(deviceInfo.getPhoneBrand()));
-		event.put("phone_manufacturer", replaceWithJSONNull(deviceInfo.getPhoneManufacturer()));
-		event.put("phone_model", replaceWithJSONNull(deviceInfo.getPhoneModel()));
-		event.put("phone_carrier", replaceWithJSONNull(deviceInfo.getPhoneCarrier()));
-		event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
-		event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
-		event.put("client", "android");
-
-		JSONObject apiProperties = event.getJSONObject("api_properties");
-		Location location = deviceInfo.getMostRecentLocation();
-		if (location != null) {
-			JSONObject JSONLocation = new JSONObject();
-			JSONLocation.put("lat", location.getLatitude());
-			JSONLocation.put("lng", location.getLongitude());
-			apiProperties.put("location", JSONLocation);
-		}
-	}
-
 	public static void uploadEvents() {
 		if (!contextAndApiKeySet("uploadEvents()")) {
 			return;
 		}
 
 		logThread.post(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				updateServer();
 			}
 		});
@@ -225,7 +258,8 @@ public class Amplitude {
 		if (!updateScheduled.getAndSet(true)) {
 
 			logThread.postDelayed(new Runnable() {
-				public void run() {
+				@Override
+                public void run() {
 					updateScheduled.set(false);
 					updateServer();
 				}
@@ -263,15 +297,15 @@ public class Amplitude {
 				Context.MODE_PRIVATE);
 		return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1);
 	}
-	
+
 	private static void openSession() {
 		clearEndSession();
-		sessionOpen = true;		
+		sessionOpen = true;
 	}
-	
+
 	private static void closeSession() {
 		// Close the session. Events within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
-		// will stay in the session. 
+		// will stay in the session.
 		// A startSession call within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
 		// will reopen the session.
 		sessionOpen = false;
@@ -441,7 +475,8 @@ public class Amplitude {
 				final long maxId = pair.first;
 				final JSONArray events = pair.second;
 				httpThread.post(new Runnable() {
-					public void run() {
+					@Override
+                    public void run() {
 						makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString(),
 								maxId);
 					}
@@ -500,13 +535,15 @@ public class Amplitude {
 			if (stringResponse.equals("success")) {
 				uploadSuccess = true;
 				logThread.post(new Runnable() {
-					public void run() {
+					@Override
+                    public void run() {
 						DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 						dbHelper.removeEvents(maxId);
 						uploadingCurrently.set(false);
 						if (dbHelper.getEventCount() > Constants.EVENT_UPLOAD_THRESHOLD) {
 							logThread.post(new Runnable() {
-								public void run() {
+								@Override
+                                public void run() {
 									updateServer(false);
 								}
 							});
@@ -552,8 +589,15 @@ public class Amplitude {
 
 	}
 
-	// Returns a unique identifier for tracking within the analytics system
+	/**
+	 * @return A unique identifier for tracking within the analytics system.
+	 *     Can be null if deviceId hasn't been initialized yet;
+	 */
 	public static String getDeviceId() {
+	    return deviceId;
+	}
+
+	private static String initializeDeviceId() {
 		Set<String> invalidIds = new HashSet<String>();
 		invalidIds.add("");
 		invalidIds.add("9774d56d682e549c");
@@ -569,21 +613,20 @@ public class Amplitude {
 			return deviceId;
 		}
 
-		if (!newDeviceIdPerInstall) {
-			// Android ID
-			// Issues on 2.2, some phones have same Android ID due to
-			// manufacturer error
-			String androidId = android.provider.Settings.Secure.getString(
-					context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-			if (!(TextUtils.isEmpty(androidId) || invalidIds.contains(androidId))) {
-				preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, androidId).commit();
-				return androidId;
-			}
+		if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId) {
+		    // Android ID is deprecated by Google.
+		    // We are required to use Advertising ID, and respect the advertising ID preference
+
+            String advertisingId = deviceInfo.getAdvertisingId();
+            if (!(TextUtils.isEmpty(advertisingId) || invalidIds.contains(advertisingId))) {
+                preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, advertisingId).commit();
+                return advertisingId;
+            }
 		}
 
 		// If this still fails, generate random identifier that does not persist
-		// across installations
-		String randomId = UUID.randomUUID().toString();
+		// across installations. Append R to distinguish as randomly generated
+		String randomId = deviceInfo.generateUUID() + "R";
 		preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
 		return randomId;
 
@@ -593,7 +636,7 @@ public class Amplitude {
 		return obj == null ? JSONObject.NULL : obj;
 	}
 
-	private static boolean contextAndApiKeySet(String methodName) {
+	private synchronized static boolean contextAndApiKeySet(String methodName) {
 		if (context == null) {
 			Log.e(TAG, "context cannot be null, set context with initialize() before calling "
 					+ methodName);
