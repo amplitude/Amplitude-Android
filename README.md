@@ -114,7 +114,9 @@ Amplitude.logRevenue("com.company.productid", 1, 3.99);
     
 `logRevenue()` takes a takes a string to identify the product (the product ID from Google Play), an int with the quantity of product purchased, and a double with the dollar amount of the sale. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
 
-To enable revenue verification, copy your Google Play License Public Key into the manage section of your app on Amplitude. Then after a successful purchase transaction, call `logRevenue()` with the purchase data and receipt signature:
+**To enable revenue verification, copy your Google Play License Public Key into the manage section of your app on Amplitude. You must put a key for every single app in Amplitude where you want revenue verification.**
+
+Then after a successful purchase transaction, call `logRevenue()` with the purchase data and receipt signature:
 
 ```java
 
