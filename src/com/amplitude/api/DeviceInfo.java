@@ -16,6 +16,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 public class DeviceInfo {
@@ -23,15 +24,15 @@ public class DeviceInfo {
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
     private Context context;
-    
+
     // Cached properties, since fetching these take time
     private String advertisingId;
     private String country;
-    
+
     public DeviceInfo(Context context) {
         this.context = context;
     }
-    
+
     public int getVersionCode() {
         PackageInfo packageInfo;
         try {
@@ -77,7 +78,7 @@ public class DeviceInfo {
                 .getSystemService(Context.TELEPHONY_SERVICE);
         return manager.getNetworkOperatorName();
     }
-    
+
     public String getCountry() {
         if (country == null) {
             country = getCountryUncached();
@@ -85,15 +86,16 @@ public class DeviceInfo {
         return country;
     }
 
-    private String getCountryUncached() {
-        // This should not be called on the main thread.
+    // @VisibleForTesting
+    protected Geocoder getGeocoder() {
+        return new Geocoder(context, Locale.ENGLISH);
+    }
 
-        // Prioritize reverse geocode, but until we have a result from that,
-        // we try to grab the country from the network, and finally the locale
+    private String getCountryFromLocation() {
         Location recent = getMostRecentLocation(context);
         if (recent != null) {
             try {
-                Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+                Geocoder geocoder = getGeocoder();
                 List<Address> addresses = geocoder.getFromLocation(
                         recent.getLatitude(), recent.getLongitude(), 1);
                 if (addresses != null) {
@@ -107,7 +109,10 @@ public class DeviceInfo {
                 // Failed to reverse geocode location
             }
         }
+        return null;
+    }
 
+    private String getCountryFromNetwork() {
         TelephonyManager manager = (TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE);
         if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
@@ -116,13 +121,33 @@ public class DeviceInfo {
                 return country.toUpperCase(Locale.US);
             }
         }
+        return null;
+    }
+
+    private String getCountryFromLocale() {
         return Locale.getDefault().getCountry();
+    }
+
+    private String getCountryUncached() {
+        // This should not be called on the main thread.
+
+        // Prioritize reverse geocode, but until we have a result from that,
+        // we try to grab the country from the network, and finally the locale
+        String country = getCountryFromLocation();
+        if (!TextUtils.isEmpty(country)) {
+            return country;
+        }
+        country = getCountryFromNetwork();
+        if (!TextUtils.isEmpty(country)) {
+            return country;
+        }
+        return getCountryFromLocale();
     }
 
     public String getLanguage() {
         return Locale.getDefault().getLanguage();
     }
-    
+
     public String getAdvertisingId() {
         // This should not be called on the main thread.
         if (advertisingId == null) {
@@ -139,14 +164,14 @@ public class DeviceInfo {
                 Method getId = advertisingInfo.getClass().getMethod("getId");
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
-              Log.w(TAG, "Google Play Services SDK not found!");  
+              Log.w(TAG, "Google Play Services SDK not found!");
             } catch (Exception e) {
               Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
         }
         return advertisingId;
     }
-    
+
     public String generateUUID() {
         return UUID.randomUUID().toString();
     }
