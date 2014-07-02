@@ -140,4 +140,4 @@ This SDK automatically grabs useful data from the phone, including app version, 
 
 User IDs are automatically generated based on device specific identifiers if not specified.
 
-Device IDs use ANDROID_ID if available, or a random ID otherwise. You can retrieve the Device ID that Amplitude uses with `Amplitude.getDeviceId()`.
+By default, device IDs are a randomly generated UUID. If you would like to use Google's Advertising ID as the device ID, you can specify this by calling `Amplitude.useAdvertisingIdForDeviceId()` prior to initializing. You can retrieve the Device ID that Amplitude uses with `Amplitude.getDeviceId()`. This method can return null if a Device ID hasn't been generated yet.
