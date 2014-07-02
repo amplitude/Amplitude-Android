@@ -204,6 +204,9 @@ public class Amplitude {
 	            locationJSON.put("lng", location.getLongitude());
 	            apiProperties.put("location", locationJSON);
 	        }
+	        if (advertisingId != null) {
+	            apiProperties.put("androidADID", advertisingId);
+	        }
 
             event.put("api_properties", apiProperties);
             event.put("custom_properties", (eventProperties == null) ? new JSONObject()
