@@ -9,7 +9,7 @@
     <dependency>
       <groupId>com.amplitude</groupId>
       <artifactId>android-sdk</artifactId>
-      <version>1.4</version>
+      <version>1.4.1</version>
     </dependency>
     ```
 
