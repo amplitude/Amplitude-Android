@@ -399,13 +399,16 @@ public class Amplitude {
                     apiProperties.put("special", END_SESSION_EVENT);
                 } catch (JSONException e) {
                 }
-                long eventId = logEvent(END_SESSION_EVENT, null, apiProperties, timestamp, false);
+                if (sessionOpen) {
+                    long eventId = logEvent(END_SESSION_EVENT, null, apiProperties, timestamp,
+                            false);
 
-                SharedPreferences preferences = context.getSharedPreferences(
-                        getSharedPreferencesName(), Context.MODE_PRIVATE);
-                preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, eventId)
-                        .putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, timestamp).commit();
-
+                    SharedPreferences preferences = context.getSharedPreferences(
+                            getSharedPreferencesName(), Context.MODE_PRIVATE);
+                    preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, eventId)
+                            .putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, timestamp)
+                            .commit();
+                }
                 closeSession();
             }
         });
