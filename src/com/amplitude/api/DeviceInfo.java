@@ -33,16 +33,6 @@ public class DeviceInfo {
         this.context = context;
     }
 
-    public int getVersionCode() {
-        PackageInfo packageInfo;
-        try {
-            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            return packageInfo.versionCode;
-        } catch (NameNotFoundException e) {
-        }
-        return 0;
-    }
-
     public String getVersionName() {
         PackageInfo packageInfo;
         try {
@@ -53,27 +43,27 @@ public class DeviceInfo {
         return null;
     }
 
-    public int getBuildVersionSdk() {
-        return Build.VERSION.SDK_INT;
+    public String getOSName() {
+        return "android";
     }
 
-    public String getBuildVersionRelease() {
+    public String getOSVersion() {
         return Build.VERSION.RELEASE;
     }
 
-    public String getPhoneBrand() {
+    public String getBrand() {
         return Build.BRAND;
     }
 
-    public String getPhoneManufacturer() {
+    public String getManufacturer() {
         return Build.MANUFACTURER;
     }
 
-    public String getPhoneModel() {
+    public String getModel() {
         return Build.MODEL;
     }
 
-    public String getPhoneCarrier() {
+    public String getCarrier() {
         TelephonyManager manager = (TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE);
         return manager.getNetworkOperatorName();
@@ -96,8 +86,8 @@ public class DeviceInfo {
         if (recent != null) {
             try {
                 Geocoder geocoder = getGeocoder();
-                List<Address> addresses = geocoder.getFromLocation(
-                        recent.getLatitude(), recent.getLongitude(), 1);
+                List<Address> addresses = geocoder.getFromLocation(recent.getLatitude(),
+                        recent.getLongitude(), 1);
                 if (addresses != null) {
                     for (Address address : addresses) {
                         if (address != null) {
@@ -152,11 +142,15 @@ public class DeviceInfo {
         // This should not be called on the main thread.
         if (advertisingId == null) {
             try {
-                Class AdvertisingIdClient = Class.forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
-                Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo", Context.class);
+                Class AdvertisingIdClient = Class
+                        .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
+                Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo",
+                        Context.class);
                 Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
-                Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod("isLimitAdTrackingEnabled");
-                Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled.invoke(advertisingInfo);
+                Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod(
+                        "isLimitAdTrackingEnabled");
+                Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
+                        .invoke(advertisingInfo);
 
                 if (limitAdTrackingEnabled) {
                     return null;
@@ -164,9 +158,9 @@ public class DeviceInfo {
                 Method getId = advertisingInfo.getClass().getMethod("getId");
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
-              Log.w(TAG, "Google Play Services SDK not found!");
+                Log.w(TAG, "Google Play Services SDK not found!");
             } catch (Exception e) {
-              Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
+                Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
         }
         return advertisingId;

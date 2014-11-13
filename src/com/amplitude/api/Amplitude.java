@@ -45,14 +45,13 @@ public class Amplitude {
 
     private static DeviceInfo deviceInfo;
     private static String advertisingId;
-    private static int versionCode;
     private static String versionName;
-    private static int buildVersionSdk;
-    private static String buildVersionRelease;
-    private static String phoneBrand;
-    private static String phoneManufacturer;
-    private static String phoneModel;
-    private static String phoneCarrier;
+    private static String osName;
+    private static String osVersion;
+    private static String brand;
+    private static String manufacturer;
+    private static String model;
+    private static String carrier;
     private static String country;
     private static String language;
 
@@ -117,14 +116,13 @@ public class Amplitude {
             public void run() {
                 deviceId = initializeDeviceId();
                 advertisingId = deviceInfo.getAdvertisingId();
-                versionCode = deviceInfo.getVersionCode();
                 versionName = deviceInfo.getVersionName();
-                buildVersionSdk = deviceInfo.getBuildVersionSdk();
-                buildVersionRelease = deviceInfo.getBuildVersionRelease();
-                phoneBrand = deviceInfo.getPhoneBrand();
-                phoneManufacturer = deviceInfo.getPhoneManufacturer();
-                phoneModel = deviceInfo.getPhoneModel();
-                phoneCarrier = deviceInfo.getPhoneCarrier();
+                osName = deviceInfo.getOSName();
+                osVersion = deviceInfo.getOSVersion();
+                brand = deviceInfo.getBrand();
+                manufacturer = deviceInfo.getManufacturer();
+                model = deviceInfo.getModel();
+                carrier = deviceInfo.getCarrier();
                 country = deviceInfo.getCountry();
                 language = deviceInfo.getLanguage();
             }
@@ -184,17 +182,21 @@ public class Amplitude {
                     : replaceWithJSONNull(userId));
             event.put("device_id", replaceWithJSONNull(deviceId));
             event.put("session_id", sessionId);
-            event.put("version_code", versionCode);
             event.put("version_name", replaceWithJSONNull(versionName));
-            event.put("build_version_sdk", buildVersionSdk);
-            event.put("build_version_release", replaceWithJSONNull(buildVersionRelease));
-            event.put("phone_brand", replaceWithJSONNull(phoneBrand));
-            event.put("phone_manufacturer", replaceWithJSONNull(phoneManufacturer));
-            event.put("phone_model", replaceWithJSONNull(phoneModel));
-            event.put("phone_carrier", replaceWithJSONNull(phoneCarrier));
+            event.put("os_name", replaceWithJSONNull(osName));
+            event.put("os_version", replaceWithJSONNull(osVersion));
+            event.put("device_brand", replaceWithJSONNull(brand));
+            event.put("device_manufacturer", replaceWithJSONNull(manufacturer));
+            event.put("device_model", replaceWithJSONNull(model));
+            event.put("carrier", replaceWithJSONNull(carrier));
             event.put("country", replaceWithJSONNull(country));
             event.put("language", replaceWithJSONNull(language));
-            event.put("client", "android");
+            event.put("platform", Constants.PLATFORM);
+
+            JSONObject library = new JSONObject();
+            library.put("name", Constants.LIBRARY);
+            library.put("version", Constants.VERSION);
+            event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
             Location location = DeviceInfo.getMostRecentLocation(context);
@@ -209,9 +211,9 @@ public class Amplitude {
             }
 
             event.put("api_properties", apiProperties);
-            event.put("custom_properties", (eventProperties == null) ? new JSONObject()
+            event.put("event_properties", (eventProperties == null) ? new JSONObject()
                     : eventProperties);
-            event.put("global_properties", (userProperties == null) ? new JSONObject()
+            event.put("user_properties", (userProperties == null) ? new JSONObject()
                     : userProperties);
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
