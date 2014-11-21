@@ -129,6 +129,21 @@ Amplitude.logRevenue("com.company.productid", 1, 3.99, purchaseData, receiptSign
 
 See the [Google In App Billing Documentation](http://developer.android.com/google/play/billing/billing_integrate.html#Purchase) for details on how to retrieve the purchase data and receipt signature.
 
+# Fine-grained location tracking #
+
+Amplitude access the Android location service (if possible) to add the specific coordinates (longitude and latitude)
+where an event is logged.
+
+This behaviour is enabled by default, but can be adjusted calling the following methods before initializing:
+
+```java
+Amplitude.enableLocationListening();
+Amplitude.disableLocationListening();
+```
+
+Even disabling the location listening, the events will have the "country" property filled. That property
+is retrieved from other sources (i.e. network or device locale).
+
 
 # Advanced #
 

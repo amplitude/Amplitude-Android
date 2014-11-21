@@ -41,6 +41,7 @@ public class Amplitude {
     private static String deviceId;
     private static boolean newDeviceIdPerInstall = false;
     private static boolean useAdvertisingIdForDeviceId = false;
+    private static boolean locationListening = true;
     private static boolean initialized = false;
 
     private static DeviceInfo deviceInfo;
@@ -109,7 +110,7 @@ public class Amplitude {
     }
 
     private static void initializeDeviceInfo() {
-        deviceInfo = new DeviceInfo(context);
+        deviceInfo = new DeviceInfo(context, Amplitude.locationListening);
         runOnLogThread(new Runnable() {
 
             @Override
@@ -135,6 +136,14 @@ public class Amplitude {
 
     public static void useAdvertisingIdForDeviceId() {
         Amplitude.useAdvertisingIdForDeviceId = true;
+    }
+
+    public static void enableLocationListening() {
+        Amplitude.locationListening = true;
+    }
+
+    public static void disableLocationListening() {
+        Amplitude.locationListening = false;
     }
 
     public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
@@ -199,12 +208,14 @@ public class Amplitude {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            Location location = DeviceInfo.getMostRecentLocation(context);
-            if (location != null) {
-                JSONObject locationJSON = new JSONObject();
-                locationJSON.put("lat", location.getLatitude());
-                locationJSON.put("lng", location.getLongitude());
-                apiProperties.put("location", locationJSON);
+            if (locationListening) {
+                Location location = DeviceInfo.getMostRecentLocation(context);
+                if (location != null) {
+                    JSONObject locationJSON = new JSONObject();
+                    locationJSON.put("lat", location.getLatitude());
+                    locationJSON.put("lng", location.getLongitude());
+                    apiProperties.put("location", locationJSON);
+                }
             }
             if (advertisingId != null) {
                 apiProperties.put("androidADID", advertisingId);

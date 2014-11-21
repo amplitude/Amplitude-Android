@@ -28,9 +28,11 @@ public class DeviceInfo {
     // Cached properties, since fetching these take time
     private String advertisingId;
     private String country;
+    private boolean locationListeningAllowed;
 
-    public DeviceInfo(Context context) {
+    public DeviceInfo(Context context, boolean locationListeningAllowed) {
         this.context = context;
+        this.locationListeningAllowed = locationListeningAllowed;
     }
 
     public String getVersionName() {
@@ -82,6 +84,8 @@ public class DeviceInfo {
     }
 
     private String getCountryFromLocation() {
+        if (!locationListeningAllowed) { return null; }
+
         Location recent = getMostRecentLocation(context);
         if (recent != null) {
             try {
@@ -127,6 +131,7 @@ public class DeviceInfo {
         if (!TextUtils.isEmpty(country)) {
             return country;
         }
+
         country = getCountryFromNetwork();
         if (!TextUtils.isEmpty(country)) {
             return country;
