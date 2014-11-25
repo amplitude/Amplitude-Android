@@ -23,16 +23,16 @@ public class DeviceInfo {
 
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
+    private static boolean locationListening = true;
+
     private Context context;
 
     // Cached properties, since fetching these take time
     private String advertisingId;
     private String country;
-    private boolean locationListeningAllowed;
 
-    public DeviceInfo(Context context, boolean locationListeningAllowed) {
+    public DeviceInfo(Context context) {
         this.context = context;
-        this.locationListeningAllowed = locationListeningAllowed;
     }
 
     public String getVersionName() {
@@ -84,7 +84,7 @@ public class DeviceInfo {
     }
 
     private String getCountryFromLocation() {
-        if (!locationListeningAllowed) { return null; }
+        if (!isLocationListening()) { return null; }
 
         Location recent = getMostRecentLocation(context);
         if (recent != null) {
@@ -176,6 +176,9 @@ public class DeviceInfo {
     }
 
     public static Location getMostRecentLocation(Context context) {
+
+        if (!locationListening) { return null; }
+
         LocationManager locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
@@ -197,6 +200,14 @@ public class DeviceInfo {
         }
 
         return bestLocation;
+    }
+
+    public static boolean isLocationListening() {
+        return locationListening;
+    }
+
+    public static void setLocationListening(boolean locationListening) {
+        DeviceInfo.locationListening = locationListening;
     }
 
 }

@@ -41,7 +41,6 @@ public class Amplitude {
     private static String deviceId;
     private static boolean newDeviceIdPerInstall = false;
     private static boolean useAdvertisingIdForDeviceId = false;
-    private static boolean locationListening = true;
     private static boolean initialized = false;
 
     private static DeviceInfo deviceInfo;
@@ -110,7 +109,7 @@ public class Amplitude {
     }
 
     private static void initializeDeviceInfo() {
-        deviceInfo = new DeviceInfo(context, Amplitude.locationListening);
+        deviceInfo = new DeviceInfo(context);
         runOnLogThread(new Runnable() {
 
             @Override
@@ -139,11 +138,11 @@ public class Amplitude {
     }
 
     public static void enableLocationListening() {
-        Amplitude.locationListening = true;
+        DeviceInfo.setLocationListening(true);
     }
 
     public static void disableLocationListening() {
-        Amplitude.locationListening = false;
+        DeviceInfo.setLocationListening(false);
     }
 
     public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
@@ -208,7 +207,7 @@ public class Amplitude {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            if (locationListening) {
+            if (DeviceInfo.isLocationListening()) {
                 Location location = DeviceInfo.getMostRecentLocation(context);
                 if (location != null) {
                     JSONObject locationJSON = new JSONObject();
