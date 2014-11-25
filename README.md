@@ -134,7 +134,7 @@ See the [Google In App Billing Documentation](http://developer.android.com/googl
 Amplitude access the Android location service (if possible) to add the specific coordinates (longitude and latitude)
 where an event is logged.
 
-This behaviour is enabled by default, but can be adjusted calling the following methods before initializing:
+This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
 
 ```java
 Amplitude.enableLocationListening();

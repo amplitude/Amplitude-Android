@@ -138,11 +138,17 @@ public class Amplitude {
     }
 
     public static void enableLocationListening() {
-        DeviceInfo.setLocationListening(true);
+        if (deviceInfo == null) {
+            throw new IllegalStateException("Must initialize before acting on location listening.");
+        }
+        deviceInfo.setLocationListening(true);
     }
 
     public static void disableLocationListening() {
-        DeviceInfo.setLocationListening(false);
+        if (deviceInfo == null) {
+            throw new IllegalStateException("Must initialize before acting on location listening.");
+        }
+        deviceInfo.setLocationListening(false);
     }
 
     public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
@@ -207,14 +213,12 @@ public class Amplitude {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            if (DeviceInfo.isLocationListening()) {
-                Location location = DeviceInfo.getMostRecentLocation(context);
-                if (location != null) {
-                    JSONObject locationJSON = new JSONObject();
-                    locationJSON.put("lat", location.getLatitude());
-                    locationJSON.put("lng", location.getLongitude());
-                    apiProperties.put("location", locationJSON);
-                }
+            Location location = deviceInfo.getMostRecentLocation(context);
+            if (location != null) {
+                JSONObject locationJSON = new JSONObject();
+                locationJSON.put("lat", location.getLatitude());
+                locationJSON.put("lng", location.getLongitude());
+                apiProperties.put("location", locationJSON);
             }
             if (advertisingId != null) {
                 apiProperties.put("androidADID", advertisingId);

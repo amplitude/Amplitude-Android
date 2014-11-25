@@ -23,7 +23,7 @@ public class DeviceInfo {
 
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
-    private static boolean locationListening = true;
+    private boolean locationListening = true;
 
     private Context context;
 
@@ -175,9 +175,9 @@ public class DeviceInfo {
         return UUID.randomUUID().toString();
     }
 
-    public static Location getMostRecentLocation(Context context) {
+    public Location getMostRecentLocation(Context context) {
 
-        if (!locationListening) { return null; }
+        if (!isLocationListening()) { return null; }
 
         LocationManager locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
@@ -202,12 +202,12 @@ public class DeviceInfo {
         return bestLocation;
     }
 
-    public static boolean isLocationListening() {
+    public boolean isLocationListening() {
         return locationListening;
     }
 
-    public static void setLocationListening(boolean locationListening) {
-        DeviceInfo.locationListening = locationListening;
+    public void setLocationListening(boolean locationListening) {
+        this.locationListening = locationListening;
     }
 
 }
