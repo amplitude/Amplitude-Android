@@ -86,7 +86,7 @@ public class DeviceInfo {
     private String getCountryFromLocation() {
         if (!isLocationListening()) { return null; }
 
-        Location recent = getMostRecentLocation(context);
+        Location recent = getMostRecentLocation();
         if (recent != null) {
             try {
                 Geocoder geocoder = getGeocoder();
@@ -175,7 +175,7 @@ public class DeviceInfo {
         return UUID.randomUUID().toString();
     }
 
-    public Location getMostRecentLocation(Context context) {
+    public Location getMostRecentLocation() {
 
         if (!isLocationListening()) { return null; }
 

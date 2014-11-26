@@ -213,7 +213,7 @@ public class Amplitude {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            Location location = deviceInfo.getMostRecentLocation(context);
+            Location location = deviceInfo.getMostRecentLocation();
             if (location != null) {
                 JSONObject locationJSON = new JSONObject();
                 locationJSON.put("lat", location.getLatitude());
