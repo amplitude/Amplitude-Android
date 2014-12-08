@@ -137,6 +137,20 @@ public class Amplitude {
         Amplitude.useAdvertisingIdForDeviceId = true;
     }
 
+    public static void enableLocationListening() {
+        if (deviceInfo == null) {
+            throw new IllegalStateException("Must initialize before acting on location listening.");
+        }
+        deviceInfo.setLocationListening(true);
+    }
+
+    public static void disableLocationListening() {
+        if (deviceInfo == null) {
+            throw new IllegalStateException("Must initialize before acting on location listening.");
+        }
+        deviceInfo.setLocationListening(false);
+    }
+
     public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
         Amplitude.sessionTimeoutMillis = sessionTimeoutMillis;
     }
@@ -199,7 +213,7 @@ public class Amplitude {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            Location location = DeviceInfo.getMostRecentLocation(context);
+            Location location = deviceInfo.getMostRecentLocation();
             if (location != null) {
                 JSONObject locationJSON = new JSONObject();
                 locationJSON.put("lat", location.getLatitude());

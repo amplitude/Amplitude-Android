@@ -23,6 +23,8 @@ public class DeviceInfo {
 
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
+    private boolean locationListening = true;
+
     private Context context;
 
     // Cached properties, since fetching these take time
@@ -82,7 +84,9 @@ public class DeviceInfo {
     }
 
     private String getCountryFromLocation() {
-        Location recent = getMostRecentLocation(context);
+        if (!isLocationListening()) { return null; }
+
+        Location recent = getMostRecentLocation();
         if (recent != null) {
             try {
                 Geocoder geocoder = getGeocoder();
@@ -127,6 +131,7 @@ public class DeviceInfo {
         if (!TextUtils.isEmpty(country)) {
             return country;
         }
+
         country = getCountryFromNetwork();
         if (!TextUtils.isEmpty(country)) {
             return country;
@@ -170,7 +175,10 @@ public class DeviceInfo {
         return UUID.randomUUID().toString();
     }
 
-    public static Location getMostRecentLocation(Context context) {
+    public Location getMostRecentLocation() {
+
+        if (!isLocationListening()) { return null; }
+
         LocationManager locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
@@ -192,6 +200,14 @@ public class DeviceInfo {
         }
 
         return bestLocation;
+    }
+
+    public boolean isLocationListening() {
+        return locationListening;
+    }
+
+    public void setLocationListening(boolean locationListening) {
+        this.locationListening = locationListening;
     }
 
 }
