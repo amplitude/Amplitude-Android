@@ -2,6 +2,8 @@ package com.amplitude.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.Exception;
+import java.lang.Thread;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -163,8 +165,24 @@ public class Amplitude {
         checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
     }
 
+    /**
+     * <p>Logs an event on the calling thread to local database. Event will be send to server
+     * with next batch or by calling {@linkplain #uploadEvents()} manually.
+     * <p>No network call is made by calling this.
+     * @param eventType Name of the event
+     * @param eventProperties Event properties
+     */
+    public static void logEventSynchronous(String eventType, JSONObject eventProperties) {
+        checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, false);
+    }
+
     private static void checkedLogEvent(final String eventType, final JSONObject eventProperties,
             final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+        checkedLogEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
+    }
+
+    private static void checkedLogEvent(final String eventType, final JSONObject eventProperties,
+            final JSONObject apiProperties, final long timestamp, final boolean checkSession, final boolean asyncronous) {
         if (TextUtils.isEmpty(eventType)) {
             Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return;
@@ -172,16 +190,26 @@ public class Amplitude {
         if (!contextAndApiKeySet("logEvent()")) {
             return;
         }
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
-            }
-        });
+
+        if(asyncronous) {
+            runOnLogThread(new Runnable() {
+                @Override
+                public void run() {
+                    logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
+                }
+            });
+        } else {
+            logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
+        }
     }
 
     private static long logEvent(String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, long timestamp, boolean checkSession) {
+                                 JSONObject apiProperties, long timestamp, boolean checkSession) {
+        logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, false);
+    }
+
+    private static long logEvent(String eventType, JSONObject eventProperties,
+            JSONObject apiProperties, long timestamp, boolean checkSession, final boolean offline) {
         if (checkSession) {
             startNewSessionIfNeeded(timestamp);
         }
@@ -233,10 +261,10 @@ public class Amplitude {
             Log.e(TAG, e.toString());
         }
 
-        return logEvent(event);
+        return logEvent(event, offline);
     }
 
-    private static long logEvent(JSONObject event) {
+    private static long logEvent(JSONObject event, final boolean offline) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
 
@@ -244,7 +272,8 @@ public class Amplitude {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD) {
+        if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD
+                && !offline) {
             updateServer();
         } else {
             updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
@@ -492,6 +521,10 @@ public class Amplitude {
 
     // Always call this from logThread
     private static void updateServer(boolean limit) {
+        if(Thread.currentThread() != logThread) {
+            Log.w(TAG, "updateServer has to be called from log thread", new Exception("Called from:"));
+        }
+
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
