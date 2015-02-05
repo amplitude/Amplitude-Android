@@ -6,3 +6,4 @@ dist/
 
 .idea/
 android-sdk.iml
+target/
