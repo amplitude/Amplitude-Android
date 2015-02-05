@@ -172,7 +172,7 @@ public class Amplitude {
      * @param eventType Name of the event
      * @param eventProperties Event properties
      */
-    public static void logEventSyncrounous(String eventType, JSONObject eventProperties) {
+    public static void logEventSynchronous(String eventType, JSONObject eventProperties) {
         checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, false);
     }
 
