@@ -3,3 +3,6 @@
 *~
 dist/
 *.asc
+
+.idea/
+android-sdk.iml
