@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,12 +30,18 @@ public class AmplitudeTest {
         Robolectric.getShadowApplication().setPackageName("com.amplitude.test");
         context = Robolectric.getShadowApplication().getApplicationContext();
         amplitude = new Amplitude.Lib();
+        // this sometimes deadlocks with lock contention by logThread and httpThread for
+        // a ShadowWrangler instance and the ShadowLooper class
+        // Might be a sign of a bug, or just Robolectric's bug.
         amplitude.initialize(context, "3e1bdafd338d25310d727a394f282a8d");
         Robolectric.setDefaultHttpResponse(200, "success");
     }
 
     @After
-    public void tearDown() throws Exception {}
+    public void tearDown() throws Exception {
+        amplitude.logThread.getLooper().quit();
+        amplitude.httpThread.getLooper().quit();
+    }
 
     @Test
     public void testSetUserId() {
@@ -46,6 +54,37 @@ public class AmplitudeTest {
                 "user_id",
                 context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
                         Constants.PREFKEY_USER_ID, null));
+    }
+
+    @Test
+    public void testSetUserProperties() throws JSONException {
+        amplitude.setUserProperties(null);
+        assertNull(amplitude.userProperties);
+
+        JSONObject userProperties;
+        JSONObject userProperties2;
+        JSONObject expected;
+
+        userProperties = new JSONObject();
+        userProperties.put("key1", "value1");
+        userProperties.put("key2", "value2");
+        amplitude.setUserProperties(userProperties);
+        assertEquals(amplitude.userProperties, userProperties);
+
+        amplitude.setUserProperties(null);
+        assertEquals(amplitude.userProperties, userProperties);
+
+        userProperties2 = new JSONObject();
+        userProperties.put("key2", "value3");
+        userProperties.put("key3", "value4");
+        amplitude.setUserProperties(userProperties2);
+        expected = new JSONObject();
+        expected.put("key1", "value1");
+        expected.put("key2", "value3");
+        expected.put("key3", "value4");
+        // JSONObject doesn't have a proper equals method, so we compare strings
+        // instead
+        assertEquals(expected.toString(), amplitude.userProperties.toString());
     }
 
     @Test

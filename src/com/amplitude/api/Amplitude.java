@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -20,6 +21,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.fest.util.VisibleForTesting;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,7 +64,8 @@ public class Amplitude {
         private String country;
         private String language;
 
-        private JSONObject userProperties;
+        @VisibleForTesting
+        JSONObject userProperties;
 
         private long sessionId = -1;
         private boolean sessionOpen = false;
@@ -476,7 +479,26 @@ public class Amplitude {
         }
 
         public void setUserProperties(JSONObject userProperties) {
-            this.userProperties = userProperties;
+            setUserProperties(userProperties, false);
+        }
+
+        public void setUserProperties(JSONObject userProperties, boolean replace) {
+            if (replace || this.userProperties == null) {
+                this.userProperties = userProperties;
+            } else {
+                if (userProperties == null) {
+                    return;
+                }
+                Iterator<?> keys = userProperties.keys();
+                while (keys.hasNext()) {
+                    String key = (String) keys.next();
+                    try {
+                        this.userProperties.put(key, userProperties.get(key));
+                    } catch (JSONException e) {
+                        Log.e(TAG, e.toString());
+                    }
+                }
+            }
         }
 
         public void setUserId(String userId) {
