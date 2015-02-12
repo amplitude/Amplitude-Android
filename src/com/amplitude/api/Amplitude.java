@@ -21,7 +21,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-import org.fest.util.VisibleForTesting;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -64,7 +63,7 @@ public class Amplitude {
         private String country;
         private String language;
 
-        @VisibleForTesting
+        /* VisibleForTesting */
         JSONObject userProperties;
 
         private long sessionId = -1;

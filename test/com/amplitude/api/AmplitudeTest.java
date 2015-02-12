@@ -11,9 +11,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.FakeHttp;
+import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
 
 import android.content.Context;
@@ -27,14 +29,14 @@ public class AmplitudeTest {
 
     @Before
     public void setUp() throws Exception {
-        Robolectric.getShadowApplication().setPackageName("com.amplitude.test");
-        context = Robolectric.getShadowApplication().getApplicationContext();
+        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
+        context = ShadowApplication.getInstance().getApplicationContext();
         amplitude = new Amplitude.Lib();
         // this sometimes deadlocks with lock contention by logThread and httpThread for
         // a ShadowWrangler instance and the ShadowLooper class
         // Might be a sign of a bug, or just Robolectric's bug.
         amplitude.initialize(context, "3e1bdafd338d25310d727a394f282a8d");
-        Robolectric.setDefaultHttpResponse(200, "success");
+        FakeHttp.setDefaultHttpResponse(200, "success");
     }
 
     @After
@@ -90,7 +92,7 @@ public class AmplitudeTest {
     @Test
     public void testGetDeviceIdWithoutAdvertisingId() {
         assertNull(amplitude.getDeviceId());
-        ShadowLooper looper = Robolectric.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.getScheduler().advanceToLastPostedRunnable();
         assertNotNull(amplitude.getDeviceId());
         assertEquals(37, amplitude.getDeviceId().length());
@@ -99,17 +101,17 @@ public class AmplitudeTest {
 
     @Test
     public void testLogEvent() {
-        ShadowLooper looper = Robolectric.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.getScheduler().advanceToLastPostedRunnable();
         amplitude.logEvent("test_event");
         looper.getScheduler().advanceToLastPostedRunnable();
         looper.getScheduler().advanceToLastPostedRunnable();
 
-        Robolectric.addPendingHttpResponse(200, "success");
-        ShadowLooper httplooper = Robolectric.shadowOf(amplitude.httpThread.getLooper());
+        FakeHttp.addPendingHttpResponse(200, "success");
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.getScheduler().advanceToLastPostedRunnable();
 
-        assertEquals(1, looper.getScheduler().enqueuedTaskCount());
-        assertTrue(Robolectric.httpRequestWasMade(Constants.EVENT_LOG_URL));
+        assertEquals(1, looper.getScheduler().size());
+        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
     }
 }

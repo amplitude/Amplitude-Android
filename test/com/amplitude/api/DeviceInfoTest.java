@@ -8,12 +8,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.internal.ShadowExtractor;
+import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowGeocoder;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowTelephonyManager;
+import org.robolectric.util.ReflectionHelpers;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -52,18 +55,18 @@ public class DeviceInfoTest {
 
     @Before
     public void setUp() throws Exception {
-        context = Robolectric.getShadowApplication().getApplicationContext();
-        Robolectric.getShadowApplication().getPackageManager()
+        context = ShadowApplication.getInstance().getApplicationContext();
+        ShadowApplication.getInstance().getPackageManager()
                 .getPackageInfo(context.getPackageName(), 0).versionName = TEST_VERSION_NAME;
-        Robolectric.Reflection.setFinalStaticField(Build.class, "BRAND", TEST_BRAND);
-        Robolectric.Reflection.setFinalStaticField(Build.class, "MANUFACTURER", TEST_MANUFACTURER);
-        Robolectric.Reflection.setFinalStaticField(Build.class, "MODEL", TEST_MODEL);
+        ReflectionHelpers.setStaticField(Build.class, "BRAND", TEST_BRAND);
+        ReflectionHelpers.setStaticField(Build.class, "MANUFACTURER", TEST_MANUFACTURER);
+        ReflectionHelpers.setStaticField(Build.class, "MODEL", TEST_MODEL);
 
         Configuration c = context.getResources().getConfiguration();
-        Robolectric.shadowOf(c).setLocale(TEST_LOCALE);
+        Shadows.shadowOf(c).setLocale(TEST_LOCALE);
         Locale.setDefault(TEST_LOCALE);
 
-        ShadowTelephonyManager manager = Robolectric.shadowOf((TelephonyManager) context
+        ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
         deviceInfo = new DeviceInfo(context);
@@ -104,7 +107,7 @@ public class DeviceInfoTest {
 
     @Test
     public void testGetCountryFromNetwork() {
-        ShadowTelephonyManager manager = Robolectric.shadowOf((TelephonyManager) context
+        ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
         assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
@@ -116,16 +119,16 @@ public class DeviceInfoTest {
             @Override
             protected Geocoder getGeocoder() {
                 Geocoder geocoder = new Geocoder(context, Locale.ENGLISH);
-                ShadowGeocoder shadowGeocoder = Robolectric.shadowOf(geocoder);
+                ShadowGeocoder shadowGeocoder = (ShadowGeocoder) ShadowExtractor.extract(geocoder);
                 shadowGeocoder.setSimulatedResponse("1 Dr Carlton B Goodlett Pl", "San Francisco",
                         "CA", "94506", TEST_GEO_COUNTRY);
                 return geocoder;
             };
         };
-        ShadowTelephonyManager telephonyManager = Robolectric.shadowOf((TelephonyManager) context
+        ShadowTelephonyManager telephonyManager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         telephonyManager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
-        ShadowLocationManager locationManager = Robolectric.shadowOf((LocationManager) context
+        ShadowLocationManager locationManager = Shadows.shadowOf((LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE));
         locationManager.simulateLocation(makeLocation(LocationManager.NETWORK_PROVIDER,
                 TEST_LOCATION_LAT, TEST_LOCATION_LNG));
@@ -146,7 +149,7 @@ public class DeviceInfoTest {
     @Test
     public void testGetMostRecentLocation() {
         DeviceInfo deviceInfo = new DeviceInfo(context);
-        ShadowLocationManager locationManager = Robolectric.shadowOf((LocationManager) context
+        ShadowLocationManager locationManager = Shadows.shadowOf((LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE));
         Location loc = makeLocation(LocationManager.NETWORK_PROVIDER, TEST_LOCATION_LAT,
                 TEST_LOCATION_LNG);
