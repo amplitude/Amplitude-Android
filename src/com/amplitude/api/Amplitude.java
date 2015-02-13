@@ -264,7 +264,7 @@ public class Amplitude {
         return logEvent(event, offline);
     }
 
-    private static long logEvent(JSONObject event, final boolean offline) {
+    private static synchronized long logEvent(JSONObject event, final boolean offline) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
 
@@ -272,8 +272,11 @@ public class Amplitude {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD
-                && !offline) {
+        if(offline) {
+            return eventId;
+        }
+
+        if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD) {
             updateServer();
         } else {
             updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
