@@ -91,10 +91,10 @@
         </artifact:mvn>
     </target>
 
-    <target name="compile-tests" depends="build" description="Compile test files">
+    <target name="build-tests" depends="build" description="Compile test files">
         <path id="test.classpath">
-            <path refid="project.class.path" />
             <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
         </path>
         <javac srcdir="${test.src}"
                destdir="${build}"
@@ -103,11 +103,11 @@
         </javac>
     </target>
 
-    <target name="test" depends="compile-tests" description="Runs all Robolectric unit tests.">
+    <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
         <path id="junit.classpath">
-            <path refid="project.class.path" />
             <pathelement location="${build}" />
             <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
         </path>
 
         <junit failureproperty="junit.failure" printsummary="yes">
