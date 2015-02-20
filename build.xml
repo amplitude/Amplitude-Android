@@ -11,6 +11,9 @@
     <property name="build" location="build" />
     <property name="dist" location="dist" />
 
+    <property name="test.src" location="test" />
+    <property name="test.reports" location="${dist}/reports"/>
+
     <property environment="env" />
     <property name="android-sdk-path" value="${env.ANDROID_SDK}" />
     <property name="android-target" value="${env.ANDROID_TARGET}" />
@@ -30,6 +33,7 @@
     <target name="init">
         <mkdir dir="${build}" />
         <mkdir dir="${dist}/lib" />
+        <mkdir dir="${test.reports}" />
     </target>
 
     <target name="clean" >
@@ -86,6 +90,36 @@
             <arg value="-Dfile=${jar}" />
         </artifact:mvn>
     </target>
+
+    <target name="build-tests" depends="build" description="Compile test files">
+        <path id="test.classpath">
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
+        </path>
+        <javac srcdir="${test.src}"
+               destdir="${build}"
+               classpathref="test.classpath"
+               includeantruntime="false">
+        </javac>
+    </target>
+
+    <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
+        <path id="junit.classpath">
+            <pathelement location="${build}" />
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
+        </path>
+
+        <junit failureproperty="junit.failure" printsummary="yes">
+            <classpath refid="junit.classpath" />
+            <formatter type="brief" />
+            <batchtest todir="${test.reports}">
+                <fileset dir="${test.src}" includes="**/*Test.java" />
+            </batchtest>
+        </junit>
+        <fail if="junit.failure" message="Unit test(s) failed. See reports!" />
+    </target>
+
 
     <!-- version in build.xml and pom.xml must NOT be -SNAPSHOT -->
     <target name="stage" depends="dist" description="deploy release version to Maven staging repository">
