@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -97,6 +98,36 @@ public class AmplitudeTest {
         assertNotNull(amplitude.getDeviceId());
         assertEquals(37, amplitude.getDeviceId().length());
         assertTrue(amplitude.getDeviceId().endsWith("R"));
+    }
+
+    @Test
+    public void testOptOut() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.getScheduler().advanceToLastPostedRunnable();
+        amplitude.setOptOut(true);
+        amplitude.logEvent("testOptOut");
+
+        looper.getScheduler().advanceToLastPostedRunnable();
+        looper.getScheduler().advanceToLastPostedRunnable();
+
+        FakeHttp.addPendingHttpResponse(200, "success");
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httplooper.getScheduler().advanceToLastPostedRunnable();
+
+        assertEquals(0, looper.getScheduler().size());
+        assertFalse(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+
+        amplitude.setOptOut(false);
+        amplitude.logEvent("testOptOut");
+
+        looper.getScheduler().advanceToLastPostedRunnable();
+        looper.getScheduler().advanceToLastPostedRunnable();
+
+        FakeHttp.addPendingHttpResponse(200, "success");
+        httplooper.getScheduler().advanceToLastPostedRunnable();
+
+        assertEquals(1, looper.getScheduler().size());
+        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
     }
 
     @Test

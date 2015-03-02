@@ -50,6 +50,7 @@ public class Amplitude {
         private boolean newDeviceIdPerInstall = false;
         private boolean useAdvertisingIdForDeviceId = false;
         private boolean initialized = false;
+        private boolean optOut = false;
 
         private DeviceInfo deviceInfo;
         private String advertisingId;
@@ -107,6 +108,7 @@ public class Amplitude {
                 } else {
                     this.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
                 }
+                this.optOut = preferences.getBoolean(Constants.PREFKEY_OPT_OUT, false);
                 initialized = true;
             }
         }
@@ -160,6 +162,14 @@ public class Amplitude {
             this.sessionTimeoutMillis = sessionTimeoutMillis;
         }
 
+        public void setOptOut(boolean optOut) {
+            this.optOut = optOut;
+
+            SharedPreferences preferences = context.getSharedPreferences(
+                    getSharedPreferencesName(), Context.MODE_PRIVATE);
+            preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
+        }
+
         public void logEvent(String eventType) {
             logEvent(eventType, null);
         }
@@ -187,6 +197,9 @@ public class Amplitude {
 
         private long logEvent(String eventType, JSONObject eventProperties,
                 JSONObject apiProperties, long timestamp, boolean checkSession) {
+            if (optOut) {
+                return -1;
+            }
             if (checkSession) {
                 startNewSessionIfNeeded(timestamp);
             }
@@ -238,10 +251,10 @@ public class Amplitude {
                 Log.e(TAG, e.toString());
             }
 
-            return logEvent(event);
+            return saveEvent(event);
         }
 
-        private long logEvent(JSONObject event) {
+        private long saveEvent(JSONObject event) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             long eventId = dbHelper.addEvent(event.toString());
 
@@ -517,6 +530,9 @@ public class Amplitude {
 
         // Always call this from logThread
         private void updateServer(boolean limit) {
+            if (optOut) {
+                return;
+            }
             if (!uploadingCurrently.getAndSet(true)) {
                 DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                 try {
@@ -748,6 +764,10 @@ public class Amplitude {
 
     public static void setSessionTimeoutMillis(long sessionTimeoutMillis) {
         instance.setSessionTimeoutMillis(sessionTimeoutMillis);
+    }
+
+    public static void setOptOut(boolean optOut) {
+        instance.setOptOut(optOut);
     }
 
     public static void logEvent(String eventType) {
