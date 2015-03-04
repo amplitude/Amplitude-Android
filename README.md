@@ -15,37 +15,43 @@
     </dependency>
     ```
 
-4. In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
+4. Or if you are using gradle in your project, include in your build.gradle file:
+
+    ```
+    compile 'com.amplitude:android-sdk:1.4.3'
+    ```
+
+5. In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
 
     ```java
     import com.amplitude.api.Amplitude;
     ```
 
-5. In the `onCreate()` of your main activity, initialize the SDK:
+6. In the `onCreate()` of your main activity, initialize the SDK:
 
     ```java
     Amplitude.initialize(this, "YOUR_API_KEY_HERE");
     ```
 
-6. Add a `startSession()` call to each `onResume()` in every activity in your app:
+7. Add a `startSession()` call to each `onResume()` in every activity in your app:
 
     ```java
     Amplitude.startSession();
     ```
 
-7. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
+8. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
 
     ```java
     Amplitude.endSession();
     ```
 
-8. To track an event anywhere in the app, call:
+9. To track an event anywhere in the app, call:
 
     ```java
     Amplitude.logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+10. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
