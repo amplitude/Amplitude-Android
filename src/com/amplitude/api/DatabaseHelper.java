@@ -27,8 +27,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private static final String EVENT_FIELD = "event";
 
     private static final String CREATE_EVENTS_TABLE = "CREATE TABLE IF NOT EXISTS "
-            + EVENT_TABLE_NAME + " ("
-            + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + EVENT_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
     private File file;
@@ -86,8 +85,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(EVENT_TABLE_NAME, new String[] { ID_FIELD, EVENT_FIELD },
-                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null,
-                    null, ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
+                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null, null,
+                    ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
@@ -129,8 +128,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
         long nthEventId = -1;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String query = "SELECT " + ID_FIELD + " FROM " + EVENT_TABLE_NAME
-                    + " LIMIT 1 OFFSET " + (n - 1);
+            String query = "SELECT " + ID_FIELD + " FROM " + EVENT_TABLE_NAME + " LIMIT 1 OFFSET "
+                    + (n - 1);
             SQLiteStatement statement = db.compileStatement(query);
             nthEventId = -1;
             try {
