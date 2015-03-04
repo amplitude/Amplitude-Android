@@ -807,6 +807,10 @@ public class Amplitude {
         instance.setUserProperties(userProperties);
     }
 
+    public static void setUserProperties(JSONObject userProperties, boolean replace) {
+        instance.setUserProperties(userProperties, replace);
+    }
+
     public static void setUserId(String userId) {
         instance.setUserId(userId);
     }
