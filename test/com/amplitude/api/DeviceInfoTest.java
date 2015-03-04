@@ -1,6 +1,10 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Locale;
 
@@ -14,6 +18,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowGeocoder;
+import org.robolectric.shadows.ShadowLocation;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowTelephonyManager;
 import org.robolectric.util.ReflectionHelpers;
@@ -156,6 +161,13 @@ public class DeviceInfoTest {
         locationManager.simulateLocation(loc);
         locationManager.setProviderEnabled(LocationManager.NETWORK_PROVIDER, true);
         assertEquals(loc, deviceInfo.getMostRecentLocation());
+    }
+
+    @Test
+    public void testNoLocation() {
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+        Location recent = deviceInfo.getMostRecentLocation();
+        assertNull(recent);
     }
 
 }
