@@ -23,6 +23,7 @@
     <property name="version" value="1.4.3" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
+    <property name="unity-jar" value="amplitude-unity-${version}.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
     <property name="sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
 
@@ -56,7 +57,7 @@
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
-        <jar destfile="amplitude-unity-${version}.jar">
+        <jar destfile="${unity-jar}">
             <fileset dir="${build}" includes="com/amplitude/api/*.class" />
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
             <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
@@ -76,18 +77,93 @@
         </jar>
     </target>
 
+    <target name="update-version">
+        <replaceregexp match="\d+\.\d+.\d+(-SNAPSHOT)?" replace="${version}" flags="g">
+            <fileset dir="." includes="README.md"/>
+        </replaceregexp>
+
+        <replaceregexp match="&lt;version&gt;[\d.]*(-SNAPSHOT)?&lt;/version&gt;" replace="&lt;version&gt;${version}&lt;/version&gt;">
+            <fileset dir="." includes="pom.xml"/>
+        </replaceregexp>
+
+        <replaceregexp match="name=.version. value=.[\d.]*(-SNAPSHOT)?." replace="name=&quot;version&quot; value=&quot;${version}&quot;" >
+            <fileset dir="." includes="build.xml"/>
+        </replaceregexp>
+    </target>
+
+    <target name="tag" depends="update-version,dist,unity" description="commits new artifacts to git and tags the release">
+        <echo message="Tagging artifacts in git for version ${version}"/>
+
+        <exec dir="." executable="git"><arg line="rm amplitude-*jar"/></exec>
+
+        <copy file="${jar}" todir="."/>
+
+        <exec dir="." executable="git"><arg line="add amplitude-*jar README.md pom.xml build.xml" /></exec>
+        <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
+        <exec dir="." executable="git"><arg line="push origin master" /></exec>
+
+        <exec dir="." executable="git"><arg line="tag v${version}" /></exec>
+        <exec dir="." executable="git"><arg line="push origin v${version}" /></exec>
+    </target>
+
+    <target name="release" depends="clean,tag" description="prepares for a release">
+        <antcall target="maven-snapshot" inheritAll="false">
+            <param name="version" value="${version}-SNAPSHOT"/>
+        </antcall>
+
+        <antcall target="maven-stage" >
+            <param name="version" value="${version}"/>
+        </antcall>
+    </target>
+
     <property name="ossrh-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots" />
     <property name="ossrh-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2" />
     <property name="ossrh-server-id" value="ossrh" />
 
     <!-- version in build.xml and pom.xml must be -SNAPSHOT -->
-    <target name="deploy" depends="dist" description="deploy snapshot version to Maven snapshot repository">
+    <target name="maven-snapshot" depends="update-version,dist" description="deploy snapshot version to Maven snapshot repository">
+        <echo message="Uploading artifacts to maven snapshot for version ${version}"/>
+
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file" />
             <arg value="-Durl=${ossrh-snapshots-repository-url}" />
             <arg value="-DrepositoryId=${ossrh-server-id}" />
             <arg value="-DpomFile=pom.xml" />
             <arg value="-Dfile=${jar}" />
+        </artifact:mvn>
+    </target>
+
+    <!-- version in build.xml and pom.xml must NOT be -SNAPSHOT -->
+    <target name="maven-stage" depends="update-version,dist" description="deploy release version to Maven staging repository">
+        <echo message="Uploading artifacts to maven for version ${version}"/>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${ossrh-staging-repository-url}" />
+            <arg value="-DrepositoryId=${ossrh-server-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${jar}" />
+            <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${ossrh-staging-repository-url}" />
+            <arg value="-DrepositoryId=${ossrh-server-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${sources-jar}" />
+            <arg value="-Dclassifier=sources" />
+            <arg value="-Pgpg" />
+        </artifact:mvn>
+
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+            <arg value="-Durl=${ossrh-staging-repository-url}" />
+            <arg value="-DrepositoryId=${ossrh-server-id}" />
+            <arg value="-DpomFile=pom.xml" />
+            <arg value="-Dfile=${javadoc-jar}" />
+            <arg value="-Dclassifier=javadoc" />
+            <arg value="-Pgpg" />
         </artifact:mvn>
     </target>
 
@@ -118,39 +194,6 @@
             </batchtest>
         </junit>
         <fail if="junit.failure" message="Unit test(s) failed. See reports!" />
-    </target>
-
-
-    <!-- version in build.xml and pom.xml must NOT be -SNAPSHOT -->
-    <target name="stage" depends="dist" description="deploy release version to Maven staging repository">
-        <artifact:mvn>
-            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
-            <arg value="-Durl=${ossrh-staging-repository-url}" />
-            <arg value="-DrepositoryId=${ossrh-server-id}" />
-            <arg value="-DpomFile=pom.xml" />
-            <arg value="-Dfile=${jar}" />
-            <arg value="-Pgpg" />
-        </artifact:mvn>
-
-        <artifact:mvn>
-            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
-            <arg value="-Durl=${ossrh-staging-repository-url}" />
-            <arg value="-DrepositoryId=${ossrh-server-id}" />
-            <arg value="-DpomFile=pom.xml" />
-            <arg value="-Dfile=${sources-jar}" />
-            <arg value="-Dclassifier=sources" />
-            <arg value="-Pgpg" />
-        </artifact:mvn>
-
-        <artifact:mvn>
-            <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
-            <arg value="-Durl=${ossrh-staging-repository-url}" />
-            <arg value="-DrepositoryId=${ossrh-server-id}" />
-            <arg value="-DpomFile=pom.xml" />
-            <arg value="-Dfile=${javadoc-jar}" />
-            <arg value="-Dclassifier=javadoc" />
-            <arg value="-Pgpg" />
-        </artifact:mvn>
     </target>
 
 </project>
