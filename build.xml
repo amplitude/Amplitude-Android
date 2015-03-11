@@ -48,7 +48,8 @@
         <javac classpathref="project.class.path"
                srcdir="${src}"
                destdir="${build}"
-               includeantruntime="false" />
+               includeantruntime="false"
+               debug="true" />
     </target>
 
     <target name="jar" depends="build">
@@ -99,8 +100,8 @@
         <javac srcdir="${test.src}"
                destdir="${build}"
                classpathref="test.classpath"
-               includeantruntime="false">
-        </javac>
+               includeantruntime="false"
+               debug="true" />
     </target>
 
     <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
