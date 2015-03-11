@@ -175,6 +175,15 @@ public class Amplitude {
         }
 
         public void logEvent(String eventType, JSONObject eventProperties) {
+            // Clone the incoming eventProperties object before sendinging over
+            // to the log thread. Helps avoid ConcurrentModificationException
+            // if the caller starts mutating the object they passed in.
+            // Only does a shallow copy, so it's still possible, though unlikely,
+            // to hit concurrent access if the caller mutates deep in the object.
+            if (eventProperties != null) {
+                eventProperties = cloneJSONObject(eventProperties);
+            }
+
             checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
         }
 
@@ -268,6 +277,26 @@ public class Amplitude {
                 updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
             }
             return eventId;
+        }
+
+        /**
+         * Do a shallow copy of a JSONObject. Takes a bit of code to avoid
+         * stringify and reparse given the API.
+         */
+        private JSONObject cloneJSONObject(final JSONObject obj) {
+            JSONArray nameArray = obj.names();
+            int len = nameArray.length();
+            String[] names = new String[len];
+            for (int i = 0; i < len; i++) {
+                names[i] = nameArray.optString(i);
+            }
+
+            try {
+                return new JSONObject(obj, names);
+            } catch (JSONException e) {
+                Log.e(TAG, e.toString());
+                return null;
+            }
         }
 
         private void runOnLogThread(Runnable r) {
@@ -494,23 +523,34 @@ public class Amplitude {
             setUserProperties(userProperties, false);
         }
 
-        public void setUserProperties(JSONObject userProperties, boolean replace) {
+        public void setUserProperties(final JSONObject userProperties, final boolean replace) {
             if (replace || this.userProperties == null) {
                 this.userProperties = userProperties;
-            } else {
-                if (userProperties == null) {
-                    return;
-                }
-                Iterator<?> keys = userProperties.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    try {
-                        this.userProperties.put(key, userProperties.get(key));
-                    } catch (JSONException e) {
-                        Log.e(TAG, e.toString());
+                return;
+            }
+
+            if (userProperties == null) {
+                return;
+            }
+
+            // If merging is needed, do it on the log thread. Avoids an issue
+            // where user properties is being mutated here at the same time
+            // it's being iterated on for stringify in the event sending logic.
+            final JSONObject currentUserProperties = this.userProperties;
+            runOnLogThread(new Runnable() {
+                @Override
+                public void run() {
+                    Iterator<?> keys = userProperties.keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        try {
+                            currentUserProperties.put(key, userProperties.get(key));
+                        } catch (JSONException e) {
+                            Log.e(TAG, e.toString());
+                        }
                     }
                 }
-            }
+            });
         }
 
         public void setUserId(String userId) {

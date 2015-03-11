@@ -6,6 +6,8 @@
 * Merge user properties in setUserProperties by default
 * Refactor Amplitude to be a singleton to support tests
 * Add option to disable fine-grained location tracking
+* Fix crash: ConcurrentModificationException in HashMap
+* Fix crash: CursorWindowAllocationException in SQLite
 
 ## 1.4.3 (November 13, 2014)
 

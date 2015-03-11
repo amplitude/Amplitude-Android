@@ -49,7 +49,8 @@
         <javac classpathref="project.class.path"
                srcdir="${src}"
                destdir="${build}"
-               includeantruntime="false" />
+               includeantruntime="false"
+               debug="true" />
     </target>
 
     <target name="jar" depends="build">
@@ -133,6 +134,35 @@
         </artifact:mvn>
     </target>
 
+    <target name="build-tests" depends="build" description="Compile test files">
+        <path id="test.classpath">
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
+        </path>
+        <javac srcdir="${test.src}"
+               destdir="${build}"
+               classpathref="test.classpath"
+               includeantruntime="false"
+               debug="true" />
+    </target>
+
+    <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
+        <path id="junit.classpath">
+            <pathelement location="${build}" />
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.class.path" />
+        </path>
+
+        <junit failureproperty="junit.failure" printsummary="yes">
+            <classpath refid="junit.classpath" />
+            <formatter type="brief" />
+            <batchtest todir="${test.reports}">
+                <fileset dir="${test.src}" includes="**/*Test.java" />
+            </batchtest>
+        </junit>
+        <fail if="junit.failure" message="Unit test(s) failed. See reports!" />
+    </target>
+
     <!-- version in build.xml and pom.xml must NOT be -SNAPSHOT -->
     <target name="maven-stage" depends="update-version,dist" description="deploy release version to Maven staging repository">
         <echo message="Uploading artifacts to maven for version ${version}"/>
@@ -165,35 +195,6 @@
             <arg value="-Dclassifier=javadoc" />
             <arg value="-Pgpg" />
         </artifact:mvn>
-    </target>
-
-    <target name="build-tests" depends="build" description="Compile test files">
-        <path id="test.classpath">
-            <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.class.path" />
-        </path>
-        <javac srcdir="${test.src}"
-               destdir="${build}"
-               classpathref="test.classpath"
-               includeantruntime="false">
-        </javac>
-    </target>
-
-    <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
-        <path id="junit.classpath">
-            <pathelement location="${build}" />
-            <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.class.path" />
-        </path>
-
-        <junit failureproperty="junit.failure" printsummary="yes">
-            <classpath refid="junit.classpath" />
-            <formatter type="brief" />
-            <batchtest todir="${test.reports}">
-                <fileset dir="${test.src}" includes="**/*Test.java" />
-            </batchtest>
-        </junit>
-        <fail if="junit.failure" message="Unit test(s) failed. See reports!" />
     </target>
 
 </project>
