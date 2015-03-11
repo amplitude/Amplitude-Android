@@ -27,6 +27,10 @@
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
     <property name="sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
 
+    <tstamp>
+      <format property="long-date" pattern="MMMM dd, yyyy"/>
+    </tstamp>
+
     <path id="project.class.path">
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
@@ -81,6 +85,10 @@
     <target name="update-version">
         <replaceregexp match="\d+\.\d+.\d+(-SNAPSHOT)?" replace="${version}" flags="g">
             <fileset dir="." includes="README.md"/>
+        </replaceregexp>
+
+        <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
+            <fileset dir="." includes="CHANGELOG.md"/>
         </replaceregexp>
 
         <replaceregexp match="&lt;version&gt;[\d.]*(-SNAPSHOT)?&lt;/version&gt;" replace="&lt;version&gt;${version}&lt;/version&gt;">

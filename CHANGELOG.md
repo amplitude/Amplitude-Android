@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.4.4 (March 11, 2015)
+
 * Expose setUserProperties(JSONObject, boolean) as a static
 * Handle null edge cases in location request
 * Add user opt out support
