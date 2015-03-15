@@ -783,7 +783,7 @@ public class Amplitude {
     }
 
     public static void initialize(Context context, String apiKey, String userId) {
-        instance.initialize(context, userId);
+        instance.initialize(context, apiKey, userId);
     }
 
     public static void enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
