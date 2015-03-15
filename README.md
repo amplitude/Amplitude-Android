@@ -73,12 +73,6 @@ Amplitude.setUserId("USER_ID_HERE");
 
 A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
-You can also add a user ID as an argument to the `initialize()` call:
-
-```
-Amplitude.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
-```
-
 # Setting Event Properties #
 
 You can attach additional data to any event by passing a JSONObject as the second argument to `logEvent()`:
