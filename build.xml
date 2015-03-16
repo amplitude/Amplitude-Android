@@ -85,10 +85,7 @@
     <target name="update-version">
         <replaceregexp match="\d+\.\d+.\d+(-SNAPSHOT)?" replace="${version}" flags="g">
             <fileset dir="." includes="README.md"/>
-        </replaceregexp>
-
-        <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
-            <fileset dir="." includes="CHANGELOG.md"/>
+            <fileset dir="${src}" includes="com/amplitude/api/Constants.java" />
         </replaceregexp>
 
         <replaceregexp match="&lt;version&gt;[\d.]*(-SNAPSHOT)?&lt;/version&gt;" replace="&lt;version&gt;${version}&lt;/version&gt;">
@@ -106,6 +103,10 @@
         <exec dir="." executable="git"><arg line="rm amplitude-*jar"/></exec>
 
         <copy file="${jar}" todir="."/>
+
+        <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
+            <fileset dir="." includes="CHANGELOG.md"/>
+        </replaceregexp>
 
         <exec dir="." executable="git"><arg line="add amplitude-*jar README.md pom.xml build.xml" /></exec>
         <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
