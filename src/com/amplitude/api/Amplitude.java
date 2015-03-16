@@ -89,12 +89,10 @@ public class Amplitude {
 
         public synchronized void initialize(Context context, String apiKey, String userId) {
             if (context == null) {
-                Log.e(TAG, "Argument context cannot be null in initialize()");
-                return;
+                throw new IllegalArgumentException("context cannot be null");
             }
             if (TextUtils.isEmpty(apiKey)) {
-                Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
-                return;
+                throw new IllegalArgumentException("apiKey cannot be null or blank");
             }
             if (!initialized) {
                 this.context = context.getApplicationContext();
@@ -193,7 +191,7 @@ public class Amplitude {
                 Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
                 return;
             }
-            if (!contextAndApiKeySet("logEvent()")) {
+            if (!isInitialized("logEvent()")) {
                 return;
             }
             runOnLogThread(new Runnable() {
@@ -308,7 +306,7 @@ public class Amplitude {
         }
 
         public void uploadEvents() {
-            if (!contextAndApiKeySet("uploadEvents()")) {
+            if (!isInitialized("uploadEvents()")) {
                 return;
             }
 
@@ -422,7 +420,7 @@ public class Amplitude {
         }
 
         public void startSession() {
-            if (!contextAndApiKeySet("startSession()")) {
+            if (!isInitialized("startSession()")) {
                 return;
             }
             final long now = System.currentTimeMillis();
@@ -450,7 +448,7 @@ public class Amplitude {
         }
 
         public void endSession() {
-            if (!contextAndApiKeySet("endSession()")) {
+            if (!isInitialized("endSession()")) {
                 return;
             }
             final long timestamp = System.currentTimeMillis();
@@ -501,7 +499,7 @@ public class Amplitude {
 
         public void logRevenue(String productId, int quantity, double price, String receipt,
                 String receiptSignature) {
-            if (!contextAndApiKeySet("logRevenue()")) {
+            if (!isInitialized("logRevenue()")) {
                 return;
             }
 
@@ -554,7 +552,7 @@ public class Amplitude {
         }
 
         public void setUserId(String userId) {
-            if (!contextAndApiKeySet("setUserId()")) {
+            if (!isInitialized("setUserId()")) {
                 return;
             }
 
@@ -745,16 +743,10 @@ public class Amplitude {
             return obj == null ? JSONObject.NULL : obj;
         }
 
-        private synchronized boolean contextAndApiKeySet(String methodName) {
-            if (context == null) {
-                Log.e(TAG, "context cannot be null, set context with initialize() before calling "
+        private synchronized boolean isInitialized(String methodName) {
+            if (!initialized) {
+                Log.e(TAG, "initialize() must be called to set Context and api key before calling "
                         + methodName);
-                return false;
-            }
-            if (TextUtils.isEmpty(apiKey)) {
-                Log.e(TAG,
-                        "apiKey cannot be null or empty, set apiKey with initialize() before calling "
-                                + methodName);
                 return false;
             }
             return true;
