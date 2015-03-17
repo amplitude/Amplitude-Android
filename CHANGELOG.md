@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.4.5 (March 16, 2015)
+
 * Fix bug when initializing with user id. Api key was not set properly.
 
 ## 1.4.4 (March 11, 2015)

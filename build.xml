@@ -109,6 +109,9 @@
         </replaceregexp>
 
         <exec dir="." executable="git"><arg line="add amplitude-*jar README.md pom.xml build.xml" /></exec>
+        <exec dir="." executable="git"><arg line="add src/com/amplitude/api/Constants.java" /></exec>
+        <exec dir="." executable="git"><arg line="add CHANGELOG.md" /></exec>
+
         <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
         <exec dir="." executable="git"><arg line="push origin master" /></exec>
 
