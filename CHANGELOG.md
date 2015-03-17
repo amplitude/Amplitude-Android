@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix bug when initializing with user id. Api key was not set properly.
+
 ## 1.4.4 (March 11, 2015)
 
 * Expose setUserProperties(JSONObject, boolean) as a static

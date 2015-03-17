@@ -54,7 +54,7 @@ public class AmplitudeTest {
         String userId = "user_id";
         amplitude.setUserId(userId);
         assertEquals(
-                "user_id",
+                userId,
                 context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
                         Constants.PREFKEY_USER_ID, null));
     }

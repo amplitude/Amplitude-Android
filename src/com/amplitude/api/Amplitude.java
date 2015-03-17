@@ -42,6 +42,10 @@ public class Amplitude {
 
     private static Lib instance = new Lib();
 
+    static Amplitude.Lib getInstance() {
+        return instance;
+    }
+
     public static class Lib {
         private Context context;
         private String apiKey;
