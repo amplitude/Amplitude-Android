@@ -20,7 +20,7 @@
 
     <property name="groupId" value="com.amplitude" />
     <property name="artifactId" value="amplitude-android" />
-    <property name="version" value="1.4.5" />
+    <property name="version" value="1.4.6" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="unity-jar" value="amplitude-unity-${version}.jar" />
@@ -113,10 +113,10 @@
         <exec dir="." executable="git"><arg line="add CHANGELOG.md" /></exec>
 
         <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
-        <exec dir="." executable="git"><arg line="push origin master" /></exec>
-
         <exec dir="." executable="git"><arg line="tag v${version}" /></exec>
-        <exec dir="." executable="git"><arg line="push origin v${version}" /></exec>
+
+        <echo message="The release has been tagged in your local repository. To push the release to github:"/>
+        <echo message="git push --tags origin master"/>
     </target>
 
     <target name="release" depends="clean,tag" description="prepares for a release">
