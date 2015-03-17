@@ -165,7 +165,7 @@
             <path refid="project.class.path" />
         </path>
 
-        <junit failureproperty="junit.failure" printsummary="yes">
+        <junit failureproperty="junit.failure" printsummary="yes" fork="on">
             <classpath refid="junit.classpath" />
             <formatter type="brief" />
             <batchtest todir="${test.reports}">
