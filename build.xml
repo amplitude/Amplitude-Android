@@ -20,7 +20,7 @@
 
     <property name="groupId" value="com.amplitude" />
     <property name="artifactId" value="amplitude-android" />
-    <property name="version" value="1.4.4" />
+    <property name="version" value="1.4.5" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="unity-jar" value="amplitude-unity-${version}.jar" />
