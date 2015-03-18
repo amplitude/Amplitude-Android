@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -23,30 +25,24 @@ import android.content.Context;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-public class InitializeTest {
-
-    Context context;
-    Amplitude.Lib amplitude;
+public class InitializeTest extends BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
-        context = ShadowApplication.getInstance().getApplicationContext();
+        super.setUp();
         amplitude = Amplitude.getInstance();
-        FakeHttp.setDefaultHttpResponse(200, "success");
     }
 
     @After
     public void tearDown() throws Exception {
-        amplitude.logThread.getLooper().quit();
-        amplitude.httpThread.getLooper().quit();
+        super.tearDown();
     }
 
     @Test
     public void testInitializeUserId() {
         String userId = "user_id";
 
-        Amplitude.initialize(context, "3e1bdafd338d25310d727a394f282a8d", userId);
+        Amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e", userId);
 
         // Test that the user id is set.
         String sharedPreferences = Constants.SHARED_PREFERENCES_NAME_PREFIX + "."
@@ -58,17 +54,7 @@ public class InitializeTest {
                         Constants.PREFKEY_USER_ID, null));
 
         // Test that events are logged.
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.getScheduler().advanceToLastPostedRunnable();
-        Amplitude.logEvent("test_event");
-        looper.getScheduler().advanceToLastPostedRunnable();
-        looper.getScheduler().advanceToLastPostedRunnable();
-
-        FakeHttp.addPendingHttpResponse(200, "success");
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
-        httplooper.getScheduler().advanceToLastPostedRunnable();
-
-        assertEquals(1, looper.getScheduler().size());
-        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+        RecordedRequest request = sendEvent(amplitude, "init_test_event", null);
+        assertNotNull(request);
     }
 }

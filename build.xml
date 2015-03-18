@@ -31,7 +31,12 @@
       <format property="long-date" pattern="MMMM dd, yyyy"/>
     </tstamp>
 
-    <path id="project.class.path">
+    <artifact:dependencies pathId="dependency.classpath">
+        <artifact:pom file="pom.xml" />
+    </artifact:dependencies>
+
+    <path id="project.classpath">
+        <path refid="dependency.classpath"/>
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
 
@@ -49,12 +54,14 @@
     <target name="build" depends="init" >
         <echo message="Building for android target ${android-target}" />
         <echo message="Java version: ${java.version}"/>
-        <echo message="Android SDK Path: ${toString:project.class.path}" />
-        <javac classpathref="project.class.path"
+        <echo message="Android SDK Path: ${toString:project.classpath}" />
+        <javac classpathref="project.classpath"
                srcdir="${src}"
                destdir="${build}"
                includeantruntime="false"
-               debug="true" />
+               debug="true">
+            <classpath refid="dependency.classpath" />
+        </javac>
     </target>
 
     <target name="jar" depends="build">
@@ -71,7 +78,7 @@
     </target>
 
     <target name="dist" depends="jar" description="creates release jar with javadoc and sources">
-        <javadoc classpathref="project.class.path" sourcepath="${src}" destdir="${dist}/javadoc">
+        <javadoc classpathref="project.classpath" sourcepath="${src}" destdir="${dist}/javadoc">
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
         </javadoc>
         <jar jarfile="${javadoc-jar}">
@@ -149,27 +156,29 @@
     <target name="build-tests" depends="build" description="Compile test files">
         <path id="test.classpath">
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.class.path" />
+            <path refid="project.classpath" />
         </path>
         <javac srcdir="${test.src}"
                destdir="${build}"
                classpathref="test.classpath"
                includeantruntime="false"
-               debug="true" />
+               debug="true">
+            <classpath refid="dependency.classpath" />
+        </javac>
     </target>
 
     <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
         <path id="junit.classpath">
             <pathelement location="${build}" />
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.class.path" />
+            <path refid="project.classpath" />
         </path>
 
         <junit failureproperty="junit.failure" printsummary="yes" fork="on">
             <classpath refid="junit.classpath" />
             <formatter type="brief" />
             <batchtest todir="${test.reports}">
-                <fileset dir="${test.src}" includes="**/*Test.java" />
+                <fileset dir="${test.src}" includes="**/*Test.java" excludes="**/BaseTest.java" />
             </batchtest>
         </junit>
         <fail if="junit.failure" message="Unit test(s) failed. See reports!" />

@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -23,27 +25,16 @@ import android.content.Context;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-public class AmplitudeTest {
-
-    Context context;
-    Amplitude.Lib amplitude;
+public class AmplitudeTest extends BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
-        context = ShadowApplication.getInstance().getApplicationContext();
-        amplitude = new Amplitude.Lib();
-        // this sometimes deadlocks with lock contention by logThread and httpThread for
-        // a ShadowWrangler instance and the ShadowLooper class
-        // Might be a sign of a bug, or just Robolectric's bug.
-        amplitude.initialize(context, "3e1bdafd338d25310d727a394f282a8d");
-        FakeHttp.setDefaultHttpResponse(200, "success");
+        super.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
-        amplitude.logThread.getLooper().quit();
-        amplitude.httpThread.getLooper().quit();
+        super.tearDown();
     }
 
     @Test
@@ -102,47 +93,18 @@ public class AmplitudeTest {
 
     @Test
     public void testOptOut() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.getScheduler().advanceToLastPostedRunnable();
         amplitude.setOptOut(true);
-        amplitude.logEvent("testOptOut");
-
-        looper.getScheduler().advanceToLastPostedRunnable();
-        looper.getScheduler().advanceToLastPostedRunnable();
-
-        FakeHttp.addPendingHttpResponse(200, "success");
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
-        httplooper.getScheduler().advanceToLastPostedRunnable();
-
-        assertEquals(0, looper.getScheduler().size());
-        assertFalse(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+        RecordedRequest request = sendEvent(amplitude, "testOptOut", null);
+        assertNull(request);
 
         amplitude.setOptOut(false);
-        amplitude.logEvent("testOptOut");
-
-        looper.getScheduler().advanceToLastPostedRunnable();
-        looper.getScheduler().advanceToLastPostedRunnable();
-
-        FakeHttp.addPendingHttpResponse(200, "success");
-        httplooper.getScheduler().advanceToLastPostedRunnable();
-
-        assertEquals(1, looper.getScheduler().size());
-        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+        request = sendEvent(amplitude, "testOptOut", null);
+        assertNotNull(request);
     }
 
     @Test
     public void testLogEvent() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.getScheduler().advanceToLastPostedRunnable();
-        amplitude.logEvent("test_event");
-        looper.getScheduler().advanceToLastPostedRunnable();
-        looper.getScheduler().advanceToLastPostedRunnable();
-
-        FakeHttp.addPendingHttpResponse(200, "success");
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
-        httplooper.getScheduler().advanceToLastPostedRunnable();
-
-        assertEquals(1, looper.getScheduler().size());
-        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+        RecordedRequest request = sendEvent(amplitude, "test_event", null);
+        assertNotNull(request);
     }
 }

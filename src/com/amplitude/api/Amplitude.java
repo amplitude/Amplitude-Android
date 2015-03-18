@@ -2,25 +2,21 @@ package com.amplitude.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,9 +37,17 @@ public class Amplitude {
     public static final String REVENUE_EVENT = "revenue_amount";
 
     private static Lib instance = new Lib();
+    private static URL url;
 
     static Amplitude.Lib getInstance() {
         return instance;
+    }
+
+    /**
+     * Let tests inject a url for server mocking.
+     */
+    static void setUrl(URL value) {
+        Amplitude.url = value;
     }
 
     public static class Lib {
@@ -588,8 +592,7 @@ public class Amplitude {
                     httpThread.post(new Runnable() {
                         @Override
                         public void run() {
-                            makeEventUploadPostRequest(Constants.EVENT_LOG_URL, events.toString(),
-                                    maxId);
+                            makeEventUploadPostRequest(events.toString(), maxId);
                         }
                     });
                 } catch (JSONException e) {
@@ -599,10 +602,7 @@ public class Amplitude {
             }
         }
 
-        private void makeEventUploadPostRequest(String url, String events, final long maxId) {
-            HttpPost postRequest = new HttpPost(url);
-            List<NameValuePair> postParams = new ArrayList<NameValuePair>();
-
+        protected void makeEventUploadPostRequest(String events, final long maxId) {
             String apiVersionString = "" + Constants.API_VERSION;
             String timestampString = "" + System.currentTimeMillis();
 
@@ -623,26 +623,36 @@ public class Amplitude {
                 Log.e(TAG, e.toString());
             }
 
-            postParams.add(new BasicNameValuePair("v", apiVersionString));
-            postParams.add(new BasicNameValuePair("client", apiKey));
-            postParams.add(new BasicNameValuePair("e", events));
-            postParams.add(new BasicNameValuePair("upload_time", timestampString));
-            postParams.add(new BasicNameValuePair("checksum", checksumString));
+            RequestBody body = new FormEncodingBuilder()
+                .add("v", apiVersionString)
+                .add("client", apiKey)
+                .add("e", events)
+                .add("upload_time", timestampString)
+                .add("checksum", checksumString)
+                .build();
 
-            try {
-                postRequest.setEntity(new UrlEncodedFormEntity(postParams, HTTP.UTF_8));
-            } catch (UnsupportedEncodingException e) {
-                // According to
-                // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
-                // this will never be thrown
-                Log.e(TAG, e.toString());
+            URL logUrl = Amplitude.url;
+            if (logUrl == null) {
+                try {
+                    logUrl = new URL(Constants.EVENT_LOG_URL);
+                }
+                catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    return;
+                }
             }
 
+            Request request = new Request.Builder()
+                .url(logUrl)
+                .post(body)
+                .build();
+
             boolean uploadSuccess = false;
-            HttpClient client = new DefaultHttpClient();
+            OkHttpClient client = new OkHttpClient();
+
             try {
-                HttpResponse response = client.execute(postRequest);
-                String stringResponse = EntityUtils.toString(response.getEntity());
+                Response response = client.newCall(request).execute();
+                String stringResponse = response.body().string();
                 if (stringResponse.equals("success")) {
                     uploadSuccess = true;
                     logThread.post(new Runnable() {
@@ -679,8 +689,6 @@ public class Amplitude {
             } catch (java.net.UnknownHostException e) {
                 // Log.w(TAG,
                 // "No internet connection found, unable to upload events");
-            } catch (ClientProtocolException e) {
-                Log.e(TAG, e.toString());
             } catch (IOException e) {
                 Log.e(TAG, e.toString());
             } catch (AssertionError e) {
@@ -689,10 +697,6 @@ public class Amplitude {
             } catch (Exception e) {
                 // Just log any other exception so things don't crash on upload
                 Log.e(TAG, "Exception:", e);
-            } finally {
-                if (client.getConnectionManager() != null) {
-                    client.getConnectionManager().shutdown();
-                }
             }
 
             if (!uploadSuccess) {
