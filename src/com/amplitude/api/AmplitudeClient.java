@@ -635,7 +635,6 @@ public class AmplitudeClient {
         try {
             Response response = client.newCall(request).execute();
             String stringResponse = response.body().string();
-            System.out.println("Response: " + stringResponse);
             if (stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {

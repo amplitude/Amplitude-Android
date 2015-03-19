@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Add PinnedAmplitudeClient to support SSL pinning.
 * Deprecate static methods on Amplitude. Switch to using Amplitude.getInstance().
 * Upgrade HTTP client to okhttp.
 
