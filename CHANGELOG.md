@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Deprecate static methods on Amplitude. Switch to using Amplitude.getInstance().
 * Upgrade HTTP client to okhttp.
 
 ## 1.4.6 (March 16, 2015)

@@ -169,6 +169,7 @@
 
     <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
         <path id="junit.classpath">
+            <pathelement location="./"/>
             <pathelement location="${build}" />
             <fileset dir="lib" includes="**/*.jar" />
             <path refid="project.classpath" />

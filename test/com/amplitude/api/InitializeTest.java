@@ -29,8 +29,8 @@ public class InitializeTest extends BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         amplitude = Amplitude.getInstance();
+        super.setUp();
     }
 
     @After

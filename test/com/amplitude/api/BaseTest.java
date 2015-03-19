@@ -24,34 +24,52 @@ import android.content.Context;
 
 public class BaseTest {
 
-
-    protected Amplitude.Lib amplitude;
+    protected AmplitudeClient amplitude;
     protected Context context;
     protected MockWebServer server;
 
     public void setUp() throws Exception {
+        setUp(true);
+    }
+
+    /**
+     * Handle common test setup for default cases. Specific cases can
+     * override the defaults by providing an amplitude object before
+     * calling this method or passing false for withServer.
+     */
+    public void setUp(boolean withServer) throws Exception {
         ShadowApplication.getInstance().setPackageName("com.amplitude.test");
         context = ShadowApplication.getInstance().getApplicationContext();
 
-        server = new MockWebServer();
-        server.play();
-        Amplitude.setUrl(server.getUrl("/"));
+        if (withServer) {
+            server = new MockWebServer();
+            server.play();
+        }
 
-        amplitude = new Amplitude.Lib();
-        // this sometimes deadlocks with lock contention by logThread and httpThread for
-        // a ShadowWrangler instance and the ShadowLooper class
-        // Might be a sign of a bug, or just Robolectric's bug.
-        amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+        if (amplitude == null) {
+            amplitude = new AmplitudeClient();
+            // this sometimes deadlocks with lock contention by logThread and httpThread for
+            // a ShadowWrangler instance and the ShadowLooper class
+            // Might be a sign of a bug, or just Robolectric's bug.
+            amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+        }
+
+        if (server != null) {
+            amplitude.url = server.getUrl("/").toString();            
+        }
     }
 
     public void tearDown() throws Exception {
         amplitude.logThread.getLooper().quit();
         amplitude.httpThread.getLooper().quit();
+        amplitude = null;
 
-        server.shutdown();
+        if (server != null) {
+            server.shutdown();
+        }
     }
 
-    public RecordedRequest sendEvent(Amplitude.Lib amplitude, String name, JSONObject props) {
+    public RecordedRequest sendEvent(AmplitudeClient amplitude, String name, JSONObject props) {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
