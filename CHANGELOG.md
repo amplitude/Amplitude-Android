@@ -1,5 +1,9 @@
 ## Unreleased
 
+* Add PinnedAmplitudeClient to support SSL pinning.
+* Deprecate static methods on Amplitude. Switch to using Amplitude.getInstance().
+* Upgrade HTTP client to okhttp.
+
 ## 1.4.6 (March 16, 2015)
 
 * Fix bug when initializing with user id. Api key was not set properly.

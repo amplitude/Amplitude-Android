@@ -16,6 +16,14 @@
     </license>
   </licenses>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+  </dependencies>
+
   <developers>
     <developer>
       <name>Spenser Skates</name>

@@ -30,25 +30,25 @@
 6. In the `onCreate()` of your main activity, initialize the SDK:
 
     ```java
-    Amplitude.initialize(this, "YOUR_API_KEY_HERE");
+    Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE");
     ```
 
 7. Add a `startSession()` call to each `onResume()` in every activity in your app:
 
     ```java
-    Amplitude.startSession();
+    Amplitude.getInstance().startSession();
     ```
 
 8. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
 
     ```java
-    Amplitude.endSession();
+    Amplitude.getInstance().endSession();
     ```
 
 9. To track an event anywhere in the app, call:
 
     ```java
-    Amplitude.logEvent("EVENT_IDENTIFIER_HERE");
+    Amplitude.getInstance().logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
 10. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
@@ -68,7 +68,7 @@ Calling `startSession()` in `onResume()` will generate a start session event eve
 If your app has its own login system that you want to track users with, you can call `setUserId()` at any time:
 
 ```java
-Amplitude.setUserId("USER_ID_HERE");
+Amplitude.getInstance().setUserId("USER_ID_HERE");
 ```
 
 A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
@@ -76,7 +76,7 @@ A user's data will be merged on the backend so that any events up to that point 
 You can also add a user ID as an argument to the `initialize()` call:
 
 ```
-Amplitude.initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
+Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 ```
 
 # Setting Event Properties #
@@ -89,7 +89,7 @@ try {
     eventProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
 } catch (JSONException exception) {
 }
-Amplitude.logEvent("Sent Message", eventProperties);
+Amplitude.getInstance().logEvent("Sent Message", eventProperties);
 ```
 
 You will need to add two JSONObject imports to the code:
@@ -109,7 +109,7 @@ try {
     userProperties.put("KEY_GOES_HERE", "VALUE_GOES_HERE");
 } catch (JSONException exception) {
 }
-Amplitude.setUserProperties(userProperties);
+Amplitude.getInstance().setUserProperties(userProperties);
 ```
 
 # Tracking Revenue #
@@ -117,7 +117,7 @@ Amplitude.setUserProperties(userProperties);
 To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
 
 ```java
-Amplitude.logRevenue("com.company.productid", 1, 3.99);
+Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99);
 ```
 
 `logRevenue()` takes a takes a string to identify the product (the product ID from Google Play), an int with the quantity of product purchased, and a double with the dollar amount of the sale. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
@@ -132,7 +132,7 @@ Then after a successful purchase transaction, call `logRevenue()` with the purch
 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
 String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
 
-Amplitude.logRevenue("com.company.productid", 1, 3.99, purchaseData, receiptSignature);
+Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseData, receiptSignature);
 ```
 
 See the [Google In App Billing Documentation](http://developer.android.com/google/play/billing/billing_integrate.html#Purchase) for details on how to retrieve the purchase data and receipt signature.
@@ -145,8 +145,8 @@ where an event is logged.
 This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
 
 ```java
-Amplitude.enableLocationListening();
-Amplitude.disableLocationListening();
+Amplitude.getInstance().enableLocationListening();
+Amplitude.getInstance().disableLocationListening();
 ```
 
 Even disabling the location listening, the events will have the "country" property filled. That property
@@ -157,7 +157,7 @@ is retrieved from other sources (i.e. network or device locale).
 
 If you want to use the source files directly, you can [download them here](https://github.com/amplitude/Amplitude-Android/archive/master.zip). To include them in your project, extract the files, and then copy the five *.java files into your Android project.
 
-If your app has multiple entry points/exit points, you should make a `Amplitude.initialize()` at every `onCreate()` entry point.
+If your app has multiple entry points/exit points, you should make a `Amplitude.getInstance().initialize()` at every `onCreate()` entry point.
 
 This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of a user (this will not consume any extra battery, as it does not poll for a new location).
 
