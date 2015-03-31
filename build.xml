@@ -69,11 +69,17 @@
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
+        <!-- Prepare dependency path jar list for inclusion in unity uberjar -->
+        <pathconvert refid="dependency.classpath" property="dependency.list" pathsep="," dirsep="/">
+            <map from="/" to=""/>
+        </pathconvert>
+
         <jar destfile="${unity-jar}">
             <fileset dir="${build}" includes="com/amplitude/api/*.class" />
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
             <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
             <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
+            <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
 

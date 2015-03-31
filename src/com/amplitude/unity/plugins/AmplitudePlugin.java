@@ -8,27 +8,27 @@ import android.content.Context;
 import com.amplitude.api.Amplitude;
 
 public class AmplitudePlugin {
-    
+
     public static void init(Context context, String apiKey) {
-        Amplitude.initialize(context, apiKey);
+        Amplitude.getInstance().initialize(context, apiKey);
     }
-    
+
     public static void init(Context context, String apiKey, String userId) {
-        Amplitude.initialize(context, apiKey, userId);
+        Amplitude.getInstance().initialize(context, apiKey, userId);
     }
 
     public static void startSession() {
-        Amplitude.startSession();
+        Amplitude.getInstance().startSession();
     }
 
     public static void endSession() {
-        Amplitude.endSession();
+        Amplitude.getInstance().endSession();
     }
-    
+
     public static void logEvent(String event) {
-        Amplitude.logEvent(event);
+        Amplitude.getInstance().logEvent(event);
     }
-    
+
     public static void logEvent(String event, String jsonProperties) {
         JSONObject properties = null;
         try {
@@ -36,14 +36,18 @@ public class AmplitudePlugin {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
-        Amplitude.logEvent(event, properties);
+
+        Amplitude.getInstance().logEvent(event, properties);
     }
-    
+
     public static void setUserId(String userId) {
-        Amplitude.setUserId(userId);
+        Amplitude.getInstance().setUserId(userId);
     }
-    
+
+    public static void setOptOut(boolean enabled) {
+        Amplitude.getInstance().setOptOut(enabled);
+    }
+
     public static void setUserProperties(String jsonProperties) {
         JSONObject properties = null;
         try {
@@ -51,23 +55,23 @@ public class AmplitudePlugin {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
-        Amplitude.setUserProperties(properties);
+
+        Amplitude.getInstance().setUserProperties(properties);
     }
-    
+
     public static void logRevenue(double amount) {
-        Amplitude.logRevenue(amount);
+        Amplitude.getInstance().logRevenue(amount);
     }
-    
+
     public static void logRevenue(String productId, int quantity, double price) {
-        Amplitude.logRevenue(productId, quantity, price);
+        Amplitude.getInstance().logRevenue(productId, quantity, price);
     }
-    
+
     public static void logRevenue(String productId, int quantity, double price, String receipt, String receiptSignature) {
-        Amplitude.logRevenue(productId, quantity, price, receipt, receiptSignature);
+        Amplitude.getInstance().logRevenue(productId, quantity, price, receipt, receiptSignature);
     }
-    
+
     public static String getDeviceId() {
-        return Amplitude.getDeviceId();
+        return Amplitude.getInstance().getDeviceId();
     }
 }
