@@ -172,6 +172,17 @@ public class AmplitudeClient {
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
     }
 
+    /**
+     * <p>Logs an event on the calling thread to local database. Event will be send to server
+     * with next batch or by calling {@linkplain #uploadEvents()} manually.
+     * <p>No network call is made by calling this.
+     * @param eventType Name of the event
+     * @param eventProperties Event properties
+     */
+    public void logEventSynchronous(String eventType, JSONObject eventProperties) {
+        checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, false);
+    }
+
     public void logEvent(String eventType) {
         logEvent(eventType, null);
     }
@@ -186,11 +197,16 @@ public class AmplitudeClient {
             eventProperties = cloneJSONObject(eventProperties);
         }
 
-        checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
+        checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, true);
     }
 
     private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+                                 final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+        checkedLogEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
+    }
+
+    private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
+            final JSONObject apiProperties, final long timestamp, final boolean checkSession, final boolean asyncronous) {
         if (TextUtils.isEmpty(eventType)) {
             Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return;
@@ -198,16 +214,27 @@ public class AmplitudeClient {
         if (!contextAndApiKeySet("logEvent()")) {
             return;
         }
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
-            }
-        });
+
+        if(asyncronous) {
+            runOnLogThread(new Runnable() {
+                @Override
+                public void run() {
+                    logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
+                }
+            });
+        } else {
+            logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
+        }
     }
 
     private long logEvent(String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, long timestamp, boolean checkSession) {
+                          JSONObject apiProperties, long timestamp, boolean checkSession) {
+        return logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, false);
+    }
+
+    private long logEvent(String eventType, JSONObject eventProperties,
+            JSONObject apiProperties, long timestamp, boolean checkSession,
+            final boolean offline) {
         if (optOut) {
             return -1;
         }
@@ -262,12 +289,16 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
-        return saveEvent(event);
+        return saveEvent(event, offline);
     }
 
-    private long saveEvent(JSONObject event) {
+    private long saveEvent(JSONObject event, final boolean offline) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
+
+        if(offline) {
+            return eventId;
+        }
 
         if (dbHelper.getEventCount() >= Constants.EVENT_MAX_COUNT) {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));

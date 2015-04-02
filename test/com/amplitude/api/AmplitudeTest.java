@@ -107,4 +107,9 @@ public class AmplitudeTest extends BaseTest {
         RecordedRequest request = sendEvent(amplitude, "test_event", null);
         assertNotNull(request);
     }
+
+    @Test
+    public void testLogEventSyncronous() {
+        amplitude.logEventSynchronous("test_event", null);
+    }
 }
