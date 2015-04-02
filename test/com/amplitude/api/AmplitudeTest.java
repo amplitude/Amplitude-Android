@@ -110,6 +110,6 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testLogEventSyncronous() {
-        assertNotNull("event_id", amplitude.logEventSynchronous("test_event", null));
+        amplitude.logEventSynchronous("test_event", null);
     }
 }

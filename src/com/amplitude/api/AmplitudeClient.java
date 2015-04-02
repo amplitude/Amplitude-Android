@@ -179,7 +179,7 @@ public class AmplitudeClient {
      * @param eventType Name of the event
      * @param eventProperties Event properties
      */
-    public static void logEventSynchronous(String eventType, JSONObject eventProperties) {
+    public void logEventSynchronous(String eventType, JSONObject eventProperties) {
         checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, false);
     }
 
@@ -198,6 +198,11 @@ public class AmplitudeClient {
         }
 
         checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true, true);
+    }
+
+    private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
+                                 final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+        checkedLogEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
     }
 
     private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
@@ -220,6 +225,11 @@ public class AmplitudeClient {
         } else {
             logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, true);
         }
+    }
+
+    private long logEvent(String eventType, JSONObject eventProperties,
+                          JSONObject apiProperties, long timestamp, boolean checkSession) {
+        return logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession, false);
     }
 
     private long logEvent(String eventType, JSONObject eventProperties,

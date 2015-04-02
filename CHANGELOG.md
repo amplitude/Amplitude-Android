@@ -1,5 +1,7 @@
 ## Unreleased
 
+* logEventSynchronous() method for synchronous logging
+
 ## 1.5.0 (March 24, 2015)
 
 * Add PinnedAmplitudeClient to support SSL pinning.
