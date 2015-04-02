@@ -1,9 +1,12 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,27 +25,16 @@ import android.content.Context;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-public class AmplitudeTest {
-
-    Context context;
-    Amplitude.Lib amplitude;
+public class AmplitudeTest extends BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
-        context = ShadowApplication.getInstance().getApplicationContext();
-        amplitude = new Amplitude.Lib();
-        // this sometimes deadlocks with lock contention by logThread and httpThread for
-        // a ShadowWrangler instance and the ShadowLooper class
-        // Might be a sign of a bug, or just Robolectric's bug.
-        amplitude.initialize(context, "3e1bdafd338d25310d727a394f282a8d");
-        FakeHttp.setDefaultHttpResponse(200, "success");
+        super.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
-        amplitude.logThread.getLooper().quit();
-        amplitude.httpThread.getLooper().quit();
+        super.tearDown();
     }
 
     @Test
@@ -53,7 +45,7 @@ public class AmplitudeTest {
         String userId = "user_id";
         amplitude.setUserId(userId);
         assertEquals(
-                "user_id",
+                userId,
                 context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
                         Constants.PREFKEY_USER_ID, null));
     }
@@ -100,18 +92,24 @@ public class AmplitudeTest {
     }
 
     @Test
+    public void testOptOut() {
+        amplitude.setOptOut(true);
+        RecordedRequest request = sendEvent(amplitude, "testOptOut", null);
+        assertNull(request);
+
+        amplitude.setOptOut(false);
+        request = sendEvent(amplitude, "testOptOut", null);
+        assertNotNull(request);
+    }
+
+    @Test
     public void testLogEvent() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.getScheduler().advanceToLastPostedRunnable();
-        amplitude.logEvent("test_event");
-        looper.getScheduler().advanceToLastPostedRunnable();
-        looper.getScheduler().advanceToLastPostedRunnable();
+        RecordedRequest request = sendEvent(amplitude, "test_event", null);
+        assertNotNull(request);
+    }
 
-        FakeHttp.addPendingHttpResponse(200, "success");
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
-        httplooper.getScheduler().advanceToLastPostedRunnable();
-
-        assertEquals(1, looper.getScheduler().size());
-        assertTrue(FakeHttp.httpRequestWasMade(Constants.EVENT_LOG_URL));
+    @Test
+    public void testLogEventSyncronous() {
+        assertNotNull("event_id", amplitude.logEventSynchronous("test_event", null));
     }
 }

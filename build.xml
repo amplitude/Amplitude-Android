@@ -11,25 +11,39 @@
     <property name="build" location="build" />
     <property name="dist" location="dist" />
 
+    <property name="test.src" location="test" />
+    <property name="test.reports" location="${dist}/reports"/>
+
     <property environment="env" />
     <property name="android-sdk-path" value="${env.ANDROID_SDK}" />
     <property name="android-target" value="${env.ANDROID_TARGET}" />
 
     <property name="groupId" value="com.amplitude" />
     <property name="artifactId" value="amplitude-android" />
-    <property name="version" value="1.4.3" />
+    <property name="version" value="1.5.0" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
+    <property name="unity-jar" value="amplitude-unity-${version}.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
     <property name="sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
 
-    <path id="project.class.path">
+    <tstamp>
+      <format property="long-date" pattern="MMMM dd, yyyy"/>
+    </tstamp>
+
+    <artifact:dependencies pathId="dependency.classpath">
+        <artifact:pom file="pom.xml" />
+    </artifact:dependencies>
+
+    <path id="project.classpath">
+        <path refid="dependency.classpath"/>
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
 
     <target name="init">
         <mkdir dir="${build}" />
         <mkdir dir="${dist}/lib" />
+        <mkdir dir="${test.reports}" />
     </target>
 
     <target name="clean" >
@@ -40,11 +54,14 @@
     <target name="build" depends="init" >
         <echo message="Building for android target ${android-target}" />
         <echo message="Java version: ${java.version}"/>
-        <echo message="Android SDK Path: ${toString:project.class.path}" />
-        <javac classpathref="project.class.path"
+        <echo message="Android SDK Path: ${toString:project.classpath}" />
+        <javac classpathref="project.classpath"
                srcdir="${src}"
                destdir="${build}"
-               includeantruntime="false" />
+               includeantruntime="false"
+               debug="true">
+            <classpath refid="dependency.classpath" />
+        </javac>
     </target>
 
     <target name="jar" depends="build">
@@ -52,16 +69,22 @@
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
-        <jar destfile="amplitude-unity-${version}.jar">
+        <!-- Prepare dependency path jar list for inclusion in unity uberjar -->
+        <pathconvert refid="dependency.classpath" property="dependency.list" pathsep="," dirsep="/">
+            <map from="/" to=""/>
+        </pathconvert>
+
+        <jar destfile="${unity-jar}">
             <fileset dir="${build}" includes="com/amplitude/api/*.class" />
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
             <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
             <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
+            <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
 
     <target name="dist" depends="jar" description="creates release jar with javadoc and sources">
-        <javadoc classpathref="project.class.path" sourcepath="${src}" destdir="${dist}/javadoc">
+        <javadoc classpathref="project.classpath" sourcepath="${src}" destdir="${dist}/javadoc">
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
         </javadoc>
         <jar jarfile="${javadoc-jar}">
@@ -72,12 +95,61 @@
         </jar>
     </target>
 
+    <target name="update-version">
+        <replaceregexp match="\d+\.\d+.\d+(-SNAPSHOT)?" replace="${version}" flags="g">
+            <fileset dir="." includes="README.md"/>
+            <fileset dir="${src}" includes="com/amplitude/api/Constants.java" />
+        </replaceregexp>
+
+        <replaceregexp match="&lt;version&gt;[\d.]*(-SNAPSHOT)?&lt;/version&gt;" replace="&lt;version&gt;${version}&lt;/version&gt;">
+            <fileset dir="." includes="pom.xml"/>
+        </replaceregexp>
+
+        <replaceregexp match="name=.version. value=.[\d.]*(-SNAPSHOT)?." replace="name=&quot;version&quot; value=&quot;${version}&quot;" >
+            <fileset dir="." includes="build.xml"/>
+        </replaceregexp>
+    </target>
+
+    <target name="tag" depends="update-version,dist,unity" description="commits new artifacts to git and tags the release">
+        <echo message="Tagging artifacts in git for version ${version}"/>
+
+        <exec dir="." executable="git"><arg line="rm amplitude-*jar"/></exec>
+
+        <copy file="${jar}" todir="."/>
+
+        <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
+            <fileset dir="." includes="CHANGELOG.md"/>
+        </replaceregexp>
+
+        <exec dir="." executable="git"><arg line="add amplitude-*jar README.md pom.xml build.xml" /></exec>
+        <exec dir="." executable="git"><arg line="add src/com/amplitude/api/Constants.java" /></exec>
+        <exec dir="." executable="git"><arg line="add CHANGELOG.md" /></exec>
+
+        <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
+        <exec dir="." executable="git"><arg line="tag v${version}" /></exec>
+
+        <echo message="The release has been tagged in your local repository. To push the release to github:"/>
+        <echo message="git push --tags origin master"/>
+    </target>
+
+    <target name="release" depends="clean,tag" description="prepares for a release">
+        <antcall target="maven-snapshot" inheritAll="false">
+            <param name="version" value="${version}-SNAPSHOT"/>
+        </antcall>
+
+        <antcall target="maven-stage" >
+            <param name="version" value="${version}"/>
+        </antcall>
+    </target>
+
     <property name="ossrh-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots" />
     <property name="ossrh-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2" />
     <property name="ossrh-server-id" value="ossrh" />
 
     <!-- version in build.xml and pom.xml must be -SNAPSHOT -->
-    <target name="deploy" depends="dist" description="deploy snapshot version to Maven snapshot repository">
+    <target name="maven-snapshot" depends="update-version,dist" description="deploy snapshot version to Maven snapshot repository">
+        <echo message="Uploading artifacts to maven snapshot for version ${version}"/>
+
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file" />
             <arg value="-Durl=${ossrh-snapshots-repository-url}" />
@@ -87,8 +159,42 @@
         </artifact:mvn>
     </target>
 
+    <target name="build-tests" depends="build" description="Compile test files">
+        <path id="test.classpath">
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.classpath" />
+        </path>
+        <javac srcdir="${test.src}"
+               destdir="${build}"
+               classpathref="test.classpath"
+               includeantruntime="false"
+               debug="true">
+            <classpath refid="dependency.classpath" />
+        </javac>
+    </target>
+
+    <target name="test" depends="build-tests" description="Runs all Robolectric unit tests.">
+        <path id="junit.classpath">
+            <pathelement location="./"/>
+            <pathelement location="${build}" />
+            <fileset dir="lib" includes="**/*.jar" />
+            <path refid="project.classpath" />
+        </path>
+
+        <junit failureproperty="junit.failure" printsummary="yes" fork="on">
+            <classpath refid="junit.classpath" />
+            <formatter type="brief" />
+            <batchtest todir="${test.reports}">
+                <fileset dir="${test.src}" includes="**/*Test.java" excludes="**/BaseTest.java" />
+            </batchtest>
+        </junit>
+        <fail if="junit.failure" message="Unit test(s) failed. See reports!" />
+    </target>
+
     <!-- version in build.xml and pom.xml must NOT be -SNAPSHOT -->
-    <target name="stage" depends="dist" description="deploy release version to Maven staging repository">
+    <target name="maven-stage" depends="update-version,dist" description="deploy release version to Maven staging repository">
+        <echo message="Uploading artifacts to maven for version ${version}"/>
+
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
             <arg value="-Durl=${ossrh-staging-repository-url}" />

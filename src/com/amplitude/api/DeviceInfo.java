@@ -181,7 +181,16 @@ public class DeviceInfo {
 
         LocationManager locationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
+
+        // Don't crash if the device does not have location services.
+        if (locationManager == null) { return null; }
+
         List<String> providers = locationManager.getProviders(true);
+
+        // It's possible that the location service is running out of process
+        // and the remote getProviders call fails. Handle null provider lists.
+        if (providers == null) { return null; }
+
         List<Location> locations = new ArrayList<Location>();
         for (String provider : providers) {
             Location location = locationManager.getLastKnownLocation(provider);

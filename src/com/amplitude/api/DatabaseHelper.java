@@ -27,13 +27,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private static final String EVENT_FIELD = "event";
 
     private static final String CREATE_EVENTS_TABLE = "CREATE TABLE IF NOT EXISTS "
-            + EVENT_TABLE_NAME + " ("
-            + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + EVENT_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
     private File file;
 
-    static DatabaseHelper getDatabaseHelper(Context context) {
+    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
         if (instance == null) {
             instance = new DatabaseHelper(context.getApplicationContext());
         }
@@ -86,8 +85,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(EVENT_TABLE_NAME, new String[] { ID_FIELD, EVENT_FIELD },
-                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null,
-                    null, ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
+                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null, null,
+                    ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
@@ -112,14 +111,18 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long getEventCount() {
         long numberRows = 0;
+        SQLiteStatement statement = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
             String query = "SELECT COUNT(*) FROM " + EVENT_TABLE_NAME;
-            SQLiteStatement statement = db.compileStatement(query);
+            statement = db.compileStatement(query);
             numberRows = statement.simpleQueryForLong();
         } catch (SQLiteException e) {
             Log.e(TAG, "getNumberRows failed", e);
         } finally {
+            if (statement != null) {
+                statement.close();
+            }
             close();
         }
         return numberRows;
@@ -127,11 +130,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long getNthEventId(long n) {
         long nthEventId = -1;
+        SQLiteStatement statement = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String query = "SELECT " + ID_FIELD + " FROM " + EVENT_TABLE_NAME
-                    + " LIMIT 1 OFFSET " + (n - 1);
-            SQLiteStatement statement = db.compileStatement(query);
+            String query = "SELECT " + ID_FIELD + " FROM " + EVENT_TABLE_NAME + " LIMIT 1 OFFSET "
+                    + (n - 1);
+            statement = db.compileStatement(query);
             nthEventId = -1;
             try {
                 nthEventId = statement.simpleQueryForLong();
@@ -141,6 +145,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (SQLiteException e) {
             Log.e(TAG, "getNthEventId failed", e);
         } finally {
+            if (statement != null) {
+                statement.close();
+            }
             close();
         }
         return nthEventId;
