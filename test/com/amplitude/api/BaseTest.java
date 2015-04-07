@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 import org.robolectric.annotation.Config;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.FakeHttp;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.Shadows;

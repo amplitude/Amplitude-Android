@@ -31,12 +31,23 @@
       <format property="long-date" pattern="MMMM dd, yyyy"/>
     </tstamp>
 
-    <artifact:dependencies pathId="dependency.classpath">
+    <!-- Load dependencies from pom -->
+    <artifact:dependencies pathId="dependency.classpath" useScope="runtime">
         <artifact:pom file="pom.xml" />
     </artifact:dependencies>
 
     <path id="project.classpath">
         <path refid="dependency.classpath"/>
+        <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
+    </path>
+
+    <!-- Load test dependency classpath from pom-->
+    <artifact:dependencies pathId="dependency.testclasspath" useScope="test">
+        <artifact:pom file="pom.xml" />
+    </artifact:dependencies>
+
+    <path id="project.testclasspath">
+        <path refid="dependency.testclasspath"/>
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
 
@@ -162,14 +173,14 @@
     <target name="build-tests" depends="build" description="Compile test files">
         <path id="test.classpath">
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.classpath" />
+            <path refid="project.testclasspath" />
         </path>
         <javac srcdir="${test.src}"
                destdir="${build}"
                classpathref="test.classpath"
                includeantruntime="false"
                debug="true">
-            <classpath refid="dependency.classpath" />
+            <classpath refid="dependency.testclasspath" />
         </javac>
     </target>
 
@@ -178,7 +189,7 @@
             <pathelement location="./"/>
             <pathelement location="${build}" />
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.classpath" />
+            <path refid="project.testclasspath" />
         </path>
 
         <junit failureproperty="junit.failure" printsummary="yes" fork="on">
