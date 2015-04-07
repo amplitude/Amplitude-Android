@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Fix exception when calling logEvent with empty JSONObject.
+* Log a DEBUG message on each event.
 
 ## 1.5.0 (March 24, 2015)
 

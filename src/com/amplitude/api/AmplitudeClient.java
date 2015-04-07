@@ -208,6 +208,8 @@ public class AmplitudeClient {
 
     private long logEvent(String eventType, JSONObject eventProperties,
             JSONObject apiProperties, long timestamp, boolean checkSession) {
+        Log.d(TAG, "Logged event to Amplitude: " + eventType);
+
         if (optOut) {
             return -1;
         }
