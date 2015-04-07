@@ -106,4 +106,14 @@ public class AmplitudeTest extends BaseTest {
         RecordedRequest request = sendEvent(amplitude, "test_event", null);
         assertNotNull(request);
     }
+
+    /**
+     * Test for not excepting on empty event properties.
+     * See https://github.com/amplitude/Amplitude-Android/issues/35
+     */
+    @Test
+    public void testEmptyEventProps() {
+        RecordedRequest request = sendEvent(amplitude, "test_event", new JSONObject());
+        assertNotNull(request);
+    }
 }

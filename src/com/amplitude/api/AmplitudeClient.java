@@ -286,8 +286,14 @@ public class AmplitudeClient {
      * stringify and reparse given the API.
      */
     private JSONObject cloneJSONObject(final JSONObject obj) {
+        if (obj == null) {
+            return null;
+        }
+
+        // obj.names returns null if the json obj is empty.
         JSONArray nameArray = obj.names();
-        int len = nameArray.length();
+        int len = (nameArray != null ? nameArray.length() : 0);
+
         String[] names = new String[len];
         for (int i = 0; i < len; i++) {
             names[i] = nameArray.optString(i);

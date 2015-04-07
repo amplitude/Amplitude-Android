@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix exception when calling logEvent with empty JSONObject.
+
 ## 1.5.0 (March 24, 2015)
 
 * Add PinnedAmplitudeClient to support SSL pinning.
