@@ -41,6 +41,11 @@
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
 
+    <!-- Prepare dependency path jar list for inclusion in uberjar -->
+    <pathconvert refid="dependency.classpath" property="dependency.list" pathsep="," dirsep="/">
+        <map from="/" to=""/>
+    </pathconvert>
+
     <!-- Load test dependency classpath from pom-->
     <artifact:dependencies pathId="dependency.testclasspath" useScope="test">
         <artifact:pom file="pom.xml" />
@@ -76,7 +81,10 @@
     </target>
 
     <target name="jar" depends="build">
-        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class" />
+        <jar destfile="${jar}" basedir="${build}">
+            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
+            <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
+        </jar>
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
@@ -104,6 +112,7 @@
         <jar jarfile="${sources-jar}">
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
         </jar>
+        <copy file="${jar}" todir="."/>
     </target>
 
     <target name="update-version">
@@ -125,8 +134,6 @@
         <echo message="Tagging artifacts in git for version ${version}"/>
 
         <exec dir="." executable="git"><arg line="rm amplitude-*jar"/></exec>
-
-        <copy file="${jar}" todir="."/>
 
         <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
             <fileset dir="." includes="CHANGELOG.md"/>
