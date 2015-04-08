@@ -59,7 +59,7 @@ public class PinningTest extends BaseTest {
     }
 
     private static class InvalidPinnedAmplitudeClient extends PinnedAmplitudeClient {
-        public static final SSLContext INVALID_SSL_CONTEXT = new SslContextBuilder()
+        public static final SSLContextBuilder INVALID_SSL_CONTEXT = new SSLContextBuilder()
           .addCertificate(""
               + "MIIFVjCCBD6gAwIBAgIRAObsedhCFsMHaYL156gA4XAwDQYJKoZIhvcNAQELBQAwgZ"
               + "AxCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNV"
@@ -88,7 +88,7 @@ public class PinningTest extends BaseTest {
               + "+b3OUtNElnfSFXZnsgpxp3BlcCEfQs7faII89rTzxJqRf0fNo8Y4u3+k79zGF8xbon"
               + "O8oXZt0ApxcYmFIQlhCddM20lgHLTeMx4yG5C2lHGJE3iUS7YVAq6ENRrgiVhcuf5R"
               + "H1mWAYpFPJ7rOmpCReC6brxCho/7jg+fBqEUfCGyrMtYSRejCc9aZGBQmuz5v5iT6P"
-              + "XCBeVmjEX3kh4bkRPHJ5vyASNXUkF3nwVAe4cwOoLHN8o=").build();
+              + "XCBeVmjEX3kh4bkRPHJ5vyASNXUkF3nwVAe4cwOoLHN8o=");
 
         public InvalidPinnedAmplitudeClient() {
             super();
