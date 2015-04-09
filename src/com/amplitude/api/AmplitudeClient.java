@@ -36,16 +36,16 @@ public class AmplitudeClient {
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
 
-    private static AmplitudeClient instance = new AmplitudeClient();
+    protected static AmplitudeClient instance = new AmplitudeClient();
 
     public static AmplitudeClient getInstance() {
         return instance;
     }
 
-    private Context context;
-    private String apiKey;
-    private String userId;
-    private String deviceId;
+    protected Context context;
+    protected String apiKey;
+    protected String userId;
+    protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
@@ -192,8 +192,8 @@ public class AmplitudeClient {
         checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
     }
 
-    private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+    protected void checkedLogEvent(String eventType, JSONObject eventProperties,
+            JSONObject apiProperties, long timestamp, boolean checkSession) {
         if (TextUtils.isEmpty(eventType)) {
             Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return;
@@ -201,6 +201,12 @@ public class AmplitudeClient {
         if (!contextAndApiKeySet("logEvent()")) {
             return;
         }
+
+        asyncLogEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
+    }
+
+    protected void asyncLogEvent(final String eventType, final JSONObject eventProperties,
+            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
@@ -209,7 +215,7 @@ public class AmplitudeClient {
         });
     }
 
-    private long logEvent(String eventType, JSONObject eventProperties,
+    protected long logEvent(String eventType, JSONObject eventProperties,
             JSONObject apiProperties, long timestamp, boolean checkSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
@@ -270,7 +276,7 @@ public class AmplitudeClient {
         return saveEvent(event);
     }
 
-    private long saveEvent(JSONObject event) {
+    protected long saveEvent(JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
 
@@ -283,6 +289,7 @@ public class AmplitudeClient {
         } else {
             updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
         }
+
         return eventId;
     }
 
@@ -312,7 +319,7 @@ public class AmplitudeClient {
         }
     }
 
-    private void runOnLogThread(Runnable r) {
+    protected void runOnLogThread(Runnable r) {
         if (Thread.currentThread() != logThread) {
             logThread.post(r);
         } else {
@@ -333,20 +340,7 @@ public class AmplitudeClient {
         });
     }
 
-    private void updateServerLater(long delayMillis) {
-        if (!updateScheduled.getAndSet(true)) {
-
-            logThread.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    updateScheduled.set(false);
-                    updateServer();
-                }
-            }, delayMillis);
-        }
-    }
-
-    long getLastEventTime() {
+    private long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
@@ -578,12 +572,12 @@ public class AmplitudeClient {
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
     }
 
-    private void updateServer() {
+    protected void updateServer() {
         updateServer(true);
     }
 
     // Always call this from logThread
-    private void updateServer(boolean limit) {
+    protected void updateServer(boolean limit) {
         if (optOut) {
             return;
         }
@@ -605,6 +599,19 @@ public class AmplitudeClient {
                 uploadingCurrently.set(false);
                 Log.e(TAG, e.toString());
             }
+        }
+    }
+
+    protected void updateServerLater(long delayMillis) {
+        if (!updateScheduled.getAndSet(true)) {
+
+            logThread.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    updateScheduled.set(false);
+                    updateServer();
+                }
+            }, delayMillis);
         }
     }
 
@@ -748,11 +755,11 @@ public class AmplitudeClient {
 
     }
 
-    private Object replaceWithJSONNull(Object obj) {
+    protected Object replaceWithJSONNull(Object obj) {
         return obj == null ? JSONObject.NULL : obj;
     }
 
-    private synchronized boolean contextAndApiKeySet(String methodName) {
+    protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
             Log.e(TAG, "context cannot be null, set context with initialize() before calling "
                     + methodName);
@@ -767,11 +774,11 @@ public class AmplitudeClient {
         return true;
     }
 
-    private String getSharedPreferencesName() {
+    protected String getSharedPreferencesName() {
         return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
     }
 
-    private String bytesToHexString(byte[] bytes) {
+    protected String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
         char[] hexChars = new char[bytes.length * 2];
