@@ -94,6 +94,9 @@ public class AmplitudeClient {
             Log.e(TAG, "Argument context cannot be null in initialize()");
             return;
         }
+
+        AmplitudeClient.upgradePrefs(context);
+
         if (TextUtils.isEmpty(apiKey)) {
             Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
             return;
@@ -779,4 +782,98 @@ public class AmplitudeClient {
         }
         return new String(hexChars);
     }
-}
+
+    /**
+     * Move all preference data from the legacy name to the new, static name if needed.
+     *
+     * Constants.PACKAGE_NAME used to be set using "Constants.class.getPackage().getName()"
+     * Some aggressive proguard optimizations broke the reflection and caused apps
+     * to crash on startup.
+     *
+     * Now that Constants.PACKAGE_NAME is changed, old data on devices needs to be
+     * moved over to the new location so that device ids remain consistent.
+     *
+     * This should only happen once -- the first time a user loads the app after updating.
+     * This logic needs to remain in place for quite a long time. It was first introduced in
+     * April 2015 in version 1.6.0.
+     */
+    static boolean upgradePrefs(Context context) {
+        return upgradePrefs(context, null, null);
+    }
+
+    static boolean upgradePrefs(Context context, String sourcePkgName, String targetPkgName) {
+        try {
+            if (sourcePkgName == null) {
+                // Try to load the package name using the old reflection strategy.
+                sourcePkgName = Constants.PACKAGE_NAME;
+                try {
+                    sourcePkgName = Constants.class.getPackage().getName();
+                } catch (Exception e) { }
+            }
+
+            if (targetPkgName == null) {
+                targetPkgName = Constants.PACKAGE_NAME;
+            }
+
+            // No need to copy if the source and target are the same.
+            if (targetPkgName.equals(sourcePkgName)) {
+                return false;
+            }
+
+            // Copy over any preferences that may exist in a source preference store.
+            String sourcePrefsName = sourcePkgName + "." + context.getPackageName();
+            SharedPreferences source =
+                    context.getSharedPreferences(sourcePrefsName, Context.MODE_PRIVATE);
+
+            // Nothing left in the source store to copy
+            if (source.getAll().size() == 0) {
+                return false;
+            }
+
+            String prefsName = targetPkgName + "." + context.getPackageName();
+            SharedPreferences targetPrefs =
+                    context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+            SharedPreferences.Editor target = targetPrefs.edit();
+
+            // Copy over all existing data.
+            if (source.contains(sourcePkgName + ".previousSessionTime")) {
+                target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME,
+                        source.getLong(sourcePkgName + ".previousSessionTime", -1));
+            }
+            if (source.contains(sourcePkgName + ".previousEndSessionTime")) {
+                target.putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME,
+                        source.getLong(sourcePkgName + ".previousEndSessionTime", -1));
+            }
+            if (source.contains(sourcePkgName + ".previousEndSessionId")) {
+                target.putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID,
+                        source.getLong(sourcePkgName + ".previousEndSessionId", -1));
+            }
+            if (source.contains(sourcePkgName + ".previousSessionId")) {
+                target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID,
+                        source.getLong(sourcePkgName + ".previousSessionId", -1));
+            }
+            if (source.contains(sourcePkgName + ".deviceId")) {
+                target.putString(Constants.PREFKEY_DEVICE_ID,
+                        source.getString(sourcePkgName + ".deviceId", null));
+            }
+            if (source.contains(sourcePkgName + ".userId")) {
+                target.putString(Constants.PREFKEY_USER_ID,
+                        source.getString(sourcePkgName + ".userId", null));
+            }
+            if (source.contains(sourcePkgName + ".optOut")) {
+                target.putBoolean(Constants.PREFKEY_OPT_OUT,
+                        source.getBoolean(sourcePkgName + ".optOut", false));
+            }
+
+            // Commit the changes and clear the source store so we don't recopy.
+            target.apply();
+            source.edit().clear().apply();
+
+            Log.i(TAG, "Upgraded shared preferences from " + sourcePrefsName + " to " + prefsName);
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error upgrading shared preferences", e);
+            return false;
+        }
+    }}
