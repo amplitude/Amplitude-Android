@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.6.0 (April 08, 2015)
+
 * Fix crash under aggressive proguard optimizations.
 * Fix device id being lost occasionally on app update.
 * Fix exception when calling logEvent with empty JSONObject.
