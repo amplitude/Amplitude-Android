@@ -8,7 +8,7 @@ public class Constants {
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
 
-    public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
+    public static final String PACKAGE_NAME = "com.amplitude.api";
 
     public static final int API_VERSION = 2;
 

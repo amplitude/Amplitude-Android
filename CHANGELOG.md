@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix crash under aggressive proguard optimizations.
+* Fix device id being lost occasionally on app update.
 * Fix exception when calling logEvent with empty JSONObject.
 * Log a DEBUG message on each event.
 
