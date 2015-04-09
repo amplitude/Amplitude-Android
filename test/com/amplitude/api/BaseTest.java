@@ -59,9 +59,11 @@ public class BaseTest {
     }
 
     public void tearDown() throws Exception {
-        amplitude.logThread.getLooper().quit();
-        amplitude.httpThread.getLooper().quit();
-        amplitude = null;
+        if (amplitude != null) {
+            amplitude.logThread.getLooper().quit();
+            amplitude.httpThread.getLooper().quit();
+            amplitude = null;
+        }
 
         if (server != null) {
             server.shutdown();
