@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 1.6.1 (April 13, 2015)
+
+* Fix double class inclusion in jar distribution
+
 ## 1.6.0 (April 08, 2015)
 
 * Fix crash under aggressive proguard optimizations.
