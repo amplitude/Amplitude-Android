@@ -5,7 +5,7 @@
 
 2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-1.6.1-with-dependencies.jar) and copy it into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
 
-3. Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C1.6.1%7Cjar) using the following configuration in your pom.xml:
+  Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C1.6.1%7Cjar) using the following configuration in your pom.xml:
 
     ```
     <dependency>
@@ -15,43 +15,43 @@
     </dependency>
     ```
 
-4. Or if you are using gradle in your project, include in your build.gradle file:
+  Or if you are using gradle in your project, include in your build.gradle file:
 
     ```
     compile 'com.amplitude:android-sdk:1.6.1'
     ```
 
-5. In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
+4.  In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
 
     ```java
     import com.amplitude.api.Amplitude;
     ```
 
-6. In the `onCreate()` of your main activity, initialize the SDK:
+5. In the `onCreate()` of your main activity, initialize the SDK:
 
     ```java
     Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE");
     ```
 
-7. Add a `startSession()` call to each `onResume()` in every activity in your app:
+6. Add a `startSession()` call to each `onResume()` in every activity in your app:
 
     ```java
     Amplitude.getInstance().startSession();
     ```
 
-8. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
+7. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
 
     ```java
     Amplitude.getInstance().endSession();
     ```
 
-9. To track an event anywhere in the app, call:
+8. To track an event anywhere in the app, call:
 
     ```java
     Amplitude.getInstance().logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-10. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
