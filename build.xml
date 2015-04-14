@@ -23,6 +23,7 @@
     <property name="version" value="1.6.1" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
+    <property name="uberjar" value="${dist}/lib/${artifactId}-${version}-with-dependencies.jar" />
     <property name="unity-jar" value="amplitude-unity-${version}.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
     <property name="sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
@@ -31,12 +32,28 @@
       <format property="long-date" pattern="MMMM dd, yyyy"/>
     </tstamp>
 
-    <artifact:dependencies pathId="dependency.classpath">
+    <!-- Load dependencies from pom -->
+    <artifact:dependencies pathId="dependency.classpath" useScope="runtime">
         <artifact:pom file="pom.xml" />
     </artifact:dependencies>
 
     <path id="project.classpath">
         <path refid="dependency.classpath"/>
+        <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
+    </path>
+
+    <!-- Prepare dependency path jar list for inclusion in uberjar -->
+    <pathconvert refid="dependency.classpath" property="dependency.list" pathsep="," dirsep="/">
+        <map from="/" to=""/>
+    </pathconvert>
+
+    <!-- Load test dependency classpath from pom-->
+    <artifact:dependencies pathId="dependency.testclasspath" useScope="test">
+        <artifact:pom file="pom.xml" />
+    </artifact:dependencies>
+
+    <path id="project.testclasspath">
+        <path refid="dependency.testclasspath"/>
         <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
     </path>
 
@@ -66,6 +83,10 @@
 
     <target name="jar" depends="build">
         <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class" />
+        <jar destfile="${uberjar}">
+            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
+            <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
+        </jar>
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
@@ -74,6 +95,7 @@
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
             <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
             <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
+            <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
 
@@ -88,6 +110,7 @@
             <fileset dir="${src}" includes="com/amplitude/api/*.java" />
         </jar>
         <copy file="${jar}" todir="."/>
+        <copy file="${uberjar}" todir="."/>
     </target>
 
     <target name="update-version">
@@ -155,14 +178,14 @@
     <target name="build-tests" depends="build" description="Compile test files">
         <path id="test.classpath">
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.classpath" />
+            <path refid="project.testclasspath" />
         </path>
         <javac srcdir="${test.src}"
                destdir="${build}"
                classpathref="test.classpath"
                includeantruntime="false"
                debug="true">
-            <classpath refid="dependency.classpath" />
+            <classpath refid="dependency.testclasspath" />
         </javac>
     </target>
 
@@ -171,7 +194,7 @@
             <pathelement location="./"/>
             <pathelement location="${build}" />
             <fileset dir="lib" includes="**/*.jar" />
-            <path refid="project.classpath" />
+            <path refid="project.testclasspath" />
         </path>
 
         <junit failureproperty="junit.failure" printsummary="yes" fork="on">
