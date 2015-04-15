@@ -128,4 +128,15 @@ public class BaseTest {
 
         return null;
     }
+
+    public JSONObject getLastEvent() {
+        try {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            Pair<Long, JSONArray> pair = dbHelper.getEvents(-1, -1);
+            return (JSONObject)pair.second.get(pair.second.length() - 1);
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+        return null;
+    }
 }

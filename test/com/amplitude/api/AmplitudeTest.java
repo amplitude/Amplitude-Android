@@ -5,11 +5,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -156,6 +161,30 @@ public class AmplitudeTest extends BaseTest {
         assertEquals("SIG", apiProps.optString("receiptSig"));
 
         assertNotNull(runRequest());
+    }
+
+    @Test
+    public void testLogEventSync() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        amplitude.logEventSync("test_event_sync", null);
+
+        // Event should be in the database synchronously.
+        JSONObject event = getLastEvent();
+        assertEquals("test_event_sync", event.optString("event_type"));
+
+        looper.runToEndOfTasks();
+
+        server.enqueue(new MockResponse().setBody("success"));
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httplooper.runToEndOfTasks();
+
+        try {
+            assertNotNull(server.takeRequest(1, SECONDS));
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
     }
 
     /**
