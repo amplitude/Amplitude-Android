@@ -132,7 +132,7 @@ Then after a successful purchase transaction, call `logRevenue()` with the purch
 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
 String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
 
-Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseData, receiptSignature);
+Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseData, dataSignature);
 ```
 
 See the [Google In App Billing Documentation](http://developer.android.com/google/play/billing/billing_integrate.html#Purchase) for details on how to retrieve the purchase data and receipt signature.
