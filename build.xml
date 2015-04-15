@@ -131,6 +131,8 @@
     <target name="tag" depends="update-version,dist,unity" description="commits new artifacts to git and tags the release">
         <echo message="Tagging artifacts in git for version ${version}"/>
 
+        <exec dir="." executable="git"><arg line="checkout -b v${version}-snapshot"/></exec>
+
         <exec dir="." executable="git"><arg line="rm amplitude-*jar"/></exec>
 
         <replaceregexp match="## Unreleased" replace="## Unreleased&#10;&#10;## ${version} (${long-date})" flags="g">
@@ -144,12 +146,14 @@
         <exec dir="." executable="git"><arg line="commit -m 'Version ${version}'" /></exec>
         <exec dir="." executable="git"><arg line="tag v${version}" /></exec>
 
-        <echo message="The release has been tagged in your local repository. To push the release to github:"/>
-        <echo message="git push --tags origin master"/>
+        <exec dir="." executable="git"><arg line="push --tags origin v${version}-snapshot" /></exec>
+
+        <echo message="The release has been tagged in the v${version} branch. To publish the release to github:"/>
+        <echo message="git checkout master; git merge v${version}; git push origin master"/>
     </target>
 
     <target name="release" depends="clean,tag" description="prepares for a release">
-        <antcall target="maven-snapshot" inheritAll="false">
+        <antcall target="test-snapshot" inheritAll="false">
             <param name="version" value="${version}-SNAPSHOT"/>
         </antcall>
 
@@ -173,6 +177,16 @@
             <arg value="-DpomFile=pom.xml" />
             <arg value="-Dfile=${jar}" />
         </artifact:mvn>
+    </target>
+
+    <target name="test-snapshot" depends="maven-snapshot" description="test release packages">
+        <echo message="Testing release artifacts for ${version}"/>
+        <echo message="Cloning demo app..."/>
+
+        <exec dir="." executable="rm"><arg line="-rf test-release"/></exec>
+        <exec dir="." executable="git"><arg line="clone https://github.com/amplitude/AndroidDemo test-release"/></exec>
+        <exec dir="test-release" executable="./amplitude-test.sh"><arg line="${version}"/></exec>
+        <exec dir="." executable="rm"><arg line="-rf test-release"/></exec>
     </target>
 
     <target name="build-tests" depends="build" description="Compile test files">
