@@ -50,6 +50,7 @@ public class AmplitudeClient {
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
     private boolean optOut = false;
+    private boolean offline = false;
 
     private DeviceInfo deviceInfo;
     private String advertisingId;
@@ -173,6 +174,15 @@ public class AmplitudeClient {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
+    }
+
+    public void setOffline(boolean offline) {
+        this.offline = offline;
+
+        // Try to update to the server once offline mode is disabled.
+        if (!offline) {
+            uploadEvents();
+        }
     }
 
     public void logEvent(String eventType) {
@@ -568,7 +578,7 @@ public class AmplitudeClient {
 
     // Always call this from logThread
     protected void updateServer(boolean limit) {
-        if (optOut) {
+        if (optOut || offline) {
             return;
         }
 
