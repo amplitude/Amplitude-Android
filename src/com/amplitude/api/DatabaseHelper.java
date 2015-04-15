@@ -19,7 +19,7 @@ import android.util.Pair;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static DatabaseHelper instance;
+    static DatabaseHelper instance;
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
     private static final String EVENT_TABLE_NAME = "events";

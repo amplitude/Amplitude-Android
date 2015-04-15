@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import static org.junit.Assert.fail;
+
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -9,6 +11,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -20,6 +23,7 @@ import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.Shadows;
 
 import android.content.Context;
+import android.util.Pair;
 
 public class BaseTest {
 
@@ -39,6 +43,11 @@ public class BaseTest {
     public void setUp(boolean withServer) throws Exception {
         ShadowApplication.getInstance().setPackageName("com.amplitude.test");
         context = ShadowApplication.getInstance().getApplicationContext();
+
+        // Clear the database helper for each test. Better to have isolation.
+        // See https://github.com/robolectric/robolectric/issues/569
+        // and https://github.com/robolectric/robolectric/issues/1622
+        DatabaseHelper.instance = null;
 
         if (withServer) {
             server = new MockWebServer();
@@ -87,5 +96,28 @@ public class BaseTest {
         } catch (InterruptedException e) {
             return null;
         }
+    }
+
+    public JSONObject getLastUnsentEvent() {
+        JSONArray events = getUnsentEvents(1);
+        return (JSONObject)events.opt(events.length() - 1);
+    }
+
+    public JSONArray getUnsentEvents(int limit) {
+        try {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            Pair<Long, JSONArray> pair = dbHelper.getEvents(-1, -1);
+
+            JSONArray out = new JSONArray();
+            int start = Math.max(limit - pair.second.length(), 0);
+            for (int i = start; i < limit; i++) {
+                out.put(i, pair.second.get(pair.second.length() - limit + i));
+            }
+            return out;
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+
+        return null;
     }
 }
