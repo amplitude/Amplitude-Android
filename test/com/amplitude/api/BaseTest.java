@@ -100,6 +100,12 @@ public class BaseTest {
         return runRequest();
     }
 
+    public long getUnsentEventCount() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        return dbHelper.getEventCount();
+    }
+
+
     public JSONObject getLastUnsentEvent() {
         JSONArray events = getUnsentEvents(1);
         return (JSONObject)events.opt(events.length() - 1);

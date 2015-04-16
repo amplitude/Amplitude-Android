@@ -346,32 +346,32 @@ public class AmplitudeClient {
         }
     }
 
-    private long getLastEventTime() {
+    long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
     }
 
-    private void setLastEventTime(long timestamp) {
+    void setLastEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
     }
 
-    private void clearEndSession() {
+    void clearEndSession() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().remove(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME)
                 .remove(Constants.PREFKEY_PREVIOUS_END_SESSION_ID).commit();
     }
 
-    private long getEndSessionTime() {
+    long getEndSessionTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, -1);
     }
 
-    private long getEndSessionId() {
+    long getEndSessionId() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1);
@@ -489,7 +489,8 @@ public class AmplitudeClient {
                 closeSession();
             }
         });
-        // Queue up upload events 16 seconds later
+
+        // Queue up upload events MIN_TIME_BETWEEN_SESSIONS + 1 seconds later
         logThread.removeCallbacks(endSessionRunnable);
         endSessionRunnable = new Runnable() {
             @Override
