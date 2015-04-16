@@ -107,6 +107,57 @@ public class AmplitudeTest extends BaseTest {
         assertNotNull(request);
     }
 
+    @Test
+    public void testLogRevenue() {
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        JSONObject event, apiProps;
+
+        amplitude.logRevenue(10.99);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        apiProps = event.optJSONObject("api_properties");
+        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(1, apiProps.optInt("quantity"));
+        assertNull(apiProps.optString("productId", null));
+        assertEquals(10.99, apiProps.optDouble("price"), .01);
+        assertNull(apiProps.optString("receipt", null));
+        assertNull(apiProps.optString("receiptSig", null));
+
+        amplitude.logRevenue("ID1", 2, 9.99);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        apiProps = event.optJSONObject("api_properties");;
+        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(2, apiProps.optInt("quantity"));
+        assertEquals("ID1", apiProps.optString("productId"));
+        assertEquals(9.99, apiProps.optDouble("price"), .01);
+        assertNull(apiProps.optString("receipt", null));
+        assertNull(apiProps.optString("receiptSig", null));
+
+        amplitude.logRevenue("ID2", 3, 8.99, "RECEIPT", "SIG");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        apiProps = event.optJSONObject("api_properties");
+        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(3, apiProps.optInt("quantity"));
+        assertEquals("ID2", apiProps.optString("productId"));
+        assertEquals(8.99, apiProps.optDouble("price"), .01);
+        assertEquals("RECEIPT", apiProps.optString("receipt"));
+        assertEquals("SIG", apiProps.optString("receiptSig"));
+
+        assertNotNull(runRequest());
+    }
+
     /**
      * Test for not excepting on empty event properties.
      * See https://github.com/amplitude/Amplitude-Android/issues/35

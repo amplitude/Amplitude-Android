@@ -79,14 +79,7 @@ public class BaseTest {
         }
     }
 
-    public RecordedRequest sendEvent(AmplitudeClient amplitude, String name, JSONObject props) {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.runToEndOfTasks();
-
-        amplitude.logEvent(name, props);
-        looper.runToEndOfTasks();
-        looper.runToEndOfTasks();
-
+    public RecordedRequest runRequest() {
         server.enqueue(new MockResponse().setBody("success"));
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
@@ -96,6 +89,15 @@ public class BaseTest {
         } catch (InterruptedException e) {
             return null;
         }
+    }
+
+    public RecordedRequest sendEvent(AmplitudeClient amplitude, String name, JSONObject props) {
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        amplitude.logEvent(name, props);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        return runRequest();
     }
 
     public JSONObject getLastUnsentEvent() {
