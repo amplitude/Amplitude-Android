@@ -20,7 +20,7 @@
 
     <property name="groupId" value="com.amplitude" />
     <property name="artifactId" value="amplitude-android" />
-    <property name="version" value="1.6.1" />
+    <property name="version" value="1.6.2" />
 
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="uberjar" value="${dist}/lib/${artifactId}-${version}-with-dependencies.jar" />

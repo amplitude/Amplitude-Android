@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.6.2 (April 17, 2015)
+
 * Change protection on AmplitudeClient to public.
 
 ## 1.6.1 (April 13, 2015)
