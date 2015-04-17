@@ -80,7 +80,7 @@ public class AmplitudeClient {
     WorkerThread logThread = new WorkerThread("logThread");
     WorkerThread httpThread = new WorkerThread("httpThread");
 
-    protected AmplitudeClient() {
+    public AmplitudeClient() {
         logThread.start();
         httpThread.start();
     }

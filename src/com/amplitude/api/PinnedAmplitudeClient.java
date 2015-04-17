@@ -145,7 +145,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
 
     protected SSLSocketFactory sslSocketFactory;
 
-    protected PinnedAmplitudeClient() {
+    public PinnedAmplitudeClient() {
         super();
     }
 

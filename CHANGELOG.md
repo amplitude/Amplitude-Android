@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Change protection on AmplitudeClient to public.
+
 ## 1.6.1 (April 13, 2015)
 
 * Fix double class inclusion in jar distribution
