@@ -37,9 +37,6 @@ public class SessionTest extends BaseTest {
         super.tearDown();
     }
 
-
-// TODO: Add a bunch of tests around starting and ending sessions
-
     @Test
     public void testStartSession() {
         amplitude.startSession();
@@ -89,5 +86,51 @@ public class SessionTest extends BaseTest {
 
         assertEquals(2, getUnsentEventCount());
         assertNotNull(runRequest());
+    }
+
+    @Test
+    public void testContinueSession() {
+        amplitude.startSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        JSONObject event = getLastUnsentEvent();
+        long session_id = event.optLong("session_id");
+
+        amplitude.endSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
+
+        amplitude.startSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertEquals(1, getUnsentEventCount());
+
+        amplitude.logEvent("event");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        assertEquals(session_id, event.optLong("session_id"));
+    }
+
+    @Test
+    public void testExpiredSession() {
+        amplitude.startSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        JSONObject event = getLastUnsentEvent();
+        long session_id = event.optLong("session_id");
+
+        amplitude.endSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        amplitude.startSession();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertEquals(3, getUnsentEventCount());
+
+        amplitude.logEvent("event");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        assertFalse(session_id == event.optLong("session_id"));
     }
 }
