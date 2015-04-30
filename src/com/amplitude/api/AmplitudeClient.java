@@ -193,7 +193,7 @@ public class AmplitudeClient {
     }
 
     private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+                                 final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
         if (TextUtils.isEmpty(eventType)) {
             Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return;
@@ -210,7 +210,7 @@ public class AmplitudeClient {
     }
 
     private long logEvent(String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, long timestamp, boolean checkSession) {
+                          JSONObject apiProperties, long timestamp, boolean checkSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -267,6 +267,8 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
+        reportEvent(eventType);
+
         return saveEvent(event);
     }
 
@@ -284,6 +286,14 @@ public class AmplitudeClient {
             updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
         }
         return eventId;
+    }
+
+    /**
+     * Register a callback reporting event
+     * to act as hook for other platforms
+     */
+    public void reportEvent(JSONObject event){
+        // do something with event
     }
 
     /**
@@ -514,7 +524,7 @@ public class AmplitudeClient {
     }
 
     public void logRevenue(String productId, int quantity, double price, String receipt,
-            String receiptSignature) {
+                           String receiptSignature) {
         if (!contextAndApiKeySet("logRevenue()")) {
             return;
         }
@@ -565,6 +575,17 @@ public class AmplitudeClient {
                 }
             }
         });
+    }
+
+    /**
+     * Allow to get the user properties
+     */
+
+    public JSONObject getUserProperties() {
+        if(userProperties != null){
+            return userProperties;
+        }
+        return null;
     }
 
     public void setUserId(String userId) {
@@ -630,17 +651,17 @@ public class AmplitudeClient {
         }
 
         RequestBody body = new FormEncodingBuilder()
-            .add("v", apiVersionString)
-            .add("client", apiKey)
-            .add("e", events)
-            .add("upload_time", timestampString)
-            .add("checksum", checksumString)
-            .build();
+                .add("v", apiVersionString)
+                .add("client", apiKey)
+                .add("e", events)
+                .add("upload_time", timestampString)
+                .add("checksum", checksumString)
+                .build();
 
         Request request = new Request.Builder()
-            .url(url)
-            .post(body)
-            .build();
+                .url(url)
+                .post(body)
+                .build();
 
         boolean uploadSuccess = false;
 
