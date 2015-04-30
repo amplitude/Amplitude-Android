@@ -137,6 +137,17 @@ Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseDat
 
 See the [Google In App Billing Documentation](http://developer.android.com/google/play/billing/billing_integrate.html#Purchase) for details on how to retrieve the purchase data and receipt signature.
 
+#### Amazon Store Revenue Verification
+
+For purchases on the Amazon Store, you should copy your Amazon Shared Secret into the manage section of your app on Amplitude. After a successful purchase transaction, you should send the purchase token as the receipt and the user id as the receiptSignature:
+
+```java
+String purchaseToken = purchaseResponse.getReceipt();
+String userId = getUserIdResponse.getUserId();
+
+Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseToken, userId);
+```
+
 # Fine-grained location tracking #
 
 Amplitude access the Android location service (if possible) to add the specific coordinates (longitude and latitude)
