@@ -6,6 +6,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -267,7 +268,7 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
-        reportEvent(eventType);
+        EventListener.addToEventListener(JSONObject event);
 
         return saveEvent(event);
     }
@@ -288,13 +289,6 @@ public class AmplitudeClient {
         return eventId;
     }
 
-    /**
-     * Register a callback reporting event
-     * to act as hook for other platforms
-     */
-    public void reportEvent(JSONObject event){
-        // do something with event
-    }
 
     /**
      * Do a shallow copy of a JSONObject. Takes a bit of code to avoid
