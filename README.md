@@ -1,5 +1,12 @@
 [![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
 
+Amplitude Android SDK
+====================
+
+An Android SDK for tracking events and revenue to [Amplitude](http://www.amplitude.com).
+
+A [demo application](https://github.com/amplitude/Android-Demo) is available to show a simple integration.
+
 # Setup #
 1. If you haven't already, go to https://amplitude.com/signup and register for an account. Then, add an app. You will receive an API Key.
 
@@ -163,6 +170,16 @@ Amplitude.getInstance().disableLocationListening();
 Even disabling the location listening, the events will have the "country" property filled. That property
 is retrieved from other sources (i.e. network or device locale).
 
+# Allowing Users to Opt Out
+
+To stop all event and session logging for a user, call setOptOut:
+
+```java
+Amplitude.getInstance().setOptOut(true);
+```
+
+Logging can be restarted by calling setOptOut again with enabled set to false.
+No events will be logged during any period opt out is enabled.
 
 # Advanced #
 
