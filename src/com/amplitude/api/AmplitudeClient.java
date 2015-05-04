@@ -270,7 +270,7 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
-        reportEvent(JSONObject event);
+        reportEvent(event);
 
         return saveEvent(event);
     }
