@@ -1,33 +1,32 @@
 package com.amplitude.api;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AmplitudeClient {
 
@@ -74,6 +73,9 @@ public class AmplitudeClient {
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
+
+    // Array for event listeners
+    private ArrayList<EventListener> mEventListeners;
 
     // Let test classes have access to these properties.
     Throwable lastError;
@@ -268,7 +270,7 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
-        EventListener.addToEventListener(JSONObject event);
+        reportEvent(JSONObject event);
 
         return saveEvent(event);
     }
@@ -576,7 +578,7 @@ public class AmplitudeClient {
      */
 
     public JSONObject getUserProperties() {
-        if(userProperties != null){
+        if (userProperties != null) {
             return userProperties;
         }
         return null;
@@ -721,7 +723,7 @@ public class AmplitudeClient {
 
     /**
      * @return A unique identifier for tracking within the analytics system. Can be null if
-     *         deviceId hasn't been initialized yet;
+     * deviceId hasn't been initialized yet;
      */
     public String getDeviceId() {
         return deviceId;
@@ -787,8 +789,8 @@ public class AmplitudeClient {
     }
 
     private String bytesToHexString(byte[] bytes) {
-        final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
-                'c', 'd', 'e', 'f' };
+        final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
+                'c', 'd', 'e', 'f'};
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
@@ -801,14 +803,14 @@ public class AmplitudeClient {
 
     /**
      * Move all preference data from the legacy name to the new, static name if needed.
-     *
+     * <p/>
      * Constants.PACKAGE_NAME used to be set using "Constants.class.getPackage().getName()"
      * Some aggressive proguard optimizations broke the reflection and caused apps
      * to crash on startup.
-     *
+     * <p/>
      * Now that Constants.PACKAGE_NAME is changed, old data on devices needs to be
      * moved over to the new location so that device ids remain consistent.
-     *
+     * <p/>
      * This should only happen once -- the first time a user loads the app after updating.
      * This logic needs to remain in place for quite a long time. It was first introduced in
      * April 2015 in version 1.6.0.
@@ -824,7 +826,8 @@ public class AmplitudeClient {
                 sourcePkgName = Constants.PACKAGE_NAME;
                 try {
                     sourcePkgName = Constants.class.getPackage().getName();
-                } catch (Exception e) { }
+                } catch (Exception e) {
+                }
             }
 
             if (targetPkgName == null) {
@@ -892,4 +895,34 @@ public class AmplitudeClient {
             Log.e(TAG, "Error upgrading shared preferences", e);
             return false;
         }
-    }}
+    }
+
+
+    /**
+     * Events logged by Amplitude sent to any event listeners
+     * @param listener
+     */
+    public void addEventListener(EventListener listener) {
+        if (mEventListeners == null) {
+            mEventListeners = new ArrayList<EventListener>();
+        }
+        if (!mEventListeners.contains(listener)) {
+            mEventListeners.add(listener);
+        }
+    }
+
+    public void removeEventListener(EventListener listener) {
+        if (mEventListeners == null) {
+            return;
+        }
+        mEventListeners.remove(listener);
+    }
+
+    private void reportEvent(JSONObject event){
+        if (mEventListeners != null){
+            for(EventListener listener : mEventListeners){
+                EventListener.trackEvent(JSONObject event);
+            }
+        }
+    }
+}
