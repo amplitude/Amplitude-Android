@@ -36,20 +36,21 @@ public class AmplitudeClient {
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
 
-    private static AmplitudeClient instance = new AmplitudeClient();
+    protected static AmplitudeClient instance = new AmplitudeClient();
 
     public static AmplitudeClient getInstance() {
         return instance;
     }
 
-    private Context context;
-    private String apiKey;
-    private String userId;
-    private String deviceId;
+    protected Context context;
+    protected String apiKey;
+    protected String userId;
+    protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
     private boolean optOut = false;
+    private boolean offline = false;
 
     private DeviceInfo deviceInfo;
     private String advertisingId;
@@ -175,11 +176,46 @@ public class AmplitudeClient {
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
     }
 
+    public void setOffline(boolean offline) {
+        this.offline = offline;
+
+        // Try to update to the server once offline mode is disabled.
+        if (!offline) {
+            uploadEvents();
+        }
+    }
+
     public void logEvent(String eventType) {
         logEvent(eventType, null);
     }
 
     public void logEvent(String eventType, JSONObject eventProperties) {
+        if (validateLogEvent(eventType)) {
+            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), true);
+        }
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties) {
+        if (validateLogEvent(eventType)) {
+            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
+        }
+    }
+
+    protected boolean validateLogEvent(String eventType) {
+        if (TextUtils.isEmpty(eventType)) {
+            Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
+            return false;
+        }
+
+        if (!contextAndApiKeySet("logEvent()")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected void logEventAsync(final String eventType, JSONObject eventProperties,
+            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
         // Clone the incoming eventProperties object before sendinging over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -189,27 +225,16 @@ public class AmplitudeClient {
             eventProperties = cloneJSONObject(eventProperties);
         }
 
-        checkedLogEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
-    }
-
-    private void checkedLogEvent(final String eventType, final JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
-        if (TextUtils.isEmpty(eventType)) {
-            Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
-            return;
-        }
-        if (!contextAndApiKeySet("logEvent()")) {
-            return;
-        }
+        final JSONObject copyEventProperties = eventProperties;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                logEvent(eventType, eventProperties, apiProperties, timestamp, checkSession);
+                logEvent(eventType, copyEventProperties, apiProperties, timestamp, checkSession);
             }
         });
     }
 
-    private long logEvent(String eventType, JSONObject eventProperties,
+    protected long logEvent(String eventType, JSONObject eventProperties,
             JSONObject apiProperties, long timestamp, boolean checkSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
@@ -270,7 +295,7 @@ public class AmplitudeClient {
         return saveEvent(event);
     }
 
-    private long saveEvent(JSONObject event) {
+    protected long saveEvent(JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
 
@@ -283,70 +308,11 @@ public class AmplitudeClient {
         } else {
             updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
         }
+
         return eventId;
     }
 
-    /**
-     * Do a shallow copy of a JSONObject. Takes a bit of code to avoid
-     * stringify and reparse given the API.
-     */
-    private JSONObject cloneJSONObject(final JSONObject obj) {
-        if (obj == null) {
-            return null;
-        }
-
-        // obj.names returns null if the json obj is empty.
-        JSONArray nameArray = obj.names();
-        int len = (nameArray != null ? nameArray.length() : 0);
-
-        String[] names = new String[len];
-        for (int i = 0; i < len; i++) {
-            names[i] = nameArray.optString(i);
-        }
-
-        try {
-            return new JSONObject(obj, names);
-        } catch (JSONException e) {
-            Log.e(TAG, e.toString());
-            return null;
-        }
-    }
-
-    private void runOnLogThread(Runnable r) {
-        if (Thread.currentThread() != logThread) {
-            logThread.post(r);
-        } else {
-            r.run();
-        }
-    }
-
-    public void uploadEvents() {
-        if (!contextAndApiKeySet("uploadEvents()")) {
-            return;
-        }
-
-        logThread.post(new Runnable() {
-            @Override
-            public void run() {
-                updateServer();
-            }
-        });
-    }
-
-    private void updateServerLater(long delayMillis) {
-        if (!updateScheduled.getAndSet(true)) {
-
-            logThread.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    updateScheduled.set(false);
-                    updateServer();
-                }
-            }, delayMillis);
-        }
-    }
-
-    long getLastEventTime() {
+    private long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
@@ -530,7 +496,8 @@ public class AmplitudeClient {
             apiProperties.put("receiptSig", receiptSignature);
         } catch (JSONException e) {
         }
-        checkedLogEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
+
+        logEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
     }
 
     public void setUserProperties(JSONObject userProperties) {
@@ -578,15 +545,43 @@ public class AmplitudeClient {
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
     }
 
-    private void updateServer() {
+    public void uploadEvents() {
+        if (!contextAndApiKeySet("uploadEvents()")) {
+            return;
+        }
+
+        logThread.post(new Runnable() {
+            @Override
+            public void run() {
+                updateServer();
+            }
+        });
+    }
+
+    private void updateServerLater(long delayMillis) {
+        if (updateScheduled.getAndSet(true)) {
+            return;
+        }
+
+        logThread.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateScheduled.set(false);
+                updateServer();
+            }
+        }, delayMillis);
+    }
+
+    protected void updateServer() {
         updateServer(true);
     }
 
     // Always call this from logThread
-    private void updateServer(boolean limit) {
-        if (optOut) {
+    protected void updateServer(boolean limit) {
+        if (optOut || offline) {
             return;
         }
+
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
@@ -748,11 +743,19 @@ public class AmplitudeClient {
 
     }
 
-    private Object replaceWithJSONNull(Object obj) {
+    private void runOnLogThread(Runnable r) {
+        if (Thread.currentThread() != logThread) {
+            logThread.post(r);
+        } else {
+            r.run();
+        }
+    }
+
+    protected Object replaceWithJSONNull(Object obj) {
         return obj == null ? JSONObject.NULL : obj;
     }
 
-    private synchronized boolean contextAndApiKeySet(String methodName) {
+    protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
             Log.e(TAG, "context cannot be null, set context with initialize() before calling "
                     + methodName);
@@ -767,11 +770,11 @@ public class AmplitudeClient {
         return true;
     }
 
-    private String getSharedPreferencesName() {
+    protected String getSharedPreferencesName() {
         return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
     }
 
-    private String bytesToHexString(byte[] bytes) {
+    protected String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
         char[] hexChars = new char[bytes.length * 2];
@@ -782,6 +785,32 @@ public class AmplitudeClient {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    /**
+     * Do a shallow copy of a JSONObject. Takes a bit of code to avoid
+     * stringify and reparse given the API.
+     */
+    private JSONObject cloneJSONObject(final JSONObject obj) {
+        if (obj == null) {
+            return null;
+        }
+
+        // obj.names returns null if the json obj is empty.
+        JSONArray nameArray = obj.names();
+        int len = (nameArray != null ? nameArray.length() : 0);
+
+        String[] names = new String[len];
+        for (int i = 0; i < len; i++) {
+            names[i] = nameArray.optString(i);
+        }
+
+        try {
+            return new JSONObject(obj, names);
+        } catch (JSONException e) {
+            Log.e(TAG, e.toString());
+            return null;
+        }
     }
 
     /**

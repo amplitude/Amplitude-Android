@@ -1,5 +1,8 @@
 ## Unreleased
 
+* Add offline mode to turn off server uploading for a time.
+* Add synchronous logging. Logs events to the DB synchronously to guarantee event persistence.
+
 ## 1.6.2 (April 17, 2015)
 
 * Change protection on AmplitudeClient to public.
