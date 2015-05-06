@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.6.3 (May 06, 2015)
+
 * Add offline mode to turn off server uploading for a time.
 * Add synchronous logging. Logs events to the DB synchronously to guarantee event persistence.
 
