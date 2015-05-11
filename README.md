@@ -58,7 +58,7 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
     Amplitude.getInstance().logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-9. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project.
+9. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project. _This is required for integrating with third party attribution services_
 
 10. If you are using Proguard, add these exceptions to ```proguard.pro``` for Google Play Advertising IDs and Amplitude dependencies:
 
