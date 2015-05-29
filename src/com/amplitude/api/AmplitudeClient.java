@@ -69,7 +69,13 @@ public class AmplitudeClient {
 
     private long sessionId = -1;
     private boolean sessionOpen = false;
+    private int eventUploadThreshold = Constants.EVENT_UPLOAD_THRESHOLD;
+    private int eventUploadMaxBatchSize = Constants.EVENT_UPLOAD_MAX_BATCH_SIZE;
+    private int eventMaxCount = Constants.EVENT_MAX_COUNT;
+    private long eventUploadPeriodMillis = Constants.EVENT_UPLOAD_PERIOD_MILLIS;
+    private long minTimeBetweenSessionsMillis = Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS;
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
+
     private Runnable endSessionRunnable;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
@@ -162,6 +168,26 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(false);
+    }
+
+    public void setEventUploadThreshold(int eventUploadThreshold) {
+        this.eventUploadThreshold = eventUploadThreshold;
+    }
+
+    public void setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
+        this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
+    }
+
+    public void setEventMaxCount(int eventMaxCount) {
+        this.eventMaxCount = eventMaxCount;
+    }
+
+    public void setEventUploadPeriodMillis(int eventUploadPeriodMillis) {
+        this.eventUploadPeriodMillis = eventUploadPeriodMillis;
+    }
+
+    public void setMinTimeBetweenSessionsMillis(int minTimeBetweenSessionsMillis) {
+        this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
     }
 
     public void setSessionTimeoutMillis(long sessionTimeoutMillis) {
@@ -299,14 +325,14 @@ public class AmplitudeClient {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
 
-        if (dbHelper.getEventCount() >= Constants.EVENT_MAX_COUNT) {
+        if (dbHelper.getEventCount() >= eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getEventCount() >= Constants.EVENT_UPLOAD_THRESHOLD) {
+        if (dbHelper.getEventCount() >= eventUploadThreshold) {
             updateServer();
         } else {
-            updateServerLater(Constants.EVENT_UPLOAD_PERIOD_MILLIS);
+            updateServerLater(eventUploadPeriodMillis);
         }
 
         return eventId;
@@ -374,7 +400,7 @@ public class AmplitudeClient {
     private void startNewSessionIfNeeded(long timestamp) {
         if (!sessionOpen) {
             long lastEndSessionTime = getEndSessionTime();
-            if (timestamp - lastEndSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+            if (timestamp - lastEndSessionTime < minTimeBetweenSessionsMillis) {
                 // Sessions close enough, set sessionId to previous sessionId
 
                 SharedPreferences preferences = context.getSharedPreferences(
@@ -413,7 +439,7 @@ public class AmplitudeClient {
                 long previousEndSessionId = getEndSessionId();
                 long lastEndSessionTime = getEndSessionTime();
                 if (previousEndSessionId != -1
-                        && now - lastEndSessionTime < Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS) {
+                        && now - lastEndSessionTime < minTimeBetweenSessionsMillis) {
                     DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                     dbHelper.removeEvent(previousEndSessionId);
                 }
@@ -466,7 +492,7 @@ public class AmplitudeClient {
             }
         };
         logThread.postDelayed(endSessionRunnable,
-                Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS + 1000);
+                minTimeBetweenSessionsMillis + 1000);
     }
 
     public void logRevenue(double amount) {
@@ -587,7 +613,7 @@ public class AmplitudeClient {
             try {
                 long endSessionId = getEndSessionId();
                 Pair<Long, JSONArray> pair = dbHelper.getEvents(endSessionId,
-                        limit ? Constants.EVENT_UPLOAD_MAX_BATCH_SIZE : -1);
+                        limit ? eventUploadMaxBatchSize : -1);
                 final long maxId = pair.first;
                 final JSONArray events = pair.second;
                 httpThread.post(new Runnable() {
@@ -650,7 +676,7 @@ public class AmplitudeClient {
                         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                         dbHelper.removeEvents(maxId);
                         uploadingCurrently.set(false);
-                        if (dbHelper.getEventCount() > Constants.EVENT_UPLOAD_THRESHOLD) {
+                        if (dbHelper.getEventCount() > eventUploadThreshold) {
                             logThread.post(new Runnable() {
                                 @Override
                                 public void run() {
