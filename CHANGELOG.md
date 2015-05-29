@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.7.0 (May 29, 2015)
+
 * Enable configuration of eventUploadThreshold, eventMaxCount,
   eventUploadMaxBatchSize, eventUploadPeriodSeconds, minTimeBetweenSessionsMillis,
   and sessionTimeoutMillis.
