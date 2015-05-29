@@ -1,5 +1,9 @@
 ## Unreleased
 
+* Enable configuration of eventUploadThreshold, eventMaxCount,
+  eventUploadMaxBatchSize, eventUploadPeriodSeconds, minTimeBetweenSessionsMillis,
+  and sessionTimeoutMillis.
+
 ## 1.6.3 (May 06, 2015)
 
 * Add offline mode to turn off server uploading for a time.
