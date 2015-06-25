@@ -3,3 +3,7 @@
 *~
 dist/
 *.asc
+# Intellij
+.idea/
+*.iml
+

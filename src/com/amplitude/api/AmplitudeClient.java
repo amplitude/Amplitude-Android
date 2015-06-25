@@ -43,6 +43,7 @@ public class AmplitudeClient {
     }
 
     protected Context context;
+    protected OkHttpClient httpClient;
     protected String apiKey;
     protected String userId;
     protected String deviceId;
@@ -93,10 +94,14 @@ public class AmplitudeClient {
     }
 
     public void initialize(Context context, String apiKey) {
-        initialize(context, apiKey, null);
+        initialize(context, apiKey, null, null);
     }
 
-    public synchronized void initialize(Context context, String apiKey, String userId) {
+    public void initialize(Context context, String apiKey, OkHttpClient okHttpClient) {
+        initialize(context, apiKey, null, okHttpClient);
+    }
+
+    public synchronized void initialize(Context context, String apiKey, String userId, OkHttpClient okHttpClient) {
         if (context == null) {
             Log.e(TAG, "Argument context cannot be null in initialize()");
             return;
@@ -110,6 +115,7 @@ public class AmplitudeClient {
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
+            this.httpClient = okHttpClient == null ? new OkHttpClient(): okHttpClient;
             this.apiKey = apiKey;
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
@@ -619,7 +625,7 @@ public class AmplitudeClient {
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(new OkHttpClient(), events.toString(), maxId);
+                        makeEventUploadPostRequest(httpClient, events.toString(), maxId);
                     }
                 });
             } catch (JSONException e) {
