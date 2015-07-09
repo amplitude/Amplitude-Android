@@ -51,6 +51,7 @@ public class AmplitudeClient {
     private boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
+    private boolean debugLogEnabled = false;
 
     private DeviceInfo deviceInfo;
     private String advertisingId;
@@ -211,6 +212,10 @@ public class AmplitudeClient {
         }
     }
 
+    public void setDebugLogEnabled(boolean debugLogEnabled) {
+        this.debugLogEnabled = debugLogEnabled;
+    }
+
     public void logEvent(String eventType) {
         logEvent(eventType, null);
     }
@@ -262,7 +267,9 @@ public class AmplitudeClient {
 
     protected long logEvent(String eventType, JSONObject eventProperties,
             JSONObject apiProperties, long timestamp, boolean checkSession) {
-        Log.d(TAG, "Logged event to Amplitude: " + eventType);
+        if (debugLogEnabled) {
+            Log.d(TAG, "Logged event to Amplitude: " + eventType);
+        }
 
         if (optOut) {
             return -1;
