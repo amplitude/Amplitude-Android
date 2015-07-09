@@ -560,6 +560,15 @@ public class AmplitudeClient {
         });
     }
 
+
+    /**
+     * @return The developer specified identifier for tracking within the analytics system.
+     *         Can be null.
+     */
+    public String getUserId() {
+        return userId;
+    }
+
     public void setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
             return;
