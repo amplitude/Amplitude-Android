@@ -18,7 +18,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowGeocoder;
-import org.robolectric.shadows.ShadowLocation;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowTelephonyManager;
 import org.robolectric.util.ReflectionHelpers;
@@ -75,6 +74,7 @@ public class DeviceInfoTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
         deviceInfo = new DeviceInfo(context);
+        deviceInfo.init();
     }
 
     @After
@@ -115,11 +115,23 @@ public class DeviceInfoTest {
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
+
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+        deviceInfo.init();
         assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
     }
 
     @Test
     public void testGetCountryFromLocation() {
+        ShadowTelephonyManager telephonyManager = Shadows.shadowOf((TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE));
+        telephonyManager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
+        ShadowLocationManager locationManager = Shadows.shadowOf((LocationManager) context
+                .getSystemService(Context.LOCATION_SERVICE));
+        locationManager.simulateLocation(makeLocation(LocationManager.NETWORK_PROVIDER,
+                TEST_LOCATION_LAT, TEST_LOCATION_LNG));
+        locationManager.setProviderEnabled(LocationManager.NETWORK_PROVIDER, true);
+
         DeviceInfo deviceInfo = new DeviceInfo(context) {
             @Override
             protected Geocoder getGeocoder() {
@@ -130,14 +142,8 @@ public class DeviceInfoTest {
                 return geocoder;
             };
         };
-        ShadowTelephonyManager telephonyManager = Shadows.shadowOf((TelephonyManager) context
-                .getSystemService(Context.TELEPHONY_SERVICE));
-        telephonyManager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
-        ShadowLocationManager locationManager = Shadows.shadowOf((LocationManager) context
-                .getSystemService(Context.LOCATION_SERVICE));
-        locationManager.simulateLocation(makeLocation(LocationManager.NETWORK_PROVIDER,
-                TEST_LOCATION_LAT, TEST_LOCATION_LNG));
-        locationManager.setProviderEnabled(LocationManager.NETWORK_PROVIDER, true);
+        deviceInfo.init();
+
         assertEquals(TEST_GEO_COUNTRY, deviceInfo.getCountry());
     }
 

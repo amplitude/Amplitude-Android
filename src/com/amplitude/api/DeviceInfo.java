@@ -23,6 +23,8 @@ public class DeviceInfo {
 
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
+    public static final String OS_NAME = "android";
+
     private boolean locationListening = true;
 
     private Context context;
@@ -30,12 +32,130 @@ public class DeviceInfo {
     // Cached properties, since fetching these take time
     private String advertisingId;
     private String country;
+    private String versionName;
+    private String osName;
+    private String osVersion;
+    private String brand;
+    private String manufacturer;
+    private String model;
+    private String carrier;
+    private String language;
 
     public DeviceInfo(Context context) {
         this.context = context;
     }
 
+    public void init() {
+        advertisingId = getAdvertisingId(context);
+        versionName = getVersionName(context);
+        osName = getOsName(context);
+        osVersion = getOsVersion(context);
+        brand = getBrand(context);
+        manufacturer = getManufacturer(context);
+        model = getModel(context);
+        carrier = getCarrier(context);
+        country = getCountry(context);
+        language = getLanguage(context);
+    }
+
+    public String generateUUID() {
+        return UUID.randomUUID().toString();
+    }
+
     public String getVersionName() {
+        return versionName;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getOsVersion() {
+        return osVersion;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public String getCarrier() {
+        return carrier;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public String getAdvertisingId() {
+        return advertisingId;
+    }
+
+    public Location getMostRecentLocation() {
+        if (!isLocationListening()) {
+            return null;
+        }
+
+        LocationManager locationManager = (LocationManager) context
+                .getSystemService(Context.LOCATION_SERVICE);
+
+        // Don't crash if the device does not have location services.
+        if (locationManager == null) {
+            return null;
+        }
+
+        List<String> providers = locationManager.getProviders(true);
+
+        // It's possible that the location service is running out of process
+        // and the remote getProviders call fails. Handle null provider lists.
+        if (providers == null) {
+            return null;
+        }
+
+        List<Location> locations = new ArrayList<Location>();
+        for (String provider : providers) {
+            Location location = locationManager.getLastKnownLocation(provider);
+            if (location != null) {
+                locations.add(location);
+            }
+        }
+
+        long maximumTimestamp = -1;
+        Location bestLocation = null;
+        for (Location location : locations) {
+            if (location.getTime() > maximumTimestamp) {
+                maximumTimestamp = location.getTime();
+                bestLocation = location;
+            }
+        }
+
+        return bestLocation;
+    }
+
+    public boolean isLocationListening() {
+        return locationListening;
+    }
+
+    public void setLocationListening(boolean locationListening) {
+        this.locationListening = locationListening;
+    }
+
+    /**
+     * Internal methods for getting raw information
+     */
+
+    private String getVersionName(Context context) {
         PackageInfo packageInfo;
         try {
             packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
@@ -45,37 +165,47 @@ public class DeviceInfo {
         return null;
     }
 
-    public String getOSName() {
-        return "android";
+    private String getOsName(Context context) {
+        return OS_NAME;
     }
 
-    public String getOSVersion() {
+    private String getOsVersion(Context context) {
         return Build.VERSION.RELEASE;
     }
 
-    public String getBrand() {
+    private String getBrand(Context context) {
         return Build.BRAND;
     }
 
-    public String getManufacturer() {
+    private String getManufacturer(Context context) {
         return Build.MANUFACTURER;
     }
 
-    public String getModel() {
+    private String getModel(Context context) {
         return Build.MODEL;
     }
 
-    public String getCarrier() {
+    private String getCarrier(Context context) {
         TelephonyManager manager = (TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE);
         return manager.getNetworkOperatorName();
     }
 
-    public String getCountry() {
-        if (country == null) {
-            country = getCountryUncached();
+    private String getCountry(Context context) {
+        // This should not be called on the main thread.
+
+        // Prioritize reverse geocode, but until we have a result from that,
+        // we try to grab the country from the network, and finally the locale
+        String country = getCountryFromLocation();
+        if (!TextUtils.isEmpty(country)) {
+            return country;
         }
-        return country;
+
+        country = getCountryFromNetwork();
+        if (!TextUtils.isEmpty(country)) {
+            return country;
+        }
+        return getCountryFromLocale();
     }
 
     // @VisibleForTesting
@@ -84,7 +214,9 @@ public class DeviceInfo {
     }
 
     private String getCountryFromLocation() {
-        if (!isLocationListening()) { return null; }
+        if (!isLocationListening()) {
+            return null;
+        }
 
         Location recent = getMostRecentLocation();
         if (recent != null) {
@@ -122,101 +254,34 @@ public class DeviceInfo {
         return Locale.getDefault().getCountry();
     }
 
-    private String getCountryUncached() {
-        // This should not be called on the main thread.
-
-        // Prioritize reverse geocode, but until we have a result from that,
-        // we try to grab the country from the network, and finally the locale
-        String country = getCountryFromLocation();
-        if (!TextUtils.isEmpty(country)) {
-            return country;
-        }
-
-        country = getCountryFromNetwork();
-        if (!TextUtils.isEmpty(country)) {
-            return country;
-        }
-        return getCountryFromLocale();
-    }
-
-    public String getLanguage() {
+    private String getLanguage(Context context) {
         return Locale.getDefault().getLanguage();
     }
 
-    public String getAdvertisingId() {
+    private String getAdvertisingId(Context context) {
         // This should not be called on the main thread.
-        if (advertisingId == null) {
-            try {
-                Class AdvertisingIdClient = Class
-                        .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
-                Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo",
-                        Context.class);
-                Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
-                Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod(
-                        "isLimitAdTrackingEnabled");
-                Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
-                        .invoke(advertisingInfo);
+        try {
+            Class AdvertisingIdClient = Class
+                    .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
+            Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo",
+                    Context.class);
+            Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
+            Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod(
+                    "isLimitAdTrackingEnabled");
+            Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
+                    .invoke(advertisingInfo);
 
-                if (limitAdTrackingEnabled) {
-                    return null;
-                }
-                Method getId = advertisingInfo.getClass().getMethod("getId");
-                advertisingId = (String) getId.invoke(advertisingInfo);
-            } catch (ClassNotFoundException e) {
-                Log.w(TAG, "Google Play Services SDK not found!");
-            } catch (Exception e) {
-                Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
+            if (limitAdTrackingEnabled) {
+                return null;
             }
+            Method getId = advertisingInfo.getClass().getMethod("getId");
+            advertisingId = (String) getId.invoke(advertisingInfo);
+        } catch (ClassNotFoundException e) {
+            Log.w(TAG, "Google Play Services SDK not found!");
+        } catch (Exception e) {
+            Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
         }
-        return advertisingId;
-    }
-
-    public String generateUUID() {
-        return UUID.randomUUID().toString();
-    }
-
-    public Location getMostRecentLocation() {
-
-        if (!isLocationListening()) { return null; }
-
-        LocationManager locationManager = (LocationManager) context
-                .getSystemService(Context.LOCATION_SERVICE);
-
-        // Don't crash if the device does not have location services.
-        if (locationManager == null) { return null; }
-
-        List<String> providers = locationManager.getProviders(true);
-
-        // It's possible that the location service is running out of process
-        // and the remote getProviders call fails. Handle null provider lists.
-        if (providers == null) { return null; }
-
-        List<Location> locations = new ArrayList<Location>();
-        for (String provider : providers) {
-            Location location = locationManager.getLastKnownLocation(provider);
-            if (location != null) {
-                locations.add(location);
-            }
-        }
-
-        long maximumTimestamp = -1;
-        Location bestLocation = null;
-        for (Location location : locations) {
-            if (location.getTime() > maximumTimestamp) {
-                maximumTimestamp = location.getTime();
-                bestLocation = location;
-            }
-        }
-
-        return bestLocation;
-    }
-
-    public boolean isLocationListening() {
-        return locationListening;
-    }
-
-    public void setLocationListening(boolean locationListening) {
-        this.locationListening = locationListening;
+        return null;
     }
 
 }
