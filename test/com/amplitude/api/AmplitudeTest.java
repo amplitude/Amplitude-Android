@@ -227,4 +227,86 @@ public class AmplitudeTest extends BaseTest {
         RecordedRequest request = sendEvent(amplitude, "test_event", new JSONObject());
         assertNotNull(request);
     }
+
+    /**
+     * Test that resend failed events only occurs every 30 events.
+     */
+    @Test
+    public void testSaveEventLogic() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        for (int i = 0; i < Constants.EVENT_UPLOAD_THRESHOLD; i++) {
+            amplitude.logEvent("test");
+        }
+        looper.runToEndOfTasks();
+        // unsent events will be threshold (+1 for start session)
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
+
+        server.enqueue(new MockResponse().setBody("invalid_api_key"));
+        server.enqueue(new MockResponse().setBody("bad_checksum"));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // no events sent, queue should be same size
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
+
+        for (int i = 0; i < Constants.EVENT_UPLOAD_THRESHOLD; i++) {
+            amplitude.logEvent("test");
+        }
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD * 2 + 1);
+        httpLooper.runToEndOfTasks();
+
+        // sent 61 events, should have only made 2 requests
+        assertEquals(server.getRequestCount(), 2);
+    }
+
+    @Test
+    public void testRequestTooLargeBackoffLogic() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 2);
+        looper.runToEndOfTasks();
+        server.enqueue(new MockResponse().setResponseCode(413));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // there are only 2 events (startSession, test)
+        // 413 error triggers backoff /2 will set maxUploadSize to 1
+        try {
+            server.takeRequest(1, SECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        // log 1 more event
+        // verify 413 error with maxUploadSize 1 will remove the top event
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
+        looper.runToEndOfTasks();
+        server.enqueue(new MockResponse().setResponseCode(413));
+        httpLooper.runToEndOfTasks();
+
+        try {
+            server.takeRequest(1, SECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertEquals(getUnsentEventCount(), 2);
+        JSONArray events = getUnsentEvents(2);
+        try {
+            assertEquals(events.getJSONObject(0).getString("event_type"), "test");
+            assertEquals(events.getJSONObject(1).getString("event_type"), "test");
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+    }
 }

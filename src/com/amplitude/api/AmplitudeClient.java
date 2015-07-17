@@ -2,14 +2,11 @@ package com.amplitude.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -242,7 +239,7 @@ public class AmplitudeClient {
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
             final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
-        // Clone the incoming eventProperties object before sendinging over
+        // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
         // Only does a shallow copy, so it's still possible, though unlikely,
@@ -324,12 +321,13 @@ public class AmplitudeClient {
     protected long saveEvent(JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
+        long eventCount = dbHelper.getEventCount();
 
-        if (dbHelper.getEventCount() >= eventMaxCount) {
+        if (eventCount >= eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getEventCount() >= eventUploadThreshold) {
+        if ((eventCount % eventUploadThreshold) == 0 && eventCount >= eventUploadThreshold) {
             updateServer();
         } else {
             updateServerLater(eventUploadPeriodMillis);
@@ -703,6 +701,18 @@ public class AmplitudeClient {
             } else if (stringResponse.equals("request_db_write_failed")) {
                 Log.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
+            } else if (response.code() == 413) {
+                // If blocked by one massive event, drop it
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                if (eventUploadMaxBatchSize == 1) {
+                    dbHelper.removeEvents(maxId);
+                }
+
+                // Server complained about length of request, backoff and try again later
+                int numEvents = Math.min((int)dbHelper.getEventCount(), eventUploadMaxBatchSize);
+                eventUploadMaxBatchSize = (int)Math.ceil(numEvents / 2.0);
+                Log.w(TAG,
+                        "Request too large, will decrease size and attempt to reupload later");
             } else {
                 Log.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
