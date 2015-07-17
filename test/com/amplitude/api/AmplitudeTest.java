@@ -286,7 +286,7 @@ public class AmplitudeTest extends BaseTest {
         }
 
         // log 1 more event
-        // verify 413 error with maxUploadSize 1 will remove the top event
+        // 413 error with maxUploadSize 1 will remove the top (start session) event
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 3);
