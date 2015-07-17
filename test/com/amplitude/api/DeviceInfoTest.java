@@ -74,7 +74,6 @@ public class DeviceInfoTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
         deviceInfo = new DeviceInfo(context);
-        deviceInfo.init();
     }
 
     @After
@@ -117,7 +116,6 @@ public class DeviceInfoTest {
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
 
         DeviceInfo deviceInfo = new DeviceInfo(context);
-        deviceInfo.init();
         assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
     }
 
@@ -142,7 +140,6 @@ public class DeviceInfoTest {
                 return geocoder;
             };
         };
-        deviceInfo.init();
 
         assertEquals(TEST_GEO_COUNTRY, deviceInfo.getCountry());
     }

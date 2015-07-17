@@ -122,7 +122,7 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 deviceId = initializeDeviceId();
-                deviceInfo.init();
+                deviceInfo.prefetch();
             }
         });
     }

@@ -29,33 +29,178 @@ public class DeviceInfo {
 
     private Context context;
 
-    // Cached properties, since fetching these take time
-    private String advertisingId;
-    private String country;
-    private String versionName;
-    private String osName;
-    private String osVersion;
-    private String brand;
-    private String manufacturer;
-    private String model;
-    private String carrier;
-    private String language;
+    private CachedInfo cachedInfo;
+
+    /**
+     * Internal class serves as a cache
+     */
+    private class CachedInfo {
+        private String advertisingId;
+        private String country;
+        private String versionName;
+        private String osName;
+        private String osVersion;
+        private String brand;
+        private String manufacturer;
+        private String model;
+        private String carrier;
+        private String language;
+
+        private CachedInfo() {
+            advertisingId = getAdvertisingId();
+            versionName = getVersionName();
+            osName = getOsName();
+            osVersion = getOsVersion();
+            brand = getBrand();
+            manufacturer = getManufacturer();
+            model = getModel();
+            carrier = getCarrier();
+            country = getCountry();
+            language = getLanguage();
+        }
+
+        /**
+         * Internal methods for getting raw information
+         */
+
+        private String getVersionName() {
+            PackageInfo packageInfo;
+            try {
+                packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                return packageInfo.versionName;
+            } catch (NameNotFoundException e) {
+            }
+            return null;
+        }
+
+        private String getOsName() {
+            return OS_NAME;
+        }
+
+        private String getOsVersion() {
+            return Build.VERSION.RELEASE;
+        }
+
+        private String getBrand() {
+            return Build.BRAND;
+        }
+
+        private String getManufacturer() {
+            return Build.MANUFACTURER;
+        }
+
+        private String getModel() {
+            return Build.MODEL;
+        }
+
+        private String getCarrier() {
+            TelephonyManager manager = (TelephonyManager) context
+                    .getSystemService(Context.TELEPHONY_SERVICE);
+            return manager.getNetworkOperatorName();
+        }
+
+        private String getCountry() {
+            // This should not be called on the main thread.
+
+            // Prioritize reverse geocode, but until we have a result from that,
+            // we try to grab the country from the network, and finally the locale
+            String country = getCountryFromLocation();
+            if (!TextUtils.isEmpty(country)) {
+                return country;
+            }
+
+            country = getCountryFromNetwork();
+            if (!TextUtils.isEmpty(country)) {
+                return country;
+            }
+            return getCountryFromLocale();
+        }
+
+        private String getCountryFromLocation() {
+            if (!isLocationListening()) {
+                return null;
+            }
+
+            Location recent = getMostRecentLocation();
+            if (recent != null) {
+                try {
+                    Geocoder geocoder = getGeocoder();
+                    List<Address> addresses = geocoder.getFromLocation(recent.getLatitude(),
+                            recent.getLongitude(), 1);
+                    if (addresses != null) {
+                        for (Address address : addresses) {
+                            if (address != null) {
+                                return address.getCountryCode();
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    // Failed to reverse geocode location
+                }
+            }
+            return null;
+        }
+
+        private String getCountryFromNetwork() {
+            TelephonyManager manager = (TelephonyManager) context
+                    .getSystemService(Context.TELEPHONY_SERVICE);
+            if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
+                String country = manager.getNetworkCountryIso();
+                if (country != null) {
+                    return country.toUpperCase(Locale.US);
+                }
+            }
+            return null;
+        }
+
+        private String getCountryFromLocale() {
+            return Locale.getDefault().getCountry();
+        }
+
+        private String getLanguage() {
+            return Locale.getDefault().getLanguage();
+        }
+
+        private String getAdvertisingId() {
+            // This should not be called on the main thread.
+            try {
+                Class AdvertisingIdClient = Class
+                        .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
+                Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo",
+                        Context.class);
+                Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
+                Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod(
+                        "isLimitAdTrackingEnabled");
+                Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
+                        .invoke(advertisingInfo);
+
+                if (limitAdTrackingEnabled) {
+                    return null;
+                }
+                Method getId = advertisingInfo.getClass().getMethod("getId");
+                advertisingId = (String) getId.invoke(advertisingInfo);
+            } catch (ClassNotFoundException e) {
+                Log.w(TAG, "Google Play Services SDK not found!");
+            } catch (Exception e) {
+                Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
+            }
+            return null;
+        }
+    }
 
     public DeviceInfo(Context context) {
         this.context = context;
     }
 
-    public void init() {
-        advertisingId = getAdvertisingId(context);
-        versionName = getVersionName(context);
-        osName = getOsName(context);
-        osVersion = getOsVersion(context);
-        brand = getBrand(context);
-        manufacturer = getManufacturer(context);
-        model = getModel(context);
-        carrier = getCarrier(context);
-        country = getCountry(context);
-        language = getLanguage(context);
+    private CachedInfo getCachedInfo() {
+        if (cachedInfo == null) {
+            cachedInfo = new CachedInfo();
+        }
+        return cachedInfo;
+    }
+
+    public void prefetch() {
+        getCachedInfo();
     }
 
     public String generateUUID() {
@@ -63,43 +208,43 @@ public class DeviceInfo {
     }
 
     public String getVersionName() {
-        return versionName;
+        return getCachedInfo().versionName;
     }
 
     public String getOsName() {
-        return osName;
+        return getCachedInfo().osName;
     }
 
     public String getOsVersion() {
-        return osVersion;
+        return getCachedInfo().osVersion;
     }
 
     public String getBrand() {
-        return brand;
+        return getCachedInfo().brand;
     }
 
     public String getManufacturer() {
-        return manufacturer;
+        return getCachedInfo().manufacturer;
     }
 
     public String getModel() {
-        return model;
+        return getCachedInfo().model;
     }
 
     public String getCarrier() {
-        return carrier;
+        return getCachedInfo().carrier;
     }
 
     public String getCountry() {
-        return country;
+        return getCachedInfo().country;
     }
 
     public String getLanguage() {
-        return language;
+        return getCachedInfo().language;
     }
 
     public String getAdvertisingId() {
-        return advertisingId;
+        return getCachedInfo().advertisingId;
     }
 
     public Location getMostRecentLocation() {
@@ -151,137 +296,9 @@ public class DeviceInfo {
         this.locationListening = locationListening;
     }
 
-    /**
-     * Internal methods for getting raw information
-     */
-
-    private String getVersionName(Context context) {
-        PackageInfo packageInfo;
-        try {
-            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            return packageInfo.versionName;
-        } catch (NameNotFoundException e) {
-        }
-        return null;
-    }
-
-    private String getOsName(Context context) {
-        return OS_NAME;
-    }
-
-    private String getOsVersion(Context context) {
-        return Build.VERSION.RELEASE;
-    }
-
-    private String getBrand(Context context) {
-        return Build.BRAND;
-    }
-
-    private String getManufacturer(Context context) {
-        return Build.MANUFACTURER;
-    }
-
-    private String getModel(Context context) {
-        return Build.MODEL;
-    }
-
-    private String getCarrier(Context context) {
-        TelephonyManager manager = (TelephonyManager) context
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        return manager.getNetworkOperatorName();
-    }
-
-    private String getCountry(Context context) {
-        // This should not be called on the main thread.
-
-        // Prioritize reverse geocode, but until we have a result from that,
-        // we try to grab the country from the network, and finally the locale
-        String country = getCountryFromLocation();
-        if (!TextUtils.isEmpty(country)) {
-            return country;
-        }
-
-        country = getCountryFromNetwork();
-        if (!TextUtils.isEmpty(country)) {
-            return country;
-        }
-        return getCountryFromLocale();
-    }
-
     // @VisibleForTesting
     protected Geocoder getGeocoder() {
         return new Geocoder(context, Locale.ENGLISH);
-    }
-
-    private String getCountryFromLocation() {
-        if (!isLocationListening()) {
-            return null;
-        }
-
-        Location recent = getMostRecentLocation();
-        if (recent != null) {
-            try {
-                Geocoder geocoder = getGeocoder();
-                List<Address> addresses = geocoder.getFromLocation(recent.getLatitude(),
-                        recent.getLongitude(), 1);
-                if (addresses != null) {
-                    for (Address address : addresses) {
-                        if (address != null) {
-                            return address.getCountryCode();
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // Failed to reverse geocode location
-            }
-        }
-        return null;
-    }
-
-    private String getCountryFromNetwork() {
-        TelephonyManager manager = (TelephonyManager) context
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
-            String country = manager.getNetworkCountryIso();
-            if (country != null) {
-                return country.toUpperCase(Locale.US);
-            }
-        }
-        return null;
-    }
-
-    private String getCountryFromLocale() {
-        return Locale.getDefault().getCountry();
-    }
-
-    private String getLanguage(Context context) {
-        return Locale.getDefault().getLanguage();
-    }
-
-    private String getAdvertisingId(Context context) {
-        // This should not be called on the main thread.
-        try {
-            Class AdvertisingIdClient = Class
-                    .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
-            Method getAdvertisingInfo = AdvertisingIdClient.getMethod("getAdvertisingIdInfo",
-                    Context.class);
-            Object advertisingInfo = getAdvertisingInfo.invoke(null, context);
-            Method isLimitAdTrackingEnabled = advertisingInfo.getClass().getMethod(
-                    "isLimitAdTrackingEnabled");
-            Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
-                    .invoke(advertisingInfo);
-
-            if (limitAdTrackingEnabled) {
-                return null;
-            }
-            Method getId = advertisingInfo.getClass().getMethod("getId");
-            advertisingId = (String) getId.invoke(advertisingInfo);
-        } catch (ClassNotFoundException e) {
-            Log.w(TAG, "Google Play Services SDK not found!");
-        } catch (Exception e) {
-            Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
-        }
-        return null;
     }
 
 }
