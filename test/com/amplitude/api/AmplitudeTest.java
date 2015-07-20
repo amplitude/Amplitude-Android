@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -9,7 +8,6 @@ import static org.junit.Assert.fail;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.json.JSONException;
@@ -22,7 +20,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
 
 import android.content.Context;
@@ -226,5 +223,92 @@ public class AmplitudeTest extends BaseTest {
     public void testEmptyEventProps() {
         RecordedRequest request = sendEvent(amplitude, "test_event", new JSONObject());
         assertNotNull(request);
+    }
+
+    /**
+     * Test that resend failed events only occurs every 30 events.
+     */
+    @Test
+    public void testSaveEventLogic() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        for (int i = 0; i < Constants.EVENT_UPLOAD_THRESHOLD; i++) {
+            amplitude.logEvent("test");
+        }
+        looper.runToEndOfTasks();
+        // unsent events will be threshold (+1 for start session)
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
+
+        server.enqueue(new MockResponse().setBody("invalid_api_key"));
+        server.enqueue(new MockResponse().setBody("bad_checksum"));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // no events sent, queue should be same size
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
+
+        for (int i = 0; i < Constants.EVENT_UPLOAD_THRESHOLD; i++) {
+            amplitude.logEvent("test");
+        }
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD * 2 + 1);
+        httpLooper.runToEndOfTasks();
+
+        // sent 61 events, should have only made 2 requests
+        assertEquals(server.getRequestCount(), 2);
+    }
+
+    @Test
+    public void testRequestTooLargeBackoffLogic() {
+        // verify event queue empty
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        // 413 error force backoff with 2 events --> new upload limit will be 1
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 2); // 2 events: start session + test
+        looper.runToEndOfTasks();
+        server.enqueue(new MockResponse().setResponseCode(413));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // 413 error with upload limit 1 will remove the top (start session) event
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
+        looper.runToEndOfTasks();
+        server.enqueue(new MockResponse().setResponseCode(413));
+        httpLooper.runToEndOfTasks();
+
+        // verify only start session event removed
+        assertEquals(getUnsentEventCount(), 2);
+        JSONArray events = getUnsentEvents(2);
+        try {
+            assertEquals(events.getJSONObject(0).getString("event_type"), "test");
+            assertEquals(events.getJSONObject(1).getString("event_type"), "test");
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+
+        // upload limit persists until event count below threshold
+        server.enqueue(new MockResponse().setBody("success"));
+        looper.runToEndOfTasks(); // retry uploading after removing large event
+        httpLooper.runToEndOfTasks(); // send success --> 1 event sent
+        looper.runToEndOfTasks(); // event count below threshold --> disable backoff
+        assertEquals(getUnsentEventCount(), 1);
+
+        // verify backoff disabled - queue 2 more events, see that all get uploaded
+        amplitude.logEvent("test");
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
+        server.enqueue(new MockResponse().setBody("success"));
+        httpLooper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
     }
 }

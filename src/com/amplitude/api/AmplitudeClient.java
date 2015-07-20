@@ -2,14 +2,11 @@ package com.amplitude.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -65,6 +62,8 @@ public class AmplitudeClient {
     private long eventUploadPeriodMillis = Constants.EVENT_UPLOAD_PERIOD_MILLIS;
     private long minTimeBetweenSessionsMillis = Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS;
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
+    private boolean backoffUpload = false;
+    private int backoffUploadBatchSize = eventUploadMaxBatchSize;
 
     private Runnable endSessionRunnable;
 
@@ -157,6 +156,7 @@ public class AmplitudeClient {
 
     public void setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
         this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
+        this.backoffUploadBatchSize = eventUploadMaxBatchSize;
     }
 
     public void setEventMaxCount(int eventMaxCount) {
@@ -223,7 +223,7 @@ public class AmplitudeClient {
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
             final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
-        // Clone the incoming eventProperties object before sendinging over
+        // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
         // Only does a shallow copy, so it's still possible, though unlikely,
@@ -305,12 +305,13 @@ public class AmplitudeClient {
     protected long saveEvent(JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
+        long eventCount = dbHelper.getEventCount();
 
-        if (dbHelper.getEventCount() >= eventMaxCount) {
+        if (eventCount >= eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
 
-        if (dbHelper.getEventCount() >= eventUploadThreshold) {
+        if ((eventCount % eventUploadThreshold) == 0 && eventCount >= eventUploadThreshold) {
             updateServer();
         } else {
             updateServerLater(eventUploadPeriodMillis);
@@ -602,8 +603,8 @@ public class AmplitudeClient {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
                 long endSessionId = getEndSessionId();
-                Pair<Long, JSONArray> pair = dbHelper.getEvents(endSessionId,
-                        limit ? eventUploadMaxBatchSize : -1);
+                int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
+                Pair<Long, JSONArray> pair = dbHelper.getEvents(endSessionId, batchLimit);
                 final long maxId = pair.first;
                 final JSONArray events = pair.second;
                 httpThread.post(new Runnable() {
@@ -670,9 +671,13 @@ public class AmplitudeClient {
                             logThread.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    updateServer(false);
+                                    updateServer(backoffUpload);
                                 }
                             });
+                        }
+                        else {
+                            backoffUpload = false;
+                            backoffUploadBatchSize = eventUploadMaxBatchSize;
                         }
                     }
                 });
@@ -684,6 +689,27 @@ public class AmplitudeClient {
             } else if (stringResponse.equals("request_db_write_failed")) {
                 Log.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
+            } else if (response.code() == 413) {
+
+                // If blocked by one massive event, drop it
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                if (backoffUpload && backoffUploadBatchSize == 1) {
+                    dbHelper.removeEvent(maxId);
+                    // maybe we want to reset backoffUploadBatchSize after dropping massive event
+                }
+
+                // Server complained about length of request, backoff and try again
+                backoffUpload = true;
+                int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
+                backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
+                Log.w(TAG, "Request too large, will decrease size and attempt to reupload");
+                logThread.post(new Runnable() {
+                   @Override
+                    public void run() {
+                       uploadingCurrently.set(false);
+                       updateServer(true);
+                   }
+                });
             } else {
                 Log.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
