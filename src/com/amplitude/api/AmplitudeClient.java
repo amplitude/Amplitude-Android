@@ -53,16 +53,6 @@ public class AmplitudeClient {
     private boolean offline = false;
 
     private DeviceInfo deviceInfo;
-    private String advertisingId;
-    private String versionName;
-    private String osName;
-    private String osVersion;
-    private String brand;
-    private String manufacturer;
-    private String model;
-    private String carrier;
-    private String country;
-    private String language;
 
     /* VisibleForTesting */
     JSONObject userProperties;
@@ -132,16 +122,7 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 deviceId = initializeDeviceId();
-                advertisingId = deviceInfo.getAdvertisingId();
-                versionName = deviceInfo.getVersionName();
-                osName = deviceInfo.getOSName();
-                osVersion = deviceInfo.getOSVersion();
-                brand = deviceInfo.getBrand();
-                manufacturer = deviceInfo.getManufacturer();
-                model = deviceInfo.getModel();
-                carrier = deviceInfo.getCarrier();
-                country = deviceInfo.getCountry();
-                language = deviceInfo.getLanguage();
+                deviceInfo.prefetch();
             }
         });
     }
@@ -281,15 +262,15 @@ public class AmplitudeClient {
                     : replaceWithJSONNull(userId));
             event.put("device_id", replaceWithJSONNull(deviceId));
             event.put("session_id", sessionId);
-            event.put("version_name", replaceWithJSONNull(versionName));
-            event.put("os_name", replaceWithJSONNull(osName));
-            event.put("os_version", replaceWithJSONNull(osVersion));
-            event.put("device_brand", replaceWithJSONNull(brand));
-            event.put("device_manufacturer", replaceWithJSONNull(manufacturer));
-            event.put("device_model", replaceWithJSONNull(model));
-            event.put("carrier", replaceWithJSONNull(carrier));
-            event.put("country", replaceWithJSONNull(country));
-            event.put("language", replaceWithJSONNull(language));
+            event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
+            event.put("os_name", replaceWithJSONNull(deviceInfo.getOsName()));
+            event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
+            event.put("device_brand", replaceWithJSONNull(deviceInfo.getBrand()));
+            event.put("device_manufacturer", replaceWithJSONNull(deviceInfo.getManufacturer()));
+            event.put("device_model", replaceWithJSONNull(deviceInfo.getModel()));
+            event.put("carrier", replaceWithJSONNull(deviceInfo.getCarrier()));
+            event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
+            event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
 
             JSONObject library = new JSONObject();
@@ -305,8 +286,8 @@ public class AmplitudeClient {
                 locationJSON.put("lng", location.getLongitude());
                 apiProperties.put("location", locationJSON);
             }
-            if (advertisingId != null) {
-                apiProperties.put("androidADID", advertisingId);
+            if (deviceInfo.getAdvertisingId() != null) {
+                apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
 
             event.put("api_properties", apiProperties);
