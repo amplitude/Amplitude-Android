@@ -271,14 +271,13 @@ public class AmplitudeTest extends BaseTest {
 
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), 2);
+        assertEquals(getUnsentEventCount(), 2); // 2 events: start session & test
         looper.runToEndOfTasks();
         server.enqueue(new MockResponse().setResponseCode(413));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httpLooper.runToEndOfTasks();
 
-        // there are only 2 events (startSession, test)
-        // 413 error triggers backoff /2 will set maxUploadSize to 1
+        // 413 error force backoff with 2 events --> new limit will be 1
         try {
             server.takeRequest(1, SECONDS);
         } catch (InterruptedException e) {
@@ -308,5 +307,12 @@ public class AmplitudeTest extends BaseTest {
         } catch (JSONException e) {
             fail(e.toString());
         }
+
+        // upload limit persists until event count below threshold
+        server.enqueue(new MockResponse().setBody("success"));
+        looper.runOneTask(); // retry uploading after removing large event
+        httpLooper.runOneTask(); // send success --> 1 event sent
+        looper.runOneTask(); // event count below threshold --> disable backoff
+        assertEquals(getUnsentEventCount(), 1);
     }
 }
