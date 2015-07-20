@@ -19,7 +19,7 @@ public class Amplitude {
 
     @Deprecated
     public static void initialize(Context context, String apiKey, String userId) {
-        getInstance().initialize(context, apiKey, userId);
+        getInstance().initialize(context, apiKey, userId, null);
     }
 
     @Deprecated

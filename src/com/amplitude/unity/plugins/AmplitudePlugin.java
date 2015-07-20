@@ -14,7 +14,7 @@ public class AmplitudePlugin {
     }
 
     public static void init(Context context, String apiKey, String userId) {
-        Amplitude.getInstance().initialize(context, apiKey, userId);
+        Amplitude.getInstance().initialize(context, apiKey, userId, null);
     }
 
     public static void startSession() {
