@@ -65,6 +65,7 @@ public class AmplitudeClient {
     private int backoffUploadBatchSize = eventUploadMaxBatchSize;
     private boolean usingAccurateTracking = false;
     private boolean trackingSessionEvents = false;
+    private boolean inPauseState = false;
 
     private Runnable endSessionRunnable;
 
@@ -203,14 +204,14 @@ public class AmplitudeClient {
 
     public void logEvent(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            boolean checkSession = true; // Todo: check if activity lifecycle
+            boolean checkSession = !usingAccurateTracking;
             logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
         }
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            boolean checkSession = true; // Todo: check if activity lifecycle
+            boolean checkSession = !usingAccurateTracking;
             logEvent(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
         }
     }
@@ -255,10 +256,13 @@ public class AmplitudeClient {
         if (optOut) {
             return -1;
         }
-        if (checkSession) {
+
+        // corner case: using accurate tracking and log event in between onPause/onResume
+        // inPauseState will indicate if in between onPause/onResume --> need to check session
+        if (checkSession || inPauseState) {
             startNewSessionIfNeeded(timestamp);
         }
-        setLastEventTime(timestamp);
+        refreshSessionTime(timestamp);
 
         JSONObject event = new JSONObject();
         try {
@@ -339,11 +343,11 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
     }
 
-    private long getPreviousSessionId() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-    }
+//    private long getPreviousSessionId() {
+//        SharedPreferences preferences = context.getSharedPreferences(
+//                getSharedPreferencesName(), Context.MODE_PRIVATE);
+//        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
+//    }
 
     void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
@@ -351,17 +355,17 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
-    private void startSession() {
-        long timestamp = System.currentTimeMillis();
-        createOrContinueSession(timestamp);
-    }
+//    private void startSession() {
+//        long timestamp = System.currentTimeMillis();
+//        createOrContinueSession(timestamp);
+//    }
 
-    private void createOrContinueSession(long timestamp) {
-        if (!startNewSessionIfNeeded(timestamp)) {
-            // not creating a session means we should continue the session
-            refreshSessionTime(timestamp);
-        }
-    }
+//    private void createOrContinueSession(long timestamp) {
+//        if (!startNewSessionIfNeeded(timestamp)) {
+//            // not creating a session means we should continue the session
+//            refreshSessionTime(timestamp);
+//        }
+//    }
 
     private boolean startNewSessionIfNeeded(long timestamp) {
         if (!inSession() || sessionExpired(timestamp)) {
@@ -432,69 +436,6 @@ public class AmplitudeClient {
             }
         });
     }
-
-
-
-//
-//
-//
-//        if (!sessionOpen) {
-//            long lastEndSessionTime = getEndSessionTime();
-//            if (timestamp - lastEndSessionTime < minTimeBetweenSessionsMillis) {
-//                // Sessions close enough, set sessionId to previous sessionId
-//
-//                SharedPreferences preferences = context.getSharedPreferences(
-//                        getSharedPreferencesName(), Context.MODE_PRIVATE);
-//                long previousSessionId = preferences.getLong(
-//                        Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-//
-//                if (previousSessionId == -1) {
-//                    // Invalid session Id, create new sessionId
-//                    startNewSession(timestamp);
-//                } else {
-//                    sessionId = previousSessionId;
-//                }
-//            } else {
-//                // Sessions not close enough, create new sessionId
-//                startNewSession(timestamp);
-//            }
-//        } else {
-//            long lastEventTime = getLastEventTime();
-//            if (timestamp - lastEventTime > sessionTimeoutMillis || sessionId == -1) {
-//                startNewSession(timestamp);
-//            }
-//        }
-//    }
-
-//    @Deprecated
-//    public void startSession() {
-//        if (!contextAndApiKeySet("startSession()")) {
-//            return;
-//        }
-//        final long now = System.currentTimeMillis();
-//
-//        runOnLogThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                logThread.removeCallbacks(endSessionRunnable);
-//                long previousEndSessionId = getEndSessionId();
-//                long lastEndSessionTime = getEndSessionTime();
-//                if (previousEndSessionId != -1
-//                        && now - lastEndSessionTime < minTimeBetweenSessionsMillis) {
-//                    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-//                    dbHelper.removeEvent(previousEndSessionId);
-//                }
-//                startNewSessionIfNeeded(now);
-//                openSession();
-//
-//                // Update last event time
-//                setLastEventTime(now);
-//
-//                uploadEvents();
-//            }
-//        });
-//    }
-//
 
     public void logRevenue(double amount) {
         // Amount is in dollars
