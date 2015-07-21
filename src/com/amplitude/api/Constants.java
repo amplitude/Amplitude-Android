@@ -24,10 +24,10 @@ public class Constants {
     public static final long SESSION_TIMEOUT_MILLIS = 30 * 60 * 1000; // 30m
 
     public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
-    public static final String PREFKEY_PREVIOUS_SESSION_TIME = PACKAGE_NAME
-            + ".previousSessionTime";
-    public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
     public static final String PREFKEY_LAST_EVENT_ID = PACKAGE_NAME + ".lastEventId";
+    public static final String PREFKEY_LAST_EVENT_TIME = PACKAGE_NAME + ".lastEventTime";
+    public static final String PREFKEY_PREVIOUS_SESSION_ID = PACKAGE_NAME + ".previousSessionId";
+
     public static final String PREFKEY_DEVICE_ID = PACKAGE_NAME + ".deviceId";
     public static final String PREFKEY_USER_ID = PACKAGE_NAME + ".userId";
     public static final String PREFKEY_OPT_OUT = PACKAGE_NAME + ".optOut";

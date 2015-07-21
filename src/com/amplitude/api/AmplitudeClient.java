@@ -63,9 +63,9 @@ public class AmplitudeClient {
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
     private boolean backoffUpload = false;
     private int backoffUploadBatchSize = eventUploadMaxBatchSize;
-    private boolean usingAccurateTracking = false;
+    private boolean usingAccurateTracking = false;  //Todo: implement this
     private boolean trackingSessionEvents = false;
-    private boolean inPauseState = false;
+    private boolean inForeground = true;
 
     private Runnable endSessionRunnable;
 
@@ -194,42 +194,6 @@ public class AmplitudeClient {
         }
     }
 
-    private long getPreviousEventTime() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
-    }
-
-    private void setPreviousEventTime(long timestamp) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
-    }
-
-    private long getPreviousSessionId() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-    }
-
-    private void setPreviousSessionId(long timestamp) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
-    }
-
-    private long getLastEventId() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
-    }
-
-    private void setLastEventId(long eventId) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
-    }
-
     public void trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
     }
@@ -240,15 +204,13 @@ public class AmplitudeClient {
 
     public void logEvent(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            boolean checkSession = !usingAccurateTracking;
-            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
+            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), false);
         }
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            boolean checkSession = !usingAccurateTracking;
-            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
+            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), false);
         }
     }
 
@@ -266,7 +228,7 @@ public class AmplitudeClient {
     }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean checkSession) {
+            final JSONObject apiProperties, final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -280,35 +242,44 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                logEvent(eventType, copyEventProperties, apiProperties, timestamp, checkSession);
+                logEvent(eventType, copyEventProperties, apiProperties, timestamp, outOfSession);
             }
         });
     }
 
     protected long logEvent(String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, long timestamp, boolean checkSession) {
+            JSONObject apiProperties, long timestamp, boolean outOfSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
             return -1;
         }
 
-        // corner case: using accurate tracking and log event in between onPause/onResume
-        // inPauseState will indicate if in between onPause/onResume --> need to check session
-        if (checkSession || inPauseState) {
-            startNewSessionIfNeeded(timestamp);
+        // skip session check if logging start_session or end_session events
+        boolean loggingSessionEvent = trackingSessionEvents &&
+                (eventType.equals(START_SESSION_EVENT) || eventType.equals(END_SESSION_EVENT));
+
+        // Don't check session/refresh if logging session event or out of session
+        if (!loggingSessionEvent && !outOfSession) {
+
+            // default case + corner case when async logEvent between onPause and onResume
+            if (!usingAccurateTracking || !inForeground){
+                startNewSessionIfNeeded(timestamp);
+            }
+
+            // always refresh for default and while using accurate tracking
+            refreshSessionTime(timestamp);
         }
-        refreshSessionTime(timestamp);
+
 
         JSONObject event = new JSONObject();
         try {
             event.put("event_type", replaceWithJSONNull(eventType));
-
             event.put("timestamp", timestamp);
             event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
                     : replaceWithJSONNull(userId));
             event.put("device_id", replaceWithJSONNull(deviceId));
-            event.put("session_id", sessionId);
+            event.put("session_id", outOfSession ? -1 : sessionId);
             event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
             event.put("os_name", replaceWithJSONNull(deviceInfo.getOsName()));
             event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
@@ -368,47 +339,70 @@ public class AmplitudeClient {
         return eventId;
     }
 
-//    private void startSession() {
-//        long timestamp = System.currentTimeMillis();
-//        createOrContinueSession(timestamp);
-//    }
+    private long getLastEventTime() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1);
+    }
 
-//    private void createOrContinueSession(long timestamp) {
-//        if (!startNewSessionIfNeeded(timestamp)) {
-//            // not creating a session means we should continue the session
-//            refreshSessionTime(timestamp);
-//        }
-//    }
+    private void setLastEventTime(long timestamp) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
+    }
+
+    private long getLastEventId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
+    }
+
+    private void setLastEventId(long eventId) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
+    }
+
+    private long getPreviousSessionId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
+    }
+
+    private void setPreviousSessionId(long timestamp) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
+    }
 
     private boolean startNewSessionIfNeeded(long timestamp) {
+        if (inSession()) {
 
-        if (!inSession()) {
-            if (sessionExpired(timestamp)) {
-                startNewSession(timestamp);
-                return true;
-            }
-
-            // try to extend previous session
-            long previousSessionId = getPreviousSessionId();
-            if (previousSessionId == -1) {
-                startNewSession(timestamp);
-                return true;
-            } else {
-                sessionId = previousSessionId;
+            if (isWithinMinTimeBetweenSessions(timestamp)) {
                 refreshSessionTime(timestamp);
                 return false;
             }
 
-        } else {
+            startNewSession(timestamp);
+            return true;
+        }
 
-            if (sessionExpired(timestamp)) {
+        // no current session - check for previous session
+        if (isWithinMinTimeBetweenSessions(timestamp)) {
+            long previousSessionId = getPreviousSessionId();
+            if (previousSessionId == -1) {
                 startNewSession(timestamp);
                 return true;
             }
 
+            // extend previous session
+            setSessionId(previousSessionId);
             refreshSessionTime(timestamp);
             return false;
         }
+
+        startNewSession(timestamp);
+        return true;
     }
 
     private void startNewSession(long timestamp) {
@@ -429,10 +423,10 @@ public class AmplitudeClient {
         return sessionId >= 0;
     }
 
-    private boolean sessionExpired(long timestamp) {
-        long lastEventTime = getPreviousEventTime();
+    private boolean isWithinMinTimeBetweenSessions(long timestamp) {
+        long lastEventTime = getLastEventTime();
         long sessionLimit = usingAccurateTracking ? minTimeBetweenSessionsMillis : sessionTimeoutMillis;
-        return (timestamp - lastEventTime) > sessionLimit;
+        return (timestamp - lastEventTime) < sessionLimit;
     }
 
     private void setSessionId(long timestamp) {
@@ -445,15 +439,16 @@ public class AmplitudeClient {
             return;
         }
 
-        setPreviousEventTime(timestamp);
+        setLastEventTime(timestamp);
     }
 
+    // Todo: figure out if the session checks affect sendSessionEvent
     private void sendSessionEvent(final String session_event) {
         if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
             return;
         }
 
-        final long timestamp = getPreviousEventTime();
+        final long timestamp = getLastEventTime();
 
         runOnLogThread(new Runnable() {
             @Override
@@ -499,7 +494,7 @@ public class AmplitudeClient {
         } catch (JSONException e) {
         }
 
-        logEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), true);
+        logEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), false);
     }
 
     public void setUserProperties(JSONObject userProperties) {
@@ -902,10 +897,6 @@ public class AmplitudeClient {
             SharedPreferences.Editor target = targetPrefs.edit();
 
             // Copy over all existing data.
-            if (source.contains(sourcePkgName + ".previousSessionTime")) {
-                target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME,
-                        source.getLong(sourcePkgName + ".previousSessionTime", -1));
-            }
             if (source.contains(sourcePkgName + ".previousSessionId")) {
                 target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID,
                         source.getLong(sourcePkgName + ".previousSessionId", -1));
@@ -925,6 +916,10 @@ public class AmplitudeClient {
             if (source.contains(sourcePkgName + ".lastEventId")) {
                 target.putLong(Constants.PREFKEY_LAST_EVENT_ID,
                         source.getLong(sourcePkgName + ".lastEventId", -1));
+            }
+            if (source.contains(sourcePkgName + ".lastEventTime")) {
+                target.putLong(Constants.PREFKEY_LAST_EVENT_TIME,
+                        source.getLong(sourcePkgName + ".lastEventTime", -1));
             }
 
             // Commit the changes and clear the source store so we don't recopy.
