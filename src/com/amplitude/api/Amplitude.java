@@ -68,14 +68,10 @@ public class Amplitude {
     }
 
     @Deprecated
-    public static void startSession() {
-        getInstance().startSession();
-    }
+    public static void startSession() {}
 
     @Deprecated
-    public static void endSession() {
-        getInstance().endSession();
-    }
+    public static void endSession() {}
 
     @Deprecated
     public static void logRevenue(double amount) {

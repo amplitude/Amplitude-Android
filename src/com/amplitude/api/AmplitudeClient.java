@@ -63,9 +63,9 @@ public class AmplitudeClient {
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
     private boolean backoffUpload = false;
     private int backoffUploadBatchSize = eventUploadMaxBatchSize;
-    private boolean usingAccurateTracking = false;  //Todo: implement this
+    private boolean usingAccurateTracking = false;
     private boolean trackingSessionEvents = false;
-    private boolean inForeground = true;
+    private boolean inForeground = false;
 
     private Runnable endSessionRunnable;
 
@@ -196,6 +196,14 @@ public class AmplitudeClient {
 
     public void trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
+    }
+
+    void useAccurateTracking(boolean usingAccurateTracking) {
+        this.usingAccurateTracking = usingAccurateTracking;
+    }
+
+    void setInForeground(boolean inForeground) {
+        this.inForeground = inForeground;
     }
 
     public void logEvent(String eventType) {
@@ -372,7 +380,7 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
-    private boolean startNewSessionIfNeeded(long timestamp) {
+    boolean startNewSessionIfNeeded(long timestamp) {
         if (inSession()) {
 
             if (isWithinMinTimeBetweenSessions(timestamp)) {
@@ -431,7 +439,7 @@ public class AmplitudeClient {
         setPreviousSessionId(timestamp);
     }
 
-    private void refreshSessionTime(long timestamp) {
+    void refreshSessionTime(long timestamp) {
         if (!inSession()) {
             return;
         }
