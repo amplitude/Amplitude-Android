@@ -316,6 +316,7 @@ public class AmplitudeClient {
     protected long saveEvent(JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId = dbHelper.addEvent(event.toString());
+        setLastEventId(eventId);
         long eventCount = dbHelper.getEventCount();
 
         if (eventCount >= eventMaxCount) {
@@ -337,7 +338,7 @@ public class AmplitudeClient {
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
     }
 
-    void setPreviousEventTime(long timestamp) {
+    private void setPreviousEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
@@ -349,10 +350,22 @@ public class AmplitudeClient {
 //        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
 //    }
 
-    void setPreviousSessionId(long timestamp) {
+    private void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
+    }
+
+    private long getLastEventId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
+    }
+
+    private void setLastEventId(long eventId) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
     }
 
 //    private void startSession() {
@@ -432,7 +445,8 @@ public class AmplitudeClient {
                     return;
                 }
 
-                logEvent(session_event, null, apiProperties, timestamp, false);
+                long eventId = logEvent(session_event, null, apiProperties, timestamp, false);
+                setLastEventId(eventId);
             }
         });
     }
@@ -562,9 +576,9 @@ public class AmplitudeClient {
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
-                long endSessionId = getEndSessionId();
+                long lastEventId = getLastEventId();
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
-                Pair<Long, JSONArray> pair = dbHelper.getEvents(endSessionId, batchLimit);
+                Pair<Long, JSONArray> pair = dbHelper.getEvents(lastEventId, batchLimit);
                 final long maxId = pair.first;
                 final JSONArray events = pair.second;
                 httpThread.post(new Runnable() {
@@ -887,6 +901,10 @@ public class AmplitudeClient {
             if (source.contains(sourcePkgName + ".optOut")) {
                 target.putBoolean(Constants.PREFKEY_OPT_OUT,
                         source.getBoolean(sourcePkgName + ".optOut", false));
+            }
+            if (source.contains(sourcePkgName + ".lastEventId")) {
+                target.putLong(Constants.PREFKEY_LAST_EVENT_ID,
+                        source.getLong(sourcePkgName + ".lastEventId", -1));
             }
 
             // Commit the changes and clear the source store so we don't recopy.
