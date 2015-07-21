@@ -259,9 +259,7 @@ public class AmplitudeClient {
         boolean loggingSessionEvent = trackingSessionEvents &&
                 (eventType.equals(START_SESSION_EVENT) || eventType.equals(END_SESSION_EVENT));
 
-        // Don't check session/refresh if logging session event or out of session
         if (!loggingSessionEvent && !outOfSession) {
-
             // default case + corner case when async logEvent between onPause and onResume
             if (!usingAccurateTracking || !inForeground){
                 startNewSessionIfNeeded(timestamp);
@@ -270,7 +268,6 @@ public class AmplitudeClient {
             // always refresh for default and while using accurate tracking
             refreshSessionTime(timestamp);
         }
-
 
         JSONObject event = new JSONObject();
         try {
@@ -442,7 +439,6 @@ public class AmplitudeClient {
         setLastEventTime(timestamp);
     }
 
-    // Todo: figure out if the session checks affect sendSessionEvent
     private void sendSessionEvent(final String session_event) {
         if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
             return;
