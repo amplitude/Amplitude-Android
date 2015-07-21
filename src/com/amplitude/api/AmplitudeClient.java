@@ -55,7 +55,6 @@ public class AmplitudeClient {
     JSONObject userProperties;
 
     private long sessionId = -1;
-    private boolean sessionOpen = false;
     private int eventUploadThreshold = Constants.EVENT_UPLOAD_THRESHOLD;
     private int eventUploadMaxBatchSize = Constants.EVENT_UPLOAD_MAX_BATCH_SIZE;
     private int eventMaxCount = Constants.EVENT_MAX_COUNT;
@@ -64,6 +63,8 @@ public class AmplitudeClient {
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
     private boolean backoffUpload = false;
     private int backoffUploadBatchSize = eventUploadMaxBatchSize;
+    private boolean usingAccurateTracking = false;
+    private boolean trackingSessionEvents = false;
 
     private Runnable endSessionRunnable;
 
@@ -192,19 +193,25 @@ public class AmplitudeClient {
         }
     }
 
+    public void trackSessionEvents(boolean trackingSessionEvents) {
+        this.trackingSessionEvents = trackingSessionEvents;
+    }
+
     public void logEvent(String eventType) {
         logEvent(eventType, null);
     }
 
     public void logEvent(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), true);
+            boolean checkSession = true; // Todo: check if activity lifecycle
+            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
         }
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), true);
+            boolean checkSession = true; // Todo: check if activity lifecycle
+            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), checkSession);
         }
     }
 
@@ -320,162 +327,174 @@ public class AmplitudeClient {
         return eventId;
     }
 
-    private long getLastEventTime() {
+    private long getPreviousEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
     }
 
-    void setLastEventTime(long timestamp) {
+    void setPreviousEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
     }
 
-    void clearEndSession() {
+    private long getPreviousSessionId() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().remove(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME)
-                .remove(Constants.PREFKEY_PREVIOUS_END_SESSION_ID).commit();
+        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
     }
 
-    long getEndSessionTime() {
+    void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, -1);
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
-    long getEndSessionId() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1);
+    private void startSession() {
+        long timestamp = System.currentTimeMillis();
+        createOrContinueSession(timestamp);
     }
 
-    private void openSession() {
-        clearEndSession();
-        sessionOpen = true;
+    private void createOrContinueSession(long timestamp) {
+        if (!startNewSessionIfNeeded(timestamp)) {
+            // not creating a session means we should continue the session
+            refreshSessionTime(timestamp);
+        }
     }
 
-    private void closeSession() {
-        // Close the session. Events within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
-        // will stay in the session.
-        // A startSession call within the next MIN_TIME_BETWEEN_SESSIONS_MILLIS seconds
-        // will reopen the session.
-        sessionOpen = false;
+    private boolean startNewSessionIfNeeded(long timestamp) {
+        if (!inSession() || sessionExpired(timestamp)) {
+
+            // end previous session
+            if (trackingSessionEvents) {
+                sendSessionEvent(END_SESSION_EVENT);
+            }
+
+            // start new session
+            setSessionId(timestamp);
+            refreshSessionTime(timestamp);
+            if (trackingSessionEvents) {
+                sendSessionEvent(START_SESSION_EVENT);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
-    private void startNewSession(long timestamp) {
-        // Log session start in events
-        openSession();
+    private boolean inSession() {
+        return sessionId >= 0;
+    }
+
+    private boolean sessionExpired(long timestamp) {
+        if (!inSession()) {
+            return false;
+        }
+
+        long lastEventTime = getPreviousEventTime();
+        long sessionLimit = usingAccurateTracking ? minTimeBetweenSessionsMillis : sessionTimeoutMillis;
+        return (timestamp - lastEventTime) > sessionLimit;
+    }
+
+    private void setSessionId(long timestamp) {
         sessionId = timestamp;
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, sessionId).commit();
-        JSONObject apiProperties = new JSONObject();
-        try {
-            apiProperties.put("special", START_SESSION_EVENT);
-        } catch (JSONException e) {
-        }
-        logEvent(START_SESSION_EVENT, null, apiProperties, timestamp, false);
+        setPreviousSessionId(timestamp);
     }
 
-    private void startNewSessionIfNeeded(long timestamp) {
-        if (!sessionOpen) {
-            long lastEndSessionTime = getEndSessionTime();
-            if (timestamp - lastEndSessionTime < minTimeBetweenSessionsMillis) {
-                // Sessions close enough, set sessionId to previous sessionId
-
-                SharedPreferences preferences = context.getSharedPreferences(
-                        getSharedPreferencesName(), Context.MODE_PRIVATE);
-                long previousSessionId = preferences.getLong(
-                        Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-
-                if (previousSessionId == -1) {
-                    // Invalid session Id, create new sessionId
-                    startNewSession(timestamp);
-                } else {
-                    sessionId = previousSessionId;
-                }
-            } else {
-                // Sessions not close enough, create new sessionId
-                startNewSession(timestamp);
-            }
-        } else {
-            long lastEventTime = getLastEventTime();
-            if (timestamp - lastEventTime > sessionTimeoutMillis || sessionId == -1) {
-                startNewSession(timestamp);
-            }
-        }
-    }
-
-    public void startSession() {
-        if (!contextAndApiKeySet("startSession()")) {
+    private void refreshSessionTime(long timestamp) {
+        if (!inSession()) {
             return;
         }
-        final long now = System.currentTimeMillis();
 
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                logThread.removeCallbacks(endSessionRunnable);
-                long previousEndSessionId = getEndSessionId();
-                long lastEndSessionTime = getEndSessionTime();
-                if (previousEndSessionId != -1
-                        && now - lastEndSessionTime < minTimeBetweenSessionsMillis) {
-                    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-                    dbHelper.removeEvent(previousEndSessionId);
-                }
-                startNewSessionIfNeeded(now);
-                openSession();
-
-                // Update last event time
-                setLastEventTime(now);
-
-                uploadEvents();
-            }
-        });
+        setPreviousEventTime(timestamp);
     }
 
-    public void endSession() {
-        if (!contextAndApiKeySet("endSession()")) {
+    private void sendSessionEvent(final String session_event) {
+        if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
             return;
         }
-        final long timestamp = System.currentTimeMillis();
+
+        final long timestamp = getPreviousEventTime();
+
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
                 JSONObject apiProperties = new JSONObject();
                 try {
-                    apiProperties.put("special", END_SESSION_EVENT);
+                    apiProperties.put("special", session_event);
                 } catch (JSONException e) {
+                    return;
                 }
-                if (sessionOpen) {
-                    long eventId = logEvent(END_SESSION_EVENT, null, apiProperties, timestamp,
-                            false);
 
-                    SharedPreferences preferences = context.getSharedPreferences(
-                            getSharedPreferencesName(), Context.MODE_PRIVATE);
-                    preferences.edit()
-                            .putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, eventId)
-                            .putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, timestamp)
-                            .commit();
-                }
-                closeSession();
+                logEvent(session_event, null, apiProperties, timestamp, false);
             }
         });
-
-        // Queue up upload events MIN_TIME_BETWEEN_SESSIONS + 1 seconds later
-        logThread.removeCallbacks(endSessionRunnable);
-        endSessionRunnable = new Runnable() {
-            @Override
-            public void run() {
-                clearEndSession();
-                uploadEvents();
-            }
-        };
-        logThread.postDelayed(endSessionRunnable,
-                minTimeBetweenSessionsMillis + 1000);
     }
+
+
+
+//
+//
+//
+//        if (!sessionOpen) {
+//            long lastEndSessionTime = getEndSessionTime();
+//            if (timestamp - lastEndSessionTime < minTimeBetweenSessionsMillis) {
+//                // Sessions close enough, set sessionId to previous sessionId
+//
+//                SharedPreferences preferences = context.getSharedPreferences(
+//                        getSharedPreferencesName(), Context.MODE_PRIVATE);
+//                long previousSessionId = preferences.getLong(
+//                        Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
+//
+//                if (previousSessionId == -1) {
+//                    // Invalid session Id, create new sessionId
+//                    startNewSession(timestamp);
+//                } else {
+//                    sessionId = previousSessionId;
+//                }
+//            } else {
+//                // Sessions not close enough, create new sessionId
+//                startNewSession(timestamp);
+//            }
+//        } else {
+//            long lastEventTime = getLastEventTime();
+//            if (timestamp - lastEventTime > sessionTimeoutMillis || sessionId == -1) {
+//                startNewSession(timestamp);
+//            }
+//        }
+//    }
+
+//    @Deprecated
+//    public void startSession() {
+//        if (!contextAndApiKeySet("startSession()")) {
+//            return;
+//        }
+//        final long now = System.currentTimeMillis();
+//
+//        runOnLogThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                logThread.removeCallbacks(endSessionRunnable);
+//                long previousEndSessionId = getEndSessionId();
+//                long lastEndSessionTime = getEndSessionTime();
+//                if (previousEndSessionId != -1
+//                        && now - lastEndSessionTime < minTimeBetweenSessionsMillis) {
+//                    DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+//                    dbHelper.removeEvent(previousEndSessionId);
+//                }
+//                startNewSessionIfNeeded(now);
+//                openSession();
+//
+//                // Update last event time
+//                setLastEventTime(now);
+//
+//                uploadEvents();
+//            }
+//        });
+//    }
+//
 
     public void logRevenue(double amount) {
         // Amount is in dollars
@@ -911,14 +930,6 @@ public class AmplitudeClient {
             if (source.contains(sourcePkgName + ".previousSessionTime")) {
                 target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME,
                         source.getLong(sourcePkgName + ".previousSessionTime", -1));
-            }
-            if (source.contains(sourcePkgName + ".previousEndSessionTime")) {
-                target.putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME,
-                        source.getLong(sourcePkgName + ".previousEndSessionTime", -1));
-            }
-            if (source.contains(sourcePkgName + ".previousEndSessionId")) {
-                target.putLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID,
-                        source.getLong(sourcePkgName + ".previousEndSessionId", -1));
             }
             if (source.contains(sourcePkgName + ".previousSessionId")) {
                 target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID,
