@@ -206,11 +206,11 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
     }
 
-//    private long getPreviousSessionId() {
-//        SharedPreferences preferences = context.getSharedPreferences(
-//                getSharedPreferencesName(), Context.MODE_PRIVATE);
-//        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-//    }
+    private long getPreviousSessionId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
+    }
 
     private void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
@@ -381,24 +381,48 @@ public class AmplitudeClient {
 //    }
 
     private boolean startNewSessionIfNeeded(long timestamp) {
-        if (!inSession() || sessionExpired(timestamp)) {
 
-            // end previous session
-            if (trackingSessionEvents) {
-                sendSessionEvent(END_SESSION_EVENT);
+        if (!inSession()) {
+            if (sessionExpired(timestamp)) {
+                startNewSession(timestamp);
+                return true;
             }
 
-            // start new session
-            setSessionId(timestamp);
+            // try to extend previous session
+            long previousSessionId = getPreviousSessionId();
+            if (previousSessionId == -1) {
+                startNewSession(timestamp);
+                return true;
+            } else {
+                sessionId = previousSessionId;
+                refreshSessionTime(timestamp);
+                return false;
+            }
+
+        } else {
+
+            if (sessionExpired(timestamp)) {
+                startNewSession(timestamp);
+                return true;
+            }
+
             refreshSessionTime(timestamp);
-            if (trackingSessionEvents) {
-                sendSessionEvent(START_SESSION_EVENT);
-            }
+            return false;
+        }
+    }
 
-            return true;
+    private void startNewSession(long timestamp) {
+        // end previous session
+        if (trackingSessionEvents) {
+            sendSessionEvent(END_SESSION_EVENT);
         }
 
-        return false;
+        // start new session
+        setSessionId(timestamp);
+        refreshSessionTime(timestamp);
+        if (trackingSessionEvents) {
+            sendSessionEvent(START_SESSION_EVENT);
+        }
     }
 
     private boolean inSession() {
@@ -406,10 +430,6 @@ public class AmplitudeClient {
     }
 
     private boolean sessionExpired(long timestamp) {
-        if (!inSession()) {
-            return false;
-        }
-
         long lastEventTime = getPreviousEventTime();
         long sessionLimit = usingAccurateTracking ? minTimeBetweenSessionsMillis : sessionTimeoutMillis;
         return (timestamp - lastEventTime) > sessionLimit;
