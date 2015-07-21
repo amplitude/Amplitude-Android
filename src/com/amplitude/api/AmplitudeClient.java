@@ -194,6 +194,42 @@ public class AmplitudeClient {
         }
     }
 
+    private long getPreviousEventTime() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
+    }
+
+    private void setPreviousEventTime(long timestamp) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
+    }
+
+//    private long getPreviousSessionId() {
+//        SharedPreferences preferences = context.getSharedPreferences(
+//                getSharedPreferencesName(), Context.MODE_PRIVATE);
+//        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
+//    }
+
+    private void setPreviousSessionId(long timestamp) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
+    }
+
+    private long getLastEventId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
+    }
+
+    private void setLastEventId(long eventId) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
+    }
+
     public void trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
     }
@@ -330,42 +366,6 @@ public class AmplitudeClient {
         }
 
         return eventId;
-    }
-
-    private long getPreviousEventTime() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1);
-    }
-
-    private void setPreviousEventTime(long timestamp) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, timestamp).commit();
-    }
-
-//    private long getPreviousSessionId() {
-//        SharedPreferences preferences = context.getSharedPreferences(
-//                getSharedPreferencesName(), Context.MODE_PRIVATE);
-//        return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
-//    }
-
-    private void setPreviousSessionId(long timestamp) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
-    }
-
-    private long getLastEventId() {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
-    }
-
-    private void setLastEventId(long eventId) {
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
     }
 
 //    private void startSession() {
