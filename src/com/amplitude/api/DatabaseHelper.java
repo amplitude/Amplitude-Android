@@ -85,7 +85,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(EVENT_TABLE_NAME, new String[] { ID_FIELD, EVENT_FIELD },
-                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null, null,
+                    lessThanId >= 0 ? ID_FIELD + " <= " + lessThanId : null, null, null, null,
                     ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
             while (cursor.moveToNext()) {
