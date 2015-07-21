@@ -273,7 +273,7 @@ public class AmplitudeClient {
                 startNewSessionIfNeeded(timestamp);
             }
 
-            // always refresh for default and while using accurate tracking
+            // always refresh by default and while using accurate tracking
             refreshSessionTime(timestamp);
         }
 
@@ -430,7 +430,8 @@ public class AmplitudeClient {
 
     private boolean isWithinMinTimeBetweenSessions(long timestamp) {
         long lastEventTime = getLastEventTime();
-        long sessionLimit = usingAccurateTracking ? minTimeBetweenSessionsMillis : sessionTimeoutMillis;
+        long sessionLimit = usingAccurateTracking ?
+                minTimeBetweenSessionsMillis : sessionTimeoutMillis;
         return (timestamp - lastEventTime) < sessionLimit;
     }
 
@@ -453,6 +454,11 @@ public class AmplitudeClient {
         }
 
         final long timestamp = getLastEventTime();
+        // running app for first time, don't log end_session
+        if (timestamp == -1) {
+            Log.d(TAG, String.format("Running app for first time, skip logging %s", session_event));
+            return;
+        }
 
         runOnLogThread(new Runnable() {
             @Override

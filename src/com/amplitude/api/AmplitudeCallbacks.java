@@ -3,14 +3,23 @@ package com.amplitude.api;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.util.Log;
 
 public class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
 
-    private AmplitudeClient client;
+    public static final String TAG = "com.amplitude.api.AmplitudeCallbacks";
+    private static final String NULLMSG = "Need to initialize AmplitudeCallbacks with AmplitudeClient instance";
 
-    public AmplitudeCallbacks(AmplitudeClient client) {
-        this.client = client;
-        client.useAccurateTracking(true);
+    private AmplitudeClient clientInstance = null;
+
+    public AmplitudeCallbacks(AmplitudeClient clientInstance) {
+        if (clientInstance == null) {
+            Log.e(TAG, NULLMSG);
+            return;
+        }
+
+        this.clientInstance = clientInstance;
+        clientInstance.useAccurateTracking(true);
     }
 
     @Override
@@ -21,14 +30,26 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
 
     @Override
     public void onActivityPaused(Activity activity) {
-        client.refreshSessionTime(System.currentTimeMillis());
-        client.setInForeground(false);
+        if (clientInstance == null) {
+            Log.e(TAG, NULLMSG);
+            return;
+        }
+
+        Log.d(TAG, "onActivityPaused");
+        clientInstance.refreshSessionTime(System.currentTimeMillis());
+        clientInstance.setInForeground(false);
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
-        client.startNewSessionIfNeeded(System.currentTimeMillis());
-        client.setInForeground(true);
+        if (clientInstance == null) {
+            Log.e(TAG, NULLMSG);
+            return;
+        }
+
+        Log.d(TAG, "onActivityResumed");
+        clientInstance.startNewSessionIfNeeded(System.currentTimeMillis());
+        clientInstance.setInForeground(true);
     }
 
     @Override
