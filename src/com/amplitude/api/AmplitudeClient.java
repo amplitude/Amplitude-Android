@@ -483,10 +483,8 @@ public class AmplitudeClient {
             return;
         }
 
-        long eventId = logEvent(session_event, null, apiProperties, timestamp, false);
-        setLastEventId(eventId);
+        logEvent(session_event, null, apiProperties, timestamp, false);
     }
-
 
     public void logRevenue(double amount) {
         // Amount is in dollars
