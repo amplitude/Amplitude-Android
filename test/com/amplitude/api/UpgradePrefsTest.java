@@ -50,10 +50,9 @@ public class UpgradePrefsTest extends BaseTest {
     public void testUpgrade() {
         String sourceName = "com.amplitude.a" + "." + context.getPackageName();
         context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
-                .putLong("com.amplitude.a.previousSessionTime", 100L)
-                .putLong("com.amplitude.a.previousEndSessionTime", 200L)
-                .putLong("com.amplitude.a.previousEndSessionId", 300L)
-                .putLong("com.amplitude.a.previousSessionId", 400L)
+                .putLong("com.amplitude.a.previousSessionId", 100L)
+                .putLong("com.amplitude.a.lastEventId", 200L)
+                .putLong("com.amplitude.a.lastEventTime", 300L)
                 .putString("com.amplitude.a.deviceId", "deviceid")
                 .putString("com.amplitude.a.userId", "userid")
                 .putBoolean("com.amplitude.a.optOut", true)
@@ -63,10 +62,10 @@ public class UpgradePrefsTest extends BaseTest {
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1), 100L);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, -1), 200L);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1), 300L);
-        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1), 400L);
+        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1), 100L);
+        assertEquals(target.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1), 200L);
+        assertEquals(target.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1), 300L);
+
         assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), "deviceid");
         assertEquals(target.getString(Constants.PREFKEY_USER_ID, null), "userid");
         assertEquals(target.getBoolean(Constants.PREFKEY_OPT_OUT, false), true);
@@ -95,7 +94,7 @@ public class UpgradePrefsTest extends BaseTest {
     public void testUpgradePartial() {
         String sourceName = "partial" + "." + context.getPackageName();
         context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
-                .putLong("partial.previousSessionTime", 100L)
+                .putLong("partial.lastEventTime", 100L)
                 .putString("partial.deviceId", "deviceid")
                 .commit();
 
@@ -103,9 +102,8 @@ public class UpgradePrefsTest extends BaseTest {
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_TIME, -1), 100L);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_TIME, -1), -1);
-//        assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_END_SESSION_ID, -1), -1);
+        assertEquals(target.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1), 100L);
+        assertEquals(target.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1), -1);
         assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1), -1);
         assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), "deviceid");
         assertEquals(target.getString(Constants.PREFKEY_USER_ID, null), null);
