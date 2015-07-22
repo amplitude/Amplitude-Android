@@ -202,9 +202,13 @@ public class AmplitudeClient {
         this.usingAccurateTracking = usingAccurateTracking;
     }
 
+    boolean isUsingAccurateTracking() { return usingAccurateTracking; }
+
     void setInForeground(boolean inForeground) {
         this.inForeground = inForeground;
     }
+
+    boolean isInForeground() { return inForeground; }
 
     public void logEvent(String eventType) {
         logEvent(eventType, null);
@@ -344,37 +348,37 @@ public class AmplitudeClient {
         return eventId;
     }
 
-    private long getLastEventTime() {
+    long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1);
     }
 
-    private void setLastEventTime(long timestamp) {
+    void setLastEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
     }
 
-    private long getLastEventId() {
+    long getLastEventId() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
     }
 
-    private void setLastEventId(long eventId) {
+    void setLastEventId(long eventId) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
     }
 
-    private long getPreviousSessionId() {
+    long getPreviousSessionId() {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
     }
 
-    private void setPreviousSessionId(long timestamp) {
+    void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();

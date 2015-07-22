@@ -393,8 +393,64 @@ public class SessionTest extends BaseTest {
         assertEquals(event3.optString("timestamp"), String.valueOf(timestamp3));
     }
 
+    @Test
+    public void testEnableAccurateTracking() {
+        assertFalse(amplitude.isUsingAccurateTracking());
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacks(amplitude);
+        assertTrue(amplitude.isUsingAccurateTracking());
+    }
 
+    @Test
+    public void testAccurateStartSession() {
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacks(amplitude);
 
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertFalse(amplitude.isInForeground());
+
+        callBacks.onActivityResumed(null);
+        assertTrue(amplitude.isInForeground());
+        assertTrue(amplitude.getPreviousSessionId() > -1);
+        assertTrue(amplitude.getLastEventTime() > -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+    }
+
+    @Test
+    public void testAccurateStartSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacks(amplitude);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertFalse(amplitude.isInForeground());
+        assertEquals(getUnsentEventCount(), 0);
+
+        callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertTrue(amplitude.isInForeground());
+        assertTrue(amplitude.getPreviousSessionId() > -1);
+        assertTrue(amplitude.getLastEventTime() > -1);
+        assertTrue(amplitude.getLastEventId() > -1);
+
+        // verify that start session event sent
+        assertEquals(getUnsentEventCount(), 1);
+        JSONObject startSession = getLastUnsentEvent();
+        assertEquals(startSession.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+            startSession.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(
+            startSession.optString("session_id"),
+            String.valueOf(amplitude.getPreviousSessionId())
+        );
+        assertEquals(
+            startSession.optString("timestamp"),
+            String.valueOf(amplitude.getLastEventTime())
+        );
+    }
 
     @Test
     public void testLogOutOfSessionEvent() {
@@ -431,106 +487,4 @@ public class SessionTest extends BaseTest {
         assertEquals(event2.optString("event_type"), "test2");
         assertEquals(event2.optString("session_id"), String.valueOf(timestamp3));
     }
-
-
-
-
-    /*
-    @Test
-    public void testStartSession() {
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        JSONObject event = getLastUnsentEvent();
-//        assertEquals(AmplitudeClient.START_SESSION_EVENT, event.optString("event_type"));
-//        assertEquals(AmplitudeClient.START_SESSION_EVENT, event.optJSONObject("api_properties").optString("special"));
-//
-//        assertEquals(1, getUnsentEventCount());
-//        assertNotNull(runRequest());
-    }
-
-    @Test
-    public void testImplicitStartSession() {
-        amplitude.logEvent("implicit_start_session");
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-
-        JSONArray events = getUnsentEvents(2);
-        
-        JSONObject event = events.optJSONObject(0);
-        assertEquals(AmplitudeClient.START_SESSION_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.START_SESSION_EVENT, event.optJSONObject("api_properties").optString("special"));
-
-        event = events.optJSONObject(1);
-        assertEquals("implicit_start_session", event.optString("event_type"));
-
-        assertEquals(2, getUnsentEventCount());
-        assertNotNull(runRequest());
-    }
-
-    @Test
-    public void testEndSession() {
-//        amplitude.endSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        assertEquals(0, getUnsentEventCount());
-//
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        amplitude.endSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        JSONObject event = getLastUnsentEvent();
-//        assertEquals(AmplitudeClient.END_SESSION_EVENT, event.optString("event_type"));
-//        assertEquals(AmplitudeClient.END_SESSION_EVENT, event.optJSONObject("api_properties").optString("special"));
-//
-//        assertEquals(2, getUnsentEventCount());
-//        assertNotNull(runRequest());
-    }
-
-    @Test
-    public void testContinueSession() {
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        JSONObject event = getLastUnsentEvent();
-//        long session_id = event.optLong("session_id");
-//
-//        amplitude.endSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
-//
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        assertEquals(1, getUnsentEventCount());
-//
-//        amplitude.logEvent("event");
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        event = getLastUnsentEvent();
-//        assertEquals(session_id, event.optLong("session_id"));
-    }
-
-    @Test
-    public void testExpiredSession() {
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        JSONObject event = getLastUnsentEvent();
-//        long session_id = event.optLong("session_id");
-//
-//        amplitude.endSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        amplitude.startSession();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        assertEquals(3, getUnsentEventCount());
-//
-//        amplitude.logEvent("event");
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-//
-//        event = getLastUnsentEvent();
-//        assertFalse(session_id == event.optLong("session_id"));
-    }
-    */
 }
