@@ -270,7 +270,8 @@ public class AmplitudeClient {
         if (!loggingSessionEvent && !outOfSession) {
             // default case + corner case when async logEvent between onPause and onResume
             if (!usingAccurateTracking || !inForeground){
-                startNewSessionIfNeeded(timestamp);
+                boolean synchronous = Thread.currentThread() != logThread;
+                startNewSessionIfNeeded(timestamp, synchronous);
             } else {
                 refreshSessionTime(timestamp);
             }
@@ -379,7 +380,7 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
-    boolean startNewSessionIfNeeded(long timestamp) {
+    boolean startNewSessionIfNeeded(long timestamp, boolean synchronous) {
         if (inSession()) {
 
             if (isWithinMinTimeBetweenSessions(timestamp)) {
@@ -387,7 +388,7 @@ public class AmplitudeClient {
                 return false;
             }
 
-            startNewSession(timestamp);
+            startNewSession(timestamp, synchronous);
             return true;
         }
 
@@ -395,7 +396,7 @@ public class AmplitudeClient {
         if (isWithinMinTimeBetweenSessions(timestamp)) {
             long previousSessionId = getPreviousSessionId();
             if (previousSessionId == -1) {
-                startNewSession(timestamp);
+                startNewSession(timestamp, synchronous);
                 return true;
             }
 
@@ -405,21 +406,21 @@ public class AmplitudeClient {
             return false;
         }
 
-        startNewSession(timestamp);
+        startNewSession(timestamp, synchronous);
         return true;
     }
 
-    private void startNewSession(long timestamp) {
+    private void startNewSession(long timestamp, boolean synchronous) {
         // end previous session
         if (trackingSessionEvents) {
-            sendSessionEvent(END_SESSION_EVENT);
+            sendSessionEvent(END_SESSION_EVENT, synchronous);
         }
 
         // start new session
         setSessionId(timestamp);
         refreshSessionTime(timestamp);
         if (trackingSessionEvents) {
-            sendSessionEvent(START_SESSION_EVENT);
+            sendSessionEvent(START_SESSION_EVENT, synchronous);
         }
     }
 
@@ -449,7 +450,7 @@ public class AmplitudeClient {
         setLastEventTime(timestamp);
     }
 
-    private void sendSessionEvent(final String session_event) {
+    private void sendSessionEvent(final String session_event, boolean synchronous) {
         if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
             return;
         }
@@ -461,21 +462,31 @@ public class AmplitudeClient {
             return;
         }
 
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                JSONObject apiProperties = new JSONObject();
-                try {
-                    apiProperties.put("special", session_event);
-                } catch (JSONException e) {
-                    return;
+        // run on main thread for synchronous
+        if (synchronous) {
+            createAndLogSessionEvent(session_event, timestamp);
+        } else {
+            runOnLogThread(new Runnable() {
+                @Override
+                public void run() {
+                    createAndLogSessionEvent(session_event, timestamp);
                 }
-
-                long eventId = logEvent(session_event, null, apiProperties, timestamp, false);
-                setLastEventId(eventId);
-            }
-        });
+            });
+        }
     }
+
+    private void createAndLogSessionEvent (final String session_event, final long timestamp) {
+        JSONObject apiProperties = new JSONObject();
+        try {
+            apiProperties.put("special", session_event);
+        } catch (JSONException e) {
+            return;
+        }
+
+        long eventId = logEvent(session_event, null, apiProperties, timestamp, false);
+        setLastEventId(eventId);
+    }
+
 
     public void logRevenue(double amount) {
         // Amount is in dollars
