@@ -17,9 +17,11 @@ public class AmplitudePlugin {
         Amplitude.getInstance().initialize(context, apiKey, userId);
     }
 
-    public static void startSession() {}
+    @Deprecated
+    public static void startSession() { return; }
 
-    public static void endSession() {}
+    @Deprecated
+    public static void endSession() { return; }
 
     public static void logEvent(String event) {
         Amplitude.getInstance().logEvent(event);
