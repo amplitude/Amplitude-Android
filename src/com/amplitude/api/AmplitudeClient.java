@@ -271,10 +271,9 @@ public class AmplitudeClient {
             // default case + corner case when async logEvent between onPause and onResume
             if (!usingAccurateTracking || !inForeground){
                 startNewSessionIfNeeded(timestamp);
+            } else {
+                refreshSessionTime(timestamp);
             }
-
-            // always refresh by default and while using accurate tracking
-            refreshSessionTime(timestamp);
         }
 
         JSONObject event = new JSONObject();
@@ -436,11 +435,13 @@ public class AmplitudeClient {
     }
 
     private void setSessionId(long timestamp) {
+        Log.d(TAG, String.format("Starting new session @ %d", timestamp));
         sessionId = timestamp;
         setPreviousSessionId(timestamp);
     }
 
     void refreshSessionTime(long timestamp) {
+        Log.d(TAG, String.format("refreshing session time to %d", timestamp));
         if (!inSession()) {
             return;
         }
