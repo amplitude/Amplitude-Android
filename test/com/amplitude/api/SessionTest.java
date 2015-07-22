@@ -109,10 +109,15 @@ public class SessionTest extends BaseTest {
 
         assertEquals(event1.optString("event_type"), "test1");
         assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event1.optString("timestamp"), String.valueOf(timestamp1));
+
         assertEquals(event2.optString("event_type"), "test2");
         assertEquals(event2.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event2.optString("timestamp"), String.valueOf(timestamp2));
+
         assertEquals(event3.optString("event_type"), "test3");
         assertEquals(event3.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event3.optString("timestamp"), String.valueOf(timestamp3));
     }
 
     @Test
@@ -147,14 +152,14 @@ public class SessionTest extends BaseTest {
         long timestamp = System.currentTimeMillis();
         amplitude.logEvent("test", null, null, timestamp, false);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-
         // trackSessions is true, start_session event is added
         assertEquals(getUnsentEventCount(), 2);
+
+        // verify order of synchronous events
         JSONArray events = getUnsentEvents(2);
         JSONObject session_event = events.optJSONObject(0);
         JSONObject test_event = events.optJSONObject(1);
 
-        // verify order of synchronous events
         assertEquals(session_event.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
         assertEquals(
                 session_event.optJSONObject("api_properties").optString("special"),
@@ -165,6 +170,231 @@ public class SessionTest extends BaseTest {
         assertEquals(test_event.optString("event_type"), "test");
         assertEquals(test_event.optString("session_id"), String.valueOf(timestamp));
     }
+
+    @Test
+    public void testDefaultTriggerNewSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        // log 1st event, initialize first session
+        long timestamp1 = System.currentTimeMillis();
+        amplitude.logEventAsync("test1", null, null, timestamp1, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        // log 2nd event past timeout, verify new session started
+        long timestamp2 = timestamp1 + sessionTimeoutMillis;
+        amplitude.logEventAsync("test2", null, null, timestamp2, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, end_session and start_session events are added
+        assertEquals(getUnsentEventCount(), 5);
+
+        JSONArray events = getUnsentEvents(5);
+        JSONObject startSession1 = events.optJSONObject(0);
+        JSONObject event1 = events.optJSONObject(1);
+        JSONObject endSession = events.optJSONObject(2);
+        JSONObject startSession2 = events.optJSONObject(3);
+        JSONObject event2 = events.optJSONObject(4);
+
+        assertEquals(startSession1.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession1.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession1.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(event1.optString("event_type"), "test1");
+        assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event1.optString("timestamp"), String.valueOf(timestamp1));
+
+        assertEquals(endSession.optString("event_type"), AmplitudeClient.END_SESSION_EVENT);
+        assertEquals(
+                endSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.END_SESSION_EVENT
+        );
+        assertEquals(endSession.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(startSession2.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession2.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession2.optString("session_id"), String.valueOf(timestamp2));
+
+        assertEquals(event2.optString("event_type"), "test2");
+        assertEquals(event2.optString("session_id"), String.valueOf(timestamp2));
+        assertEquals(event2.optString("timestamp"), String.valueOf(timestamp2));
+    }
+
+    @Test
+    public void testDefaultTriggerNewSessionWithTrackingSynchronous() {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        // log 1st event, initialize first session
+        long timestamp1 = System.currentTimeMillis();
+        amplitude.logEvent("test1", null, null, timestamp1, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        // log 2nd event past timeout, verify new session started
+        long timestamp2 = timestamp1 + sessionTimeoutMillis;
+        amplitude.logEvent("test2", null, null, timestamp2, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, end_session and start_session events are added
+        assertEquals(getUnsentEventCount(), 5);
+
+        // verify order of synchronous events
+        JSONArray events = getUnsentEvents(5);
+        JSONObject startSession1 = events.optJSONObject(0);
+        JSONObject event1 = events.optJSONObject(1);
+        JSONObject endSession = events.optJSONObject(2);
+        JSONObject startSession2 = events.optJSONObject(3);
+        JSONObject event2 = events.optJSONObject(4);
+
+        assertEquals(startSession1.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession1.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession1.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(event1.optString("event_type"), "test1");
+        assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event1.optString("timestamp"), String.valueOf(timestamp1));
+
+        assertEquals(endSession.optString("event_type"), AmplitudeClient.END_SESSION_EVENT);
+        assertEquals(
+                endSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.END_SESSION_EVENT
+        );
+        assertEquals(endSession.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(startSession2.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession2.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession2.optString("session_id"), String.valueOf(timestamp2));
+
+        assertEquals(event2.optString("event_type"), "test2");
+        assertEquals(event2.optString("session_id"), String.valueOf(timestamp2));
+        assertEquals(event2.optString("timestamp"), String.valueOf(timestamp2));
+    }
+
+    @Test
+    public void testDefaultExtendSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        // log 3 events all just within session expiration window, verify all in same session
+        long timestamp1 = System.currentTimeMillis();
+        amplitude.logEventAsync("test1", null, null, timestamp1, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        long timestamp2 = timestamp1 + sessionTimeoutMillis - 1;
+        amplitude.logEventAsync("test2", null, null, timestamp2, false);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
+
+        long timestamp3 = timestamp2 + sessionTimeoutMillis - 1;
+        amplitude.logEventAsync("test3", null, null, timestamp3, false);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 4);
+
+        JSONArray events = getUnsentEvents(4);
+        JSONObject startSession = events.optJSONObject(0);
+        JSONObject event1 = events.optJSONObject(1);
+        JSONObject event2 = events.optJSONObject(2);
+        JSONObject event3 = events.optJSONObject(3);
+
+        assertEquals(startSession.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(event1.optString("event_type"), "test1");
+        assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event1.optString("timestamp"), String.valueOf(timestamp1));
+
+        assertEquals(event2.optString("event_type"), "test2");
+        assertEquals(event2.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event2.optString("timestamp"), String.valueOf(timestamp2));
+
+        assertEquals(event3.optString("event_type"), "test3");
+        assertEquals(event3.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event3.optString("timestamp"), String.valueOf(timestamp3));
+    }
+
+    @Test
+    public void testDefaultExtendSessionWithTrackingSynchronous() {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        // log 3 events all just within session expiration window, verify all in same session
+        long timestamp1 = System.currentTimeMillis();
+        amplitude.logEvent("test1", null, null, timestamp1, false);
+        looper.runToEndOfTasks();
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        long timestamp2 = timestamp1 + sessionTimeoutMillis - 1;
+        amplitude.logEvent("test2", null, null, timestamp2, false);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
+
+        long timestamp3 = timestamp2 + sessionTimeoutMillis - 1;
+        amplitude.logEventAsync("test3", null, null, timestamp3, false);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 4);
+
+        // verify order of synchronous events
+        JSONArray events = getUnsentEvents(4);
+        JSONObject startSession = events.optJSONObject(0);
+        JSONObject event1 = events.optJSONObject(1);
+        JSONObject event2 = events.optJSONObject(2);
+        JSONObject event3 = events.optJSONObject(3);
+
+        assertEquals(startSession.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession.optString("session_id"), String.valueOf(timestamp1));
+
+        assertEquals(event1.optString("event_type"), "test1");
+        assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event1.optString("timestamp"), String.valueOf(timestamp1));
+
+        assertEquals(event2.optString("event_type"), "test2");
+        assertEquals(event2.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event2.optString("timestamp"), String.valueOf(timestamp2));
+
+        assertEquals(event3.optString("event_type"), "test3");
+        assertEquals(event3.optString("session_id"), String.valueOf(timestamp1));
+        assertEquals(event3.optString("timestamp"), String.valueOf(timestamp3));
+    }
+
+
+
 
     @Test
     public void testLogOutOfSessionEvent() {
@@ -201,6 +431,8 @@ public class SessionTest extends BaseTest {
         assertEquals(event2.optString("event_type"), "test2");
         assertEquals(event2.optString("session_id"), String.valueOf(timestamp3));
     }
+
+
 
 
     /*
