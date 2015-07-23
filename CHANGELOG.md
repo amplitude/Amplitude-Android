@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Expose user ID with getUserId.
+* Simplified session tracking. No longer need to call startSession and endSession. No longer send start/end session events by default. Added a more accurate session tracking mode that uses Android Activity LifeCycles.
 
 ## 1.7.0 (May 29, 2015)
 

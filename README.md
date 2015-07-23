@@ -40,34 +40,22 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
     Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE");
     ```
 
-6. Add a `startSession()` call to each `onResume()` in every activity in your app:
-
-    ```java
-    Amplitude.getInstance().startSession();
-    ```
-
-7. Add an `endSession()` call to each `onPause()` in every activity in your app. This call also ensures data is uploaded before the app closes:
-
-    ```java
-    Amplitude.getInstance().endSession();
-    ```
-
-8. To track an event anywhere in the app, call:
+6. To track an event anywhere in the app, call:
 
     ```java
     Amplitude.getInstance().logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-9. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project. _This is required for integrating with third party attribution services_
+7. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project. _This is required for integrating with third party attribution services_
 
-10. If you are using Proguard, add these exceptions to ```proguard.pro``` for Google Play Advertising IDs and Amplitude dependencies:
+8. If you are using Proguard, add these exceptions to ```proguard.pro``` for Google Play Advertising IDs and Amplitude dependencies:
 
     ```yaml
         -keep class com.google.android.gms.ads.** { *; }
         -dontwarn okio.**
     ```
 
-11. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
@@ -75,9 +63,21 @@ It's important to think about what types of events you care about as a developer
 
 # Tracking Sessions #
 
-A session is a period of time that a user has the app in the foreground. Calls to `startSession()` and `endSession()` track the duration of a session. Sessions within 10 seconds of each other are merged into a single session when they are reported in Amplitude.
+A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. There are 2 different ways to track sessions - a default method based on when events are logged, and a more accurate method based on when the app goes in and out of focus (available for Android 4+). Sessions are handled automatically now, you no longer have to manually call `startSession()` or `endSession()`.
 
-Calling `startSession()` in `onResume()` will generate a start session event every time the app regains focus or comes out of a locked screen. Calling `endSession()` in `onPause()` will generate an end session event every time the foreground activity loses focus or the screen becomes locked. If you'd prefer to only log session starts and ends when the app is no longer visible, instead of no longer in focus, you can place the `startSession()` and `endSession()` calls in `onStart()` and `onStop()`, respectively. Note that `onStart()` and `onStop()` are not called when a user unlocks and locks the screen.
+Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
+
+More accurate method (only for Android 4+): a new session is created when the app comes back in focus after being out of focus for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, simply add this line after initializing the SDK:
+
+```
+getApplication().registerActivityLifecycleCallbacks(new AmplitudeCallbacks(Amplitude.getInstance()));
+```
+
+Options: by default start and end session events are no longer sent. To renable simply add this line after initializing the SDK:
+
+```java
+Amplitude.getInstance().trackSessionEvents(true);
+```
 
 # Setting Custom User IDs #
 
