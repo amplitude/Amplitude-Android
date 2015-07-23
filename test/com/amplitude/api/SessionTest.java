@@ -681,7 +681,90 @@ public class SessionTest extends BaseTest {
         assertTrue(amplitude.isInForeground());
     }
 
+    @Test
+    public void testAccurateOnResumeExtendSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+                timestamp,
+                timestamp + 1,
+                timestamp + 1 + minTimeBetweenSessionsMillis - 1  // just inside session exp window
+        };
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
 
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
+
+        callBacks.onActivityResumed(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 1);
+
+        callBacks.onActivityPaused(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertFalse(amplitude.isInForeground());
+        assertEquals(getUnsentEventCount(), 1);
+
+        callBacks.onActivityResumed(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[2]);
+        assertTrue(amplitude.isInForeground());
+        assertEquals(getUnsentEventCount(), 1);
+
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+            event.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(event.optString("session_id"), String.valueOf(timestamps[0]));
+        assertEquals(event.optString("timestamp"), String.valueOf(timestamps[0]));
+    }
+
+    @Test
+    public void testAccurateLogAsyncEvent() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp + minTimeBetweenSessionsMillis - 1};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
+        assertFalse(amplitude.isInForeground());
+
+        // logging an event before onResume will force a session check
+        amplitude.logEventAsync("test", null, null, timestamp, false);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamp);
+        assertEquals(getUnsentEventCount(), 1);
+
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 1);
+
+        JSONObject event = getLastUnsentEvent();
+
+    }
 
 
     @Test
