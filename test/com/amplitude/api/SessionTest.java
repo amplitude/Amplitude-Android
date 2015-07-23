@@ -16,17 +16,38 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
+import org.robolectric.shadows.ShadowSystemClock;
 
 import android.content.Context;
+import android.os.SystemClock;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class SessionTest extends BaseTest {
+
+    // allows for control of System.currentTimeMillis
+    private class AmplitudeCallbacksWithTime extends AmplitudeCallbacks {
+
+        private int index;
+        private long [] timestamps = null;
+
+        public AmplitudeCallbacksWithTime(AmplitudeClient client, long [] timestamps) {
+            super(client);
+            this.index = 0;
+            this.timestamps = timestamps;
+        }
+
+        @Override
+        protected long getCurrentTimeMillis() {
+            return timestamps[index++ % timestamps.length];
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -401,8 +422,10 @@ public class SessionTest extends BaseTest {
     }
 
     @Test
-    public void testAccurateStartSession() {
-        AmplitudeCallbacks callBacks = new AmplitudeCallbacks(amplitude);
+    public void testAccurateOnResumeStartSession() {
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
 
         assertEquals(amplitude.getPreviousSessionId(), -1);
         assertEquals(amplitude.getLastEventId(), -1);
@@ -411,15 +434,17 @@ public class SessionTest extends BaseTest {
 
         callBacks.onActivityResumed(null);
         assertTrue(amplitude.isInForeground());
-        assertTrue(amplitude.getPreviousSessionId() > -1);
-        assertTrue(amplitude.getLastEventTime() > -1);
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
         assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamp);
     }
 
     @Test
-    public void testAccurateStartSessionWithTracking() {
+    public void testAccurateOnResumeStartSessionWithTracking() {
         amplitude.trackSessionEvents(true);
-        AmplitudeCallbacks callBacks = new AmplitudeCallbacks(amplitude);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
 
         assertEquals(amplitude.getPreviousSessionId(), -1);
         assertEquals(amplitude.getLastEventId(), -1);
@@ -430,27 +455,127 @@ public class SessionTest extends BaseTest {
         callBacks.onActivityResumed(null);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertTrue(amplitude.isInForeground());
-        assertTrue(amplitude.getPreviousSessionId() > -1);
-        assertTrue(amplitude.getLastEventTime() > -1);
-        assertTrue(amplitude.getLastEventId() > -1);
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamp);
 
         // verify that start session event sent
         assertEquals(getUnsentEventCount(), 1);
         JSONObject startSession = getLastUnsentEvent();
         assertEquals(startSession.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
         assertEquals(
-            startSession.optJSONObject("api_properties").optString("special"),
-            AmplitudeClient.START_SESSION_EVENT
+                startSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
         );
         assertEquals(
-            startSession.optString("session_id"),
-            String.valueOf(amplitude.getPreviousSessionId())
+                startSession.optString("session_id"),
+                String.valueOf(timestamp)
         );
         assertEquals(
             startSession.optString("timestamp"),
-            String.valueOf(amplitude.getLastEventTime())
+            String.valueOf(timestamp)
         );
     }
+
+    @Test
+    public void testAccurateOnPauseRefreshTimestamp() {
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp, timestamp + minTimeBetweenSessionsMillis};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+
+        callBacks.onActivityPaused(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertFalse(amplitude.isInForeground());
+    }
+
+    @Test
+    public void testAccurateOnPauseRefreshTimestampWithTracking() {
+        amplitude.trackSessionEvents(true);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp, timestamp + minTimeBetweenSessionsMillis};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
+
+        callBacks.onActivityResumed(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 1);
+
+        // only refresh time, no session checking
+        callBacks.onActivityPaused(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertEquals(getUnsentEventCount(), 1);
+    }
+
+    @Test
+    public void testAccurateOnResumeTriggerNewSession() {
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+                timestamp,
+                timestamp + 1,
+                timestamp + 1 + minTimeBetweenSessionsMillis
+        };
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 0);
+        assertTrue(amplitude.isInForeground());
+
+        // only refresh time, no session checking
+        callBacks.onActivityPaused(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertEquals(getUnsentEventCount(), 0);
+        assertFalse(amplitude.isInForeground());
+
+        // resume after min session expired window, verify new session started
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[2]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[2]);
+        assertEquals(getUnsentEventCount(), 0);
+        assertTrue(amplitude.isInForeground());
+    }
+
+
+
+
+
+
 
     @Test
     public void testLogOutOfSessionEvent() {

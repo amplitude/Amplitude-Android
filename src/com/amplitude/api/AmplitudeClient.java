@@ -169,7 +169,7 @@ public class AmplitudeClient {
         this.eventUploadPeriodMillis = eventUploadPeriodMillis;
     }
 
-    public void setMinTimeBetweenSessionsMillis(int minTimeBetweenSessionsMillis) {
+    public void setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
     }
 
