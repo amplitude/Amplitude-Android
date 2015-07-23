@@ -1,16 +1,11 @@
 package com.amplitude.api;
 
-import java.io.InputStream;
 import java.io.IOException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;

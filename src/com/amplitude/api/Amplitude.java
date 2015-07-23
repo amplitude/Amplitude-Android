@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;

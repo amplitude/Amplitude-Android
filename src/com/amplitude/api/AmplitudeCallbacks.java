@@ -35,7 +35,6 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
             return;
         }
 
-        Log.d(TAG, "onActivityPaused");
         clientInstance.refreshSessionTime(getCurrentTimeMillis());
         clientInstance.setInForeground(false);
     }
@@ -47,7 +46,6 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
             return;
         }
 
-        Log.d(TAG, "onActivityResumed");
         clientInstance.startNewSessionIfNeeded(getCurrentTimeMillis());
         clientInstance.setInForeground(true);
     }

@@ -73,11 +73,12 @@ More accurate method (only for Android 4+): a new session is created when the ap
 getApplication().registerActivityLifecycleCallbacks(new AmplitudeCallbacks(Amplitude.getInstance()));
 ```
 
-Options: by default start and end session events are no longer sent. To renable simply add this line after initializing the SDK:
+Options: 
 
-```java
-Amplitude.getInstance().trackSessionEvents(true);
-```
+  By default start and end session events are no longer sent. To renable simply add this line after initializing the SDK:
+  ```java
+  Amplitude.getInstance().trackSessionEvents(true);
+  ```
 
 # Setting Custom User IDs #
 
