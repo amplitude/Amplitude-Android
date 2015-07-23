@@ -274,8 +274,7 @@ public class AmplitudeClient {
         if (!loggingSessionEvent && !outOfSession) {
             // default case + corner case when async logEvent between onPause and onResume
             if (!usingAccurateTracking || !inForeground){
-                boolean synchronous = Thread.currentThread() != logThread;
-                startNewSessionIfNeeded(timestamp, synchronous);
+                startNewSessionIfNeeded(timestamp);
             } else {
                 refreshSessionTime(timestamp);
             }
@@ -384,7 +383,7 @@ public class AmplitudeClient {
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
-    boolean startNewSessionIfNeeded(long timestamp, boolean synchronous) {
+    boolean startNewSessionIfNeeded(long timestamp) {
         if (inSession()) {
 
             if (isWithinMinTimeBetweenSessions(timestamp)) {
@@ -392,7 +391,7 @@ public class AmplitudeClient {
                 return false;
             }
 
-            startNewSession(timestamp, synchronous);
+            startNewSession(timestamp);
             return true;
         }
 
@@ -400,7 +399,7 @@ public class AmplitudeClient {
         if (isWithinMinTimeBetweenSessions(timestamp)) {
             long previousSessionId = getPreviousSessionId();
             if (previousSessionId == -1) {
-                startNewSession(timestamp, synchronous);
+                startNewSession(timestamp);
                 return true;
             }
 
@@ -410,21 +409,21 @@ public class AmplitudeClient {
             return false;
         }
 
-        startNewSession(timestamp, synchronous);
+        startNewSession(timestamp);
         return true;
     }
 
-    private void startNewSession(long timestamp, boolean synchronous) {
+    private void startNewSession(long timestamp) {
         // end previous session
         if (trackingSessionEvents) {
-            sendSessionEvent(END_SESSION_EVENT, synchronous);
+            sendSessionEvent(END_SESSION_EVENT);
         }
 
         // start new session
         setSessionId(timestamp);
         refreshSessionTime(timestamp);
         if (trackingSessionEvents) {
-            sendSessionEvent(START_SESSION_EVENT, synchronous);
+            sendSessionEvent(START_SESSION_EVENT);
         }
     }
 
@@ -454,7 +453,7 @@ public class AmplitudeClient {
         setLastEventTime(timestamp);
     }
 
-    private void sendSessionEvent(final String session_event, boolean synchronous) {
+    private void sendSessionEvent(final String session_event) {
         if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
             return;
         }
@@ -467,16 +466,7 @@ public class AmplitudeClient {
         }
 
         // run on main thread for synchronous
-        if (synchronous) {
-            createAndLogSessionEvent(session_event, timestamp);
-        } else {
-            runOnLogThread(new Runnable() {
-                @Override
-                public void run() {
-                    createAndLogSessionEvent(session_event, timestamp);
-                }
-            });
-        }
+        createAndLogSessionEvent(session_event, timestamp);
     }
 
     private void createAndLogSessionEvent (final String session_event, final long timestamp) {

@@ -546,6 +546,7 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getPreviousSessionId(), -1);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
 
         callBacks.onActivityResumed(null);
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
@@ -571,7 +572,80 @@ public class SessionTest extends BaseTest {
         assertTrue(amplitude.isInForeground());
     }
 
+    @Test
+    public void testAccurateOnResumeTriggerNewSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+                timestamp,
+                timestamp + 1,
+                timestamp + 1 + minTimeBetweenSessionsMillis
+        };
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
 
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
+
+        callBacks.onActivityResumed(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 1);
+        assertTrue(amplitude.isInForeground());
+
+        // only refresh time, no session checking
+        callBacks.onActivityPaused(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertEquals(getUnsentEventCount(), 1);
+        assertFalse(amplitude.isInForeground());
+
+        // resume after min session expired window, verify new session started
+        callBacks.onActivityResumed(null);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[2]);
+        assertEquals(amplitude.getLastEventId(), 3);
+        assertEquals(amplitude.getLastEventTime(), timestamps[2]);
+        assertEquals(getUnsentEventCount(), 3);
+        assertTrue(amplitude.isInForeground());
+
+        JSONArray events = getUnsentEvents(3);
+        JSONObject startSession1 = events.optJSONObject(0);
+        JSONObject endSession = events.optJSONObject(1);
+        JSONObject startSession2 = events.optJSONObject(2);
+
+        assertEquals(startSession1.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+            startSession1.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession1.optString("session_id"), String.valueOf(timestamps[0]));
+        assertEquals(startSession1.optString("timestamp"), String.valueOf(timestamps[0]));
+
+        assertEquals(endSession.optString("event_type"), AmplitudeClient.END_SESSION_EVENT);
+        assertEquals(
+                endSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.END_SESSION_EVENT
+        );
+        assertEquals(endSession.optString("session_id"), String.valueOf(timestamps[0]));
+        assertEquals(endSession.optString("timestamp"), String.valueOf(timestamps[1]));
+
+        assertEquals(startSession2.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession2.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession2.optString("session_id"), String.valueOf(timestamps[2]));
+        assertEquals(startSession2.optString("timestamp"), String.valueOf(timestamps[2]));
+    }
 
 
 

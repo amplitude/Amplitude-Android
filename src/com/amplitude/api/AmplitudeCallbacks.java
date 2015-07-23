@@ -48,7 +48,7 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
         }
 
         Log.d(TAG, "onActivityResumed");
-        clientInstance.startNewSessionIfNeeded(getCurrentTimeMillis(), false);
+        clientInstance.startNewSessionIfNeeded(getCurrentTimeMillis());
         clientInstance.setInForeground(true);
     }
 
