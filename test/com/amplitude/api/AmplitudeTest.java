@@ -230,6 +230,7 @@ public class AmplitudeTest extends BaseTest {
      */
     @Test
     public void testSaveEventLogic() {
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
@@ -262,6 +263,8 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testRequestTooLargeBackoffLogic() {
+        amplitude.trackSessionEvents(true);
+
         // verify event queue empty
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
@@ -287,12 +290,8 @@ public class AmplitudeTest extends BaseTest {
         // verify only start session event removed
         assertEquals(getUnsentEventCount(), 2);
         JSONArray events = getUnsentEvents(2);
-        try {
-            assertEquals(events.getJSONObject(0).getString("event_type"), "test");
-            assertEquals(events.getJSONObject(1).getString("event_type"), "test");
-        } catch (JSONException e) {
-            fail(e.toString());
-        }
+        assertEquals(events.optJSONObject(0).optString("event_type"), "test");
+        assertEquals(events.optJSONObject(1).optString("event_type"), "test");
 
         // upload limit persists until event count below threshold
         server.enqueue(new MockResponse().setBody("success"));
