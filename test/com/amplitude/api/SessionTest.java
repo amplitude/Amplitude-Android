@@ -647,6 +647,39 @@ public class SessionTest extends BaseTest {
         assertEquals(startSession2.optString("timestamp"), String.valueOf(timestamps[2]));
     }
 
+    @Test
+    public void testAccurateOnResumeExtendSession() {
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+                timestamp,
+                timestamp + 1,
+                timestamp + 1 + minTimeBetweenSessionsMillis - 1  // just inside session exp window
+        };
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+
+        callBacks.onActivityPaused(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[1]);
+        assertFalse(amplitude.isInForeground());
+
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), timestamps[2]);
+        assertTrue(amplitude.isInForeground());
+    }
 
 
 
