@@ -67,18 +67,21 @@ A session is a period of time that a user has the app in the foreground. Events 
 
 Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
 
-More accurate method (only for Android 4+): a new session is created when the app comes back in focus after being out of focus for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, simply add this line after initializing the SDK:
+More accurate method (only for Android 4+): a new session is created when the app comes back in focus after being out of focus for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, add this line after initializing the SDK:
 
-```
+```java
 getApplication().registerActivityLifecycleCallbacks(new AmplitudeCallbacks(Amplitude.getInstance()));
 ```
 
-Options: 
+Other Session Options: 
 
-  By default start and end session events are no longer sent. To renable simply add this line after initializing the SDK:
-  ```java
-  Amplitude.getInstance().trackSessionEvents(true);
-  ```
+1.  By default start and end session events are no longer sent. To renable add this line after initializing the SDK:
+
+    ```java
+    Amplitude.getInstance().trackSessionEvents(true);
+    ```
+
+2. You can also log events as out of session. Out of session events have a `session_id` of `-1` and are not considered part of the current session, meaning they do not extend the current session. You can log events as out of session by setting input parameter `outOfSession` to `true` when calling `logEvent()`.
 
 # Setting Custom User IDs #
 
