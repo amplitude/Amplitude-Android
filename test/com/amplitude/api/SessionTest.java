@@ -761,9 +761,79 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getLastEventId(), 1);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
         assertEquals(getUnsentEventCount(), 1);
+        assertTrue(amplitude.isInForeground());
 
         JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test");
+        assertEquals(event.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(event.optString("timestamp"), String.valueOf(timestamp));
+    }
 
+    @Test
+    public void testAccurateLogAsyncEventWithTracking() {
+        amplitude.trackSessionEvents(true);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long minTimeBetweenSessionsMillis = 5*1000; //5s
+        amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp + minTimeBetweenSessionsMillis};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertEquals(getUnsentEventCount(), 0);
+        assertFalse(amplitude.isInForeground());
+
+        // logging an event before onResume will force a session check
+        amplitude.logEventAsync("test", null, null, timestamp, false);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
+        assertEquals(amplitude.getLastEventId(), 2);
+        assertEquals(amplitude.getLastEventTime(), timestamp);
+        assertEquals(getUnsentEventCount(), 2);
+
+        // onResume after session expires will start new session
+        callBacks.onActivityResumed(null);
+        assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
+        assertEquals(amplitude.getLastEventId(), 4);
+        assertEquals(amplitude.getLastEventTime(), timestamps[0]);
+        assertEquals(getUnsentEventCount(), 4);
+        assertTrue(amplitude.isInForeground());
+
+        JSONArray events = getUnsentEvents(4);
+        JSONObject startSession1 = events.optJSONObject(0);
+        JSONObject event = events.optJSONObject(1);
+        JSONObject endSession = events.optJSONObject(2);
+        JSONObject startSession2 = events.optJSONObject(3);
+
+        assertEquals(startSession1.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+            startSession1.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession1.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(startSession1.optString("timestamp"), String.valueOf(timestamp));
+
+        assertEquals(event.optString("event_type"), "test");
+        assertEquals(event.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(event.optString("timestamp"), String.valueOf(timestamp));
+
+        assertEquals(endSession.optString("event_type"), AmplitudeClient.END_SESSION_EVENT);
+        assertEquals(
+                endSession.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.END_SESSION_EVENT
+        );
+        assertEquals(endSession.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(endSession.optString("timestamp"), String.valueOf(timestamp));
+
+        assertEquals(startSession2.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(
+                startSession2.optJSONObject("api_properties").optString("special"),
+                AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(startSession2.optString("session_id"), String.valueOf(timestamps[0]));
+        assertEquals(startSession2.optString("timestamp"), String.valueOf(timestamps[0]));
     }
 
 

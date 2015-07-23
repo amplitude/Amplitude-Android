@@ -96,12 +96,12 @@ public class DatabaseHelperTest extends BaseTest {
             assertEquals("test_get_events_1", ((JSONObject)events.get(0)).getString("event_type"));
 
             events = dbInstance.getEvents(1, -1).second;
-            assertEquals(0, events.length());
+            assertEquals(1, events.length());
 
             events = dbInstance.getEvents(5, -1).second;
-            assertEquals(4, events.length());
-            assertEquals(4, ((JSONObject)events.get(3)).getLong("event_id"));
-            assertEquals("test_get_events_4", ((JSONObject)events.get(3)).getString("event_type"));
+            assertEquals(5, events.length());
+            assertEquals(5, ((JSONObject)events.get(4)).getLong("event_id"));
+            assertEquals("test_get_events_5", ((JSONObject)events.get(4)).getString("event_type"));
 
             events = dbInstance.getEvents(-1, 0).second;
             assertEquals(0, events.length());
