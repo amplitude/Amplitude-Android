@@ -465,11 +465,6 @@ public class AmplitudeClient {
             return;
         }
 
-        // run on main thread for synchronous
-        createAndLogSessionEvent(session_event, timestamp);
-    }
-
-    private void createAndLogSessionEvent (final String session_event, final long timestamp) {
         JSONObject apiProperties = new JSONObject();
         try {
             apiProperties.put("special", session_event);
