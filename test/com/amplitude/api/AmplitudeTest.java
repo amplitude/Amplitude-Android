@@ -52,6 +52,31 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
+    public void testSetUserIdTwice() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        String userId1 = "user_id1";
+        String userId2 = "user_id2";
+
+        amplitude.setUserId(userId1);
+        assertEquals(amplitude.getUserId(), userId1);
+        amplitude.logEvent("event1");
+        looper.runToEndOfTasks();
+
+        JSONObject event1 = getLastUnsentEvent();
+        assertEquals(event1.optString("event_type"), "event1");
+        assertEquals(event1.optString("user_id"), userId1);
+
+        amplitude.setUserId(userId2);
+        assertEquals(amplitude.getUserId(), userId2);
+        amplitude.logEvent("event2");
+        looper.runToEndOfTasks();
+
+        JSONObject event2 = getLastUnsentEvent();
+        assertEquals(event2.optString("event_type"), "event2");
+        assertEquals(event2.optString("user_id"), userId2);
+    }
+
+    @Test
     public void testSetUserProperties() throws JSONException {
         amplitude.setUserProperties(null);
         assertNull(amplitude.userProperties);
