@@ -299,7 +299,7 @@ public class AmplitudeClient {
 
         if (!loggingSessionEvent && !outOfSession) {
             // default case + corner case when async logEvent between onPause and onResume
-            if (!usingForegroundTracking || !inForeground){
+            if (!inForeground){
                 startNewSessionIfNeeded(timestamp);
             } else {
                 refreshSessionTime(timestamp);
@@ -477,8 +477,8 @@ public class AmplitudeClient {
         setLastEventTime(timestamp);
     }
 
-    private void sendSessionEvent(final String session_event) {
-        if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", session_event))) {
+    private void sendSessionEvent(final String sessionEvent) {
+        if (!contextAndApiKeySet(String.format("sendSessionEvent('%s')", sessionEvent))) {
             return;
         }
 
@@ -488,13 +488,13 @@ public class AmplitudeClient {
 
         JSONObject apiProperties = new JSONObject();
         try {
-            apiProperties.put("special", session_event);
+            apiProperties.put("special", sessionEvent);
         } catch (JSONException e) {
             return;
         }
 
         long timestamp = getLastEventTime();
-        logEvent(session_event, null, apiProperties, timestamp, false);
+        logEvent(sessionEvent, null, apiProperties, timestamp, false);
     }
 
     void onExitForeground(long timestamp) {
