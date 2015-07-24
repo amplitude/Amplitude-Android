@@ -57,7 +57,7 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
 
 9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
-10. To enable foreground tracking for more accurate session information, add this to your SDK initialization call:
+10. For Android API level 14+ - To enable foreground tracking for more accurate session information (*highly recommended*), add this to your SDK initialization call:
     ```java
     Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE").enableForegroundTracking(getApplication());
     ```
@@ -72,7 +72,7 @@ A session is a period of time that a user has the app in the foreground. Events 
 
 * Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
 
-* More accurate method (*highly recommended* - only for Android 4+): a new session is created when the app comes back into the foreground after being out of the foreground for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, add this line after initializing the SDK:
+* More accurate method (*highly recommended* - only for Android API level 14+): a new session is created when the app comes back into the foreground after being out of the foreground for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, add this line after initializing the SDK:
 
     ```java
     Amplitude.getInstance().enableForegroundTracking(getApplication());

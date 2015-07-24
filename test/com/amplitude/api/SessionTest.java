@@ -130,7 +130,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultStartSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         long timestamp = System.currentTimeMillis();
         amplitude.logEventAsync("test", null, null, timestamp, false);
@@ -155,7 +155,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultStartSessionWithTrackingSynchronous() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         long timestamp = System.currentTimeMillis();
         amplitude.logEvent("test", null, null, timestamp, false);
@@ -181,7 +181,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultTriggerNewSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long sessionTimeoutMillis = 5 * 1000; //5s
@@ -240,7 +240,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultTriggerNewSessionWithTrackingSynchronous() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long sessionTimeoutMillis = 5 * 1000; //5s
@@ -300,7 +300,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultExtendSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long sessionTimeoutMillis = 5 * 1000; //5s
@@ -351,7 +351,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testDefaultExtendSessionWithTrackingSynchronous() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long sessionTimeoutMillis = 5 * 1000; //5s
@@ -428,7 +428,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testAccurateOnResumeStartSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         long timestamp = System.currentTimeMillis();
         long [] timestamps = {timestamp};
         AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
@@ -489,7 +489,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testAccurateOnPauseRefreshTimestampWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long minTimeBetweenSessionsMillis = 5*1000; //5s
         amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
@@ -561,7 +561,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testAccurateOnResumeTriggerNewSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long minTimeBetweenSessionsMillis = 5*1000; //5s
         amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
@@ -670,7 +670,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testAccurateOnResumeExtendSessionWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long minTimeBetweenSessionsMillis = 5*1000; //5s
         amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
@@ -758,7 +758,7 @@ public class SessionTest extends BaseTest {
 
     @Test
     public void testAccurateLogAsyncEventWithTracking() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         long minTimeBetweenSessionsMillis = 5*1000; //5s
         amplitude.setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);

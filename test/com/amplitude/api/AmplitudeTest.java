@@ -230,7 +230,7 @@ public class AmplitudeTest extends BaseTest {
      */
     @Test
     public void testSaveEventLogic() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
@@ -263,7 +263,7 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testRequestTooLargeBackoffLogic() {
-        amplitude.trackSessionEvents();
+        amplitude.trackSessionEvents(true);
 
         // verify event queue empty
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());

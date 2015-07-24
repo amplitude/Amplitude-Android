@@ -223,8 +223,8 @@ public class AmplitudeClient {
         return instance;
     }
 
-    public AmplitudeClient trackSessionEvents() {
-        trackingSessionEvents = true;
+    public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
+        this.trackingSessionEvents = trackingSessionEvents;
         return instance;
     }
 
@@ -241,8 +241,12 @@ public class AmplitudeClient {
     }
 
     public void logEvent(String eventType, JSONObject eventProperties) {
+        logEvent(eventType, eventProperties, false);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), false);
+            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), outOfSession);
         }
     }
 
