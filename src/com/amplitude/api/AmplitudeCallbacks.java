@@ -5,7 +5,7 @@ import android.app.Application;
 import android.os.Bundle;
 import android.util.Log;
 
-public class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
+class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
 
     public static final String TAG = "com.amplitude.api.AmplitudeCallbacks";
     private static final String NULLMSG = "Need to initialize AmplitudeCallbacks with AmplitudeClient instance";
@@ -19,7 +19,7 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
         }
 
         this.clientInstance = clientInstance;
-        clientInstance.useAccurateTracking(true);
+        clientInstance.useForegroundTracking();
     }
 
     @Override
@@ -35,8 +35,7 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
             return;
         }
 
-        clientInstance.refreshSessionTime(getCurrentTimeMillis());
-        clientInstance.setInForeground(false);
+        clientInstance.onExitForeground(getCurrentTimeMillis());
     }
 
     @Override
@@ -46,8 +45,7 @@ public class AmplitudeCallbacks implements Application.ActivityLifecycleCallback
             return;
         }
 
-        clientInstance.startNewSessionIfNeeded(getCurrentTimeMillis());
-        clientInstance.setInForeground(true);
+        clientInstance.onEnterForeground(getCurrentTimeMillis());
     }
 
     @Override

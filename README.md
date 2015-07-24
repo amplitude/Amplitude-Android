@@ -57,21 +57,26 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
 
 9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
+10. To enable foreground tracking for more accurate session information, add this to your SDK initialization call:
+    ```java
+    Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE").enableForegroundTracking(getApplication());
+    ```
+
 # Tracking Events #
 
 It's important to think about what types of events you care about as a developer. You should aim to track between 20 and 100 types of events within your app. Common event types are different screens within the app, actions a user initiates (such as pressing a button), and events you want a user to complete (such as filling out a form, completing a level, or making a payment). Contact us if you want assistance determining what would be best for you to track.
 
 # Tracking Sessions #
 
-A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. There are 2 different ways to track sessions - a default method based on when events are logged, and a more accurate method based on when the app goes in and out of focus (available for Android 4+). Sessions are handled automatically now, you no longer have to manually call `startSession()` or `endSession()`.
+A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. There are 2 different ways to track sessions - a default method based on when events are logged, and a recommended more accurate method based on when the app goes in and out of the foreground (available for Android 4+). Sessions are handled automatically now, you no longer have to manually call `startSession()` or `endSession()`.
 
-Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
+* Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
 
-More accurate method (only for Android 4+): a new session is created when the app comes back in focus after being out of focus for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, add this line after initializing the SDK:
+* More accurate method (*highly recommended* - only for Android 4+): a new session is created when the app comes back into the foreground after being out of the foreground for 15 minutes or more. Note you can define your own session expiration time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds. To enable the more accurate session tracking, add this line after initializing the SDK:
 
-```java
-getApplication().registerActivityLifecycleCallbacks(new AmplitudeCallbacks(Amplitude.getInstance()));
-```
+    ```java
+    Amplitude.getInstance().enableForegroundTracking(getApplication());
+    ```
 
 Other Session Options: 
 
