@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import java.util.Locale;
 
@@ -36,6 +35,7 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -100,8 +100,6 @@ public class DeviceInfoTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
         deviceInfo = new DeviceInfo(context);
-
-        
     }
 
     @After
