@@ -5,13 +5,20 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Locale;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
@@ -38,6 +45,8 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 
 
 @RunWith(RobolectricTestRunner.class)
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*" })
+@PrepareForTest(AdvertisingIdClient.class)
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest {
 
@@ -64,24 +73,8 @@ public class DeviceInfoTest {
         return l;
     }
 
-    @Implements(AdvertisingIdClient.class)
-    private static class ShadowAdvertisingIdClient{
-
-        public ShadowAdvertisingIdClient() {
-            System.out.println("Creating custom advertising id client shadow");
-        }
-
-        public void __constructor__() {
-            System.out.println("Running __constructor__");
-        }
-
-        @Implementation
-        public static AdvertisingIdClient.Info getAdvertisingIdInfo(Context context) {
-            System.out.println("Inside shadow implementation");
-            return null;
-        }
-    }
-
+    @Rule
+    public PowerMockRule rule = new PowerMockRule();
 
     @Before
     public void setUp() throws Exception {
@@ -176,10 +169,24 @@ public class DeviceInfoTest {
     }
 
     @Test
-    @Config(shadows=ShadowAdvertisingIdClient.class)
     public void testGetAdvertisingId() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "advertisingId";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+                advertisingId,
+                false
+        );
+
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
         DeviceInfo deviceInfo = new DeviceInfo(context);
-        deviceInfo.getAdvertisingId();
+
+        // still get advertisingId even if limit ad tracking disabled
+        assertEquals(advertisingId, deviceInfo.getAdvertisingId());
+        assertFalse(deviceInfo.isLimitAdTrackingEnabled());
     }
 
     @Test
