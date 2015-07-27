@@ -45,6 +45,7 @@ public class DeviceInfo {
         private String model;
         private String carrier;
         private String language;
+        private boolean limitAdTrackingEnabled;
 
         private CachedInfo() {
             advertisingId = getAdvertisingId();
@@ -173,10 +174,8 @@ public class DeviceInfo {
                         "isLimitAdTrackingEnabled");
                 Boolean limitAdTrackingEnabled = (Boolean) isLimitAdTrackingEnabled
                         .invoke(advertisingInfo);
-
-                if (limitAdTrackingEnabled) {
-                    return null;
-                }
+                this.limitAdTrackingEnabled =
+                        limitAdTrackingEnabled != null && limitAdTrackingEnabled;
                 Method getId = advertisingInfo.getClass().getMethod("getId");
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
@@ -184,7 +183,7 @@ public class DeviceInfo {
             } catch (Exception e) {
                 Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
-            return null;
+            return advertisingId;
         }
     }
 
@@ -246,6 +245,8 @@ public class DeviceInfo {
     public String getAdvertisingId() {
         return getCachedInfo().advertisingId;
     }
+
+    public boolean isLimitAdTrackingEnabled() { return getCachedInfo().limitAdTrackingEnabled; }
 
     public Location getMostRecentLocation() {
         if (!isLocationListening()) {

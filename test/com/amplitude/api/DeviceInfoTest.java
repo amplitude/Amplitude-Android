@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.util.Locale;
 
@@ -12,9 +13,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.Implementation;
+import org.robolectric.annotation.Implements;
+import org.robolectric.internal.Shadow;
 import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowGeocoder;
@@ -29,6 +34,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -57,6 +64,25 @@ public class DeviceInfoTest {
         return l;
     }
 
+    @Implements(AdvertisingIdClient.class)
+    private static class ShadowAdvertisingIdClient{
+
+        public ShadowAdvertisingIdClient() {
+            System.out.println("Creating custom advertising id client shadow");
+        }
+
+        public void __constructor__() {
+            System.out.println("Running __constructor__");
+        }
+
+        @Implementation
+        public static AdvertisingIdClient.Info getAdvertisingIdInfo(Context context) {
+            System.out.println("Inside shadow implementation");
+            return null;
+        }
+    }
+
+
     @Before
     public void setUp() throws Exception {
         context = ShadowApplication.getInstance().getApplicationContext();
@@ -74,6 +100,8 @@ public class DeviceInfoTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
         deviceInfo = new DeviceInfo(context);
+
+        
     }
 
     @After
@@ -150,8 +178,10 @@ public class DeviceInfoTest {
     }
 
     @Test
+    @Config(shadows=ShadowAdvertisingIdClient.class)
     public void testGetAdvertisingId() {
-        // TODO (curtis): Not sure how to do this yet.
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+        deviceInfo.getAdvertisingId();
     }
 
     @Test

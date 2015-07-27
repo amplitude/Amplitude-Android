@@ -272,6 +272,7 @@ public class AmplitudeClient {
             event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
+            event.put("limit_tracking_enabled", replaceWithJSONNull(deviceInfo.isLimitAdTrackingEnabled()));
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);

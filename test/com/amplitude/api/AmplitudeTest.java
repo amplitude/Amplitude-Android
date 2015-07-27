@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -336,4 +337,14 @@ public class AmplitudeTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
     }
+
+    @Test
+    public void testLimitTrackingEnabled() {
+        amplitude.logEvent("test");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        JSONObject event = getLastUnsentEvent();
+        assertTrue(event.has("limit_tracking_enabled"));
+        assertFalse(event.optBoolean("limit_tracking_enabled"));
+    }
+
 }
