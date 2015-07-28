@@ -29,16 +29,47 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-       <groupId>org.robolectric</groupId>
-       <artifactId>robolectric</artifactId>
-       <version>3.0-rc2</version>
-       <scope>test</scope>
+      <groupId>org.robolectric</groupId>
+      <artifactId>robolectric</artifactId>
+      <version>3.0-rc2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-       <groupId>org.robolectric</groupId>
-       <artifactId>shadows-maps</artifactId>
-       <version>3.0-rc2</version>
-       <scope>test</scope>
+      <groupId>org.robolectric</groupId>
+      <artifactId>shadows-maps</artifactId>
+      <version>3.0-rc2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <version>1.6.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4-rule</artifactId>
+      <version>1.6.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>1.6.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-classloading-xstream</artifactId>
+      <version>1.6.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>google-play-services</artifactId>
+      <version>25.0.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/google-play-services-25.0.0.jar</systemPath>
     </dependency>
   </dependencies>
 

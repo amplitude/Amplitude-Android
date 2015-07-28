@@ -345,6 +345,7 @@ public class AmplitudeClient {
             if (deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
+            apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()

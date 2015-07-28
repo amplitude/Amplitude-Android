@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -334,5 +335,15 @@ public class AmplitudeTest extends BaseTest {
         httpLooper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
+    }
+
+    @Test
+    public void testLimitTrackingEnabled() {
+        amplitude.logEvent("test");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        JSONObject apiProperties = getLastUnsentEvent().optJSONObject("api_properties");
+        assertTrue(apiProperties.has("limit_ad_tracking"));
+        assertFalse(apiProperties.optBoolean("limit_ad_tracking"));
+        assertFalse(apiProperties.has("androidADID"));
     }
 }
