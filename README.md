@@ -68,7 +68,7 @@ It's important to think about what types of events you care about as a developer
 
 # Tracking Sessions #
 
-A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. There are 2 different ways to track sessions - a default method based on when events are logged, and a recommended more accurate method based on when the app goes in and out of the foreground (available for Android 4+). Sessions are handled automatically now, you no longer have to manually call `startSession()` or `endSession()`.
+A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. There are 2 different ways to track sessions - a default method based on when events are logged, and a recommended more accurate method based on when the app goes in and out of the foreground (available for Android API level 14+). Sessions are handled automatically now, you no longer have to manually call `startSession()` or `endSession()`.
 
 * Default method: a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds.
 
@@ -86,7 +86,11 @@ Other Session Options:
     Amplitude.getInstance().trackSessionEvents(true);
     ```
 
-2. You can also log events as out of session. Out of session events have a `session_id` of `-1` and are not considered part of the current session, meaning they do not extend the current session. You can log events as out of session by setting input parameter `outOfSession` to `true` when calling `logEvent()`.
+2. You can also log events as out of session. Out of session events have a `session_id` of `-1` and are not considered part of the current session, meaning they do not extend the current session. You can log events as out of session by setting input parameter `outOfSession` to `true` when calling `logEvent()`:
+
+    ```java
+    Amplitude.getInstance().logEvent("EVENT", null, true);
+    ```
 
 # Setting Custom User IDs #
 

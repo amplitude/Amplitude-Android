@@ -1,7 +1,8 @@
 ## Unreleased
 
 * Expose user ID with getUserId.
-* Simplified session tracking. No longer need to call startSession and endSession. No longer send start/end session events by default. Added a more accurate session tracking mode that uses Android activity lifecycles.
+* Simplified session tracking. No longer need to call startSession and endSession. No longer send start/end session events by default. Added an optional foreground tracking for sessions mode that uses Android activity lifecycles.
+* The minimum supported API level is 9. API level 14 is required for foreground tracking.
 
 ## 1.7.0 (May 29, 2015)
 
