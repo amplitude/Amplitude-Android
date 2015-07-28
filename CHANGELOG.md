@@ -3,6 +3,8 @@
 * Expose user ID with getUserId.
 * Simplified session tracking. No longer need to call startSession and endSession. No longer send start/end session events by default. Added an optional foreground tracking for sessions mode that uses Android activity lifecycles.
 * The minimum supported API level is 9. API level 14 is required for foreground tracking.
+* Always track Android advertising ID (ADID) regardless of limit ad tracking enabled.
+* Track if limit ad tracking enabled as an API property for each logged event.
 
 ## 1.7.0 (May 29, 2015)
 
