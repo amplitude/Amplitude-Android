@@ -246,7 +246,9 @@ public class DeviceInfo {
         return getCachedInfo().advertisingId;
     }
 
-    public boolean isLimitAdTrackingEnabled() { return getCachedInfo().limitAdTrackingEnabled; }
+    public boolean isLimitAdTrackingEnabled() {
+        return getCachedInfo().limitAdTrackingEnabled;
+    }
 
     public Location getMostRecentLocation() {
         if (!isLocationListening()) {

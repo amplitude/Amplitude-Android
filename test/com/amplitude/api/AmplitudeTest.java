@@ -341,9 +341,9 @@ public class AmplitudeTest extends BaseTest {
     public void testLimitTrackingEnabled() {
         amplitude.logEvent("test");
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        JSONObject event = getLastUnsentEvent();
-        assertTrue(event.has("limit_tracking_enabled"));
-        assertFalse(event.optBoolean("limit_tracking_enabled"));
+        JSONObject apiProperties = getLastUnsentEvent().optJSONObject("api_properties");
+        assertTrue(apiProperties.has("limit_tracking_enabled"));
+        assertFalse(apiProperties.optBoolean("limit_tracking_enabled"));
+        assertFalse(apiProperties.has("androidADID"));
     }
-
 }

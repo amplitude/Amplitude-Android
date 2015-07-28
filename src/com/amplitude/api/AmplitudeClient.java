@@ -328,7 +328,6 @@ public class AmplitudeClient {
             event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
-            event.put("limit_tracking_enabled", replaceWithJSONNull(deviceInfo.isLimitAdTrackingEnabled()));
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);
@@ -346,6 +345,7 @@ public class AmplitudeClient {
             if (deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
+            apiProperties.put("limit_tracking_enabled", deviceInfo.isLimitAdTrackingEnabled());
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()
