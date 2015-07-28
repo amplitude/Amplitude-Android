@@ -78,14 +78,14 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    synchronized Pair<Long, JSONArray> getEvents(long lessThanId, int limit) throws JSONException {
+    synchronized Pair<Long, JSONArray> getEvents(long upToId, int limit) throws JSONException {
         long maxId = -1;
         JSONArray events = new JSONArray();
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(EVENT_TABLE_NAME, new String[] { ID_FIELD, EVENT_FIELD },
-                    lessThanId >= 0 ? ID_FIELD + " < " + lessThanId : null, null, null, null,
+                    upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
                     ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
             while (cursor.moveToNext()) {
