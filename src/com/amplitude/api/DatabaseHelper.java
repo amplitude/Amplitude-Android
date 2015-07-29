@@ -244,5 +244,4 @@ class DatabaseHelper extends SQLiteOpenHelper {
             Log.e(TAG, "delete failed", e);
         }
     }
-
 }

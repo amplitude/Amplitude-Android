@@ -34,6 +34,7 @@ public class AmplitudeClient {
     public static final String START_SESSION_EVENT = "session_start";
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
+    public static final String DEVICE_ID_KEY = "device_id";
 
     protected static AmplitudeClient instance = new AmplitudeClient();
 
@@ -139,6 +140,10 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 deviceId = initializeDeviceId();
+                DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+                        DEVICE_ID_KEY,
+                        deviceId
+                );
                 deviceInfo.prefetch();
             }
         });
@@ -785,6 +790,14 @@ public class AmplitudeClient {
     }
 
     private String initializeDeviceId() {
+
+        // see if device id already stored in db
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
+        if (!TextUtils.isEmpty(deviceId)) {
+            return deviceId;
+        }
+
         Set<String> invalidIds = new HashSet<String>();
         invalidIds.add("");
         invalidIds.add("9774d56d682e549c");
@@ -795,7 +808,7 @@ public class AmplitudeClient {
 
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
-        String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+        deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
         }
@@ -817,7 +830,6 @@ public class AmplitudeClient {
         String randomId = deviceInfo.generateUUID() + "R";
         preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
         return randomId;
-
     }
 
     private void runOnLogThread(Runnable r) {
