@@ -53,9 +53,12 @@ public class UpgradePrefsTest extends BaseTest {
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
         assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1), 100L);
-        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), "deviceid");
         assertEquals(target.getString(Constants.PREFKEY_USER_ID, null), "userid");
         assertEquals(target.getBoolean(Constants.PREFKEY_OPT_OUT, false), true);
+        assertEquals(
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+                "deviceid"
+        );
 
         int size = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).getAll().size();
         assertEquals(size, 0);
@@ -90,9 +93,12 @@ public class UpgradePrefsTest extends BaseTest {
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
         assertEquals(target.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1), -1);
-        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), "deviceid");
         assertEquals(target.getString(Constants.PREFKEY_USER_ID, null), null);
         assertEquals(target.getBoolean(Constants.PREFKEY_OPT_OUT, false), false);
+        assertEquals(
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+                "deviceid"
+        );
 
         int size = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).getAll().size();
         assertEquals(size, 0);

@@ -17,6 +17,7 @@ import com.squareup.okhttp.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import android.app.Application;
 import android.content.Context;
@@ -140,10 +141,6 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 deviceId = initializeDeviceId();
-                DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
-                        DEVICE_ID_KEY,
-                        deviceId
-                );
                 deviceInfo.prefetch();
             }
         });
@@ -806,21 +803,13 @@ public class AmplitudeClient {
         invalidIds.add("Android");
         invalidIds.add("DEFACE");
 
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
-        if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
-            return deviceId;
-        }
-
         if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
 
             String advertisingId = deviceInfo.getAdvertisingId();
             if (!(TextUtils.isEmpty(advertisingId) || invalidIds.contains(advertisingId))) {
-                preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, advertisingId)
-                        .commit();
+                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, advertisingId);
                 return advertisingId;
             }
         }
@@ -828,7 +817,7 @@ public class AmplitudeClient {
         // If this still fails, generate random identifier that does not persist
         // across installations. Append R to distinguish as randomly generated
         String randomId = deviceInfo.generateUUID() + "R";
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
+        dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, randomId);
         return randomId;
     }
 
@@ -960,8 +949,13 @@ public class AmplitudeClient {
                         source.getLong(sourcePkgName + ".previousSessionId", -1));
             }
             if (source.contains(sourcePkgName + ".deviceId")) {
-                target.putString(Constants.PREFKEY_DEVICE_ID,
-                        source.getString(sourcePkgName + ".deviceId", null));
+                String deviceId = source.getString(sourcePkgName + ".deviceId", null);
+                if (!TextUtils.isEmpty(deviceId)) {
+                    DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+                        DEVICE_ID_KEY,
+                        deviceId
+                    );
+                }
             }
             if (source.contains(sourcePkgName + ".userId")) {
                 target.putString(Constants.PREFKEY_USER_ID,
