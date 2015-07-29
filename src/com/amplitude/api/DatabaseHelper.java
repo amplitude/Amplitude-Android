@@ -22,10 +22,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
     static DatabaseHelper instance;
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
+    private static final String AMPLITUDE_STORE_TABLE_NAME = "amplitudestore";
+    private static final String KEY_FIELD = "key";
+    private static final String VALUE_FIELD = "value";
     private static final String EVENT_TABLE_NAME = "events";
     private static final String ID_FIELD = "id";
     private static final String EVENT_FIELD = "event";
 
+    private static final String CREATE_AMPLITUDE_STORE_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + AMPLITUDE_STORE_TABLE_NAME + " (" + KEY_FIELD + " TEXT PRIMARY KEY NOT NULL, "
+            + VALUE_FIELD + " TEXT);";
     private static final String CREATE_EVENTS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + EVENT_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
@@ -46,6 +52,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        db.execSQL(CREATE_AMPLITUDE_STORE_TABLE);
         // INTEGER PRIMARY KEY AUTOINCREMENT guarantees that all generated values
         // for the field will be monotonically increasing and unique over the
         // lifetime of the table, even if rows get removed
@@ -54,8 +61,36 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + AMPLITUDE_STORE_TABLE_NAME);
+        db.execSQL(CREATE_AMPLITUDE_STORE_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         db.execSQL(CREATE_EVENTS_TABLE);
+    }
+
+    synchronized long insertOrReplaceKeyValue(String key, String value) {
+        long result = -1;
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(KEY_FIELD, key);
+            contentValues.put(VALUE_FIELD, value);
+            result = db.insertWithOnConflict(
+                    AMPLITUDE_STORE_TABLE_NAME,
+                    null,
+                    contentValues,
+                    SQLiteDatabase.CONFLICT_REPLACE
+            );
+            if (result == -1) {
+                Log.w(TAG, "Insert failed");
+            }
+        } catch (SQLiteException e) {
+            Log.e(TAG, "insertOrReplaceKeyValue failed", e);
+            // Not much we can do, just start fresh
+            delete();
+        } finally {
+            close();
+        }
+        return result;
     }
 
     synchronized long addEvent(String event) {
@@ -76,6 +111,32 @@ class DatabaseHelper extends SQLiteOpenHelper {
             close();
         }
         return result;
+    }
+
+    synchronized String getValue(String key) {
+        String value = null;
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            cursor = db.query(
+                    AMPLITUDE_STORE_TABLE_NAME,
+                    new String [] { KEY_FIELD, VALUE_FIELD },
+                    KEY_FIELD + " = ?",
+                    new String [] { key },
+                    null, null, null, null
+            );
+            if (cursor.moveToFirst()) {
+                value = cursor.getString(1);
+            }
+        } catch (SQLiteException e) {
+            Log.e(TAG, "getValue failed", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            close();
+        }
+        return value;
     }
 
     synchronized Pair<Long, JSONArray> getEvents(long upToId, int limit) throws JSONException {

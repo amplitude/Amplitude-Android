@@ -56,16 +56,44 @@ public class DatabaseHelperTest extends BaseTest {
         return -1;
     }
 
+    protected long insertOrReplaceKeyValue(String key, String value) {
+        return dbInstance.insertOrReplaceKeyValue(key, value);
+    }
+
+    protected String getValue(String key) {
+        return dbInstance.getValue(key);
+    }
+
     @Test
     public void testCreate() {
         dbInstance.onCreate(dbInstance.getWritableDatabase());
+        assertEquals(1, insertOrReplaceKeyValue("test_key", "test_value"));
         assertEquals(1, addEvent("test_create"));
     }
 
     @Test
     public void testUpgrade() {
+        String key = "test_key";
+        String value = "test_value";
+        assertEquals(1, insertOrReplaceKeyValue(key, value));
         dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 1, 2);
         assertEquals(1, addEvent("test_upgrade"));
+        assertEquals(null, getValue(key));
+        assertEquals(1, insertOrReplaceKeyValue(key, value));
+    }
+
+    @Test
+    public void testInsertOrReplaceKeyValue() {
+        String key = "test_key";
+        String value1 = "test_value1";
+        String value2 = "test_value2";
+        assertEquals(null, getValue(key));
+
+        insertOrReplaceKeyValue(key, value1);
+        assertEquals(value1, getValue(key));
+
+        insertOrReplaceKeyValue(key, value2);
+        assertEquals(value2, getValue(key));
     }
 
     @Test
