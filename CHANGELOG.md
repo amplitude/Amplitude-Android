@@ -5,7 +5,7 @@
 * The minimum supported API level is 9. API level 14 is required for foreground tracking.
 * Always track Android advertising ID (ADID) regardless of limit ad tracking enabled.
 * Track if limit ad tracking enabled as an API property for each logged event.
-* Device ID is now saved to and reloaded from the SQLite database (instead of SharedPrefs in the event that SharedPrefs is cleared).
+* Device ID is now saved to and reloaded from the SQLite database (instead of SharedPrefs because SharedPrefs currently does not support multiple processes).
 
 ## 1.7.0 (May 29, 2015)
 
