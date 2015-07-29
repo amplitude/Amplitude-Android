@@ -109,13 +109,33 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
+    public void testReloadDeviceIdFromDatabase() {
+        String deviceId = "test_device_id";
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        assertNull(amplitude.getDeviceId());
+        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+                AmplitudeClient.DEVICE_ID_KEY,
+                deviceId
+        );
+        looper.getScheduler().advanceToLastPostedRunnable();
+        assertEquals(deviceId, amplitude.getDeviceId());
+    }
+
+    @Test
     public void testGetDeviceIdWithoutAdvertisingId() {
         assertNull(amplitude.getDeviceId());
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.getScheduler().advanceToLastPostedRunnable();
         assertNotNull(amplitude.getDeviceId());
         assertEquals(37, amplitude.getDeviceId().length());
-        assertTrue(amplitude.getDeviceId().endsWith("R"));
+        String deviceId = amplitude.getDeviceId();
+        assertTrue(deviceId.endsWith("R"));
+        assertEquals(
+                deviceId,
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
+
     }
 
     @Test
