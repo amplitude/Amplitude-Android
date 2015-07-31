@@ -77,9 +77,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private void resetDatabase(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);
-        db.execSQL(CREATE_STORE_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
-        db.execSQL(CREATE_EVENTS_TABLE);
+        onCreate(db);
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
