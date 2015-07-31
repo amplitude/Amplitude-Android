@@ -786,14 +786,6 @@ public class AmplitudeClient {
     }
 
     private String initializeDeviceId() {
-
-        // see if device id already stored in db
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        if (!TextUtils.isEmpty(deviceId)) {
-            return deviceId;
-        }
-
         Set<String> invalidIds = new HashSet<String>();
         invalidIds.add("");
         invalidIds.add("9774d56d682e549c");
@@ -801,6 +793,22 @@ public class AmplitudeClient {
         invalidIds.add("000000000000000"); // Common Serial Number
         invalidIds.add("Android");
         invalidIds.add("DEFACE");
+
+        // see if device id already stored in db
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
+        if (!TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId)) {
+            return deviceId;
+        }
+
+        // see if device id stored in old sharedPrefs
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+        if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
+            dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+            return deviceId;
+        }
 
         if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId) {
             // Android ID is deprecated by Google.

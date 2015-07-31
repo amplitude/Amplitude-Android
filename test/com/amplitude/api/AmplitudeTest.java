@@ -24,6 +24,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -120,6 +121,24 @@ public class AmplitudeTest extends BaseTest {
         );
         looper.getScheduler().advanceToLastPostedRunnable();
         assertEquals(deviceId, amplitude.getDeviceId());
+    }
+
+    @Test
+    public void testUpgradeDeviceIdFromSharedPrefsToDatabase() {
+        assertNull(amplitude.getDeviceId());
+        String deviceId = "test_device_id";
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, deviceId).commit();
+
+        looper.getScheduler().advanceToLastPostedRunnable();
+        assertEquals(deviceId, amplitude.getDeviceId());
+        assertEquals(
+                deviceId,
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
     }
 
     @Test
