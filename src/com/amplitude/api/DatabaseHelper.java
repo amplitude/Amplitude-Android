@@ -22,7 +22,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     static DatabaseHelper instance;
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
-    private static final String STORE_TABLE_NAME = "store";
+    protected static final String STORE_TABLE_NAME = "store";
     private static final String KEY_FIELD = "key";
     private static final String VALUE_FIELD = "value";
     private static final String EVENT_TABLE_NAME = "events";
@@ -61,10 +61,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);
-        db.execSQL(CREATE_STORE_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
-        db.execSQL(CREATE_EVENTS_TABLE);
+        switch (oldVersion) {
+
+            case 1:
+                db.execSQL(CREATE_STORE_TABLE);
+
+            case 2:
+                break;
+
+            default:
+                throw new IllegalStateException(
+                    "onUpgrade() with unknown oldVersion " + oldVersion
+                );
+        }
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
@@ -120,9 +129,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(
                     STORE_TABLE_NAME,
-                    new String [] { KEY_FIELD, VALUE_FIELD },
+                    new String[]{KEY_FIELD, VALUE_FIELD},
                     KEY_FIELD + " = ?",
-                    new String [] { key },
+                    new String[]{key},
                     null, null, null, null
             );
             if (cursor.moveToFirst()) {

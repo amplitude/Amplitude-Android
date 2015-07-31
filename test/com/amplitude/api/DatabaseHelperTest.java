@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import android.database.sqlite.SQLiteDatabase;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -62,12 +64,18 @@ public class DatabaseHelperTest extends BaseTest {
 
     @Test
     public void testUpgrade() {
+        SQLiteDatabase db = dbInstance.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + DatabaseHelper.STORE_TABLE_NAME);
+
+        // store table doesn't exist in v1, insert will fail
         String key = "test_key";
         String value = "test_value";
-        assertEquals(1, insertOrReplaceKeyValue(key, value));
-        dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 1, 2);
+        assertEquals(-1, insertOrReplaceKeyValue(key, value));
         assertEquals(1, addEvent("test_upgrade"));
-        assertEquals(null, getValue(key));
+
+        // after upgrade, can insert
+        dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 1, 2);
+        assertEquals(2, addEvent("test_upgrade"));
         assertEquals(1, insertOrReplaceKeyValue(key, value));
     }
 
