@@ -70,10 +70,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 break;
 
             default:
-                throw new IllegalStateException(
-                    "onUpgrade() with unknown oldVersion " + oldVersion
-                );
+                Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
+                resetDatabase(db);
         }
+    }
+
+    private void resetDatabase(SQLiteDatabase db) {
+        db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);
+        db.execSQL(CREATE_STORE_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
+        db.execSQL(CREATE_EVENTS_TABLE);
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
