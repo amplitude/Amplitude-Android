@@ -5,6 +5,7 @@
 * The minimum supported API level is 9. API level 14 is required for foreground tracking.
 * Always track Android advertising ID (ADID) regardless of limit ad tracking enabled.
 * Track if limit ad tracking enabled as an API property for each logged event.
+* MessageDigest.getInstance(String) is not threadsafe (known Android issue). Replaced with alternative MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java.
 
 ## 1.7.0 (May 29, 2015)
 
