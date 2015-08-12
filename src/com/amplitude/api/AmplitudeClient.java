@@ -70,8 +70,6 @@ public class AmplitudeClient {
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
 
-    private Runnable endSessionRunnable;
-
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
@@ -97,6 +95,7 @@ public class AmplitudeClient {
         }
 
         AmplitudeClient.upgradePrefs(context);
+        AmplitudeClient.upgradeDeviceIdToDB(context);
 
         if (TextUtils.isEmpty(apiKey)) {
             Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
@@ -801,15 +800,6 @@ public class AmplitudeClient {
             return deviceId;
         }
 
-        // see if device id stored in old sharedPrefs
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
-        if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
-            dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-            return deviceId;
-        }
-
         if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
@@ -956,13 +946,8 @@ public class AmplitudeClient {
                         source.getLong(sourcePkgName + ".previousSessionId", -1));
             }
             if (source.contains(sourcePkgName + ".deviceId")) {
-                String deviceId = source.getString(sourcePkgName + ".deviceId", null);
-                if (!TextUtils.isEmpty(deviceId)) {
-                    DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
-                        DEVICE_ID_KEY,
-                        deviceId
-                    );
-                }
+                target.putString(Constants.PREFKEY_DEVICE_ID,
+                        source.getString(sourcePkgName + ".deviceId", null));
             }
             if (source.contains(sourcePkgName + ".userId")) {
                 target.putString(Constants.PREFKEY_USER_ID,
@@ -984,4 +969,35 @@ public class AmplitudeClient {
             Log.e(TAG, "Error upgrading shared preferences", e);
             return false;
         }
-    }}
+    }
+
+    /*
+     * Move device ID from sharedPrefs to new sqlite key value store.
+     *
+     * This should only happen once -- the first time a user loads the app after updating.
+     * This should happen only after moving the preference data from legacy to new static name.
+     * This logic needs to remain in place for quite a long time. It was first introduced in
+     * August 2015 in version 1.8.0.
+     */
+    static boolean upgradeDeviceIdToDB(Context context) {
+        return upgradeDeviceIdToDB(context, null);
+    }
+
+    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName) {
+        if (sourcePkgName == null) {
+            sourcePkgName = Constants.PACKAGE_NAME;
+        }
+
+        String prefsName = sourcePkgName + "." + context.getPackageName();
+        SharedPreferences preferences =
+                context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+
+        String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+        if (!TextUtils.isEmpty(deviceId)) {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+        }
+
+        return true;
+    }
+}
