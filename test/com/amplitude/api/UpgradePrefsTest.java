@@ -121,4 +121,45 @@ public class UpgradePrefsTest extends BaseTest {
                 null
         );
     }
+
+    @Test
+    public void testUpgradeDeviceIdFromLegacyToDB() {
+        String deviceId = "device_id";
+        String legacyPkgName = "com.amplitude.a";
+        String sourceName = legacyPkgName + "." + context.getPackageName();
+        context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
+                .putString(legacyPkgName + ".deviceId", deviceId)
+                .commit();
+
+        assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), deviceId);
+        assertEquals(
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+                deviceId
+        );
+    }
+
+    @Test
+    public void testUpgradeDeviceIdFromLegacyToDBEmpty() {
+        String legacyPkgName = "com.amplitude.a";
+        String sourceName = legacyPkgName + "." + context.getPackageName();
+        context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
+                .putLong("partial.lastEventTime", 100L)
+                .commit();
+
+        assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), null);
+        assertEquals(
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+                null
+        );
+    }
 }
