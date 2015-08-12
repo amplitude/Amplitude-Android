@@ -796,7 +796,7 @@ public class AmplitudeClient {
         // see if device id already stored in db
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        if (!TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId)) {
+        if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
         }
 
