@@ -32,8 +32,8 @@ public class MD5Test {
             MessageDigest androidMD5 = MessageDigest.getInstance("MD5");
             byte[] androidBytes = androidMD5.digest(input.getBytes("UTF-8"));
 
-            MessageDigest alternativeMD5 = new MD5();
-            byte[] altBytes = alternativeMD5.digest(input.getBytes("UTF-8"));
+            MessageDigest alternateMD5 = new MD5();
+            byte[] altBytes = alternateMD5.digest(input.getBytes("UTF-8"));
 
             assertArrayEquals(androidBytes, altBytes);
 
@@ -68,13 +68,14 @@ public class MD5Test {
                 "\":{\"name\":\"amplitude-android\",\"version\":\"1.7.0\"},\"carrier\":null," +
                 "\"user_id\":\"610e21eb-2f27-48ca-bf4e-f977ce6391d1R\",\"language\":\"en\"}]";
 
-        String preimage = apiVersionString + apiKey + events + timestampString;
-        compareMD5(preimage);
+        String preImage = apiVersionString + apiKey + events + timestampString;
+        compareMD5(preImage);
     }
 
     @Test
-    public void testMD5WithRandomString() {
-        String uuid = UUID.randomUUID().toString();
-        compareMD5(uuid);
+    public void testMD5WithRandomStrings() {
+        for (int i = 0; i < 5; i++) {
+            compareMD5(UUID.randomUUID().toString());
+        }
     }
 }
