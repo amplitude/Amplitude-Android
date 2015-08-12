@@ -124,17 +124,18 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
-    public void testUpgradeDeviceIdFromSharedPrefsToDatabase() {
+    public void testDoesNotUpgradeDeviceIdFromSharedPrefsToDatabase() {
         assertNull(amplitude.getDeviceId());
-        String deviceId = "test_device_id";
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
+        // initializeDeviceId no longer fetches from SharedPrefs, will get advertising ID instead
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, deviceId).commit();
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, "test_device_id").commit();
 
         looper.getScheduler().advanceToLastPostedRunnable();
-        assertEquals(deviceId, amplitude.getDeviceId());
+        String deviceId = amplitude.getDeviceId();
+        assertTrue(deviceId.endsWith("R"));
         assertEquals(
                 deviceId,
                 DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
