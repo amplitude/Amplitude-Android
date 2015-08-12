@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import com.amplitude.security.MD5;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -662,13 +664,13 @@ public class AmplitudeClient {
         String checksumString = "";
         try {
             String preimage = apiVersionString + apiKey + events + timestampString;
-            checksumString = bytesToHexString(MessageDigest.getInstance("MD5").digest(
-                    preimage.getBytes("UTF-8")));
-        } catch (NoSuchAlgorithmException e) {
-            // According to
-            // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
-            // this will never be thrown
-            Log.e(TAG, e.toString());
+
+            // MessageDigest.getInstance(String) is not threadsafe on Android.
+            // See https://code.google.com/p/android/issues/detail?id=37937
+            // Use MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java
+            // This implementation does not throw NoSuchAlgorithm exceptions.
+            MessageDigest messageDigest = new MD5();
+            checksumString = bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             // According to
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
