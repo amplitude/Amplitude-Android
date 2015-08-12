@@ -5,7 +5,6 @@ import com.amplitude.security.MD5;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
