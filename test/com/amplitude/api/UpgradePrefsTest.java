@@ -2,6 +2,7 @@ package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
@@ -102,23 +103,24 @@ public class UpgradePrefsTest extends BaseTest {
     public void testUpgradeDeviceIdToDB() {
         String deviceId = "device_id";
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
-        context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
-                .putString(Constants.PREFKEY_DEVICE_ID, deviceId)
-                .commit();
+        SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, deviceId).commit();
 
         assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
         assertEquals(
-                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-                deviceId
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+            deviceId
         );
+
+        // deviceId should be removed from sharedPrefs after upgrade
+        assertNull(prefs.getString(Constants.PREFKEY_DEVICE_ID, null));
     }
 
     @Test
     public void testUpgradeDeviceIdToDBEmpty() {
         assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
-        assertEquals(
-                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-                null
+        assertNull(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
         );
     }
 
@@ -136,11 +138,13 @@ public class UpgradePrefsTest extends BaseTest {
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), deviceId);
         assertEquals(
-                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-                deviceId
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+            deviceId
         );
+
+        // deviceId should be removed from sharedPrefs after upgrade
+        assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
     }
 
     @Test
@@ -156,10 +160,9 @@ public class UpgradePrefsTest extends BaseTest {
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        assertEquals(target.getString(Constants.PREFKEY_DEVICE_ID, null), null);
-        assertEquals(
-                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-                null
+        assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
+        assertNull(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
         );
     }
 }

@@ -996,6 +996,9 @@ public class AmplitudeClient {
         if (!TextUtils.isEmpty(deviceId)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+
+            // remove device id from sharedPrefs so that this upgrade occurs only once
+            preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
         }
 
         return true;
