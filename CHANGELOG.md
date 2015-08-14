@@ -7,6 +7,7 @@
 * Track if limit ad tracking enabled as an API property for each logged event.
 * Database upgraded to version 2: added a new store table for key value pairs.
 * Device ID is now saved to and reloaded from the SQLite database (instead of SharedPrefs because SharedPrefs currently does not support multiple processes).
+* MessageDigest.getInstance(String) is not threadsafe (known Android issue). Replaced with alternate MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java.
 
 ## 1.7.0 (May 29, 2015)
 
