@@ -65,7 +65,7 @@ It's important to think about what types of events you care about as a developer
 
 A session is a period of time that a user has the app in the foreground. Events that are logged within the same session will have the same `session_id`. Sessions are handled automatically now; you no longer have to manually call `startSession()` or `endSession()`.
 
-* For Android API level 14+, a new session is created when the app comes back into the foreground after being out of the foreground for 15 minutes or more. (Note you can define your own session experiation time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds.)
+* For Android API level 14+, a new session is created when the app comes back into the foreground after being out of the foreground for 5 minutes or more. (Note you can define your own session experiation time by calling `setMinTimeBetweenSessionsMillis(timeout)`, where the timeout input is in milliseconds.)
 
 * For Android API level 13 and below, foreground tracking is not available, so a new session is automatically started when an event is logged 30 minutes or more after the last logged event. If another event is logged within 30 minutes, it will extend the current session. (Note you can define your own session expiration time by calling `setSessionTimeoutMillis(timeout)`, where the timeout input is in milliseconds. Also note, `enableForegroundTracking(getApplication)` is still safe to call for Android API level 13 and below, even though it is not available.)
 
