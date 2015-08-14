@@ -2,6 +2,7 @@ package com.amplitude.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
@@ -98,4 +99,70 @@ public class UpgradePrefsTest extends BaseTest {
         assertEquals(size, 0);
     }
 
+    @Test
+    public void testUpgradeDeviceIdToDB() {
+        String deviceId = "device_id";
+        String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, deviceId).commit();
+
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+        assertEquals(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+            deviceId
+        );
+
+        // deviceId should be removed from sharedPrefs after upgrade
+        assertNull(prefs.getString(Constants.PREFKEY_DEVICE_ID, null));
+    }
+
+    @Test
+    public void testUpgradeDeviceIdToDBEmpty() {
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+        assertNull(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
+    }
+
+    @Test
+    public void testUpgradeDeviceIdFromLegacyToDB() {
+        String deviceId = "device_id";
+        String legacyPkgName = "com.amplitude.a";
+        String sourceName = legacyPkgName + "." + context.getPackageName();
+        context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
+                .putString(legacyPkgName + ".deviceId", deviceId)
+                .commit();
+
+        assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        assertEquals(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+            deviceId
+        );
+
+        // deviceId should be removed from sharedPrefs after upgrade
+        assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
+    }
+
+    @Test
+    public void testUpgradeDeviceIdFromLegacyToDBEmpty() {
+        String legacyPkgName = "com.amplitude.a";
+        String sourceName = legacyPkgName + "." + context.getPackageName();
+        context.getSharedPreferences(sourceName, Context.MODE_PRIVATE).edit()
+                .putLong("partial.lastEventTime", 100L)
+                .commit();
+
+        assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
+        assertNull(
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
+    }
 }

@@ -13,14 +13,14 @@ public class Constants {
     public static final int API_VERSION = 2;
 
     public static final String DATABASE_NAME = PACKAGE_NAME;
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
 
     public static final int EVENT_UPLOAD_THRESHOLD = 30;
     public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;
     public static final int EVENT_MAX_COUNT = 1000;
     public static final int EVENT_REMOVE_BATCH_SIZE = 20;
     public static final long EVENT_UPLOAD_PERIOD_MILLIS = 30 * 1000; // 30s
-    public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 15 * 60 * 1000; // 15m
+    public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 5 * 60 * 1000; // 5m
     public static final long SESSION_TIMEOUT_MILLIS = 30 * 60 * 1000; // 30m
 
     public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;

@@ -35,6 +35,7 @@ public class AmplitudeClient {
     public static final String START_SESSION_EVENT = "session_start";
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
+    public static final String DEVICE_ID_KEY = "device_id";
 
     protected static AmplitudeClient instance = new AmplitudeClient();
 
@@ -70,8 +71,6 @@ public class AmplitudeClient {
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
 
-    private Runnable endSessionRunnable;
-
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
@@ -97,6 +96,7 @@ public class AmplitudeClient {
         }
 
         AmplitudeClient.upgradePrefs(context);
+        AmplitudeClient.upgradeDeviceIdToDB(context);
 
         if (TextUtils.isEmpty(apiKey)) {
             Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
@@ -794,9 +794,9 @@ public class AmplitudeClient {
         invalidIds.add("Android");
         invalidIds.add("DEFACE");
 
-        SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
-        String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+        // see if device id already stored in db
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
         }
@@ -807,8 +807,7 @@ public class AmplitudeClient {
 
             String advertisingId = deviceInfo.getAdvertisingId();
             if (!(TextUtils.isEmpty(advertisingId) || invalidIds.contains(advertisingId))) {
-                preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, advertisingId)
-                        .commit();
+                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, advertisingId);
                 return advertisingId;
             }
         }
@@ -816,9 +815,8 @@ public class AmplitudeClient {
         // If this still fails, generate random identifier that does not persist
         // across installations. Append R to distinguish as randomly generated
         String randomId = deviceInfo.generateUUID() + "R";
-        preferences.edit().putString(Constants.PREFKEY_DEVICE_ID, randomId).commit();
+        dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, randomId);
         return randomId;
-
     }
 
     private void runOnLogThread(Runnable r) {
@@ -972,4 +970,38 @@ public class AmplitudeClient {
             Log.e(TAG, "Error upgrading shared preferences", e);
             return false;
         }
-    }}
+    }
+
+    /*
+     * Move device ID from sharedPrefs to new sqlite key value store.
+     *
+     * This should only happen once -- the first time a user loads the app after updating.
+     * This should happen only after moving the preference data from legacy to new static name.
+     * This logic needs to remain in place for quite a long time. It was first introduced in
+     * August 2015 in version 1.8.0.
+     */
+    static boolean upgradeDeviceIdToDB(Context context) {
+        return upgradeDeviceIdToDB(context, null);
+    }
+
+    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName) {
+        if (sourcePkgName == null) {
+            sourcePkgName = Constants.PACKAGE_NAME;
+        }
+
+        String prefsName = sourcePkgName + "." + context.getPackageName();
+        SharedPreferences preferences =
+                context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+
+        String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
+        if (!TextUtils.isEmpty(deviceId)) {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+
+            // remove device id from sharedPrefs so that this upgrade occurs only once
+            preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
+        }
+
+        return true;
+    }
+}

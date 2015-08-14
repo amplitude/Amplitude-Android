@@ -1,13 +1,9 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import android.database.sqlite.SQLiteDatabase;
 
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,12 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowApplication;
-import org.robolectric.shadows.ShadowLooper;
-
-import android.content.Context;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -56,16 +47,50 @@ public class DatabaseHelperTest extends BaseTest {
         return -1;
     }
 
+    protected long insertOrReplaceKeyValue(String key, String value) {
+        return dbInstance.insertOrReplaceKeyValue(key, value);
+    }
+
+    protected String getValue(String key) {
+        return dbInstance.getValue(key);
+    }
+
     @Test
     public void testCreate() {
         dbInstance.onCreate(dbInstance.getWritableDatabase());
+        assertEquals(1, insertOrReplaceKeyValue("test_key", "test_value"));
         assertEquals(1, addEvent("test_create"));
     }
 
     @Test
     public void testUpgrade() {
-        dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 1, 2);
+        SQLiteDatabase db = dbInstance.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + DatabaseHelper.STORE_TABLE_NAME);
+
+        // store table doesn't exist in v1, insert will fail
+        String key = "test_key";
+        String value = "test_value";
+        assertEquals(-1, insertOrReplaceKeyValue(key, value));
         assertEquals(1, addEvent("test_upgrade"));
+
+        // after upgrade, can insert
+        dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 1, 2);
+        assertEquals(2, addEvent("test_upgrade"));
+        assertEquals(1, insertOrReplaceKeyValue(key, value));
+    }
+
+    @Test
+    public void testInsertOrReplaceKeyValue() {
+        String key = "test_key";
+        String value1 = "test_value1";
+        String value2 = "test_value2";
+        assertEquals(null, getValue(key));
+
+        insertOrReplaceKeyValue(key, value1);
+        assertEquals(value1, getValue(key));
+
+        insertOrReplaceKeyValue(key, value2);
+        assertEquals(value2, getValue(key));
     }
 
     @Test
