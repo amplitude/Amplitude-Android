@@ -315,8 +315,7 @@ public class AmplitudeClient {
         try {
             event.put("event_type", replaceWithJSONNull(eventType));
             event.put("timestamp", timestamp);
-            event.put("user_id", (userId == null) ? replaceWithJSONNull(deviceId)
-                    : replaceWithJSONNull(userId));
+            event.put("user_id", replaceWithJSONNull(userId));
             event.put("device_id", replaceWithJSONNull(deviceId));
             event.put("session_id", outOfSession ? -1 : sessionId);
             event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
