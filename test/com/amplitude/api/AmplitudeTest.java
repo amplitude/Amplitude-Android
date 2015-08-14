@@ -24,6 +24,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -109,13 +110,52 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
+    public void testReloadDeviceIdFromDatabase() {
+        String deviceId = "test_device_id";
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        assertNull(amplitude.getDeviceId());
+        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+                AmplitudeClient.DEVICE_ID_KEY,
+                deviceId
+        );
+        looper.getScheduler().advanceToLastPostedRunnable();
+        assertEquals(deviceId, amplitude.getDeviceId());
+    }
+
+    @Test
+    public void testDoesNotUpgradeDeviceIdFromSharedPrefsToDatabase() {
+        assertNull(amplitude.getDeviceId());
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        // initializeDeviceId no longer fetches from SharedPrefs, will get advertising ID instead
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, "test_device_id").commit();
+
+        looper.getScheduler().advanceToLastPostedRunnable();
+        String deviceId = amplitude.getDeviceId();
+        assertTrue(deviceId.endsWith("R"));
+        assertEquals(
+                deviceId,
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
+    }
+
+    @Test
     public void testGetDeviceIdWithoutAdvertisingId() {
         assertNull(amplitude.getDeviceId());
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.getScheduler().advanceToLastPostedRunnable();
         assertNotNull(amplitude.getDeviceId());
         assertEquals(37, amplitude.getDeviceId().length());
-        assertTrue(amplitude.getDeviceId().endsWith("R"));
+        String deviceId = amplitude.getDeviceId();
+        assertTrue(deviceId.endsWith("R"));
+        assertEquals(
+                deviceId,
+                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
+        );
+
     }
 
     @Test

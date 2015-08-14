@@ -71,6 +71,8 @@ public class BaseTest {
         if (server != null) {
             server.shutdown();
         }
+
+        DatabaseHelper.instance = null;
     }
 
     public RecordedRequest runRequest() {
