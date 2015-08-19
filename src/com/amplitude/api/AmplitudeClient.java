@@ -564,11 +564,20 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                Iterator<?> keys = userProperties.keys();
+                // Create deep copy of input userProperties to prevent ConcurrentModification
+                final JSONObject copy;
+                try {
+                    copy = new JSONObject(userProperties.toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, e.toString());
+                    return; // could not create copy, cannot merge
+                }
+
+                Iterator<?> keys = copy.keys();
                 while (keys.hasNext()) {
                     String key = (String) keys.next();
                     try {
-                        currentUserProperties.put(key, userProperties.get(key));
+                        currentUserProperties.put(key, copy.get(key));
                     } catch (JSONException e) {
                         Log.e(TAG, e.toString());
                     }
