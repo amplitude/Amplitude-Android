@@ -5,3 +5,7 @@ dist/
 *.asc
 .idea/
 *.iml
+.classpath
+.project
+.settings/
+target/
