@@ -98,13 +98,14 @@ public class AmplitudeTest extends BaseTest {
         amplitude.setUserProperties(null);
         assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
-        userProperties2 = new JSONObject();
-        userProperties2.put("key5", "value5");
-
         // modify original input JSONObject, should not modify internal amplitude JSONObject
         userProperties.put("key2", "value3");
         userProperties.put("key3", "value4");
-        amplitude.setUserProperties(userProperties2); // test merging
+
+        // test merging on background thread
+        userProperties2 = new JSONObject();
+        userProperties2.put("key5", "value5");
+        amplitude.setUserProperties(userProperties2);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         expected = new JSONObject();
