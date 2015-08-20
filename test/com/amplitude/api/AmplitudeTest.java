@@ -26,8 +26,6 @@ import org.robolectric.shadows.ShadowLooper;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.util.Iterator;
-
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class AmplitudeTest extends BaseTest {
