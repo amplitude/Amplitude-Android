@@ -548,12 +548,24 @@ public class AmplitudeClient {
     }
 
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
-        if (replace || this.userProperties == null) {
-            this.userProperties = userProperties;
+        if (userProperties == null) {
+            if (replace) {
+                this.userProperties = null;
+            }
             return;
         }
 
-        if (userProperties == null) {
+        if (replace || this.userProperties == null) {
+            // Only create copy on main thread if necessary
+            JSONObject copy;
+            try {
+                copy = new JSONObject(userProperties.toString());
+            } catch (JSONException e) {
+                Log.e(TAG, e.toString());
+                return; // could not create copy, don't set/merge
+            } // catch (ConcurrentModificationException e) {}
+
+            this.userProperties = copy;
             return;
         }
 
@@ -564,14 +576,14 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                // Create deep copy of input userProperties to prevent ConcurrentModification
-                final JSONObject copy;
+
+                JSONObject copy;
                 try {
                     copy = new JSONObject(userProperties.toString());
                 } catch (JSONException e) {
                     Log.e(TAG, e.toString());
                     return; // could not create copy, cannot merge
-                }
+                } // catch (ConcurrentModificationException e) {}
 
                 Iterator<?> keys = copy.keys();
                 while (keys.hasNext()) {

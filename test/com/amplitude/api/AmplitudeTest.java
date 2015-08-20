@@ -26,6 +26,8 @@ import org.robolectric.shadows.ShadowLooper;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.Iterator;
+
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class AmplitudeTest extends BaseTest {
@@ -91,19 +93,24 @@ public class AmplitudeTest extends BaseTest {
         userProperties.put("key1", "value1");
         userProperties.put("key2", "value2");
         amplitude.setUserProperties(userProperties);
-        assertEquals(amplitude.userProperties, userProperties);
+        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
         amplitude.setUserProperties(null);
-        assertEquals(amplitude.userProperties, userProperties);
+        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
         userProperties2 = new JSONObject();
+        userProperties2.put("key5", "value5");
+
+        // modify original input JSONObject, should not modify internal amplitude JSONObject
         userProperties.put("key2", "value3");
         userProperties.put("key3", "value4");
-        amplitude.setUserProperties(userProperties2);
+        amplitude.setUserProperties(userProperties2); // test merging
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
         expected = new JSONObject();
         expected.put("key1", "value1");
-        expected.put("key2", "value3");
-        expected.put("key3", "value4");
+        expected.put("key2", "value2");
+        expected.put("key5", "value5");
         // JSONObject doesn't have a proper equals method, so we compare strings
         // instead
         assertEquals(expected.toString(), amplitude.userProperties.toString());
