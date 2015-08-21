@@ -10,6 +10,7 @@ import java.util.UUID;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -137,6 +138,8 @@ public class DeviceInfo {
                     }
                 } catch (IOException e) {
                     // Failed to reverse geocode location
+                } catch (NullPointerException e) {
+                    // Failed to reverse geocode location
                 }
             }
             return null;
@@ -145,11 +148,17 @@ public class DeviceInfo {
         private String getCountryFromNetwork() {
             TelephonyManager manager = (TelephonyManager) context
                     .getSystemService(Context.TELEPHONY_SERVICE);
-            if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
-                String country = manager.getNetworkCountryIso();
-                if (country != null) {
-                    return country.toUpperCase(Locale.US);
+            try {
+                if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
+                    String country = manager.getNetworkCountryIso();
+                    if (country != null) {
+                        return country.toUpperCase(Locale.US);
+                    }
                 }
+            } catch (NullPointerException e) {
+                // Failed to get phone type
+            } catch (Resources.NotFoundException e) {
+                // Failed to get phone type
             }
             return null;
         }
