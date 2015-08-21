@@ -80,6 +80,7 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testSetUserProperties() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setUserProperties(null);
         assertNull(amplitude.userProperties);
 
@@ -91,6 +92,7 @@ public class AmplitudeTest extends BaseTest {
         userProperties.put("key1", "value1");
         userProperties.put("key2", "value2");
         amplitude.setUserProperties(userProperties);
+        looper.runToEndOfTasks();
         assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
         amplitude.setUserProperties(null);
@@ -104,7 +106,7 @@ public class AmplitudeTest extends BaseTest {
         userProperties2 = new JSONObject();
         userProperties2.put("key5", "value5");
         amplitude.setUserProperties(userProperties2);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        looper.runToEndOfTasks();
 
         expected = new JSONObject();
         expected.put("key1", "value1");
