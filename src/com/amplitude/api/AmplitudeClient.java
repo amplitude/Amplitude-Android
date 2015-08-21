@@ -548,21 +548,16 @@ public class AmplitudeClient {
     }
 
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
-        if (userProperties == null) {
-            if (replace) {
-                this.userProperties = null;
-            }
-            return;
-        }
-
-        // If merging is needed, do it on the log thread. Avoids an issue
-        // where user properties is being mutated here at the same time
-        // it's being iterated on for stringify in the event sending logic.
-        final AmplitudeClient instance = this;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                JSONObject currentUserProperties = instance.userProperties;
+                AmplitudeClient instance = AmplitudeClient.this;
+                if (userProperties == null) {
+                    if (replace) {
+                        instance.userProperties = null;
+                    }
+                    return;
+                }
 
                 // Create deep copy to try and prevent ConcurrentModificationException
                 JSONObject copy;
@@ -573,6 +568,7 @@ public class AmplitudeClient {
                     return; // could not create copy, cannot merge
                 } // catch (ConcurrentModificationException e) {}
 
+                JSONObject currentUserProperties = instance.userProperties;
                 if (replace || currentUserProperties == null) {
                     instance.userProperties = copy;
                     return;
