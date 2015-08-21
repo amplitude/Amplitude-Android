@@ -80,7 +80,9 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testSetUserProperties() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setUserProperties(null);
+        looper.runToEndOfTasks();
         assertNull(amplitude.userProperties);
 
         JSONObject userProperties;
@@ -91,19 +93,27 @@ public class AmplitudeTest extends BaseTest {
         userProperties.put("key1", "value1");
         userProperties.put("key2", "value2");
         amplitude.setUserProperties(userProperties);
-        assertEquals(amplitude.userProperties, userProperties);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
         amplitude.setUserProperties(null);
-        assertEquals(amplitude.userProperties, userProperties);
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
 
-        userProperties2 = new JSONObject();
+        // modify original input JSONObject, should not modify internal amplitude JSONObject
         userProperties.put("key2", "value3");
         userProperties.put("key3", "value4");
+
+        // test merging on background thread
+        userProperties2 = new JSONObject();
+        userProperties2.put("key5", "value5");
         amplitude.setUserProperties(userProperties2);
+        looper.runToEndOfTasks();
+
         expected = new JSONObject();
         expected.put("key1", "value1");
-        expected.put("key2", "value3");
-        expected.put("key3", "value4");
+        expected.put("key2", "value2");
+        expected.put("key5", "value5");
         // JSONObject doesn't have a proper equals method, so we compare strings
         // instead
         assertEquals(expected.toString(), amplitude.userProperties.toString());

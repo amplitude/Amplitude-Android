@@ -548,27 +548,37 @@ public class AmplitudeClient {
     }
 
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
-        if (replace || this.userProperties == null) {
-            this.userProperties = userProperties;
-            return;
-        }
-
-        if (userProperties == null) {
-            return;
-        }
-
-        // If merging is needed, do it on the log thread. Avoids an issue
-        // where user properties is being mutated here at the same time
-        // it's being iterated on for stringify in the event sending logic.
-        final JSONObject currentUserProperties = this.userProperties;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                Iterator<?> keys = userProperties.keys();
+                AmplitudeClient instance = AmplitudeClient.this;
+                if (userProperties == null) {
+                    if (replace) {
+                        instance.userProperties = null;
+                    }
+                    return;
+                }
+
+                // Create deep copy to try and prevent ConcurrentModificationException
+                JSONObject copy;
+                try {
+                    copy = new JSONObject(userProperties.toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, e.toString());
+                    return; // could not create copy, cannot merge
+                } // catch (ConcurrentModificationException e) {}
+
+                JSONObject currentUserProperties = instance.userProperties;
+                if (replace || currentUserProperties == null) {
+                    instance.userProperties = copy;
+                    return;
+                }
+
+                Iterator<?> keys = copy.keys();
                 while (keys.hasNext()) {
                     String key = (String) keys.next();
                     try {
-                        currentUserProperties.put(key, userProperties.get(key));
+                        currentUserProperties.put(key, copy.get(key));
                     } catch (JSONException e) {
                         Log.e(TAG, e.toString());
                     }
