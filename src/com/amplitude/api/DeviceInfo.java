@@ -137,19 +137,25 @@ public class DeviceInfo {
                     }
                 } catch (IOException e) {
                     // Failed to reverse geocode location
+                } catch (NullPointerException e) {
+                    // Failed to reverse geocode location
                 }
             }
             return null;
         }
 
         private String getCountryFromNetwork() {
-            TelephonyManager manager = (TelephonyManager) context
-                    .getSystemService(Context.TELEPHONY_SERVICE);
-            if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
-                String country = manager.getNetworkCountryIso();
-                if (country != null) {
-                    return country.toUpperCase(Locale.US);
+            try {
+                TelephonyManager manager = (TelephonyManager) context
+                        .getSystemService(Context.TELEPHONY_SERVICE);
+                if (manager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
+                    String country = manager.getNetworkCountryIso();
+                    if (country != null) {
+                        return country.toUpperCase(Locale.US);
+                    }
                 }
+            } catch (Exception e) {
+                // Failed to get country from network
             }
             return null;
         }

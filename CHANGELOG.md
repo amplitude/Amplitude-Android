@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Catch all exceptions thrown by Android TelephonyManager and NullPointerExceptions thrown by geocoder during country lookup.
+
 ## 2.0.0 (August 20, 2015)
 
 * Expose user ID with getUserId.
