@@ -155,7 +155,7 @@ public class DeviceInfo {
                     }
                 }
             } catch (Exception e) {
-                // Failed to get phone type
+                // Failed to get country from network
             }
             return null;
         }
