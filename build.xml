@@ -82,38 +82,30 @@
     </target>
 
     <target name="jar" depends="build">
-        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class" />
-        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/security/*.class" />
+        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" />
         <jar destfile="${uberjar}">
-            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
-            <fileset dir="${build}" includes="com/amplitude/security/*.class" />
+            <fileset dir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" />
             <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
 
     <target name="unity" depends="build" description="creates jar for unity plugin">
         <jar destfile="${unity-jar}">
-            <fileset dir="${build}" includes="com/amplitude/api/*.class" />
-            <fileset dir="${src}" includes="com/amplitude/api/*.java" />
-            <fileset dir="${build}" includes="com/amplitude/unity/plugins/*.class" />
-            <fileset dir="${src}" includes="com/amplitude/unity/plugins/*.java" />
-            <fileset dir="${build}" includes="com/amplitude/security/*.class" />
-            <fileset dir="${src}" includes="com/amplitude/security/*.java" />
+            <fileset dir="${build}" includes="com/amplitude/api/*.class, com/amplitude/unity/plugins/*.class, com/amplitude/security/*.class" />
+            <fileset dir="${src}" includes="com/amplitude/api/*.java, com/amplitude/unity/plugins/*.java, com/amplitude/security/*.java" />
             <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
 
     <target name="dist" depends="jar" description="creates release jar with javadoc and sources">
         <javadoc classpathref="project.classpath" sourcepath="${src}" destdir="${dist}/javadoc">
-            <fileset dir="${src}" includes="com/amplitude/api/*.java" />
-            <fileset dir="${src}" includes="com/amplitude/security/*.java" />
+            <fileset dir="${src}" includes="com/amplitude/api/*.java, com/amplitude/security/*.java" />
         </javadoc>
         <jar jarfile="${javadoc-jar}">
             <fileset dir="${dist}/javadoc" />
         </jar>
         <jar jarfile="${sources-jar}">
-            <fileset dir="${src}" includes="com/amplitude/api/*.java" />
-            <fileset dir="${src}" includes="com/amplitude/security/*.java" />
+            <fileset dir="${src}" includes="com/amplitude/api/*.java, com/amplitude/security/*.java" />
         </jar>
         <copy file="${jar}" todir="."/>
         <copy file="${uberjar}" todir="."/>
