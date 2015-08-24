@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fixed Maven jar, fixed build file
+
 ## 2.0.1 (August 21, 2015)
 
 * Catch all exceptions thrown by Android TelephonyManager and NullPointerExceptions thrown by geocoder during country lookup.
