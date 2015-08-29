@@ -3,9 +3,11 @@ package com.amplitude.unity.plugins;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.amplitude.api.Amplitude;
+import com.amplitude.api.AmplitudeClient;
 
 public class AmplitudePlugin {
 
@@ -15,6 +17,10 @@ public class AmplitudePlugin {
 
     public static void init(Context context, String apiKey, String userId) {
         Amplitude.getInstance().initialize(context, apiKey, userId);
+    }
+
+    public static void enableForegroundTracking(Application app) {
+        Amplitude.getInstance().enableForegroundTracking(app);
     }
 
     @Deprecated
@@ -36,6 +42,17 @@ public class AmplitudePlugin {
         }
 
         Amplitude.getInstance().logEvent(event, properties);
+    }
+
+    public static void logEvent(String event, String jsonProperties, boolean outOfSession) {
+        JSONObject properties = null;
+        try {
+            properties = new JSONObject(jsonProperties);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Amplitude.getInstance().logEvent(event, properties, outOfSession);
     }
 
     public static void setUserId(String userId) {
