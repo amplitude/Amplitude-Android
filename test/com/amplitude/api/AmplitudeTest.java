@@ -1,19 +1,14 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,8 +18,13 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -81,42 +81,63 @@ public class AmplitudeTest extends BaseTest {
     @Test
     public void testSetUserProperties() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        // setting null or empty user properties does nothing
         amplitude.setUserProperties(null);
         looper.runToEndOfTasks();
-        assertNull(amplitude.userProperties);
+        assertEquals(getUnsentEventCount(), 0);
+        amplitude.setUserProperties(new JSONObject());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
 
-        JSONObject userProperties;
-        JSONObject userProperties2;
-        JSONObject expected;
-
-        userProperties = new JSONObject();
-        userProperties.put("key1", "value1");
-        userProperties.put("key2", "value2");
+        JSONObject userProperties = new JSONObject().put("key1", "value1").put("key2", "value2");
         amplitude.setUserProperties(userProperties);
         looper.runToEndOfTasks();
-        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
+        assertEquals(getUnsentEventCount(), 1);
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
+        assertEquals(event.optJSONObject("event_properties").length(), 0);
 
-        amplitude.setUserProperties(null);
-        looper.runToEndOfTasks();
-        assertEquals(amplitude.userProperties.toString(), userProperties.toString());
+        JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
+        assertEquals(userPropertiesOperations.length(), 1);
+        assertTrue(userPropertiesOperations.has(Constants.AMP_OP_SET));
 
-        // modify original input JSONObject, should not modify internal amplitude JSONObject
-        userProperties.put("key2", "value3");
-        userProperties.put("key3", "value4");
+        JSONObject setOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_SET);
+        assertTrue(compareJSONObjects(userProperties, setOperations));
+    }
 
-        // test merging on background thread
-        userProperties2 = new JSONObject();
-        userProperties2.put("key5", "value5");
-        amplitude.setUserProperties(userProperties2);
-        looper.runToEndOfTasks();
+    @Test
+    public void testIdentifyMultipleOperations() throws JSONException {
+        String property1 = "string value";
+        String value1 = "testValue";
 
-        expected = new JSONObject();
-        expected.put("key1", "value1");
-        expected.put("key2", "value2");
-        expected.put("key5", "value5");
-        // JSONObject doesn't have a proper equals method, so we compare strings
-        // instead
-        assertEquals(expected.toString(), amplitude.userProperties.toString());
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "boolean value";
+        boolean value3 = true;
+
+        String property4 = "json value";
+
+        Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
+        identify.set(property3, value3).unset(property4);
+
+        // identify should ignore this since duplicate key
+        identify.set(property4, value3);
+
+        amplitude.identify(identify);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
+
+        JSONObject userProperties = event.optJSONObject("user_properties");
+        JSONObject expected = new JSONObject();
+        expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property1, value1));
+        expected.put(Constants.AMP_OP_ADD, new JSONObject().put(property2, value2));
+        expected.put(Constants.AMP_OP_SET, new JSONObject().put(property3, value3));
+        expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
+        assertTrue(compareJSONObjects(userProperties, expected));
     }
 
     @Test
@@ -208,6 +229,16 @@ public class AmplitudeTest extends BaseTest {
         } catch (InterruptedException e) {
         }
         assertNotNull(request);
+    }
+
+    @Test
+    public void testLastEventType() {
+        assertEquals(getUnsentEventCount(), 0);
+        String event_type = "test_event_type";
+        amplitude.logEvent(event_type);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertTrue(amplitude.lastEventType.equals(event_type));
+        assertEquals(amplitude.lastEventType, event_type);
     }
 
     @Test

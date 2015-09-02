@@ -7,6 +7,8 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import java.lang.InterruptedException;
+import java.util.Iterator;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.json.JSONException;
@@ -57,7 +59,7 @@ public class BaseTest {
         }
 
         if (server != null) {
-            amplitude.url = server.getUrl("/").toString();            
+            amplitude.url = server.getUrl("/").toString();
         }
     }
 
@@ -134,5 +136,44 @@ public class BaseTest {
             fail(e.toString());
         }
         return null;
+    }
+
+    public boolean compareJSONObjects(JSONObject o1, JSONObject o2) throws JSONException {
+        if (o1 == o2) {
+            return true;
+        }
+
+        if ((o1 != null && o2 == null) || (o1 == null && o2 != null)) {
+            return false;
+        }
+
+        if (o1.length() != o2.length()) {
+            return false;
+        }
+
+        Iterator<?> keys = o1.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            if (!o2.has(key)) {
+                return false;
+            }
+
+            Object value1 = o1.get(key);
+            Object value2 = o2.get(key);
+
+            if (!value1.getClass().equals(value2.getClass())) {
+                return false;
+            }
+
+            if (value1.getClass() == JSONObject.class) {
+                if (!compareJSONObjects((JSONObject) value1, (JSONObject) value2)) {
+                    return false;
+                }
+            } else if (!value1.equals(value2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -158,7 +158,7 @@ public class SessionTest extends BaseTest {
         amplitude.trackSessionEvents(true);
 
         long timestamp = System.currentTimeMillis();
-        amplitude.logEvent("test", null, null, timestamp, false);
+        amplitude.logEvent("test", null, null, null, timestamp, false);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         // trackSessions is true, start_session event is added
         assertEquals(getUnsentEventCount(), 2);
@@ -248,14 +248,14 @@ public class SessionTest extends BaseTest {
 
         // log 1st event, initialize first session
         long timestamp1 = System.currentTimeMillis();
-        amplitude.logEvent("test1", null, null, timestamp1, false);
+        amplitude.logEvent("test1", null, null, null, timestamp1, false);
         looper.runToEndOfTasks();
         // trackSessions is true, start_session event is added
         assertEquals(getUnsentEventCount(), 2);
 
         // log 2nd event past timeout, verify new session started
         long timestamp2 = timestamp1 + sessionTimeoutMillis;
-        amplitude.logEvent("test2", null, null, timestamp2, false);
+        amplitude.logEvent("test2", null, null, null, timestamp2, false);
         looper.runToEndOfTasks();
         // trackSessions is true, end_session and start_session events are added
         assertEquals(getUnsentEventCount(), 5);
@@ -359,13 +359,13 @@ public class SessionTest extends BaseTest {
 
         // log 3 events all just within session expiration window, verify all in same session
         long timestamp1 = System.currentTimeMillis();
-        amplitude.logEvent("test1", null, null, timestamp1, false);
+        amplitude.logEvent("test1", null, null, null, timestamp1, false);
         looper.runToEndOfTasks();
         // trackSessions is true, start_session event is added
         assertEquals(getUnsentEventCount(), 2);
 
         long timestamp2 = timestamp1 + sessionTimeoutMillis - 1;
-        amplitude.logEvent("test2", null, null, timestamp2, false);
+        amplitude.logEvent("test2", null, null, null, timestamp2, false);
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 3);
 
