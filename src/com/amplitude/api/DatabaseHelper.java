@@ -25,7 +25,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
     protected static final String STORE_TABLE_NAME = "store";
     private static final String KEY_FIELD = "key";
     private static final String VALUE_FIELD = "value";
-    private static final String EVENT_TABLE_NAME = "events";
+
+    protected static final String EVENT_TABLE_NAME = "events";
+    protected static final String IDENTIFY_TABLE_NAME = "identifys";
     private static final String ID_FIELD = "id";
     private static final String EVENT_FIELD = "event";
 
@@ -34,6 +36,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + VALUE_FIELD + " TEXT);";
     private static final String CREATE_EVENTS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + EVENT_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + EVENT_FIELD + " TEXT);";
+    private static final String CREATE_IDENTIFYS_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + IDENTIFY_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
     private File file;
@@ -57,16 +62,32 @@ class DatabaseHelper extends SQLiteOpenHelper {
         // for the field will be monotonically increasing and unique over the
         // lifetime of the table, even if rows get removed
         db.execSQL(CREATE_EVENTS_TABLE);
+        db.execSQL(CREATE_IDENTIFYS_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion > newVersion) {
+            Log.e(TAG, "onUpgrade() with invalid oldVersion and newVersion");
+            resetDatabase(db);
+            return;
+        }
+
         switch (oldVersion) {
 
             case 1:
                 db.execSQL(CREATE_STORE_TABLE);
+                if (newVersion <= 2) {
+                    break;
+                }
 
             case 2:
+                db.execSQL(CREATE_IDENTIFYS_TABLE);
+                if (newVersion <= 3) {
+                    break;
+                }
+
+            case 3:
                 break;
 
             default:
@@ -78,6 +99,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private void resetDatabase(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + IDENTIFY_TABLE_NAME);
         onCreate(db);
     }
 
@@ -108,17 +130,25 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized long addEvent(String event) {
+        return addEventToTable(EVENT_TABLE_NAME, event);
+    }
+
+    synchronized long addIdentify(String identifyEvent) {
+        return addEventToTable(IDENTIFY_TABLE_NAME, identifyEvent);
+    }
+
+    synchronized long addEventToTable(String table, String event) {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues contentValues = new ContentValues();
             contentValues.put(EVENT_FIELD, event);
-            result = db.insert(EVENT_TABLE_NAME, null, contentValues);
+            result = db.insert(table, null, contentValues);
             if (result == -1) {
-                Log.w(TAG, "Insert failed");
+                Log.w(TAG, String.format("Insert into %s failed", table));
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, "addEvent failed", e);
+            Log.e(TAG, String.format("addEvent to %s failed", table), e);
             // Not much we can do, just start fresh
             delete();
         } finally {
@@ -154,12 +184,20 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized Pair<Long, JSONArray> getEvents(long upToId, int limit) throws JSONException {
+        return getEventsFromTable(EVENT_TABLE_NAME, upToId, limit);
+    }
+
+    synchronized Pair<Long, JSONArray> getIdentifys(long upToId, int limit) throws JSONException {
+        return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
+    }
+
+    synchronized Pair<Long, JSONArray> getEventsFromTable(String table, long upToId, int limit) throws JSONException {
         long maxId = -1;
         JSONArray events = new JSONArray();
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            cursor = db.query(EVENT_TABLE_NAME, new String[] { ID_FIELD, EVENT_FIELD },
+            cursor = db.query(table, new String[] { ID_FIELD, EVENT_FIELD },
                     upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
                     ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
 
@@ -174,7 +212,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 maxId = eventId;
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, "getEvents failed", e);
+            Log.e(TAG, String.format("getEvents from %s failed", table), e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -185,15 +223,23 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized long getEventCount() {
+        return getEventCountFromTable(EVENT_TABLE_NAME);
+    }
+
+    synchronized long getIdentifyCount() {
+        return getEventCountFromTable(IDENTIFY_TABLE_NAME);
+    }
+
+    synchronized long getEventCountFromTable(String table) {
         long numberRows = 0;
         SQLiteStatement statement = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String query = "SELECT COUNT(*) FROM " + EVENT_TABLE_NAME;
+            String query = "SELECT COUNT(*) FROM " + table;
             statement = db.compileStatement(query);
             numberRows = statement.simpleQueryForLong();
         } catch (SQLiteException e) {
-            Log.e(TAG, "getNumberRows failed", e);
+            Log.e(TAG, String.format("getNumberRows for %s failed", table), e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -204,11 +250,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized long getNthEventId(long n) {
+        return getNthEventIdFromTable(EVENT_TABLE_NAME, n);
+    }
+
+    synchronized long getNthIdentifyId(long n) {
+        return getNthEventIdFromTable(IDENTIFY_TABLE_NAME, n);
+    }
+
+    synchronized long getNthEventIdFromTable(String table, long n) {
         long nthEventId = -1;
         SQLiteStatement statement = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String query = "SELECT " + ID_FIELD + " FROM " + EVENT_TABLE_NAME + " LIMIT 1 OFFSET "
+            String query = "SELECT " + ID_FIELD + " FROM " + table + " LIMIT 1 OFFSET "
                     + (n - 1);
             statement = db.compileStatement(query);
             nthEventId = -1;
@@ -218,7 +272,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 Log.w(TAG, e);
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, "getNthEventId failed", e);
+            Log.e(TAG, String.format("getNthEventId from %s failed", table), e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -229,22 +283,38 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized void removeEvents(long maxId) {
+        removeEventsFromTable(EVENT_TABLE_NAME, maxId);
+    }
+
+    synchronized void removeIdentifys(long maxId) {
+        removeEventsFromTable(IDENTIFY_TABLE_NAME, maxId);
+    }
+
+    synchronized void removeEventsFromTable(String table, long maxId) {
         try {
             SQLiteDatabase db = getWritableDatabase();
-            db.delete(EVENT_TABLE_NAME, ID_FIELD + " <= " + maxId, null);
+            db.delete(table, ID_FIELD + " <= " + maxId, null);
         } catch (SQLiteException e) {
-            Log.e(TAG, "removeEvents failed", e);
+            Log.e(TAG, String.format("removeEvents from %s failed", table), e);
         } finally {
             close();
         }
     }
 
     synchronized void removeEvent(long id) {
+        removeEventFromTable(EVENT_TABLE_NAME, id);
+    }
+
+    synchronized void removeIdentify(long id) {
+        removeEventFromTable(IDENTIFY_TABLE_NAME, id);
+    }
+
+    synchronized void removeEventFromTable(String table, long id) {
         try {
             SQLiteDatabase db = getWritableDatabase();
-            db.delete(EVENT_TABLE_NAME, ID_FIELD + " = " + id, null);
+            db.delete(table, ID_FIELD + " = " + id, null);
         } catch (SQLiteException e) {
-            Log.e(TAG, "removeEvent failed", e);
+            Log.e(TAG, String.format("removeEvent from %s failed", table), e);
         } finally {
             close();
         }

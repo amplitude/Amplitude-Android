@@ -105,14 +105,24 @@ public class BaseTest {
 
 
     public JSONObject getLastUnsentEvent() {
-        JSONArray events = getUnsentEvents(1);
+        JSONArray events = getUnsentEventsFromTable(DatabaseHelper.EVENT_TABLE_NAME, 1);
+        return (JSONObject)events.opt(events.length() - 1);
+    }
+
+    public JSONObject getLastUnsentIdentify() {
+        JSONArray events = getUnsentEventsFromTable(DatabaseHelper.IDENTIFY_TABLE_NAME, 1);
         return (JSONObject)events.opt(events.length() - 1);
     }
 
     public JSONArray getUnsentEvents(int limit) {
+        return getUnsentEventsFromTable(DatabaseHelper.EVENT_TABLE_NAME, limit);
+    }
+
+    public JSONArray getUnsentEventsFromTable(String table, int limit) {
         try {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-            Pair<Long, JSONArray> pair = dbHelper.getEvents(-1, -1);
+            Pair<Long, JSONArray> pair = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
+                    dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
 
             JSONArray out = new JSONArray();
             int start = Math.max(limit - pair.second.length(), 0);
@@ -128,9 +138,18 @@ public class BaseTest {
     }
 
     public JSONObject getLastEvent() {
+        return getLastEventFromTable(DatabaseHelper.EVENT_TABLE_NAME);
+    }
+
+    public JSONObject getLastIdentify() {
+        return getLastEventFromTable(DatabaseHelper.IDENTIFY_TABLE_NAME);
+    }
+
+    public JSONObject getLastEventFromTable(String table) {
         try {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-            Pair<Long, JSONArray> pair = dbHelper.getEvents(-1, -1);
+            Pair<Long, JSONArray> pair = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
+                    dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
             return (JSONObject)pair.second.get(pair.second.length() - 1);
         } catch (JSONException e) {
             fail(e.toString());

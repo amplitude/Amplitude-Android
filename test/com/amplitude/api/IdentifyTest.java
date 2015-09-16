@@ -146,7 +146,6 @@ public class IdentifyTest extends BaseTest {
         String value1 = "testValue";
         double value2 = 0.123;
         boolean value3 = true;
-        JSONObject value4 = new JSONObject();
 
         Identify identify = new Identify().setOnce(property, value1).add(property, value2);
         identify.set(property, value3).unset(property);
@@ -156,6 +155,7 @@ public class IdentifyTest extends BaseTest {
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
+    /*
     @Test
     public void testCopyConstructor() throws JSONException {
         String property1 = "string value";
@@ -188,4 +188,5 @@ public class IdentifyTest extends BaseTest {
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
         assertTrue(compareJSONObjects(expected, copy.userPropertiesOperations));
     }
+    */
 }

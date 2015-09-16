@@ -232,19 +232,25 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
-    public void testLastEventType() {
-        assertEquals(getUnsentEventCount(), 0);
-        String event_type = "test_event_type";
-        amplitude.logEvent(event_type);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        assertTrue(amplitude.lastEventType.equals(event_type));
-        assertEquals(amplitude.lastEventType, event_type);
-    }
-
-    @Test
     public void testLogEvent() {
         RecordedRequest request = sendEvent(amplitude, "test_event", null);
         assertNotNull(request);
+    }
+
+    @Test
+    public void testLogEventHasUUID() {
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        JSONObject event;
+
+        amplitude.logEvent("test_event");
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        event = getLastUnsentEvent();
+        assertTrue(event.has("uuid"));
+        assertNotNull(event.optString("uuid"));
+        assertTrue(event.optString("uuid").length() > 0);
     }
 
     @Test

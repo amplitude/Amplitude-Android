@@ -5,6 +5,7 @@ import com.amplitude.security.MD5;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -67,9 +68,6 @@ public class AmplitudeClient {
     private boolean usingForegroundTracking = false;
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
-
-    protected String lastEventType;
-    protected Identify lastIdentify;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
@@ -247,13 +245,17 @@ public class AmplitudeClient {
 
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), outOfSession);
+            logEventAsync(eventType, eventProperties, null, null, System.currentTimeMillis(), outOfSession);
         }
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties) {
+        logEventSync(eventType, eventProperties, false);
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, null, System.currentTimeMillis(), false);
+            logEvent(eventType, eventProperties, null, null, System.currentTimeMillis(), outOfSession);
         }
     }
 
@@ -271,7 +273,8 @@ public class AmplitudeClient {
     }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean outOfSession) {
+            final JSONObject apiProperties, final JSONObject userProperties,
+            final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -285,7 +288,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                logEvent(eventType, copyEventProperties, apiProperties, null, timestamp, outOfSession);
+                logEvent(eventType, copyEventProperties, apiProperties, userProperties, timestamp, outOfSession);
             }
         });
     }
@@ -328,6 +331,7 @@ public class AmplitudeClient {
             event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
+            event.put("uuid", UUID.randomUUID().toString());
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);
@@ -365,7 +369,6 @@ public class AmplitudeClient {
         setLastEventId(eventId);
 
         long eventCount = dbHelper.getEventCount();
-
         if (eventCount >= eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
         }
@@ -541,7 +544,7 @@ public class AmplitudeClient {
         } catch (JSONException e) {
         }
 
-        logEvent(REVENUE_EVENT, null, apiProperties, null, System.currentTimeMillis(), false);
+        logEventAsync(REVENUE_EVENT, null, apiProperties, null, System.currentTimeMillis(), false);
     }
 
     // maintain for backwards compatibility
@@ -557,14 +560,11 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                // create deep copy to try and prevent ConcurrentModificationException
-                JSONObject copy;
-                try {
-                    copy = new JSONObject(userProperties.toString());
-                } catch (JSONException e) {
-                    Log.e(TAG, e.toString());
-                    return; // could not create copy, cannot set
-                } // catch (ConcurrentModificationException e) {}
+                // create shallow copy to try and prevent ConcurrentModificationException
+                JSONObject copy = cloneJSONObject(userProperties);
+                if (copy == null) {
+                    return; // could not clone userProperties
+                }
 
                 Identify identify = new Identify();
                 Iterator<?> keys = copy.keys();
@@ -576,7 +576,6 @@ public class AmplitudeClient {
                         Log.e(TAG, e.toString());
                     }
                 }
-                // concurrency issues: if this is run on log thread will maintain order?
                 identify(identify);
             }
         });
@@ -586,17 +585,9 @@ public class AmplitudeClient {
         if (identify.userPropertiesOperations.length() == 0) {
             return;
         }
-
-        JSONObject userProperties;
-        try {
-            // deep copy in case that user reuses Identify object - concurrentModifictionException
-            userProperties = new JSONObject(identify.userPropertiesOperations.toString());
-        } catch (JSONException e) {
-            Log.e(TAG, e.toString());
-            return; // unable to copy identify JSON, cannot identify
-        } // catch (ConcurrentModificationException e) {}
         long timestamp = System.currentTimeMillis();
-        logEvent(Constants.IDENTIFY_EVENT, null, null, userProperties, timestamp, false);
+        logEventAsync(Constants.IDENTIFY_EVENT, null, null,
+                identify.userPropertiesOperations, timestamp, false);
     }
 
 

@@ -13,7 +13,7 @@ public class Constants {
     public static final int API_VERSION = 2;
 
     public static final String DATABASE_NAME = PACKAGE_NAME;
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
 
     public static final int EVENT_UPLOAD_THRESHOLD = 30;
     public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;

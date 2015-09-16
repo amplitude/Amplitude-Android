@@ -20,10 +20,12 @@ public class Identify {
 
     public Identify() { return; }
 
+    /*
     protected Identify(Identify other) throws JSONException {
         this.userPropertiesOperations = new JSONObject(other.userPropertiesOperations.toString());
         this.userProperties = new HashSet<String>(other.userProperties);
     }
+    */
 
     public Identify setOnce(String property, Object value) {
         addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
@@ -68,12 +70,10 @@ public class Identify {
         }
 
         try {
-            if (userPropertiesOperations.has(operation)) {
-                userPropertiesOperations.getJSONObject(operation).put(property, value);
-            } else {
-                JSONObject operations = new JSONObject().put(property, value);
-                userPropertiesOperations.put(operation, operations);
+            if (!userPropertiesOperations.has(operation)) {
+                userPropertiesOperations.put(operation, new JSONObject());
             }
+            userPropertiesOperations.getJSONObject(operation).put(property, value);
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
         } catch (NullPointerException e) {
