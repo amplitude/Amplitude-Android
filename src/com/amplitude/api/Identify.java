@@ -18,15 +18,6 @@ public class Identify {
     protected JSONObject userPropertiesOperations = new JSONObject();
     protected Set<String> userProperties = new HashSet<String>();
 
-    public Identify() { return; }
-
-    /*
-    protected Identify(Identify other) throws JSONException {
-        this.userPropertiesOperations = new JSONObject(other.userPropertiesOperations.toString());
-        this.userProperties = new HashSet<String>(other.userProperties);
-    }
-    */
-
     public Identify setOnce(String property, Object value) {
         addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
         return this;
@@ -74,39 +65,9 @@ public class Identify {
                 userPropertiesOperations.put(operation, new JSONObject());
             }
             userPropertiesOperations.getJSONObject(operation).put(property, value);
+            userProperties.add(property);
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
-        } catch (NullPointerException e) {
-            Log.e(TAG, e.toString());
         }
-
-        userProperties.add(property);
     }
-
-    /*
-    public boolean mergeIdentifyEvents(Identify toMerge) {
-        Set<String> currentProperties = new HashSet<String>(this.properties);
-        currentProperties.retainAll(toMerge.properties);
-        if (currentProperties.size() > 0) {
-            return false;
-        }
-
-        try {
-            Iterator<?> operations = toMerge.userProperties.keys();
-            while (operations.hasNext()) {
-                String operation = (String) operations.next();
-                if (this.userProperties.has(operation)) {
-                    Iterator<?> actions =
-                } else {
-                    this.userProperties.put(operation, toMerge.userProperties.get(operation));
-                }
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, e.toString());
-            return false;
-        }
-
-        return true;
-    }
-    */
 }

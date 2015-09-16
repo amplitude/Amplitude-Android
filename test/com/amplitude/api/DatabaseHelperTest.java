@@ -1,20 +1,18 @@
 package com.amplitude.api;
 
-import android.database.sqlite.SQLiteDatabase;
-import android.provider.ContactsContract;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -24,7 +22,7 @@ public class DatabaseHelperTest extends BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
+        super.setUp(false);
         dbInstance = DatabaseHelper.getDatabaseHelper(context);
     }
 
@@ -73,7 +71,7 @@ public class DatabaseHelperTest extends BaseTest {
     // need separate tests for different version to version upgrades since insertion failure
     // triggers database deletion and recreation - need to refetch writable database as well
     @Test
-    public void testUpgradeV1ToV2() {
+    public void testUpgradeVersion1ToVersion2() {
         // store table doesn't exist in v1, insert will fail
         dbInstance.getWritableDatabase().execSQL(
                 "DROP TABLE IF EXISTS " + DatabaseHelper.STORE_TABLE_NAME);
@@ -102,7 +100,7 @@ public class DatabaseHelperTest extends BaseTest {
     }
 
     @Test
-    public void testUpgradeV2ToV3() {
+    public void testUpgradeVersion2ToVersion3() {
         // identify table doesn't exist in v2, insert will fail
         dbInstance.getWritableDatabase().execSQL(
                 "DROP TABLE IF EXISTS " + DatabaseHelper.IDENTIFY_TABLE_NAME);
@@ -124,7 +122,7 @@ public class DatabaseHelperTest extends BaseTest {
     }
 
     @Test
-    public void testUpgradeV1ToV3() {
+    public void testUpgradeVersion1ToVersion3() {
         // store table doesn't exist in v1, insert will fail
         dbInstance.getWritableDatabase().execSQL(
                 "DROP TABLE IF EXISTS " + DatabaseHelper.STORE_TABLE_NAME);
@@ -194,46 +192,46 @@ public class DatabaseHelperTest extends BaseTest {
         assertEquals(5, addEvent("test_get_events_5"));
 
         try {
-            JSONArray events;
-            assertEquals(5, (long)dbInstance.getEvents(-1, -1).first);
+            List<JSONObject> events;
+            assertEquals(5, dbInstance.getEventCount());
 
-            events = dbInstance.getEvents(-1, -1).second;
-            assertEquals(5, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals("test_get_events_1", ((JSONObject)events.get(0)).getString("event_type"));
+            events = dbInstance.getEvents(-1, -1);
+            assertEquals(5, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_events_1", (events.get(0)).getString("event_type"));
 
-            events = dbInstance.getEvents(1, -1).second;
-            assertEquals(1, events.length());
+            events = dbInstance.getEvents(1, -1);
+            assertEquals(1, events.size());
 
-            events = dbInstance.getEvents(5, -1).second;
-            assertEquals(5, events.length());
-            assertEquals(5, ((JSONObject)events.get(4)).getLong("event_id"));
-            assertEquals("test_get_events_5", ((JSONObject)events.get(4)).getString("event_type"));
+            events = dbInstance.getEvents(5, -1);
+            assertEquals(5, events.size());
+            assertEquals(5, (events.get(4)).getLong("event_id"));
+            assertEquals("test_get_events_5", (events.get(4)).getString("event_type"));
 
-            events = dbInstance.getEvents(-1, 0).second;
-            assertEquals(0, events.length());
+            events = dbInstance.getEvents(-1, 0);
+            assertEquals(0, events.size());
 
-            events = dbInstance.getEvents(-1, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals("test_get_events_1", ((JSONObject)events.get(0)).getString("event_type"));
+            events = dbInstance.getEvents(-1, 1);
+            assertEquals(1, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_events_1", (events.get(0)).getString("event_type"));
 
-            events = dbInstance.getEvents(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals("test_get_events_1", ((JSONObject)events.get(0)).getString("event_type"));
+            events = dbInstance.getEvents(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_events_1", (events.get(0)).getString("event_type"));
 
             dbInstance.removeEvent(1);
-            events = dbInstance.getEvents(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(2, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals("test_get_events_2", ((JSONObject)events.get(0)).getString("event_type"));
+            events = dbInstance.getEvents(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(2, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_events_2", (events.get(0)).getString("event_type"));
 
             dbInstance.removeEvents(3);
-            events = dbInstance.getEvents(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(4, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals("test_get_events_4", ((JSONObject)events.get(0)).getString("event_type"));
+            events = dbInstance.getEvents(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(4, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_events_4", (events.get(0)).getString("event_type"));
 
         } catch (JSONException e) {
             fail(e.toString());
@@ -249,62 +247,48 @@ public class DatabaseHelperTest extends BaseTest {
         assertEquals(5, addIdentify("test_get_identifys_5"));
 
         try {
-            JSONArray events;
-            assertEquals(5, (long)dbInstance.getIdentifys(-1, -1).first);
+            List<JSONObject> events;
+            assertEquals(5, dbInstance.getIdentifyCount());
 
-            events = dbInstance.getIdentifys(-1, -1).second;
-            assertEquals(5, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_1",
-                    ((JSONObject)events.get(0)).getString("event_type")
+            events = dbInstance.getIdentifys(-1, -1);
+            assertEquals(5, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_identifys_1", (events.get(0)).getString("event_type"));
+
+            events = dbInstance.getIdentifys(1, -1);
+            assertEquals(1, events.size());
+
+            events = dbInstance.getIdentifys(5, -1);
+            assertEquals(5, events.size());
+            assertEquals(5, (events.get(4)).getLong("event_id"));
+            assertEquals("test_get_identifys_5", (events.get(4)).getString("event_type")
             );
 
-            events = dbInstance.getIdentifys(1, -1).second;
-            assertEquals(1, events.length());
+            events = dbInstance.getIdentifys(-1, 0);
+            assertEquals(0, events.size());
 
-            events = dbInstance.getIdentifys(5, -1).second;
-            assertEquals(5, events.length());
-            assertEquals(5, ((JSONObject)events.get(4)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_5",
-                    ((JSONObject)events.get(4)).getString("event_type")
-            );
+            events = dbInstance.getIdentifys(-1, 1);
+            assertEquals(1, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_identifys_1", (events.get(0)).getString("event_type"));
 
-            events = dbInstance.getIdentifys(-1, 0).second;
-            assertEquals(0, events.length());
-
-            events = dbInstance.getIdentifys(-1, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_1",
-                    ((JSONObject)events.get(0)).getString("event_type")
-            );
-
-            events = dbInstance.getIdentifys(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(1, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_1", ((JSONObject)events.get(0)).getString("event_type")
-            );
+            events = dbInstance.getIdentifys(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(1, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_identifys_1", (events.get(0)).getString("event_type"));
 
             dbInstance.removeIdentify(1);
-            events = dbInstance.getIdentifys(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(2, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_2",
-                    ((JSONObject)events.get(0)).getString("event_type")
+            events = dbInstance.getIdentifys(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(2, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_identifys_2", (events.get(0)).getString("event_type")
             );
 
             dbInstance.removeIdentifys(3);
-            events = dbInstance.getIdentifys(5, 1).second;
-            assertEquals(1, events.length());
-            assertEquals(4, ((JSONObject)events.get(0)).getLong("event_id"));
-            assertEquals(
-                    "test_get_identifys_4",
-                    ((JSONObject)events.get(0)).getString("event_type")
+            events = dbInstance.getIdentifys(5, 1);
+            assertEquals(1, events.size());
+            assertEquals(4, (events.get(0)).getLong("event_id"));
+            assertEquals("test_get_identifys_4", (events.get(0)).getString("event_type")
             );
         } catch (JSONException e) {
             fail(e.toString());

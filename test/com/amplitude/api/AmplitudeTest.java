@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
@@ -86,15 +87,18 @@ public class AmplitudeTest extends BaseTest {
         amplitude.setUserProperties(null);
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
         amplitude.setUserProperties(new JSONObject());
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
 
         JSONObject userProperties = new JSONObject().put("key1", "value1").put("key2", "value2");
         amplitude.setUserProperties(userProperties);
         looper.runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), 1);
-        JSONObject event = getLastUnsentEvent();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
         assertEquals(event.optJSONObject("event_properties").length(), 0);
 
@@ -127,8 +131,9 @@ public class AmplitudeTest extends BaseTest {
 
         amplitude.identify(identify);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), 1);
-        JSONObject event = getLastUnsentEvent();
+        assertEquals(getUnsentIdentifyCount(), 1);
+        assertEquals(getUnsentEventCount(), 0);
+        JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
 
         JSONObject userProperties = event.optJSONObject("user_properties");
@@ -235,6 +240,239 @@ public class AmplitudeTest extends BaseTest {
     public void testLogEvent() {
         RecordedRequest request = sendEvent(amplitude, "test_event", null);
         assertNotNull(request);
+    }
+
+    @Test
+    public void testIdentify() throws JSONException {
+        long [] timestamps = {1000, 1001};
+        clock.setTimestamps(timestamps);
+
+        RecordedRequest request = sendIdentify(amplitude, new Identify().set("key", "value"));
+        assertNotNull(request);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 1);
+        JSONObject identify = events.getJSONObject(0);
+        assertEquals(identify.getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(identify.getLong("event_id"), 1);
+        assertEquals(identify.getLong("timestamp"), timestamps[0]);
+        JSONObject userProperties = identify.getJSONObject("user_properties");
+        assertEquals(userProperties.length(), 1);
+        assertTrue(userProperties.has(Constants.AMP_OP_SET));
+
+        JSONObject expected = new JSONObject();
+        expected.put("key", "value");
+        assertTrue(compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
+    }
+
+
+    @Test
+    public void testLog3Events() throws InterruptedException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+
+        amplitude.logEvent("test_event1");
+        amplitude.logEvent("test_event2");
+        amplitude.logEvent("test_event3");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 3);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        JSONArray events = getUnsentEvents(3);
+        for (int i = 0; i < 3; i++) {
+            assertEquals(events.optJSONObject(i).optString("event_type"), "test_event" + (i+1));
+            assertEquals(events.optJSONObject(i).optLong("timestamp"), timestamps[i]);
+        }
+
+        // send response and check that remove events works properly
+        runRequest();
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+    }
+
+    @Test
+    public void testLog3Identifys() throws JSONException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+        amplitude.identify(new Identify().set("photo_count", 1));
+        amplitude.identify(new Identify().add("karma", 2));
+        amplitude.identify(new Identify().unset("gender"));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 3);
+        JSONArray events = getUnsentIdentifys(3);
+
+        JSONObject expectedIdentify1 = new JSONObject();
+        expectedIdentify1.put(Constants.AMP_OP_SET, new JSONObject().put("photo_count", 1));
+        JSONObject expectedIdentify2 = new JSONObject();
+        expectedIdentify2.put(Constants.AMP_OP_ADD, new JSONObject().put("karma", 2));
+        JSONObject expectedIdentify3 = new JSONObject();
+        expectedIdentify3.put(Constants.AMP_OP_UNSET, new JSONObject().put("gender", "-"));
+
+        assertEquals(events.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.optJSONObject(0).optLong("timestamp"), timestamps[0]);
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify1
+        ));
+        assertEquals(events.optJSONObject(1).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.optJSONObject(1).optLong("timestamp"), timestamps[1]);
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(1).optJSONObject("user_properties"), expectedIdentify2
+        ));
+        assertEquals(events.optJSONObject(2).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.optJSONObject(2).optLong("timestamp"), timestamps[2]);
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(2).optJSONObject("user_properties"), expectedIdentify3
+        ));
+
+        // send response and check that remove events works properly
+        runRequest();
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+    }
+
+    @Test
+    public void testLogEventAndIdentify() throws JSONException {
+        long [] timestamps = {1, 1, 2};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        amplitude.logEvent("test_event");
+        amplitude.identify(new Identify().add("photo_count", 1));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        // verify some internal counters
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        assertEquals(amplitude.getLastIdentifyId(), 1);
+
+        JSONObject expectedIdentify = new JSONObject();
+        expectedIdentify.put(Constants.AMP_OP_ADD, new JSONObject().put("photo_count", 1));
+
+        JSONArray unsentEvents = getUnsentEvents(1);
+        assertEquals(unsentEvents.optJSONObject(0).optString("event_type"), "test_event");
+
+        JSONArray unsentIdentifys = getUnsentIdentifys(1);
+        assertEquals(unsentIdentifys.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertTrue(compareJSONObjects(
+                unsentIdentifys.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify
+        ));
+
+        // send response and check that remove events works properly
+        RecordedRequest request = runRequest();
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 2);
+        assertEquals(events.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify
+        ));
+        assertEquals(events.optJSONObject(1).optString("event_type"), "test_event");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+    }
+
+    @Test
+    public void testMergeEventsAndIdentifys() throws JSONException {
+        long [] timestamps = {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        amplitude.logEvent("test_event1");
+        amplitude.identify(new Identify().add("photo_count", 1));
+        amplitude.logEvent("test_event2");
+        amplitude.logEvent("test_event3");
+        amplitude.logEvent("test_event4");
+        amplitude.identify(new Identify().set("gender", "male"));
+        amplitude.identify(new Identify().unset("karma"));
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        // verify some internal counters
+        assertEquals(getUnsentEventCount(), 4);
+        assertEquals(amplitude.getLastEventId(), 4);
+        assertEquals(getUnsentIdentifyCount(), 3);
+        assertEquals(amplitude.getLastIdentifyId(), 3);
+
+        RecordedRequest request = runRequest();
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 7);
+
+        JSONObject expectedIdentify1 = new JSONObject();
+        expectedIdentify1.put(Constants.AMP_OP_ADD, new JSONObject().put("photo_count", 1));
+        JSONObject expectedIdentify2 = new JSONObject();
+        expectedIdentify2.put(Constants.AMP_OP_SET, new JSONObject().put("gender", "male"));
+        JSONObject expectedIdentify3 = new JSONObject();
+        expectedIdentify3.put(Constants.AMP_OP_UNSET, new JSONObject().put("karma", "-"));
+
+        assertEquals(events.getJSONObject(0).getString("event_type"), "test_event1");
+        assertEquals(events.getJSONObject(0).getLong("event_id"), 1);
+        assertEquals(events.getJSONObject(0).getLong("timestamp"), timestamps[0]);
+
+        assertEquals(events.getJSONObject(1).getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.getJSONObject(1).getLong("event_id"), 1);
+        assertEquals(events.getJSONObject(1).getLong("timestamp"), timestamps[1]);
+        assertTrue(compareJSONObjects(
+                events.getJSONObject(1).getJSONObject("user_properties"), expectedIdentify1
+        ));
+
+        assertEquals(events.getJSONObject(2).getString("event_type"), "test_event2");
+        assertEquals(events.getJSONObject(2).getLong("event_id"), 2);
+        assertEquals(events.getJSONObject(2).getLong("timestamp"), timestamps[2]);
+
+        assertEquals(events.getJSONObject(3).getString("event_type"), "test_event3");
+        assertEquals(events.getJSONObject(3).getLong("event_id"), 3);
+        assertEquals(events.getJSONObject(3).getLong("timestamp"), timestamps[3]);
+
+        // same timestamp should put the identify first
+        assertEquals(events.getJSONObject(4).getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.getJSONObject(4).getLong("event_id"), 2);
+        assertEquals(events.getJSONObject(4).getLong("timestamp"), timestamps[4]);
+        assertTrue(compareJSONObjects(
+                events.getJSONObject(4).getJSONObject("user_properties"), expectedIdentify2
+        ));
+
+        assertEquals(events.getJSONObject(5).getString("event_type"), "test_event4");
+        assertEquals(events.getJSONObject(5).getLong("event_id"), 4);
+        assertEquals(events.getJSONObject(5).getLong("timestamp"), timestamps[5]);
+
+        assertEquals(events.getJSONObject(6).getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.getJSONObject(6).getLong("event_id"), 3);
+        assertEquals(events.getJSONObject(6).getLong("timestamp"), timestamps[6]);
+        assertTrue(compareJSONObjects(
+                events.getJSONObject(6).getJSONObject("user_properties"), expectedIdentify3
+        ));
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
     }
 
     @Test

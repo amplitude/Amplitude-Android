@@ -1,11 +1,5 @@
 package com.amplitude.api;
 
-import java.io.File;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -15,7 +9,13 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
-import android.util.Pair;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -73,19 +73,18 @@ class DatabaseHelper extends SQLiteOpenHelper {
             return;
         }
 
-        switch (oldVersion) {
+        if (newVersion <= 1) {
+            return;
+        }
 
+        switch (oldVersion) {
             case 1:
                 db.execSQL(CREATE_STORE_TABLE);
-                if (newVersion <= 2) {
-                    break;
-                }
+                if (newVersion <= 2) break;
 
             case 2:
                 db.execSQL(CREATE_IDENTIFYS_TABLE);
-                if (newVersion <= 3) {
-                    break;
-                }
+                if (newVersion <= 3) break;
 
             case 3:
                 break;
@@ -183,17 +182,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return value;
     }
 
-    synchronized Pair<Long, JSONArray> getEvents(long upToId, int limit) throws JSONException {
+    synchronized List<JSONObject> getEvents(
+                                        long upToId, int limit) throws JSONException {
         return getEventsFromTable(EVENT_TABLE_NAME, upToId, limit);
     }
 
-    synchronized Pair<Long, JSONArray> getIdentifys(long upToId, int limit) throws JSONException {
+    synchronized List<JSONObject> getIdentifys(
+                                        long upToId, int limit) throws JSONException {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
-    synchronized Pair<Long, JSONArray> getEventsFromTable(String table, long upToId, int limit) throws JSONException {
-        long maxId = -1;
-        JSONArray events = new JSONArray();
+    synchronized List<JSONObject> getEventsFromTable(
+                                    String table, long upToId, int limit) throws JSONException {
+        List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
@@ -207,9 +208,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
                 JSONObject obj = new JSONObject(event);
                 obj.put("event_id", eventId);
-                events.put(obj);
-
-                maxId = eventId;
+                events.add(obj);
             }
         } catch (SQLiteException e) {
             Log.e(TAG, String.format("getEvents from %s failed", table), e);
@@ -219,7 +218,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
             close();
         }
-        return new Pair<Long, JSONArray>(maxId, events);
+        return events;
     }
 
     synchronized long getEventCount() {
@@ -228,6 +227,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long getIdentifyCount() {
         return getEventCountFromTable(IDENTIFY_TABLE_NAME);
+    }
+
+    synchronized long getTotalEventCount() {
+        return getEventCount() + getIdentifyCount();
     }
 
     synchronized long getEventCountFromTable(String table) {

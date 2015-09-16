@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add support for user properties operations (set, setOnce, add, unset).
+
 ## 2.0.2 (August 24, 2015)
 
 * Fixed Maven jar, fixed build file

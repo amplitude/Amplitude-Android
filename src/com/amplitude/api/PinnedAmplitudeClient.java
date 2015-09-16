@@ -1,21 +1,23 @@
 package com.amplitude.api;
 
+import android.util.Log;
+
+import com.squareup.okhttp.OkHttpClient;
+
 import java.io.IOException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.squareup.okhttp.OkHttpClient;
 import okio.Buffer;
 import okio.ByteString;
-
-import android.util.Log;
 
 public class PinnedAmplitudeClient extends AmplitudeClient {
 
@@ -164,11 +166,11 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     }
 
     @Override
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxId) {
+    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
         SSLSocketFactory factory = getPinnedCertSslSocketFactory();
         if (factory != null) {
             client.setSslSocketFactory(factory);
-            super.makeEventUploadPostRequest(client, events, maxId);
+            super.makeEventUploadPostRequest(client, events, maxEventId, maxIdentifyId);
         }
         else {
             Log.e(TAG, "Unable to pin SSL as requested. Cowardly refusing to send data.");

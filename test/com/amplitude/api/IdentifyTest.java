@@ -7,17 +7,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(manifest=Config.NONE)
 public class IdentifyTest extends BaseTest {
 
     @Before
-    public void setUp() throws Exception { return; }
+    public void setUp() throws Exception { setUp(false); }
 
     @After
-    public void tearDown() throws Exception { return; }
+    public void tearDown() throws Exception {}
 
     @Test
     public void testUnsetProperty() throws JSONException {
@@ -154,39 +156,4 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property, value1));
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
-
-    /*
-    @Test
-    public void testCopyConstructor() throws JSONException {
-        String property1 = "string value";
-        String value1 = "testValue";
-
-        String property2 = "double value";
-        double value2 = 0.123;
-
-        String property3 = "boolean value";
-        boolean value3 = true;
-
-        String property4 = "json value";
-
-        Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
-        identify.set(property3, value3).unset(property4);
-
-        Identify copy = new Identify(identify);
-        // assert deep copies made
-        assertTrue(identify.userPropertiesOperations != copy.userPropertiesOperations);
-        assertTrue(identify.userProperties != copy.userProperties);
-
-        // identify should ignore this since duplicate key
-        copy.set(property4, value3);
-
-        JSONObject expected = new JSONObject();
-        expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property1, value1));
-        expected.put(Constants.AMP_OP_ADD, new JSONObject().put(property2, value2));
-        expected.put(Constants.AMP_OP_SET, new JSONObject().put(property3, value3));
-        expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
-        assertTrue(compareJSONObjects(expected, copy.userPropertiesOperations));
-    }
-    */
 }

@@ -1,31 +1,60 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.fail;
+import android.content.Context;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
-import java.lang.InterruptedException;
-import java.util.Iterator;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONArray;
+import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
-import org.robolectric.Shadows;
 
-import android.content.Context;
-import android.util.Pair;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.fail;
 
 public class BaseTest {
+
+    protected class MockClock {
+        int index = 0;
+        long timestamps [];
+
+        public void setTimestamps(long [] timestamps) {
+            this.timestamps = timestamps;
+        }
+
+        public long currentTimeMillis() {
+            if (timestamps == null || index >= timestamps.length) {
+                return System.currentTimeMillis();
+            }
+            return timestamps[index++];
+        }
+    }
+
+    // override getCurrentTimeMillis to enforce time progression in tests
+    protected class AmplitudeClientWithTime extends AmplitudeClient {
+        MockClock mockClock;
+
+        public AmplitudeClientWithTime(MockClock mockClock) { this.mockClock = mockClock; }
+
+        @Override
+        protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
+    }
 
     protected AmplitudeClient amplitude;
     protected Context context;
     protected MockWebServer server;
+    protected MockClock clock;
 
     public void setUp() throws Exception {
         setUp(true);
@@ -50,8 +79,12 @@ public class BaseTest {
             server.play();
         }
 
+        if (clock == null) {
+            clock = new MockClock();
+        }
+
         if (amplitude == null) {
-            amplitude = new AmplitudeClient();
+            amplitude = new AmplitudeClientWithTime(clock);
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
@@ -98,9 +131,21 @@ public class BaseTest {
         return runRequest();
     }
 
+    public RecordedRequest sendIdentify(AmplitudeClient amplitude, Identify identify) {
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        amplitude.identify(identify);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        return runRequest();
+    }
+
     public long getUnsentEventCount() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        return dbHelper.getEventCount();
+        return DatabaseHelper.getDatabaseHelper(context).getEventCount();
+    }
+
+    public long getUnsentIdentifyCount() {
+        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
     }
 
 
@@ -118,16 +163,20 @@ public class BaseTest {
         return getUnsentEventsFromTable(DatabaseHelper.EVENT_TABLE_NAME, limit);
     }
 
+    public JSONArray getUnsentIdentifys(int limit) {
+        return getUnsentEventsFromTable(DatabaseHelper.IDENTIFY_TABLE_NAME, limit);
+    }
+
     public JSONArray getUnsentEventsFromTable(String table, int limit) {
         try {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-            Pair<Long, JSONArray> pair = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
+            List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
 
             JSONArray out = new JSONArray();
-            int start = Math.max(limit - pair.second.length(), 0);
+            int start = Math.max(limit - events.size(), 0);
             for (int i = start; i < limit; i++) {
-                out.put(i, pair.second.get(pair.second.length() - limit + i));
+                out.put(i, events.get(events.size() - limit + i));
             }
             return out;
         } catch (JSONException e) {
@@ -148,9 +197,9 @@ public class BaseTest {
     public JSONObject getLastEventFromTable(String table) {
         try {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-            Pair<Long, JSONArray> pair = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
+            List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
-            return (JSONObject)pair.second.get(pair.second.length() - 1);
+            return events.get(events.size() - 1);
         } catch (JSONException e) {
             fail(e.toString());
         }
@@ -194,5 +243,29 @@ public class BaseTest {
         }
 
         return true;
+    }
+
+    public JSONArray getEventsFromRequest(RecordedRequest request) throws JSONException {
+        Map<String, String> parsedBody = parseRequest(request.getUtf8Body());
+        if (parsedBody == null && !parsedBody.containsKey("e")) {
+            return null;
+        }
+        return new JSONArray(parsedBody.get("e"));
+    }
+
+    // parse request string into a key:value map
+    public static Map<String, String> parseRequest(String request) {
+        try {
+            Map<String, String> query_pairs = new LinkedHashMap<String, String>();
+            String[] pairs = request.split("&");
+            for (String pair : pairs) {
+                int idx = pair.indexOf("=");
+                query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+            }
+            return query_pairs;
+        } catch (UnsupportedEncodingException e) {
+            fail(e.toString());
+        }
+        return null;
     }
 }

@@ -1,25 +1,5 @@
 package com.amplitude.api;
 
-import com.amplitude.security.MD5;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -28,6 +8,27 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import com.amplitude.security.MD5;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AmplitudeClient {
 
@@ -245,7 +246,7 @@ public class AmplitudeClient {
 
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEventAsync(eventType, eventProperties, null, null, System.currentTimeMillis(), outOfSession);
+            logEventAsync(eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession);
         }
     }
 
@@ -255,7 +256,7 @@ public class AmplitudeClient {
 
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, null, System.currentTimeMillis(), outOfSession);
+            logEvent(eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession);
         }
     }
 
@@ -360,20 +361,30 @@ public class AmplitudeClient {
             Log.e(TAG, e.toString());
         }
 
-        return saveEvent(event);
+        return saveEvent(eventType, event);
     }
 
-    protected long saveEvent(JSONObject event) {
+    protected long saveEvent(String eventType, JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        long eventId = dbHelper.addEvent(event.toString());
-        setLastEventId(eventId);
-
-        long eventCount = dbHelper.getEventCount();
-        if (eventCount >= eventMaxCount) {
-            dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        long eventId;
+        if (eventType.equals(Constants.IDENTIFY_EVENT)) {
+            eventId = dbHelper.addIdentify(event.toString());
+            setLastIdentifyId(eventId);
+        } else {
+            eventId = dbHelper.addEvent(event.toString());
+            setLastEventId(eventId);
         }
 
-        if ((eventCount % eventUploadThreshold) == 0 && eventCount >= eventUploadThreshold) {
+        if (dbHelper.getEventCount() >= eventMaxCount) {
+            dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        }
+        if (dbHelper.getIdentifyCount() >= eventMaxCount) {
+            dbHelper.removeIdentifys(dbHelper.getNthIdentifyId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        }
+
+        long totalEventCount = dbHelper.getTotalEventCount(); // counts may have changed, refetch
+        if ((totalEventCount % eventUploadThreshold) == 0 &&
+                totalEventCount >= eventUploadThreshold) {
             updateServer();
         } else {
             updateServerLater(eventUploadPeriodMillis);
@@ -404,6 +415,18 @@ public class AmplitudeClient {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
+    }
+
+    long getLastIdentifyId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_IDENTIFY_ID, -1);
+    }
+
+    void setLastIdentifyId(long identifyId) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, identifyId).commit();
     }
 
     long getPreviousSessionId() {
@@ -544,7 +567,7 @@ public class AmplitudeClient {
         } catch (JSONException e) {
         }
 
-        logEventAsync(REVENUE_EVENT, null, apiProperties, null, System.currentTimeMillis(), false);
+        logEventAsync(REVENUE_EVENT, null, apiProperties, null, getCurrentTimeMillis(), false);
     }
 
     // maintain for backwards compatibility
@@ -585,9 +608,8 @@ public class AmplitudeClient {
         if (identify.userPropertiesOperations.length() == 0) {
             return;
         }
-        long timestamp = System.currentTimeMillis();
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,
-                identify.userPropertiesOperations, timestamp, false);
+                identify.userPropertiesOperations, getCurrentTimeMillis(), false);
     }
 
 
@@ -650,15 +672,22 @@ public class AmplitudeClient {
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
-                long lastEventId = getLastEventId();
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
-                Pair<Long, JSONArray> pair = dbHelper.getEvents(lastEventId, batchLimit);
-                final long maxId = pair.first;
-                final JSONArray events = pair.second;
+
+                List<JSONObject> events = dbHelper.getEvents(getLastEventId(), batchLimit);
+                List<JSONObject> identifys = dbHelper.getIdentifys(getLastIdentifyId(), batchLimit);
+                int numEvents = Math.min(batchLimit, events.size() + identifys.size());
+
+                final Pair<Pair<Long, Long>, JSONArray> merged = mergeEventsAndIdentifys(
+                        events, identifys, numEvents);
+                final long maxEventId = merged.first.first;
+                final long maxIdentifyId = merged.first.second;
+                final String mergedEvents = merged.second.toString();
+
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(new OkHttpClient(), events.toString(), maxId);
+                        makeEventUploadPostRequest(new OkHttpClient(), mergedEvents, maxEventId, maxIdentifyId);
                     }
                 });
             } catch (JSONException e) {
@@ -668,9 +697,45 @@ public class AmplitudeClient {
         }
     }
 
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxId) {
+    protected Pair<Pair<Long,Long>, JSONArray> mergeEventsAndIdentifys(List<JSONObject> events,
+                            List<JSONObject> identifys, int numEvents) throws JSONException {
+        JSONArray merged = new JSONArray();
+        long maxEventId = -1;
+        long maxIdentifyId = -1;
+
+        while (merged.length() < numEvents) {
+            // case 1: no identifys, grab from events
+            if (identifys.size() == 0) {
+                JSONObject event = events.remove(0);
+                maxEventId = event.getLong("event_id");
+                merged.put(event);
+
+            // case 2: no events, grab from identifys
+            } else if (events.size() == 0) {
+                JSONObject identify = identifys.remove(0);
+                maxIdentifyId = identify.getLong("event_id");
+                merged.put(identify);
+
+            // case 3: need to compare timestamps, give identifys priority
+            } else {
+                if (identifys.get(0).getLong("timestamp") <= events.get(0).getLong("timestamp")) {
+                    JSONObject identify = identifys.remove(0);
+                    maxIdentifyId = identify.getLong("event_id");
+                    merged.put(identify);
+                    continue;
+                }
+                JSONObject event = events.remove(0);
+                maxEventId = event.getLong("event_id");
+                merged.put(event);
+            }
+        }
+
+        return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
+    }
+
+    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
         String apiVersionString = "" + Constants.API_VERSION;
-        String timestampString = "" + System.currentTimeMillis();
+        String timestampString = "" + getCurrentTimeMillis();
 
         String checksumString = "";
         try {
@@ -713,7 +778,8 @@ public class AmplitudeClient {
                     @Override
                     public void run() {
                         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-                        dbHelper.removeEvents(maxId);
+                        if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
+                        if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
                         if (dbHelper.getEventCount() > eventUploadThreshold) {
                             logThread.post(new Runnable() {
@@ -742,7 +808,8 @@ public class AmplitudeClient {
                 // If blocked by one massive event, drop it
                 DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
-                    dbHelper.removeEvent(maxId);
+                    if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
+                    if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
                     // maybe we want to reset backoffUploadBatchSize after dropping massive event
                 }
 
@@ -1016,4 +1083,6 @@ public class AmplitudeClient {
 
         return true;
     }
+
+    protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 }
