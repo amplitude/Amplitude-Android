@@ -1,24 +1,5 @@
 package com.amplitude.api;
 
-import com.amplitude.security.MD5;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -27,6 +8,25 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import com.amplitude.security.MD5;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AmplitudeClient {
 
@@ -507,9 +507,14 @@ public class AmplitudeClient {
         inForeground = false;
     }
 
-    void onEnterForeground(long timestamp) {
-        startNewSessionIfNeeded(timestamp);
-        inForeground = true;
+    void onEnterForeground(final long timestamp) {
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                startNewSessionIfNeeded(timestamp);
+                inForeground = true;
+            }
+        });
     }
 
     public void logRevenue(double amount) {

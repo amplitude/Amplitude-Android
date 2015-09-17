@@ -1,30 +1,31 @@
 package com.amplitude.api;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONArray;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
-import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowLooper;
-
-import android.content.Context;
-import android.content.SharedPreferences;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -340,6 +341,7 @@ public class AmplitudeTest extends BaseTest {
     @Test
     public void testRequestTooLargeBackoffLogic() {
         amplitude.trackSessionEvents(true);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
 
         // verify event queue empty
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
@@ -349,8 +351,8 @@ public class AmplitudeTest extends BaseTest {
         // 413 error force backoff with 2 events --> new upload limit will be 1
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), 2); // 2 events: start session + test
         looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 2); // 2 events: start session + test
         server.enqueue(new MockResponse().setResponseCode(413));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httpLooper.runToEndOfTasks();
@@ -358,8 +360,8 @@ public class AmplitudeTest extends BaseTest {
         // 413 error with upload limit 1 will remove the top (start session) event
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), 3);
         looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 3);
         server.enqueue(new MockResponse().setResponseCode(413));
         httpLooper.runToEndOfTasks();
 
@@ -374,15 +376,18 @@ public class AmplitudeTest extends BaseTest {
         looper.runToEndOfTasks(); // retry uploading after removing large event
         httpLooper.runToEndOfTasks(); // send success --> 1 event sent
         looper.runToEndOfTasks(); // event count below threshold --> disable backoff
+        looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 1);
 
         // verify backoff disabled - queue 2 more events, see that all get uploaded
         amplitude.logEvent("test");
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 3);
         server.enqueue(new MockResponse().setBody("success"));
         httpLooper.runToEndOfTasks();
+        looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
     }
