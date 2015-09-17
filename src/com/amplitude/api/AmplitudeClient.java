@@ -605,7 +605,7 @@ public class AmplitudeClient {
     }
 
     public void identify(Identify identify) {
-        if (identify.userPropertiesOperations.length() == 0) {
+        if (identify == null || identify.userPropertiesOperations.length() == 0) {
             return;
         }
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,

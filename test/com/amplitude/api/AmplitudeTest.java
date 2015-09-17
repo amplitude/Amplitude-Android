@@ -264,6 +264,19 @@ public class AmplitudeTest extends BaseTest {
         assertTrue(compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
     }
 
+    @Test
+    public void testNullIdentify() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        amplitude.identify(null);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+    }
 
     @Test
     public void testLog3Events() throws InterruptedException {
@@ -476,16 +489,49 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
-    public void testLogEventHasUUID() {
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+    public void testRemoveAfterSuccessfulUpload() throws JSONException {
+        long [] timestamps = new long[Constants.EVENT_UPLOAD_MAX_BATCH_SIZE + 4];
+        for (int i = 0; i < timestamps.length; i++) timestamps[i] = i;
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
 
-        JSONObject event;
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        for (int i = 0; i < Constants.EVENT_UPLOAD_THRESHOLD; i++) {
+            amplitude.logEvent("test_event" + i);
+        }
+        amplitude.identify(new Identify().add("photo_count", 1));
+        amplitude.identify(new Identify().add("photo_count", 2));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD);
+        assertEquals(getUnsentIdentifyCount(), 2);
+
+        RecordedRequest request = runRequest();
+        JSONArray events = getEventsFromRequest(request);
+        for (int i = 0; i < events.length(); i++) {
+            assertEquals(events.optJSONObject(i).optString("event_type"), "test_event" + i);
+        }
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 2); // should have 2 identifys left
+    }
+
+    @Test
+    public void testLogEventHasUUID() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
 
         amplitude.logEvent("test_event");
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
 
-        event = getLastUnsentEvent();
+        JSONObject event = getLastUnsentEvent();
         assertTrue(event.has("uuid"));
         assertNotNull(event.optString("uuid"));
         assertTrue(event.optString("uuid").length() > 0);
@@ -660,6 +706,47 @@ public class AmplitudeTest extends BaseTest {
         httpLooper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
+    }
+
+    @Test
+    public void testBackoffRemoveIdentify() {
+        long [] timestamps = {1, 1, 2, 3, 4, 5};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        // 413 error force backoff with 2 events --> new upload limit will be 1
+        amplitude.logEvent("test1");
+        amplitude.identify(new Identify().add("photo_count", 1));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentIdentifyCount(), 1);
+        assertEquals(getUnsentEventCount(), 1);
+
+        server.enqueue(new MockResponse().setResponseCode(413));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // 413 error with upload limit 1 will remove the top identify
+        amplitude.logEvent("test2");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 2);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        server.enqueue(new MockResponse().setResponseCode(413));
+        httpLooper.runToEndOfTasks();
+
+        // verify only identify removed
+        assertEquals(getUnsentEventCount(), 2);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        JSONArray events = getUnsentEvents(2);
+        assertEquals(events.optJSONObject(0).optString("event_type"), "test1");
+        assertEquals(events.optJSONObject(1).optString("event_type"), "test2");
     }
 
     @Test
