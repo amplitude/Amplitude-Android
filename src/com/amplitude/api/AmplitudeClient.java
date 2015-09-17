@@ -354,9 +354,9 @@ public class AmplitudeClient {
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()
-                    : eventProperties);
+                    : truncate(eventProperties));
             event.put("user_properties", (userProperties == null) ? new JSONObject()
-                    : userProperties);
+                    : truncate(userProperties));
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
         }
@@ -610,6 +610,46 @@ public class AmplitudeClient {
         }
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,
                 identify.userPropertiesOperations, getCurrentTimeMillis(), false);
+    }
+
+    public JSONObject truncate(JSONObject object) {
+        Iterator<?> keys = object.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                Object value = object.get(key);
+                if (value.getClass().equals(String.class)) {
+                    object.put(key, truncate((String) value));
+                } else if (value.getClass().equals(JSONObject.class)) {
+                    object.put(key, truncate((JSONObject) value));
+                } else if (value.getClass().equals(JSONArray.class)) {
+                    object.put(key, truncate((JSONArray) value));
+                }
+            } catch (JSONException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        return object;
+    }
+
+    public JSONArray truncate(JSONArray array) throws JSONException {
+        for (int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value.getClass().equals(String.class)) {
+                array.put(i, truncate((String) value));
+            } else if (value.getClass().equals(JSONObject.class)) {
+                array.put(i, truncate((JSONObject) value));
+            } else if (value.getClass().equals(JSONArray.class)) {
+                array.put(i, truncate((JSONArray) value));
+            }
+        }
+        return array;
+    }
+
+    public String truncate(String value) {
+        return value.length() <= Constants.MAX_STRING_LENGTH ? value :
+                value.substring(0, Constants.MAX_STRING_LENGTH);
     }
 
 

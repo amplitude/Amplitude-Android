@@ -19,6 +19,8 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
+import java.util.Arrays;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,6 +32,13 @@ import static org.junit.Assert.fail;
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class AmplitudeTest extends BaseTest {
+
+    private String generateStringWithLength(int length, char c) {
+        if (length < 0) return "";
+        char [] array = new char[length];
+        Arrays.fill(array, c);
+        return new String(array);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -757,5 +766,67 @@ public class AmplitudeTest extends BaseTest {
         assertTrue(apiProperties.has("limit_ad_tracking"));
         assertFalse(apiProperties.optBoolean("limit_ad_tracking"));
         assertFalse(apiProperties.has("androidADID"));
+    }
+
+    @Test
+    public void testTruncateString() {
+        String longString = generateStringWithLength(Constants.MAX_STRING_LENGTH * 2, 'c');
+        assertEquals(longString.length(), Constants.MAX_STRING_LENGTH * 2);
+        String truncatedString = amplitude.truncate(longString);
+        assertEquals(truncatedString.length(), Constants.MAX_STRING_LENGTH);
+        assertEquals(truncatedString, generateStringWithLength(Constants.MAX_STRING_LENGTH, 'c'));
+    }
+
+    @Test
+    public void testTruncateJSONObject() throws JSONException {
+        String longString = generateStringWithLength(Constants.MAX_STRING_LENGTH * 2, 'c');
+        String truncString = generateStringWithLength(Constants.MAX_STRING_LENGTH, 'c');
+        JSONObject object = new JSONObject();
+        object.put("int value", 10);
+        object.put("bool value", false);
+        object.put("long string", longString);
+        object.put("array", new JSONArray().put(longString).put(10));
+        object.put("jsonobject", new JSONObject().put("long string", longString));
+
+        object = amplitude.truncate(object);
+        assertEquals(object.optInt("int value"), 10);
+        assertEquals(object.optBoolean("bool value"), false);
+        assertEquals(object.optString("long string"), truncString);
+        assertEquals(object.optJSONArray("array").length(), 2);
+        assertEquals(object.optJSONArray("array").getString(0), truncString);
+        assertEquals(object.optJSONArray("array").getInt(1), 10);
+        assertEquals(object.optJSONObject("jsonobject").length(), 1);
+        assertEquals(object.optJSONObject("jsonobject").optString("long string"), truncString);
+    }
+
+    @Test
+    public void testTruncateEventAndIdentify() throws JSONException {
+        String longString = generateStringWithLength(Constants.MAX_STRING_LENGTH * 2, 'c');
+        String truncString = generateStringWithLength(Constants.MAX_STRING_LENGTH, 'c');
+
+        long [] timestamps = {1, 1, 2, 3};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        amplitude.logEvent("test", new JSONObject().put("long_string", longString));
+        amplitude.identify(new Identify().set("long_string", longString));
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        RecordedRequest request = runRequest();
+        JSONArray events = getEventsFromRequest(request);
+
+        assertEquals(events.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(0).optJSONObject("user_properties"),
+                new JSONObject().put(Constants.AMP_OP_SET, new JSONObject().put("long_string", truncString))
+        ));
+        assertEquals(events.optJSONObject(1).optString("event_type"), "test");
+        assertTrue(compareJSONObjects(
+                events.optJSONObject(1).optJSONObject("event_properties"),
+                new JSONObject().put("long_string", truncString)
+        ));
     }
 }
