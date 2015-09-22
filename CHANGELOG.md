@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.0.3 (September 22, 2015)
+
 * Fix bug where deviceId was being fetched on main thread.
 
 ## 2.0.2 (August 24, 2015)
