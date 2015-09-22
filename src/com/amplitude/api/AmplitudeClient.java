@@ -502,9 +502,14 @@ public class AmplitudeClient {
         logEvent(sessionEvent, null, apiProperties, timestamp, false);
     }
 
-    void onExitForeground(long timestamp) {
-        refreshSessionTime(timestamp);
-        inForeground = false;
+    void onExitForeground(final long timestamp) {
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                refreshSessionTime(timestamp);
+                inForeground = false;
+            }
+        });
     }
 
     void onEnterForeground(final long timestamp) {

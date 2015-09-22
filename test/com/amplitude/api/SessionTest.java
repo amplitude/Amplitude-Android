@@ -483,6 +483,7 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
 
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
@@ -547,6 +548,7 @@ public class SessionTest extends BaseTest {
 
         // only refresh time, no session checking
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
@@ -661,6 +663,7 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
 
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
