@@ -1,8 +1,10 @@
 ## Unreleased
 
+* Fix bug where deviceId was being fetched on main thread.
+
 ## 2.0.2 (August 24, 2015)
 
-* Fixed Maven jar, fixed build file
+* Fix Maven jar, fixed build file
 
 ## 2.0.1 (August 21, 2015)
 
