@@ -545,14 +545,24 @@ public class AmplitudeClient {
         logEvent(sessionEvent, null, apiProperties, null, timestamp, false);
     }
 
-    void onExitForeground(long timestamp) {
-        refreshSessionTime(timestamp);
-        inForeground = false;
+    void onExitForeground(final long timestamp) {
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                refreshSessionTime(timestamp);
+                inForeground = false;
+            }
+        });
     }
 
-    void onEnterForeground(long timestamp) {
-        startNewSessionIfNeeded(timestamp);
-        inForeground = true;
+    void onEnterForeground(final long timestamp) {
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                startNewSessionIfNeeded(timestamp);
+                inForeground = true;
+            }
+        });
     }
 
     public void logRevenue(double amount) {
@@ -677,15 +687,16 @@ public class AmplitudeClient {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
-            return;
+            return instance;
         }
 
         this.userId = userId;
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
+        return instance;
     }
 
     public void uploadEvents() {

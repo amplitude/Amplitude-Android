@@ -420,6 +420,7 @@ public class SessionTest extends BaseTest {
         assertFalse(amplitude.isInForeground());
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertTrue(amplitude.isInForeground());
         assertEquals(amplitude.getPreviousSessionId(), timestamp);
         assertEquals(amplitude.getLastEventId(), -1);
@@ -476,11 +477,13 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getLastEventTime(), -1);
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
 
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
@@ -536,6 +539,7 @@ public class SessionTest extends BaseTest {
         assertEquals(getUnsentEventCount(), 0);
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
@@ -544,6 +548,7 @@ public class SessionTest extends BaseTest {
 
         // only refresh time, no session checking
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
@@ -552,6 +557,7 @@ public class SessionTest extends BaseTest {
 
         // resume after min session expired window, verify new session started
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[2]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[2]);
@@ -651,17 +657,20 @@ public class SessionTest extends BaseTest {
         assertEquals(amplitude.getLastEventTime(), -1);
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
 
         callBacks.onActivityPaused(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[1]);
         assertFalse(amplitude.isInForeground());
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), -1);
         assertEquals(amplitude.getLastEventTime(), timestamps[2]);
@@ -744,6 +753,7 @@ public class SessionTest extends BaseTest {
         assertEquals(getUnsentEventCount(), 1);
 
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamp);
         assertEquals(amplitude.getLastEventId(), 1);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
@@ -782,6 +792,7 @@ public class SessionTest extends BaseTest {
 
         // onResume after session expires will start new session
         callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         assertEquals(amplitude.getPreviousSessionId(), timestamps[0]);
         assertEquals(amplitude.getLastEventId(), 4);
         assertEquals(amplitude.getLastEventTime(), timestamps[0]);
