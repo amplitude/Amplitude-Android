@@ -1,11 +1,14 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.telephony.TelephonyManager;
 
-import java.util.Locale;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,15 +30,12 @@ import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowTelephonyManager;
 import org.robolectric.util.ReflectionHelpers;
 
-import android.content.Context;
-import android.content.res.Configuration;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.telephony.TelephonyManager;
+import java.util.Locale;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 
 @RunWith(RobolectricTestRunner.class)
@@ -133,6 +133,7 @@ public class DeviceInfoTest {
     }
 
     @Test
+    @Config(shadows={MockGeocoder.class})
     public void testGetCountryFromLocation() {
         ShadowTelephonyManager telephonyManager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
@@ -151,7 +152,7 @@ public class DeviceInfoTest {
                 shadowGeocoder.setSimulatedResponse("1 Dr Carlton B Goodlett Pl", "San Francisco",
                         "CA", "94506", TEST_GEO_COUNTRY);
                 return geocoder;
-            };
+            }
         };
 
         assertEquals(TEST_GEO_COUNTRY, deviceInfo.getCountry());
