@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.0.4 (September 23, 2015)
+
 * Fix bug where deviceInfo was trying to use Geocoder if none present.
 
 ## 2.0.3 (September 22, 2015)
