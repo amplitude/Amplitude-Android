@@ -38,6 +38,7 @@ public class AmplitudeClient {
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
     public static final String DEVICE_ID_KEY = "device_id";
+    public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
 
     protected static AmplitudeClient instance = new AmplitudeClient();
 
@@ -71,7 +72,7 @@ public class AmplitudeClient {
     private boolean inForeground = false;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
-    private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
+    AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
     // Let test classes have access to these properties.
     Throwable lastError;
@@ -333,6 +334,7 @@ public class AmplitudeClient {
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
             event.put("uuid", UUID.randomUUID().toString());
+            event.put("sequence_number", getNextSequenceNumber());
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);
@@ -391,6 +393,20 @@ public class AmplitudeClient {
         }
 
         return eventId;
+    }
+
+    // shared sequence number for ordering events and identifys
+    long getNextSequenceNumber() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+
+        Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
+        if (sequenceNumber == null) {
+            sequenceNumber = 0L;
+        }
+
+        sequenceNumber++;
+        dbHelper.insertOrReplaceKeyLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
+        return sequenceNumber;
     }
 
     long getLastEventTime() {
@@ -756,17 +772,20 @@ public class AmplitudeClient {
                 maxIdentifyId = identify.getLong("event_id");
                 merged.put(identify);
 
-            // case 3: need to compare timestamps, give identifys priority
+            // case 3: need to compare sequence numbers
             } else {
-                if (identifys.get(0).getLong("timestamp") <= events.get(0).getLong("timestamp")) {
+                // events logged before v2.1.0 won't have a sequence number, put those first
+                if (!events.get(0).has("sequence_number") ||
+                        events.get(0).getLong("sequence_number") <
+                        identifys.get(0).getLong("sequence_number")) {
+                    JSONObject event = events.remove(0);
+                    maxEventId = event.getLong("event_id");
+                    merged.put(event);
+                } else {
                     JSONObject identify = identifys.remove(0);
                     maxIdentifyId = identify.getLong("event_id");
                     merged.put(identify);
-                    continue;
                 }
-                JSONObject event = events.remove(0);
-                maxEventId = event.getLong("event_id");
-                merged.put(event);
             }
         }
 

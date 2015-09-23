@@ -56,7 +56,7 @@ public class Identify {
     private void addToUserProperties(String operation, String property, Object value) {
         // check if property already used in previous operation
         if (userProperties.contains(property)) {
-            Log.e(TAG, String.format("Already used property %s in previous operation, ignoring", property));
+            Log.e(TAG, String.format("Already used property %s in previous operation, ignoring operation %s", property, operation));
             return;
         }
 

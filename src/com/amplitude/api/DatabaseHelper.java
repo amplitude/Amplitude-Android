@@ -23,6 +23,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
     protected static final String STORE_TABLE_NAME = "store";
+    protected static final String LONG_STORE_TABLE_NAME = "long_store";
     private static final String KEY_FIELD = "key";
     private static final String VALUE_FIELD = "value";
 
@@ -34,6 +35,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_STORE_TABLE = "CREATE TABLE IF NOT EXISTS "
             + STORE_TABLE_NAME + " (" + KEY_FIELD + " TEXT PRIMARY KEY NOT NULL, "
             + VALUE_FIELD + " TEXT);";
+    private static final String CREATE_LONG_STORE_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + LONG_STORE_TABLE_NAME + " (" + KEY_FIELD + " TEXT PRIMARY KEY NOT NULL, "
+            + VALUE_FIELD + " INTEGER);";
     private static final String CREATE_EVENTS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + EVENT_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
@@ -58,6 +62,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_STORE_TABLE);
+        db.execSQL(CREATE_LONG_STORE_TABLE);
         // INTEGER PRIMARY KEY AUTOINCREMENT guarantees that all generated values
         // for the field will be monotonically increasing and unique over the
         // lifetime of the table, even if rows get removed
@@ -84,33 +89,47 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
             case 2:
                 db.execSQL(CREATE_IDENTIFYS_TABLE);
-                if (newVersion <= 3) break;
+                db.execSQL(CREATE_LONG_STORE_TABLE);
+        if (newVersion <= 3) break;
 
-            case 3:
-                break;
+        case 3:
+        break;
 
-            default:
-                Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
-                resetDatabase(db);
-        }
+        default:
+        Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
+        resetDatabase(db);
     }
+}
 
     private void resetDatabase(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + LONG_STORE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + IDENTIFY_TABLE_NAME);
         onCreate(db);
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
+        return insertOrReplaceKeyValueToTable(STORE_TABLE_NAME, key, value);
+    }
+
+    synchronized long insertOrReplaceKeyLongValue(String key, Long value) {
+        return insertOrReplaceKeyValueToTable(LONG_STORE_TABLE_NAME, key, value);
+    }
+
+    synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
             ContentValues contentValues = new ContentValues();
             contentValues.put(KEY_FIELD, key);
-            contentValues.put(VALUE_FIELD, value);
+            if (value instanceof Long) {
+                contentValues.put(VALUE_FIELD, (Long) value);
+            } else {
+                contentValues.put(VALUE_FIELD, (String) value);
+            }
             result = db.insertWithOnConflict(
-                    STORE_TABLE_NAME,
+                    table,
                     null,
                     contentValues,
                     SQLiteDatabase.CONFLICT_REPLACE
@@ -157,19 +176,27 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized String getValue(String key) {
-        String value = null;
+        return (String) getValueFromTable(STORE_TABLE_NAME, key);
+    }
+
+    synchronized Long getLongValue(String key) {
+        return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
+    }
+
+    synchronized Object getValueFromTable(String table, String key) {
+        Object value = null;
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = db.query(
-                    STORE_TABLE_NAME,
+                    table,
                     new String[]{KEY_FIELD, VALUE_FIELD},
                     KEY_FIELD + " = ?",
                     new String[]{key},
                     null, null, null, null
             );
             if (cursor.moveToFirst()) {
-                value = cursor.getString(1);
+                value = table.equals(STORE_TABLE_NAME) ? cursor.getString(1) : cursor.getLong(1);
             }
         } catch (SQLiteException e) {
             Log.e(TAG, "getValue failed", e);
