@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -190,6 +191,8 @@ public class DeviceInfo {
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
                 Log.w(TAG, "Google Play Services SDK not found!");
+            } catch (InvocationTargetException e) {
+                Log.w(TAG, "Google Play Services not available");
             } catch (Exception e) {
                 Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
