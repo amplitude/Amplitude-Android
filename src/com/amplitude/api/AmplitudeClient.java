@@ -296,7 +296,7 @@ public class AmplitudeClient {
     }
 
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
-                            JSONObject userProperties, long timestamp, boolean outOfSession) {
+            JSONObject userProperties, long timestamp, boolean outOfSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -609,10 +609,13 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                // create shallow copy to try and prevent ConcurrentModificationException
-                JSONObject copy = cloneJSONObject(userProperties);
-                if (copy == null) {
-                    return; // could not clone userProperties
+                // Create deep copy to try and prevent ConcurrentModificationException
+                JSONObject copy;
+                try {
+                    copy = new JSONObject(userProperties.toString());
+                } catch (JSONException e) {
+                    Log.e(TAG, e.toString());
+                    return; // could not create copy
                 }
 
                 Identify identify = new Identify();
@@ -639,6 +642,10 @@ public class AmplitudeClient {
     }
 
     public JSONObject truncate(JSONObject object) {
+        if (object == null) {
+            return null;
+        }
+
         Iterator<?> keys = object.keys();
         while (keys.hasNext()) {
             String key = (String) keys.next();
@@ -660,6 +667,10 @@ public class AmplitudeClient {
     }
 
     public JSONArray truncate(JSONArray array) throws JSONException {
+        if (array == null) {
+            return null;
+        }
+
         for (int i = 0; i < array.length(); i++) {
             Object value = array.get(i);
             if (value.getClass().equals(String.class)) {

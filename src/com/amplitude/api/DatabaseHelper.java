@@ -90,16 +90,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
             case 2:
                 db.execSQL(CREATE_IDENTIFYS_TABLE);
                 db.execSQL(CREATE_LONG_STORE_TABLE);
-        if (newVersion <= 3) break;
+                if (newVersion <= 3) break;
 
-        case 3:
-        break;
+            case 3:
+                break;
 
-        default:
-        Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
-        resetDatabase(db);
+            default:
+                Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
+                resetDatabase(db);
+        }
     }
-}
 
     private void resetDatabase(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + STORE_TABLE_NAME);

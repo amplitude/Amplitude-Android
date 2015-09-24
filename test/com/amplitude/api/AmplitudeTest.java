@@ -887,6 +887,12 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
+    public void testTruncateNullJSONObject() throws JSONException {
+        assertNull(amplitude.truncate((JSONObject) null));
+        assertNull(amplitude.truncate((JSONArray) null));
+    }
+
+    @Test
     public void testTruncateEventAndIdentify() throws JSONException {
         String longString = generateStringWithLength(Constants.MAX_STRING_LENGTH * 2, 'c');
         String truncString = generateStringWithLength(Constants.MAX_STRING_LENGTH, 'c');
