@@ -2,6 +2,11 @@
 
 * Add support for user properties operations (set, setOnce, add, unset).
 
+## 2.0.4 (September 23, 2015)
+
+* Fix bug where deviceInfo was trying to use Geocoder if none present.
+
+
 ## 2.0.3 (September 22, 2015)
 
 * Fix bug where deviceId was being fetched on main thread.

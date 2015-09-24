@@ -1,12 +1,5 @@
 package com.amplitude.api;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -18,6 +11,14 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 public class DeviceInfo {
 
@@ -125,13 +126,15 @@ public class DeviceInfo {
             Location recent = getMostRecentLocation();
             if (recent != null) {
                 try {
-                    Geocoder geocoder = getGeocoder();
-                    List<Address> addresses = geocoder.getFromLocation(recent.getLatitude(),
-                            recent.getLongitude(), 1);
-                    if (addresses != null) {
-                        for (Address address : addresses) {
-                            if (address != null) {
-                                return address.getCountryCode();
+                    if (Geocoder.isPresent()) {
+                        Geocoder geocoder = getGeocoder();
+                        List<Address> addresses = geocoder.getFromLocation(recent.getLatitude(),
+                                recent.getLongitude(), 1);
+                        if (addresses != null) {
+                            for (Address address : addresses) {
+                                if (address != null) {
+                                    return address.getCountryCode();
+                                }
                             }
                         }
                     }
@@ -139,6 +142,8 @@ public class DeviceInfo {
                     // Failed to reverse geocode location
                 } catch (NullPointerException e) {
                     // Failed to reverse geocode location
+                } catch (NoSuchMethodError e) {
+                    // failed to fetch geocoder
                 }
             }
             return null;
@@ -186,6 +191,8 @@ public class DeviceInfo {
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
                 Log.w(TAG, "Google Play Services SDK not found!");
+            } catch (InvocationTargetException e) {
+                Log.w(TAG, "Google Play Services not available");
             } catch (Exception e) {
                 Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
