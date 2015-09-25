@@ -15,7 +15,7 @@
     <property name="test.reports" location="${dist}/reports"/>
 
     <property environment="env" />
-    <property name="android-sdk-path" value="${env.ANDROID_SDK}" />
+    <property name="android-sdk-path" value="${env.ANDROID_HOME}" />
     <property name="android-target" value="${env.ANDROID_TARGET}" />
 
     <property name="groupId" value="com.amplitude" />
