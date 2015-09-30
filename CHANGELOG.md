@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add support for user properties operations (set, setOnce, add, unset).
+
 ## 2.0.4 (September 23, 2015)
 
 * Fix bug where deviceInfo was trying to use Geocoder if none present.
@@ -10,7 +12,7 @@
 
 ## 2.0.2 (August 24, 2015)
 
-* Fix Maven jar, fixed build file
+* Fix Maven jar, fixed build file.
 
 ## 2.0.1 (August 21, 2015)
 

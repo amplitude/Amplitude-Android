@@ -25,7 +25,9 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AmplitudeClient {
@@ -36,6 +38,7 @@ public class AmplitudeClient {
     public static final String END_SESSION_EVENT = "session_end";
     public static final String REVENUE_EVENT = "revenue_amount";
     public static final String DEVICE_ID_KEY = "device_id";
+    public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
 
     protected static AmplitudeClient instance = new AmplitudeClient();
 
@@ -55,9 +58,6 @@ public class AmplitudeClient {
 
     private DeviceInfo deviceInfo;
 
-    /* VisibleForTesting */
-    JSONObject userProperties;
-
     private long sessionId = -1;
     private int eventUploadThreshold = Constants.EVENT_UPLOAD_THRESHOLD;
     private int eventUploadMaxBatchSize = Constants.EVENT_UPLOAD_MAX_BATCH_SIZE;
@@ -72,7 +72,7 @@ public class AmplitudeClient {
     private boolean inForeground = false;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
-    private AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
+    AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
     // Let test classes have access to these properties.
     Throwable lastError;
@@ -247,13 +247,17 @@ public class AmplitudeClient {
 
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEventAsync(eventType, eventProperties, null, System.currentTimeMillis(), outOfSession);
+            logEventAsync(eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession);
         }
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties) {
+        logEventSync(eventType, eventProperties, false);
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, System.currentTimeMillis(), false);
+            logEvent(eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession);
         }
     }
 
@@ -271,7 +275,8 @@ public class AmplitudeClient {
     }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            final JSONObject apiProperties, final long timestamp, final boolean outOfSession) {
+            final JSONObject apiProperties, final JSONObject userProperties,
+            final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -285,13 +290,13 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                logEvent(eventType, copyEventProperties, apiProperties, timestamp, outOfSession);
+                logEvent(eventType, copyEventProperties, apiProperties, userProperties, timestamp, outOfSession);
             }
         });
     }
 
-    protected long logEvent(String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, long timestamp, boolean outOfSession) {
+    protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
+            JSONObject userProperties, long timestamp, boolean outOfSession) {
         Log.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -328,6 +333,8 @@ public class AmplitudeClient {
             event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             event.put("platform", Constants.PLATFORM);
+            event.put("uuid", UUID.randomUUID().toString());
+            event.put("sequence_number", getNextSequenceNumber());
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);
@@ -349,33 +356,57 @@ public class AmplitudeClient {
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()
-                    : eventProperties);
+                    : truncate(eventProperties));
             event.put("user_properties", (userProperties == null) ? new JSONObject()
-                    : userProperties);
+                    : truncate(userProperties));
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
         }
 
-        return saveEvent(event);
+        return saveEvent(eventType, event);
     }
 
-    protected long saveEvent(JSONObject event) {
+    protected long saveEvent(String eventType, JSONObject event) {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        long eventId = dbHelper.addEvent(event.toString());
-        setLastEventId(eventId);
-        long eventCount = dbHelper.getEventCount();
-
-        if (eventCount >= eventMaxCount) {
-            dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        long eventId;
+        if (eventType.equals(Constants.IDENTIFY_EVENT)) {
+            eventId = dbHelper.addIdentify(event.toString());
+            setLastIdentifyId(eventId);
+        } else {
+            eventId = dbHelper.addEvent(event.toString());
+            setLastEventId(eventId);
         }
 
-        if ((eventCount % eventUploadThreshold) == 0 && eventCount >= eventUploadThreshold) {
+        if (dbHelper.getEventCount() >= eventMaxCount) {
+            dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        }
+        if (dbHelper.getIdentifyCount() >= eventMaxCount) {
+            dbHelper.removeIdentifys(dbHelper.getNthIdentifyId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        }
+
+        long totalEventCount = dbHelper.getTotalEventCount(); // counts may have changed, refetch
+        if ((totalEventCount % eventUploadThreshold) == 0 &&
+                totalEventCount >= eventUploadThreshold) {
             updateServer();
         } else {
             updateServerLater(eventUploadPeriodMillis);
         }
 
         return eventId;
+    }
+
+    // shared sequence number for ordering events and identifys
+    long getNextSequenceNumber() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+
+        Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
+        if (sequenceNumber == null) {
+            sequenceNumber = 0L;
+        }
+
+        sequenceNumber++;
+        dbHelper.insertOrReplaceKeyLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
+        return sequenceNumber;
     }
 
     long getLastEventTime() {
@@ -400,6 +431,18 @@ public class AmplitudeClient {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
+    }
+
+    long getLastIdentifyId() {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        return preferences.getLong(Constants.PREFKEY_LAST_IDENTIFY_ID, -1);
+    }
+
+    void setLastIdentifyId(long identifyId) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                getSharedPreferencesName(), Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, identifyId).commit();
     }
 
     long getPreviousSessionId() {
@@ -499,7 +542,7 @@ public class AmplitudeClient {
         }
 
         long timestamp = getLastEventTime();
-        logEvent(sessionEvent, null, apiProperties, timestamp, false);
+        logEvent(sessionEvent, null, apiProperties, null, timestamp, false);
     }
 
     void onExitForeground(final long timestamp) {
@@ -550,51 +593,100 @@ public class AmplitudeClient {
         } catch (JSONException e) {
         }
 
-        logEvent(REVENUE_EVENT, null, apiProperties, System.currentTimeMillis(), false);
+        logEventAsync(REVENUE_EVENT, null, apiProperties, null, getCurrentTimeMillis(), false);
     }
 
-    public void setUserProperties(JSONObject userProperties) {
-        setUserProperties(userProperties, false);
+    // maintain for backwards compatibility
+    public void setUserProperties(final JSONObject userProperties, final boolean replace){
+        setUserProperties(userProperties);
     }
 
-    public void setUserProperties(final JSONObject userProperties, final boolean replace) {
+    public void setUserProperties(final JSONObject userProperties) {
+        if (userProperties == null || userProperties.length() == 0) {
+            return;
+        }
+
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                AmplitudeClient instance = AmplitudeClient.this;
-                if (userProperties == null) {
-                    if (replace) {
-                        instance.userProperties = null;
-                    }
-                    return;
-                }
-
                 // Create deep copy to try and prevent ConcurrentModificationException
                 JSONObject copy;
                 try {
                     copy = new JSONObject(userProperties.toString());
                 } catch (JSONException e) {
                     Log.e(TAG, e.toString());
-                    return; // could not create copy, cannot merge
-                } // catch (ConcurrentModificationException e) {}
-
-                JSONObject currentUserProperties = instance.userProperties;
-                if (replace || currentUserProperties == null) {
-                    instance.userProperties = copy;
-                    return;
+                    return; // could not create copy
                 }
 
+                Identify identify = new Identify();
                 Iterator<?> keys = copy.keys();
                 while (keys.hasNext()) {
                     String key = (String) keys.next();
                     try {
-                        currentUserProperties.put(key, copy.get(key));
+                        identify.set(key, copy.get(key));
                     } catch (JSONException e) {
                         Log.e(TAG, e.toString());
                     }
                 }
+                identify(identify);
             }
         });
+    }
+
+    public void identify(Identify identify) {
+        if (identify == null || identify.userPropertiesOperations.length() == 0) {
+            return;
+        }
+        logEventAsync(Constants.IDENTIFY_EVENT, null, null,
+                identify.userPropertiesOperations, getCurrentTimeMillis(), false);
+    }
+
+    public JSONObject truncate(JSONObject object) {
+        if (object == null) {
+            return null;
+        }
+
+        Iterator<?> keys = object.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                Object value = object.get(key);
+                if (value.getClass().equals(String.class)) {
+                    object.put(key, truncate((String) value));
+                } else if (value.getClass().equals(JSONObject.class)) {
+                    object.put(key, truncate((JSONObject) value));
+                } else if (value.getClass().equals(JSONArray.class)) {
+                    object.put(key, truncate((JSONArray) value));
+                }
+            } catch (JSONException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        return object;
+    }
+
+    public JSONArray truncate(JSONArray array) throws JSONException {
+        if (array == null) {
+            return null;
+        }
+
+        for (int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value.getClass().equals(String.class)) {
+                array.put(i, truncate((String) value));
+            } else if (value.getClass().equals(JSONObject.class)) {
+                array.put(i, truncate((JSONObject) value));
+            } else if (value.getClass().equals(JSONArray.class)) {
+                array.put(i, truncate((JSONArray) value));
+            }
+        }
+        return array;
+    }
+
+    public String truncate(String value) {
+        return value.length() <= Constants.MAX_STRING_LENGTH ? value :
+                value.substring(0, Constants.MAX_STRING_LENGTH);
     }
 
 
@@ -658,15 +750,22 @@ public class AmplitudeClient {
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             try {
-                long lastEventId = getLastEventId();
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
-                Pair<Long, JSONArray> pair = dbHelper.getEvents(lastEventId, batchLimit);
-                final long maxId = pair.first;
-                final JSONArray events = pair.second;
+
+                List<JSONObject> events = dbHelper.getEvents(getLastEventId(), batchLimit);
+                List<JSONObject> identifys = dbHelper.getIdentifys(getLastIdentifyId(), batchLimit);
+                int numEvents = Math.min(batchLimit, events.size() + identifys.size());
+
+                final Pair<Pair<Long, Long>, JSONArray> merged = mergeEventsAndIdentifys(
+                        events, identifys, numEvents);
+                final long maxEventId = merged.first.first;
+                final long maxIdentifyId = merged.first.second;
+                final String mergedEvents = merged.second.toString();
+
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(new OkHttpClient(), events.toString(), maxId);
+                        makeEventUploadPostRequest(new OkHttpClient(), mergedEvents, maxEventId, maxIdentifyId);
                     }
                 });
             } catch (JSONException e) {
@@ -676,9 +775,48 @@ public class AmplitudeClient {
         }
     }
 
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxId) {
+    protected Pair<Pair<Long,Long>, JSONArray> mergeEventsAndIdentifys(List<JSONObject> events,
+                            List<JSONObject> identifys, int numEvents) throws JSONException {
+        JSONArray merged = new JSONArray();
+        long maxEventId = -1;
+        long maxIdentifyId = -1;
+
+        while (merged.length() < numEvents) {
+            // case 1: no identifys, grab from events
+            if (identifys.size() == 0) {
+                JSONObject event = events.remove(0);
+                maxEventId = event.getLong("event_id");
+                merged.put(event);
+
+            // case 2: no events, grab from identifys
+            } else if (events.size() == 0) {
+                JSONObject identify = identifys.remove(0);
+                maxIdentifyId = identify.getLong("event_id");
+                merged.put(identify);
+
+            // case 3: need to compare sequence numbers
+            } else {
+                // events logged before v2.1.0 won't have a sequence number, put those first
+                if (!events.get(0).has("sequence_number") ||
+                        events.get(0).getLong("sequence_number") <
+                        identifys.get(0).getLong("sequence_number")) {
+                    JSONObject event = events.remove(0);
+                    maxEventId = event.getLong("event_id");
+                    merged.put(event);
+                } else {
+                    JSONObject identify = identifys.remove(0);
+                    maxIdentifyId = identify.getLong("event_id");
+                    merged.put(identify);
+                }
+            }
+        }
+
+        return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
+    }
+
+    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
         String apiVersionString = "" + Constants.API_VERSION;
-        String timestampString = "" + System.currentTimeMillis();
+        String timestampString = "" + getCurrentTimeMillis();
 
         String checksumString = "";
         try {
@@ -721,7 +859,8 @@ public class AmplitudeClient {
                     @Override
                     public void run() {
                         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-                        dbHelper.removeEvents(maxId);
+                        if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
+                        if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
                         if (dbHelper.getEventCount() > eventUploadThreshold) {
                             logThread.post(new Runnable() {
@@ -750,7 +889,8 @@ public class AmplitudeClient {
                 // If blocked by one massive event, drop it
                 DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
-                    dbHelper.removeEvent(maxId);
+                    if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
+                    if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
                     // maybe we want to reset backoffUploadBatchSize after dropping massive event
                 }
 
@@ -1024,4 +1164,6 @@ public class AmplitudeClient {
 
         return true;
     }
+
+    protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 }
