@@ -115,6 +115,13 @@ public class AmplitudeClient {
                 this.userId = preferences.getString(Constants.PREFKEY_USER_ID, null);
             }
             this.optOut = preferences.getBoolean(Constants.PREFKEY_OPT_OUT, false);
+
+            // try to restore previous session id
+            long previousSessionId = getPreviousSessionId();
+            if (previousSessionId >= 0) {
+                sessionId = previousSessionId;
+            }
+
             initialized = true;
         }
 
