@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.1.0 (October 04, 2015)
+
 * Add support for user properties operations (set, setOnce, add, unset).
 * Fix bug where end session event was not being sent upon app reopen.
 
