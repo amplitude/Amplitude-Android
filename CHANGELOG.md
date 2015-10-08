@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Removed all references to Apache HTTPClient to support Android M.
+
 ## 2.1.0 (October 04, 2015)
 
 * Add support for user properties operations (set, setOnce, add, unset).

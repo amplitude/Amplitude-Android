@@ -917,7 +917,7 @@ public class AmplitudeClient {
                 Log.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
             }
-        } catch (org.apache.http.conn.HttpHostConnectException e) {
+        } catch (java.net.ConnectException e) {
             // Log.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
