@@ -286,7 +286,12 @@ public class DeviceInfo {
 
         List<Location> locations = new ArrayList<Location>();
         for (String provider : providers) {
-            Location location = locationManager.getLastKnownLocation(provider);
+            Location location = null;
+            try {
+                location = locationManager.getLastKnownLocation(provider);
+            } catch (IllegalArgumentException e) {
+                // failed to get last known location from provider
+            }
             if (location != null) {
                 locations.add(location);
             }

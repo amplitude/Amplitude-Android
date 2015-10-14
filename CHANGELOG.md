@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Removed all references to Apache HTTPClient to support Android M.
+* Handle exceptions when fetching last known location from LocationManager.
 
 ## 2.1.0 (October 04, 2015)
 
