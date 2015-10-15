@@ -717,6 +717,18 @@ public class AmplitudeClient {
         return instance;
     }
 
+    public AmplitudeClient setDeviceId(final String deviceId) {
+        Set<String> invalidDeviceIds = getInvalidDeviceIds();
+        if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
+                invalidDeviceIds.contains(deviceId)) {
+            return instance;
+        }
+
+        this.deviceId = deviceId;
+        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+        return instance;
+    }
+
     public void uploadEvents() {
         if (!contextAndApiKeySet("uploadEvents()")) {
             return;
@@ -952,14 +964,21 @@ public class AmplitudeClient {
         return deviceId;
     }
 
+    // don't need to keep this in memory, if only using it at most 1 or 2 times
+    private Set<String> getInvalidDeviceIds() {
+        Set<String> invalidDeviceIds = new HashSet<String>();
+        invalidDeviceIds.add("");
+        invalidDeviceIds.add("9774d56d682e549c");
+        invalidDeviceIds.add("unknown");
+        invalidDeviceIds.add("000000000000000"); // Common Serial Number
+        invalidDeviceIds.add("Android");
+        invalidDeviceIds.add("DEFACE");
+
+        return invalidDeviceIds;
+    }
+
     private String initializeDeviceId() {
-        Set<String> invalidIds = new HashSet<String>();
-        invalidIds.add("");
-        invalidIds.add("9774d56d682e549c");
-        invalidIds.add("unknown");
-        invalidIds.add("000000000000000"); // Common Serial Number
-        invalidIds.add("Android");
-        invalidIds.add("DEFACE");
+        Set<String> invalidIds = getInvalidDeviceIds();
 
         // see if device id already stored in db
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);

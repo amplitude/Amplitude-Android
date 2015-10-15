@@ -20,6 +20,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
@@ -61,6 +62,7 @@ public class AmplitudeTest extends BaseTest {
                 userId,
                 context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
                         Constants.PREFKEY_USER_ID, null));
+        assertEquals(userId, amplitude.getUserId());
     }
 
     @Test
@@ -86,6 +88,62 @@ public class AmplitudeTest extends BaseTest {
         JSONObject event2 = getLastUnsentEvent();
         assertEquals(event2.optString("event_type"), "event2");
         assertEquals(event2.optString("user_id"), userId2);
+    }
+
+    @Test
+    public void testSetDeviceId() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        assertNull(amplitude.getDeviceId());
+        looper.runToEndOfTasks();
+
+        String deviceId = amplitude.getDeviceId(); // Randomly generated device ID
+        assertNotNull(deviceId);
+        assertEquals(deviceId.length(), 36 + 1); // 36 for UUID, + 1 for appended R
+        assertEquals(deviceId.charAt(36), 'R');
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+
+        // test setting invalid device ids
+        amplitude.setDeviceId(null);
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("9774d56d682e549c");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("unknown");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("000000000000000");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("Android");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        amplitude.setDeviceId("DEFACE");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
+        // set valid device id
+        String newDeviceId = UUID.randomUUID().toString();
+        amplitude.setDeviceId(newDeviceId);
+        assertEquals(amplitude.getDeviceId(), newDeviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), newDeviceId);
+
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test");
+        assertEquals(event.optString("device_id"), newDeviceId);
     }
 
     @Test
