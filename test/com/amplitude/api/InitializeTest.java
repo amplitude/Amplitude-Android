@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import android.content.Context;
 
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
@@ -12,7 +11,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import android.content.Context;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -33,7 +33,7 @@ public class InitializeTest extends BaseTest {
     public void testInitializeUserId() {
         String userId = "user_id";
 
-        Amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e", userId);
+        Amplitude.getInstance().initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e", userId);
 
         // Test that the user id is set.
         String sharedPreferences = Constants.SHARED_PREFERENCES_NAME_PREFIX + "."

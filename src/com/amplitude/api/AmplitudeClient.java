@@ -1059,12 +1059,11 @@ public class AmplitudeClient {
         }
 
         // obj.names returns null if the json obj is empty.
-        JSONArray nameArray;
+        JSONArray nameArray = null;
         try {
             nameArray = obj.names();
         } catch (ArrayIndexOutOfBoundsException e) {
             Log.e(TAG, e.toString());
-            return null;
         }
         int len = (nameArray != null ? nameArray.length() : 0);
 
