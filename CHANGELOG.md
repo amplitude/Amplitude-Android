@@ -3,6 +3,7 @@
 * Removed all references to Apache HTTPClient to support Android M.
 * Handle exceptions when fetching last known location from LocationManager.
 * Add ability to set custom deviceId.
+* Handle exception when cloning JSON object.
 
 ## 2.1.0 (October 04, 2015)
 
