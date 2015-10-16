@@ -47,6 +47,7 @@ public class AmplitudeClient {
     }
 
     protected Context context;
+    protected OkHttpClient httpClient;
     protected String apiKey;
     protected String userId;
     protected String deviceId;
@@ -104,6 +105,7 @@ public class AmplitudeClient {
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
+            this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
@@ -784,7 +786,7 @@ public class AmplitudeClient {
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(new OkHttpClient(), mergedEvents, maxEventId, maxIdentifyId);
+                        makeEventUploadPostRequest(httpClient, mergedEvents, maxEventId, maxIdentifyId);
                     }
                 });
             } catch (JSONException e) {

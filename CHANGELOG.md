@@ -4,6 +4,7 @@
 * Handle exceptions when fetching last known location from LocationManager.
 * Add ability to set custom deviceId.
 * Handle exception when cloning JSON object.
+* Maintain only one instance of OKHttpClient.
 
 ## 2.1.0 (October 04, 2015)
 
