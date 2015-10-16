@@ -5,6 +5,7 @@
 * Add ability to set custom deviceId.
 * Handle exception when cloning JSON object.
 * Maintain only one instance of OKHttpClient.
+* Add AmplitudeLog helper class that supports enabling and disabling of logging.
 
 ## 2.1.0 (October 04, 2015)
 

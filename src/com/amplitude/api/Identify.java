@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -56,7 +54,7 @@ public class Identify {
     private void addToUserProperties(String operation, String property, Object value) {
         // check if property already used in previous operation
         if (userProperties.contains(property)) {
-            Log.w(TAG, String.format("Already used property %s in previous operation, ignoring operation %s", property, operation));
+            AmplitudeLog.getLogger().w(TAG, String.format("Already used property %s in previous operation, ignoring operation %s", property, operation));
             return;
         }
 
@@ -67,7 +65,7 @@ public class Identify {
             userPropertiesOperations.getJSONObject(operation).put(property, value);
             userProperties.add(property);
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            AmplitudeLog.getLogger().e(TAG, e.toString());
         }
     }
 }

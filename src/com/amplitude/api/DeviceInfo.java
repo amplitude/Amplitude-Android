@@ -10,7 +10,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -190,11 +189,11 @@ public class DeviceInfo {
                 Method getId = advertisingInfo.getClass().getMethod("getId");
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
-                Log.w(TAG, "Google Play Services SDK not found!");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
             } catch (InvocationTargetException e) {
-                Log.w(TAG, "Google Play Services not available");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
             } catch (Exception e) {
-                Log.e(TAG, "Encountered an error connecting to Google Play Services", e);
+                AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
             return advertisingId;
         }

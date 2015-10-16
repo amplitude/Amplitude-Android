@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.util.Log;
-
 import com.squareup.okhttp.OkHttpClient;
 
 import java.io.IOException;
@@ -22,6 +20,7 @@ import okio.ByteString;
 public class PinnedAmplitudeClient extends AmplitudeClient {
 
     public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
+    private static AmplitudeLog logger = AmplitudeLog.getLogger();
 
     /**
      * Pinned certificate chain for api.amplitude.com.
@@ -126,9 +125,9 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                 sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
                 return sslContext;
             } catch (GeneralSecurityException e) {
-                Log.e(TAG, e.getMessage(), e);
+                logger.e(TAG, e.getMessage(), e);
             } catch (IOException e) {
-                Log.e(TAG, e.getMessage(), e);
+                logger.e(TAG, e.getMessage(), e);
             }
             return null;
         }
@@ -157,9 +156,9 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         if (sslSocketFactory == null) {
             try {
                 sslSocketFactory = context.build().getSocketFactory();
-                Log.i(TAG, "Pinning SSL session using Comodo CA Cert");
+                logger.i(TAG, "Pinning SSL session using Comodo CA Cert");
             } catch (Exception e) {
-                Log.e(TAG, e.getMessage(), e);
+                logger.e(TAG, e.getMessage(), e);
             }
         }
         return sslSocketFactory;
@@ -173,7 +172,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             super.makeEventUploadPostRequest(client, events, maxEventId, maxIdentifyId);
         }
         else {
-            Log.e(TAG, "Unable to pin SSL as requested. Cowardly refusing to send data.");
+            logger.e(TAG, "Unable to pin SSL as requested. Cowardly refusing to send data.");
         }
     }
 }

@@ -3,7 +3,6 @@ package com.amplitude.api;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
-import android.util.Log;
 
 class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
 
@@ -11,10 +10,11 @@ class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
     private static final String NULLMSG = "Need to initialize AmplitudeCallbacks with AmplitudeClient instance";
 
     private AmplitudeClient clientInstance = null;
+    private static AmplitudeLog logger = AmplitudeLog.getLogger();
 
     public AmplitudeCallbacks(AmplitudeClient clientInstance) {
         if (clientInstance == null) {
-            Log.e(TAG, NULLMSG);
+            logger.e(TAG, NULLMSG);
             return;
         }
 
@@ -31,7 +31,7 @@ class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
     @Override
     public void onActivityPaused(Activity activity) {
         if (clientInstance == null) {
-            Log.e(TAG, NULLMSG);
+            logger.e(TAG, NULLMSG);
             return;
         }
 
@@ -41,7 +41,7 @@ class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
     @Override
     public void onActivityResumed(Activity activity) {
         if (clientInstance == null) {
-            Log.e(TAG, NULLMSG);
+            logger.e(TAG, NULLMSG);
             return;
         }
 
