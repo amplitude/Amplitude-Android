@@ -386,11 +386,13 @@ public class AmplitudeClient {
             setLastEventId(eventId);
         }
 
-        if (dbHelper.getEventCount() >= eventMaxCount) {
-            dbHelper.removeEvents(dbHelper.getNthEventId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        int numEventsToRemove = eventMaxCount > Constants.EVENT_REMOVE_BATCH_SIZE ?
+                Constants.EVENT_REMOVE_BATCH_SIZE : eventMaxCount/2;
+        if (dbHelper.getEventCount() > eventMaxCount) {
+            dbHelper.removeEvents(dbHelper.getNthEventId(numEventsToRemove));
         }
-        if (dbHelper.getIdentifyCount() >= eventMaxCount) {
-            dbHelper.removeIdentifys(dbHelper.getNthIdentifyId(Constants.EVENT_REMOVE_BATCH_SIZE));
+        if (dbHelper.getIdentifyCount() > eventMaxCount) {
+            dbHelper.removeIdentifys(dbHelper.getNthIdentifyId(numEventsToRemove));
         }
 
         long totalEventCount = dbHelper.getTotalEventCount(); // counts may have changed, refetch

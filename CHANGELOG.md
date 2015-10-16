@@ -5,6 +5,7 @@
 * Add ability to set custom deviceId.
 * Handle exception when cloning JSON object.
 * Maintain only one instance of OKHttpClient.
+* Fix bug where event and identify queues are not truncated if eventMaxCount is less than eventRemoveBatchSize.
 
 ## 2.1.0 (October 04, 2015)
 
