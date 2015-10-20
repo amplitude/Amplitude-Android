@@ -29,22 +29,22 @@ public class AmplitudeLog {
     }
 
     int d(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.DEBUG) return Log.d(tag, msg);
+        if (enableLogging && logLevel <= Log.DEBUG) return Log.d(tag, msg);
         return 0;
     }
 
     int d(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.DEBUG) return Log.d(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.DEBUG) return Log.d(tag, msg, tr);
         return 0;
     }
 
     int e(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.ERROR) return Log.e(tag, msg);
+        if (enableLogging && logLevel <= Log.ERROR) return Log.e(tag, msg);
         return 0;
     }
 
     int e(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.ERROR) return Log.e(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.ERROR) return Log.e(tag, msg, tr);
         return 0;
     }
 
@@ -53,12 +53,12 @@ public class AmplitudeLog {
     }
 
     int i(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.INFO) return Log.i(tag, msg);
+        if (enableLogging && logLevel <= Log.INFO) return Log.i(tag, msg);
         return 0;
     }
 
     int i(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.INFO) return Log.i(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.INFO) return Log.i(tag, msg, tr);
         return 0;
     }
 
@@ -71,43 +71,43 @@ public class AmplitudeLog {
     }
 
     int v(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.VERBOSE) return Log.v(tag, msg);
+        if (enableLogging && logLevel <= Log.VERBOSE) return Log.v(tag, msg);
         return 0;
     }
 
     int v(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.VERBOSE) return Log.v(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.VERBOSE) return Log.v(tag, msg, tr);
         return 0;
     }
 
     int w(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.WARN) return Log.w(tag, msg);
+        if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, msg);
         return 0;
     }
 
     int w(String tag, Throwable tr) {
-        if (enableLogging && logLevel >= Log.WARN) return Log.w(tag, tr);
+        if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, tr);
         return 0;
     }
 
     int w(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.WARN) return Log.w(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, msg, tr);
         return 0;
     }
 
     // wtf = What a Terrible Failure, logged at level ASSERT
     int wtf(String tag, String msg) {
-        if (enableLogging && logLevel >= Log.ASSERT) return Log.wtf(tag, msg);
+        if (enableLogging && logLevel <= Log.ASSERT) return Log.wtf(tag, msg);
         return 0;
     }
 
     int wtf(String tag, Throwable tr) {
-        if (enableLogging && logLevel >= Log.ASSERT) return Log.wtf(tag, tr);
+        if (enableLogging && logLevel <= Log.ASSERT) return Log.wtf(tag, tr);
         return 0;
     }
 
     int wtf(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel >= Log.ASSERT) return Log.wtf(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.ASSERT) return Log.wtf(tag, msg, tr);
         return 0;
     }
 }
