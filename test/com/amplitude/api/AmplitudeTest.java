@@ -20,6 +20,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -989,5 +990,106 @@ public class AmplitudeTest extends BaseTest {
             assertEquals(amplitude.getNextSequenceNumber(), i+1);
             assertEquals(dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), Long.valueOf(i+1));
         }
+    }
+
+    @Test
+    public void testSetOffline() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setOffline(true);
+
+        amplitude.logEvent("test1");
+        amplitude.logEvent("test2");
+        amplitude.identify(new Identify().unset("key1"));
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 2);
+        assertEquals(getUnsentIdentifyCount(), 1);
+
+        amplitude.setOffline(false);
+        looper.runToEndOfTasks();
+        RecordedRequest request = runRequest();
+        JSONArray events = getEventsFromRequest(request);
+        looper.runToEndOfTasks();
+
+        assertEquals(events.length(), 3);
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+    }
+
+    @Test
+    public void testSetOfflineTruncate() throws JSONException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        int eventMaxCount = 3;
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
+
+        amplitude.logEvent("test1");
+        amplitude.logEvent("test2");
+        amplitude.logEvent("test3");
+        amplitude.identify(new Identify().unset("key1"));
+        amplitude.identify(new Identify().unset("key2"));
+        amplitude.identify(new Identify().unset("key3"));
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+        assertEquals(getUnsentIdentifyCount(), eventMaxCount);
+
+        amplitude.logEvent("test4");
+        amplitude.identify(new Identify().unset("key4"));
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+        assertEquals(getUnsentIdentifyCount(), eventMaxCount);
+
+        List<JSONObject> events = dbHelper.getEvents(-1, -1);
+        assertEquals(events.size(), eventMaxCount);
+        assertEquals(events.get(0).optString("event_type"), "test2");
+        assertEquals(events.get(1).optString("event_type"), "test3");
+        assertEquals(events.get(2).optString("event_type"), "test4");
+
+        List<JSONObject> identifys = dbHelper.getIdentifys(-1, -1);
+        assertEquals(identifys.size(), eventMaxCount);
+        assertEquals(identifys.get(0).optJSONObject("user_properties").optJSONObject("$unset").optString("key2"), "-");
+        assertEquals(identifys.get(1).optJSONObject("user_properties").optJSONObject("$unset").optString("key3"), "-");
+        assertEquals(identifys.get(2).optJSONObject("user_properties").optJSONObject("$unset").optString("key4"), "-");
+    }
+
+    @Test
+    public void testTruncateEventsQueues() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        int eventMaxCount = 50;
+        assertTrue(eventMaxCount > Constants.EVENT_REMOVE_BATCH_SIZE);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
+
+        for (int i = 0; i < eventMaxCount; i++) {
+            amplitude.logEvent("test");
+        }
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount - (eventMaxCount/10) + 1);
+    }
+
+    @Test
+    public void testTruncateEventsQueuesWithOneEvent() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        int eventMaxCount = 1;
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
+
+        amplitude.logEvent("test1");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+
+        amplitude.logEvent("test2");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test2");
     }
 }

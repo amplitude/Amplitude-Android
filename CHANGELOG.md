@@ -6,6 +6,7 @@
 * Handle exception when cloning JSON object.
 * Maintain only one instance of OKHttpClient.
 * Add AmplitudeLog helper class that supports enabling and disabling of logging as well as setting of the log level.
+* Fix bug where event and identify queues are not truncated if eventMaxCount is less than eventRemoveBatchSize.
 
 ## 2.1.0 (October 04, 2015)
 
