@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.2.0 (October 20, 2015)
+
 * Removed all references to Apache HTTPClient to support Android M.
 * Handle exceptions when fetching last known location from LocationManager.
 * Add ability to set custom deviceId.
