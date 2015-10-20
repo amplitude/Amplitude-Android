@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Pair;
 
 import com.amplitude.security.MD5;
@@ -45,6 +44,8 @@ public class AmplitudeClient {
     public static AmplitudeClient getInstance() {
         return instance;
     }
+
+    private static AmplitudeLog logger = AmplitudeLog.getLogger();
 
     protected Context context;
     protected OkHttpClient httpClient;
@@ -92,7 +93,7 @@ public class AmplitudeClient {
 
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
-            Log.e(TAG, "Argument context cannot be null in initialize()");
+            logger.e(TAG, "Argument context cannot be null in initialize()");
             return instance;
         }
 
@@ -100,7 +101,7 @@ public class AmplitudeClient {
         AmplitudeClient.upgradeDeviceIdToDB(context);
 
         if (TextUtils.isEmpty(apiKey)) {
-            Log.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
+            logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
             return instance;
         }
         if (!initialized) {
@@ -222,6 +223,16 @@ public class AmplitudeClient {
         return instance;
     }
 
+    public AmplitudeClient enableLogging(boolean enableLogging) {
+        logger.setEnableLogging(enableLogging);
+        return instance;
+    }
+
+    public AmplitudeClient setLogLevel(int logLevel) {
+        logger.setLogLevel(logLevel);
+        return instance;
+    }
+
     public AmplitudeClient setOffline(boolean offline) {
         this.offline = offline;
 
@@ -272,7 +283,7 @@ public class AmplitudeClient {
 
     protected boolean validateLogEvent(String eventType) {
         if (TextUtils.isEmpty(eventType)) {
-            Log.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
+            logger.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return false;
         }
 
@@ -306,7 +317,7 @@ public class AmplitudeClient {
 
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
             JSONObject userProperties, long timestamp, boolean outOfSession) {
-        Log.d(TAG, "Logged event to Amplitude: " + eventType);
+        logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
             return -1;
@@ -369,7 +380,7 @@ public class AmplitudeClient {
             event.put("user_properties", (userProperties == null) ? new JSONObject()
                     : truncate(userProperties));
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            logger.e(TAG, e.toString());
         }
 
         return saveEvent(eventType, event);
@@ -627,7 +638,7 @@ public class AmplitudeClient {
                 try {
                     copy = new JSONObject(userProperties.toString());
                 } catch (JSONException e) {
-                    Log.e(TAG, e.toString());
+                    logger.e(TAG, e.toString());
                     return; // could not create copy
                 }
 
@@ -638,7 +649,7 @@ public class AmplitudeClient {
                     try {
                         identify.set(key, copy.get(key));
                     } catch (JSONException e) {
-                        Log.e(TAG, e.toString());
+                        logger.e(TAG, e.toString());
                     }
                 }
                 identify(identify);
@@ -672,7 +683,7 @@ public class AmplitudeClient {
                     object.put(key, truncate((JSONArray) value));
                 }
             } catch (JSONException e) {
-                Log.e(TAG, e.toString());
+                logger.e(TAG, e.toString());
             }
         }
 
@@ -795,7 +806,7 @@ public class AmplitudeClient {
                 });
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
-                Log.e(TAG, e.toString());
+                logger.e(TAG, e.toString());
             }
         }
     }
@@ -857,7 +868,7 @@ public class AmplitudeClient {
             // According to
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
             // this will never be thrown
-            Log.e(TAG, e.toString());
+            logger.e(TAG, e.toString());
         }
 
         RequestBody body = new FormEncodingBuilder()
@@ -902,12 +913,12 @@ public class AmplitudeClient {
                     }
                 });
             } else if (stringResponse.equals("invalid_api_key")) {
-                Log.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+                logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
             } else if (stringResponse.equals("bad_checksum")) {
-                Log.w(TAG,
+                logger.w(TAG,
                         "Bad checksum, post request was mangled in transit, will attempt to reupload later");
             } else if (stringResponse.equals("request_db_write_failed")) {
-                Log.w(TAG,
+                logger.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
             } else if (response.code() == 413) {
 
@@ -923,7 +934,7 @@ public class AmplitudeClient {
                 backoffUpload = true;
                 int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
                 backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
-                Log.w(TAG, "Request too large, will decrease size and attempt to reupload");
+                logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
                 logThread.post(new Runnable() {
                    @Override
                     public void run() {
@@ -932,27 +943,27 @@ public class AmplitudeClient {
                    }
                 });
             } else {
-                Log.w(TAG, "Upload failed, " + stringResponse
+                logger.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
             }
         } catch (java.net.ConnectException e) {
-            // Log.w(TAG,
+            // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
         } catch (java.net.UnknownHostException e) {
-            // Log.w(TAG,
+            // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
         } catch (IOException e) {
-            Log.e(TAG, e.toString());
+            logger.e(TAG, e.toString());
             lastError = e;
         } catch (AssertionError e) {
             // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
-            Log.e(TAG, "Exception:", e);
+            logger.e(TAG, "Exception:", e);
             lastError = e;
         } catch (Exception e) {
             // Just log any other exception so things don't crash on upload
-            Log.e(TAG, "Exception:", e);
+            logger.e(TAG, "Exception:", e);
             lastError = e;
         }
 
@@ -1025,12 +1036,12 @@ public class AmplitudeClient {
 
     protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
-            Log.e(TAG, "context cannot be null, set context with initialize() before calling "
+            logger.e(TAG, "context cannot be null, set context with initialize() before calling "
                     + methodName);
             return false;
         }
         if (TextUtils.isEmpty(apiKey)) {
-            Log.e(TAG,
+            logger.e(TAG,
                     "apiKey cannot be null or empty, set apiKey with initialize() before calling "
                             + methodName);
             return false;
@@ -1069,7 +1080,7 @@ public class AmplitudeClient {
         try {
             nameArray = obj.names();
         } catch (ArrayIndexOutOfBoundsException e) {
-            Log.e(TAG, e.toString());
+            logger.e(TAG, e.toString());
         }
         int len = (nameArray != null ? nameArray.length() : 0);
 
@@ -1081,7 +1092,7 @@ public class AmplitudeClient {
         try {
             return new JSONObject(obj, names);
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            logger.e(TAG, e.toString());
             return null;
         }
     }
@@ -1160,11 +1171,11 @@ public class AmplitudeClient {
             target.apply();
             source.edit().clear().apply();
 
-            Log.i(TAG, "Upgraded shared preferences from " + sourcePrefsName + " to " + prefsName);
+            logger.i(TAG, "Upgraded shared preferences from " + sourcePrefsName + " to " + prefsName);
             return true;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error upgrading shared preferences", e);
+            logger.e(TAG, "Error upgrading shared preferences", e);
             return false;
         }
     }

@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +46,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private File file;
 
+    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+
     static synchronized DatabaseHelper getDatabaseHelper(Context context) {
         if (instance == null) {
             instance = new DatabaseHelper(context.getApplicationContext());
@@ -73,7 +74,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion > newVersion) {
-            Log.e(TAG, "onUpgrade() with invalid oldVersion and newVersion");
+            logger.e(TAG, "onUpgrade() with invalid oldVersion and newVersion");
             resetDatabase(db);
             return;
         }
@@ -96,7 +97,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 break;
 
             default:
-                Log.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
+                logger.e(TAG, "onUpgrade() with unknown oldVersion " + oldVersion);
                 resetDatabase(db);
         }
     }
@@ -135,10 +136,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
                     SQLiteDatabase.CONFLICT_REPLACE
             );
             if (result == -1) {
-                Log.w(TAG, "Insert failed");
+                logger.w(TAG, "Insert failed");
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, "insertOrReplaceKeyValue failed", e);
+            logger.e(TAG, "insertOrReplaceKeyValue failed", e);
             // Not much we can do, just start fresh
             delete();
         } finally {
@@ -163,10 +164,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
             contentValues.put(EVENT_FIELD, event);
             result = db.insert(table, null, contentValues);
             if (result == -1) {
-                Log.w(TAG, String.format("Insert into %s failed", table));
+                logger.w(TAG, String.format("Insert into %s failed", table));
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("addEvent to %s failed", table), e);
+            logger.e(TAG, String.format("addEvent to %s failed", table), e);
             // Not much we can do, just start fresh
             delete();
         } finally {
@@ -199,7 +200,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 value = table.equals(STORE_TABLE_NAME) ? cursor.getString(1) : cursor.getLong(1);
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, "getValue failed", e);
+            logger.e(TAG, "getValue failed", e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -238,7 +239,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 events.add(obj);
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("getEvents from %s failed", table), e);
+            logger.e(TAG, String.format("getEvents from %s failed", table), e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -269,7 +270,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             statement = db.compileStatement(query);
             numberRows = statement.simpleQueryForLong();
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("getNumberRows for %s failed", table), e);
+            logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -299,10 +300,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
             try {
                 nthEventId = statement.simpleQueryForLong();
             } catch (SQLiteDoneException e) {
-                Log.w(TAG, e);
+                logger.w(TAG, e);
             }
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("getNthEventId from %s failed", table), e);
+            logger.e(TAG, String.format("getNthEventId from %s failed", table), e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -325,7 +326,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " <= " + maxId, null);
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("removeEvents from %s failed", table), e);
+            logger.e(TAG, String.format("removeEvents from %s failed", table), e);
         } finally {
             close();
         }
@@ -344,7 +345,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " = " + id, null);
         } catch (SQLiteException e) {
-            Log.e(TAG, String.format("removeEvent from %s failed", table), e);
+            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
         } finally {
             close();
         }
@@ -355,7 +356,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             close();
             file.delete();
         } catch (SecurityException e) {
-            Log.e(TAG, "delete failed", e);
+            logger.e(TAG, "delete failed", e);
         }
     }
 }
