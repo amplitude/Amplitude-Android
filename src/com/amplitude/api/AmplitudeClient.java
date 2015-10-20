@@ -386,8 +386,10 @@ public class AmplitudeClient {
             setLastEventId(eventId);
         }
 
-        int numEventsToRemove = eventMaxCount > Constants.EVENT_REMOVE_BATCH_SIZE ?
-                Constants.EVENT_REMOVE_BATCH_SIZE : eventMaxCount/2;
+        int numEventsToRemove = Math.min(
+                Math.max(1, eventMaxCount/10),
+                Constants.EVENT_REMOVE_BATCH_SIZE
+        );
         if (dbHelper.getEventCount() > eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(numEventsToRemove));
         }

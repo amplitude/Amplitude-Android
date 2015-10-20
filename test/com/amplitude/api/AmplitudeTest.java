@@ -1071,8 +1071,25 @@ public class AmplitudeTest extends BaseTest {
 
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
-        assertEquals(getUnsentEventCount(), eventMaxCount - Constants.EVENT_REMOVE_BATCH_SIZE + 1);
+        assertEquals(getUnsentEventCount(), eventMaxCount - (eventMaxCount/10) + 1);
+    }
 
+    @Test
+    public void testTruncateEventsQueuesWithOneEvent() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        int eventMaxCount = 1;
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
 
+        amplitude.logEvent("test1");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+
+        amplitude.logEvent("test2");
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), eventMaxCount);
+
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test2");
     }
 }
