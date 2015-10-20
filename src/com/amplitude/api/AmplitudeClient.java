@@ -228,6 +228,11 @@ public class AmplitudeClient {
         return instance;
     }
 
+    public AmplitudeClient setLogLevel(int logLevel) {
+        logger.setLogLevel(logLevel);
+        return instance;
+    }
+
     public AmplitudeClient setOffline(boolean offline) {
         this.offline = offline;
 
