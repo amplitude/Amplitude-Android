@@ -1,13 +1,12 @@
 package com.amplitude.unity.plugins;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Application;
 import android.content.Context;
 
 import com.amplitude.api.Amplitude;
-import com.amplitude.api.AmplitudeClient;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class AmplitudePlugin {
 
@@ -88,5 +87,9 @@ public class AmplitudePlugin {
 
     public static String getDeviceId() {
         return Amplitude.getInstance().getDeviceId();
+    }
+
+    public static void trackSessionEvents(boolean enabled) {
+        Amplitude.getInstance().trackSessionEvents(enabled);
     }
 }

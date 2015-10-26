@@ -1,8 +1,8 @@
 package com.amplitude.api;
 
-import org.json.JSONObject;
-
 import android.content.Context;
+
+import org.json.JSONObject;
 
 public class Amplitude {
 
