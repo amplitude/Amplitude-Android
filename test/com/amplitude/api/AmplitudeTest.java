@@ -64,6 +64,15 @@ public class AmplitudeTest extends BaseTest {
                 context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
                         Constants.PREFKEY_USER_ID, null));
         assertEquals(userId, amplitude.getUserId());
+
+        // try setting to null
+       amplitude.setUserId(null);
+        assertEquals(
+                null,
+                context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
+                        Constants.PREFKEY_USER_ID, null));
+        assertNull(amplitude.getUserId());
+
     }
 
     @Test

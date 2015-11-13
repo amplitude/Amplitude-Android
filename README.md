@@ -91,6 +91,8 @@ If your app has its own login system that you want to track users with, you can 
 Amplitude.getInstance().setUserId("USER_ID_HERE");
 ```
 
+You can also clear the user ID by calling `setUserId` with input `null`. Events without a user ID are anonymous.
+
 A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user.
 
 You can also add a user ID as an argument to the `initialize()` call:
@@ -135,6 +137,12 @@ Amplitude.getInstance().setUserProperties(userProperties);
 # User Property Operations #
 
 The SDK supports the operations set, setOnce, unset, and add on individual user properties. The operations are declared via a provided `Identify` interface. Multiple operations can be chained together in a single `Identify` object. The `Identify` object is then passed to the Amplitude client to send to the server. The results of the operations will be visible immediately in the dashboard, and take effect for events logged after.
+
+First you need to import the Identify class by adding this import statement at the top:
+
+```java
+import com.amplitude.api.Identify;
+```
 
 1. `set`: this sets the value of a user property.
 
