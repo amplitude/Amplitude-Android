@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Log if Google Play Services is enabled for the application.
+
 ## 2.2.0 (October 20, 2015)
 
 * Removed all references to Apache HTTPClient to support Android M.
