@@ -166,7 +166,7 @@ public class DeviceInfoTest {
     }
 
     @Test
-     public void testGetAdvertisingId() {
+    public void testGetAdvertisingId() {
         PowerMockito.mockStatic(AdvertisingIdClient.class);
         String advertisingId = "advertisingId";
         AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
