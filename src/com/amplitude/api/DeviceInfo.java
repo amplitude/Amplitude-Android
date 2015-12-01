@@ -46,6 +46,7 @@ public class DeviceInfo {
         private String carrier;
         private String language;
         private boolean limitAdTrackingEnabled;
+        private boolean gpsEnabled; // google play services
 
         private CachedInfo() {
             advertisingId = getAdvertisingId();
@@ -58,6 +59,7 @@ public class DeviceInfo {
             carrier = getCarrier();
             country = getCountry();
             language = getLanguage();
+            gpsEnabled = checkGPSEnabled();
         }
 
         /**
@@ -197,6 +199,33 @@ public class DeviceInfo {
             }
             return advertisingId;
         }
+
+        private boolean checkGPSEnabled() {
+            // This should not be called on the main thread.
+            try {
+                Class GPSUtil = Class
+                        .forName("com.google.android.gms.common.GooglePlayServicesUtil");
+                Method getGPSAvailable = GPSUtil.getMethod("isGooglePlayServicesAvailable",
+                        Context.class);
+                Integer status = (Integer) getGPSAvailable.invoke(null, context);
+                // status 0 corresponds to com.google.android.gms.common.ConnectionResult.SUCCESS;
+                return status != null && status.intValue() == 0;
+            } catch (NoClassDefFoundError e) {
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services Util not found!");
+            } catch (ClassNotFoundException e) {
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services Util not found!");
+            } catch (NoSuchMethodException e) {
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+            } catch (InvocationTargetException e) {
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+            } catch (IllegalAccessException e) {
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+            } catch (Exception e) {
+                AmplitudeLog.getLogger().w(TAG,
+                        "Error when checking for Google Play Services: " + e);
+            }
+            return false;
+        }
     }
 
     public DeviceInfo(Context context) {
@@ -261,6 +290,8 @@ public class DeviceInfo {
     public boolean isLimitAdTrackingEnabled() {
         return getCachedInfo().limitAdTrackingEnabled;
     }
+
+    public boolean isGooglePlayServicesEnabled() { return getCachedInfo().gpsEnabled; }
 
     public Location getMostRecentLocation() {
         if (!isLocationListening()) {

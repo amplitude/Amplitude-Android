@@ -71,6 +71,12 @@
       <scope>system</scope>
       <systemPath>${basedir}/lib/google-play-services-25.0.0.jar</systemPath>
     </dependency>
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>support-v4</artifactId>
+      <version>r6</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <developers>

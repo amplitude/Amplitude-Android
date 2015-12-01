@@ -9,6 +9,8 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,7 +42,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*" })
-@PrepareForTest(AdvertisingIdClient.class)
+@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest {
 
@@ -185,6 +187,35 @@ public class DeviceInfoTest {
     }
 
     @Test
+    public void testGPSDisabled() {
+        // GPS not enabled
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+        assertFalse(deviceInfo.isGooglePlayServicesEnabled());
+
+        // GPS bundled but not enabled, GooglePlayUtils.isAvailable returns non-0 value
+        PowerMockito.mockStatic(GooglePlayServicesUtil.class);
+        try {
+            Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
+                    .thenReturn(1);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+        assertFalse(deviceInfo.isGooglePlayServicesEnabled());
+    }
+
+    @Test
+    public void testGPSEnabled() {
+        PowerMockito.mockStatic(GooglePlayServicesUtil.class);
+        try {
+            Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
+                    .thenReturn(ConnectionResult.SUCCESS);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+        assert(deviceInfo.isGooglePlayServicesEnabled());
+    }
+
+    @Test
     public void testGetMostRecentLocation() {
         DeviceInfo deviceInfo = new DeviceInfo(context);
         ShadowLocationManager locationManager = Shadows.shadowOf((LocationManager) context
@@ -202,5 +233,4 @@ public class DeviceInfoTest {
         Location recent = deviceInfo.getMostRecentLocation();
         assertNull(recent);
     }
-
 }
