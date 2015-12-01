@@ -291,7 +291,7 @@ public class DeviceInfo {
         return getCachedInfo().limitAdTrackingEnabled;
     }
 
-    public boolean isGPSEnabled() { return getCachedInfo().gpsEnabled; }
+    public boolean isGooglePlayServicesEnabled() { return getCachedInfo().gpsEnabled; }
 
     public Location getMostRecentLocation() {
         if (!isLocationListening()) {

@@ -373,7 +373,7 @@ public class AmplitudeClient {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
-            apiProperties.put("gps_enabled", deviceInfo.isGPSEnabled());
+            apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()

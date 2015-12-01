@@ -190,7 +190,7 @@ public class DeviceInfoTest {
     public void testGPSDisabled() {
         // GPS not enabled
         DeviceInfo deviceInfo = new DeviceInfo(context);
-        assertFalse(deviceInfo.isGPSEnabled());
+        assertFalse(deviceInfo.isGooglePlayServicesEnabled());
 
         // GPS bundled but not enabled, GooglePlayUtils.isAvailable returns non-0 value
         PowerMockito.mockStatic(GooglePlayServicesUtil.class);
@@ -200,7 +200,7 @@ public class DeviceInfoTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        assertFalse(deviceInfo.isGPSEnabled());
+        assertFalse(deviceInfo.isGooglePlayServicesEnabled());
     }
 
     @Test
@@ -212,7 +212,7 @@ public class DeviceInfoTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        assert(deviceInfo.isGPSEnabled());
+        assert(deviceInfo.isGooglePlayServicesEnabled());
     }
 
     @Test
