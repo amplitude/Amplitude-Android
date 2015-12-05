@@ -3,7 +3,9 @@ package com.amplitude.api;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /*
@@ -70,6 +72,44 @@ public class Identify {
         addToUserProperties(Constants.AMP_OP_APPEND, property, value);
         return this;
     }
+
+    public Identify append(String property, float [] values) {
+        List<Float> valuesArray = new ArrayList<Float>(values.length);
+        for (float value : values) {
+            valuesArray.add(value);
+        }
+        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+        return this;
+    }
+
+    public Identify append(String property, int [] values) {
+        List<Integer> valuesArray = new ArrayList<Integer>(values.length);
+        for (int value : values) {
+            valuesArray.add(value);
+        }
+        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+        return this;
+    }
+
+    public Identify append(String property, long [] values) {
+        List<Long> valuesArray = new ArrayList<Long>(values.length);
+        for (long value : values) {
+            valuesArray.add(value);
+        }
+        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+        return this;
+    }
+
+    public Identify append(String property, double [] values) {
+        List<Double> valuesArray = new ArrayList<Double>(values.length);
+        for (double value : values) {
+            valuesArray.add(value);
+        }
+        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+        return this;
+    }
+
+
 
     public Identify unset(String property) {
         addToUserProperties(Constants.AMP_OP_UNSET, property, "-");
