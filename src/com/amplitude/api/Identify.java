@@ -46,6 +46,31 @@ public class Identify {
         return this;
     }
 
+    public Identify append(String property, Object value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
+    public Identify append(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
+    public Identify append(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
+    public Identify append(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
+    public Identify append(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
     public Identify unset(String property) {
         addToUserProperties(Constants.AMP_OP_UNSET, property, "-");
         return this;

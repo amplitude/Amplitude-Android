@@ -9,6 +9,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -101,7 +104,6 @@ public class IdentifyTest extends BaseTest {
         String property4 = "long value";
         long value4 = 18l;
 
-
         Identify identify = new Identify().add(property1, value1).add(property2, value2);
         identify.add(property3, value3).add(property4, value4);
 
@@ -112,6 +114,43 @@ public class IdentifyTest extends BaseTest {
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
         expected.put(Constants.AMP_OP_ADD, expectedOperations);
+        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
+
+    @Test
+    public void testAppendProperty() throws JSONException {
+        String property1 = "int value";
+        int value1 = 5;
+
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "float value";
+        double value3 = 0.625; // floats are actually promoted to long in JSONObject
+
+        String property4 = "long value";
+        long value4 = 18l;
+
+        String property5 = "list value";
+        List<Integer> value5 = new LinkedList<Integer>();
+        value5.add(15);
+        value5.add(25);
+
+        String property6 = "array value";
+        int [] value6 = new int[]{1, 2, 3};
+
+        Identify identify = new Identify().append(property1, value1).append(property2, value2);
+        identify.append(property3, value3).append(property4, value4);
+        identify.append(property5, value5).append(property6, value6);
+
+        // identify should ignore this since duplicate key
+        identify.add(property1, value3);
+
+        JSONObject expected = new JSONObject();
+        JSONObject expectedOperations = new JSONObject().put(property1, value1);
+        expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5).put(property6, value6);
+        expected.put(Constants.AMP_OP_APPEND, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
@@ -128,8 +167,13 @@ public class IdentifyTest extends BaseTest {
 
         String property4 = "json value";
 
+        String property5 = "list value";
+        List<Integer> value5 = new LinkedList<Integer>();
+        value5.add(15);
+        value5.add(25);
+
         Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
-        identify.set(property3, value3).unset(property4);
+        identify.set(property3, value3).unset(property4).append(property5, value5);
 
         // identify should ignore this since duplicate key
         identify.set(property4, value3);
@@ -139,6 +183,7 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_ADD, new JSONObject().put(property2, value2));
         expected.put(Constants.AMP_OP_SET, new JSONObject().put(property3, value3));
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
+        expected.put(Constants.AMP_OP_APPEND, new JSONObject().put(property5, value5));
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
