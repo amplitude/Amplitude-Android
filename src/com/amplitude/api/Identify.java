@@ -17,6 +17,47 @@ public class Identify {
     protected JSONObject userPropertiesOperations = new JSONObject();
     protected Set<String> userProperties = new HashSet<String>();
 
+    // SETONCE
+    public Identify setOnce(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, JSONArray value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, JSONObject value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
     // SET
     public Identify set(String property, String value) {
         addToUserProperties(Constants.AMP_OP_SET, property, value);
@@ -58,46 +99,6 @@ public class Identify {
         return this;
     }
 
-    // SETONCE
-    public Identify setOnce(String property, String value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, boolean value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, float value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, int value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, long value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, double value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, JSONArray value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
-
-    public Identify setOnce(String property, JSONObject value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
-        return this;
-    }
 
     // ADD
     public Identify add(String property, String value) {
@@ -188,6 +189,12 @@ public class Identify {
         } catch (JSONException e) {
             AmplitudeLog.getLogger().e(TAG, e.toString());
         }
+    }
+
+    // Package private method - used by AmplitudeClient to convert setUserProperties to identify
+    Identify setUserProperty(String property, Object value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
     }
 
     // DEPRECATED - Object class is too general
