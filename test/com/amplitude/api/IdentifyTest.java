@@ -1,5 +1,6 @@
 package com.amplitude.api;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -8,9 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import java.util.LinkedList;
-import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -131,17 +129,14 @@ public class IdentifyTest extends BaseTest {
         String property4 = "long value";
         long value4 = 18l;
 
-        String property5 = "list value";
-        List<Integer> value5 = new LinkedList<Integer>();
-        value5.add(15);
-        value5.add(25);
-
-        String property6 = "array value";
-        int [] value6 = new int[]{1, 2, 3};
+        String property5 = "array value";
+        JSONArray value5 = new JSONArray();
+        value5.put(1);
+        value5.put(2);
+        value5.put(3);
 
         Identify identify = new Identify().append(property1, value1).append(property2, value2);
-        identify.append(property3, value3).append(property4, value4);
-        identify.append(property5, value5).append(property6, value6);
+        identify.append(property3, value3).append(property4, value4).append(property5, value5);
 
         // identify should ignore this since duplicate key
         identify.add(property1, value3);
@@ -149,7 +144,7 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
-        expectedOperations.put(property5, value5).put(property6, value6);
+        expectedOperations.put(property5, value5);
         expected.put(Constants.AMP_OP_APPEND, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
@@ -167,10 +162,10 @@ public class IdentifyTest extends BaseTest {
 
         String property4 = "json value";
 
-        String property5 = "list value";
-        List<Integer> value5 = new LinkedList<Integer>();
-        value5.add(15);
-        value5.add(25);
+        String property5 = "array value";
+        JSONArray value5 = new JSONArray();
+        value5.put(15);
+        value5.put(25);
 
         Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
         identify.set(property3, value3).unset(property4).append(property5, value5);

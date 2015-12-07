@@ -1,11 +1,10 @@
 package com.amplitude.api;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /*
@@ -18,13 +17,91 @@ public class Identify {
     protected JSONObject userPropertiesOperations = new JSONObject();
     protected Set<String> userProperties = new HashSet<String>();
 
-    public Identify setOnce(String property, Object value) {
+    // SET
+    public Identify set(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, JSONObject value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    public Identify set(String property, JSONArray value) {
+        addToUserProperties(Constants.AMP_OP_SET, property, value);
+        return this;
+    }
+
+    // SETONCE
+    public Identify setOnce(String property, String value) {
         addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
         return this;
     }
 
-    public Identify set(String property, Object value) {
-        addToUserProperties(Constants.AMP_OP_SET, property, value);
+    public Identify setOnce(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, JSONArray value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    public Identify setOnce(String property, JSONObject value) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+        return this;
+    }
+
+    // ADD
+    public Identify add(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_ADD, property, value);
         return this;
     }
 
@@ -48,7 +125,13 @@ public class Identify {
         return this;
     }
 
-    public Identify append(String property, Object value) {
+    // APPEND
+    public Identify append(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+        return this;
+    }
+
+    public Identify append(String property, boolean value) {
         addToUserProperties(Constants.AMP_OP_APPEND, property, value);
         return this;
     }
@@ -73,44 +156,17 @@ public class Identify {
         return this;
     }
 
-    public Identify append(String property, float [] values) {
-        List<Float> valuesArray = new ArrayList<Float>(values.length);
-        for (float value : values) {
-            valuesArray.add(value);
-        }
-        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+    public Identify append(String property, JSONArray value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
         return this;
     }
 
-    public Identify append(String property, int [] values) {
-        List<Integer> valuesArray = new ArrayList<Integer>(values.length);
-        for (int value : values) {
-            valuesArray.add(value);
-        }
-        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
+    public Identify append(String property, JSONObject value) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
         return this;
     }
 
-    public Identify append(String property, long [] values) {
-        List<Long> valuesArray = new ArrayList<Long>(values.length);
-        for (long value : values) {
-            valuesArray.add(value);
-        }
-        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
-        return this;
-    }
-
-    public Identify append(String property, double [] values) {
-        List<Double> valuesArray = new ArrayList<Double>(values.length);
-        for (double value : values) {
-            valuesArray.add(value);
-        }
-        addToUserProperties(Constants.AMP_OP_ADD, property, valuesArray);
-        return this;
-    }
-
-
-
+    // UNSET
     public Identify unset(String property) {
         addToUserProperties(Constants.AMP_OP_UNSET, property, "-");
         return this;
@@ -132,5 +188,17 @@ public class Identify {
         } catch (JSONException e) {
             AmplitudeLog.getLogger().e(TAG, e.toString());
         }
+    }
+
+    // DEPRECATED - Object class is too general
+    public Identify setOnce(String property, Object value) {
+        AmplitudeLog.getLogger().w(TAG, String.format("This version of setOnce is deprecated. Please use one with a different signature."));
+        return this;
+    }
+
+    // DEPRECATED - Object class is too general
+    public Identify set(String property, Object value) {
+        AmplitudeLog.getLogger().w(TAG, String.format("This version of set is deprecated. Please use one with a different signature."));
+        return this;
     }
 }
