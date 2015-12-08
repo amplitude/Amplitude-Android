@@ -99,7 +99,6 @@ public class Identify {
         return this;
     }
 
-
     // ADD
     public Identify add(String property, String value) {
         addToUserProperties(Constants.AMP_OP_ADD, property, value);
