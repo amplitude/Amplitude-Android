@@ -48,13 +48,13 @@ public class Identify {
         return this;
     }
 
-    public Identify setOnce(String property, JSONArray value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+    public Identify setOnce(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, values);
         return this;
     }
 
-    public Identify setOnce(String property, JSONObject value) {
-        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, value);
+    public Identify setOnce(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_SET_ONCE, property, values);
         return this;
     }
 
@@ -120,13 +120,13 @@ public class Identify {
         return this;
     }
 
-    public Identify set(String property, JSONObject value) {
-        addToUserProperties(Constants.AMP_OP_SET, property, value);
+    public Identify set(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_SET, property, values);
         return this;
     }
 
-    public Identify set(String property, JSONArray value) {
-        addToUserProperties(Constants.AMP_OP_SET, property, value);
+    public Identify set(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_SET, property, values);
         return this;
     }
 
@@ -187,6 +187,12 @@ public class Identify {
         return this;
     }
 
+    // Server-side we flatten dictionaries and apply add to each flattened proeprty
+    public Identify add(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_ADD, property, values);
+        return this;
+    }
+
 
     // APPEND
     public Identify append(String property, boolean value) {
@@ -219,8 +225,14 @@ public class Identify {
         return this;
     }
 
-    public Identify append(String property, JSONArray value) {
-        addToUserProperties(Constants.AMP_OP_APPEND, property, value);
+    public Identify append(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, values);
+        return this;
+    }
+
+    // Server-side we flatten dictionaries and apply append to each flattened property
+    public Identify append(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_APPEND, property, values);
         return this;
     }
 
