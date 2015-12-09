@@ -48,8 +48,13 @@ public class IdentifyTest extends BaseTest {
         String property4 = "json value";
         JSONObject value4 = new JSONObject();
 
+        String property5 = "boolean array";
+        boolean[] value5 = new boolean[]{true, true, false};
+        JSONArray value5Expected = new JSONArray();
+        for (boolean value : value5) value5Expected.put(value);
+
         Identify identify = new Identify().set(property1, value1).set(property2, value2);
-        identify.set(property3, value3).set(property4, value4);
+        identify.set(property3, value3).set(property4, value4).set(property5, value5);
 
         // identify should ignore this since duplicate key
         identify.set(property1, value3);
@@ -57,6 +62,7 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5Expected);
         expected.put(Constants.AMP_OP_SET, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
@@ -75,8 +81,13 @@ public class IdentifyTest extends BaseTest {
         String property4 = "json value";
         JSONObject value4 = new JSONObject();
 
+        String property5 = "double array";
+        double[] value5 = new double[]{1.2, 2.3, 3.4};
+        JSONArray value5Expected = new JSONArray();
+        for (double value : value5) value5Expected.put(value);
+
         Identify identify = new Identify().setOnce(property1, value1).setOnce(property2, value2);
-        identify.setOnce(property3, value3).setOnce(property4, value4);
+        identify.setOnce(property3, value3).setOnce(property4, value4).setOnce(property5, value5);
 
         // identify should ignore this since duplicate key
         identify.setOnce(property1, value3);
@@ -84,6 +95,7 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5Expected);
         expected.put(Constants.AMP_OP_SET_ONCE, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
@@ -102,8 +114,11 @@ public class IdentifyTest extends BaseTest {
         String property4 = "long value";
         long value4 = 18l;
 
+        String property5 = "string value";
+        String value5 = "19";
+
         Identify identify = new Identify().add(property1, value1).add(property2, value2);
-        identify.add(property3, value3).add(property4, value4);
+        identify.add(property3, value3).add(property4, value4).add(property5, value5);
 
         // identify should ignore this since duplicate key
         identify.add(property1, value3);
@@ -111,6 +126,7 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5);
         expected.put(Constants.AMP_OP_ADD, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
@@ -135,8 +151,30 @@ public class IdentifyTest extends BaseTest {
         value5.put(2);
         value5.put(3);
 
+        String property6 = "float array";
+        float[] value6 = new float[]{(float)1.2, (float)2.3, (float)3.4, (float)4.5};
+        JSONArray value6Expected = new JSONArray();
+        for (float value : value6) value6Expected.put(value);
+
+        String property7 = "int array";
+        int[] value7 = new int[]{10, 12, 14, 17};
+        JSONArray value7Expected = new JSONArray();
+        for (int value : value7) value7Expected.put(value);
+
+        String property8 = "long array";
+        long[] value8 = new long[]{20, 22, 24, 27};
+        JSONArray value8Expected = new JSONArray();
+        for (long value : value8) value8Expected.put(value);
+
+        String property9 = "string array";
+        String[] value9 = new String[]{"test1", "test2", "test3"};
+        JSONArray value9Expected = new JSONArray();
+        for (String value : value9) value9Expected.put(value);
+
         Identify identify = new Identify().append(property1, value1).append(property2, value2);
         identify.append(property3, value3).append(property4, value4).append(property5, value5);
+        identify.append(property6, value6).append(property7, value7).append(property8, value8);
+        identify.append(property9, value9);
 
         // identify should ignore this since duplicate key
         identify.add(property1, value3);
@@ -144,7 +182,9 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, value1);
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
-        expectedOperations.put(property5, value5);
+        expectedOperations.put(property5, value5).put(property6, value6Expected);
+        expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
+        expectedOperations.put(property9, value9Expected);
         expected.put(Constants.AMP_OP_APPEND, expectedOperations);
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }

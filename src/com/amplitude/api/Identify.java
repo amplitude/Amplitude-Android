@@ -290,12 +290,6 @@ public class Identify {
         }
     }
 
-    private JSONArray stringArrayToJSONArray(String[] values) {
-        JSONArray array = new JSONArray();
-        for (String value : values) array.put(value);
-        return array;
-    }
-
     private JSONArray booleanArrayToJSONArray(boolean[] values) {
         JSONArray array = new JSONArray();
         for (boolean value : values) array.put(value);
@@ -309,7 +303,21 @@ public class Identify {
                 array.put(value);
             } catch (JSONException e) {
                 AmplitudeLog.getLogger().e(TAG, String.format(
-                    "Error converting float %f to JSON: %s", value, e.toString()
+                        "Error converting float %f to JSON: %s", value, e.toString()
+                ));
+            }
+        }
+        return array;
+    }
+
+    private JSONArray doubleArrayToJSONArray(double[] values) {
+        JSONArray array = new JSONArray();
+        for (double value : values) {
+            try {
+                array.put(value);
+            } catch (JSONException e) {
+                AmplitudeLog.getLogger().e(TAG, String.format(
+                        "Error converting double %d to JSON: %s", value, e.toString()
                 ));
             }
         }
@@ -328,17 +336,9 @@ public class Identify {
         return array;
     }
 
-    private JSONArray doubleArrayToJSONArray(double[] values) {
+    private JSONArray stringArrayToJSONArray(String[] values) {
         JSONArray array = new JSONArray();
-        for (double value : values) {
-            try {
-                array.put(value);
-            } catch (JSONException e) {
-                AmplitudeLog.getLogger().e(TAG, String.format(
-                    "Error converting double %d to JSON: %s", value, e.toString()
-                ));
-            }
-        }
+        for (String value : values) array.put(value);
         return array;
     }
 
