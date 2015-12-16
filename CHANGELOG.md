@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.4.0 (December 15, 2015)
+
 * Add support for append user property operation.
 
 ## 2.3.0 (November 30, 2015)
