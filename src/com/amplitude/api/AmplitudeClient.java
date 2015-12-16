@@ -648,7 +648,7 @@ public class AmplitudeClient {
                 while (keys.hasNext()) {
                     String key = (String) keys.next();
                     try {
-                        identify.set(key, copy.get(key));
+                        identify.setUserProperty(key, copy.get(key));
                     } catch (JSONException e) {
                         logger.e(TAG, e.toString());
                     }
