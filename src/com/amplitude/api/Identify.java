@@ -182,6 +182,7 @@ public class Identify {
         return this;
     }
 
+    // Server-side converts string numbers to numbers
     public Identify add(String property, String value) {
         addToUserProperties(Constants.AMP_OP_ADD, property, value);
         return this;
@@ -315,7 +316,7 @@ public class Identify {
                 array.put(value);
             } catch (JSONException e) {
                 AmplitudeLog.getLogger().e(TAG, String.format(
-                        "Error converting float %f to JSON: %s", value, e.toString()
+                    "Error converting float %f to JSON: %s", value, e.toString()
                 ));
             }
         }
@@ -329,7 +330,7 @@ public class Identify {
                 array.put(value);
             } catch (JSONException e) {
                 AmplitudeLog.getLogger().e(TAG, String.format(
-                        "Error converting double %d to JSON: %s", value, e.toString()
+                    "Error converting double %d to JSON: %s", value, e.toString()
                 ));
             }
         }
@@ -360,7 +361,7 @@ public class Identify {
         return this;
     }
 
-    // DEPRECATED - Object class is too general
+    // DEPRECATED - Signature is too general
     public Identify setOnce(String property, Object value) {
         AmplitudeLog.getLogger().w(
             TAG,
@@ -369,7 +370,7 @@ public class Identify {
         return this;
     }
 
-    // DEPRECATED - Object class is too general
+    // DEPRECATED - Signature is too general
     public Identify set(String property, Object value) {
         AmplitudeLog.getLogger().w(
             TAG,
