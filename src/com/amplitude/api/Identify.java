@@ -305,7 +305,7 @@ public class Identify {
             return;
         }
 
-        // check that property wasn't already used in this Identify
+        // check that clearAll wasn't already used in this Identify
         if (userPropertiesOperations.has(Constants.AMP_OP_CLEAR_ALL)) {
             AmplitudeLog.getLogger().w(TAG, String.format(
                 "This Identify already contains a $clearAll operation, ignoring operation %s",
