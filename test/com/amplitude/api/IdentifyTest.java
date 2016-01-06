@@ -236,4 +236,34 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property, value1));
         assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
     }
+
+    @Test
+    public void testDisallowOtherOperationsOnClearAllIdentify() throws JSONException {
+        String property = "testProperty";
+        String value1 = "testValue";
+        double value2 = 0.123;
+        boolean value3 = true;
+
+        Identify identify = new Identify().clearAll().setOnce(property, value1);
+        identify.add(property, value2).set(property, value3).unset(property);
+
+        JSONObject expected = new JSONObject();
+        expected.put(Constants.AMP_OP_CLEAR_ALL, "-");
+        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
+
+    @Test
+    public void testDisallowClearAllOnIdentifysWithOtherOperations() throws JSONException {
+        String property = "testProperty";
+        String value1 = "testValue";
+        double value2 = 0.123;
+        boolean value3 = true;
+
+        Identify identify = new Identify().setOnce(property, value1).add(property, value2);
+        identify.set(property, value3).unset(property).clearAll();
+
+        JSONObject expected = new JSONObject();
+        expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property, value1));
+        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
 }

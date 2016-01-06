@@ -1101,4 +1101,25 @@ public class AmplitudeTest extends BaseTest {
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test2");
     }
+
+    @Test
+    public void testClearUserProperties() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        amplitude.clearUserProperties();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        JSONObject event = getLastUnsentIdentify();
+        assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
+        assertEquals(event.optJSONObject("event_properties").length(), 0);
+
+        JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
+        assertEquals(userPropertiesOperations.length(), 1);
+        assertTrue(userPropertiesOperations.has(Constants.AMP_OP_CLEAR_ALL));
+
+        assertEquals(
+            "-", userPropertiesOperations.optString(Constants.AMP_OP_CLEAR_ALL)
+        );
+    }
 }

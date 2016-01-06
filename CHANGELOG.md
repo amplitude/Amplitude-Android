@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add ability to clear all user properties.
+
 ## 2.4.0 (December 15, 2015)
 
 * Add support for append user property operation.
