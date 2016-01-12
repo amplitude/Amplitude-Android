@@ -274,11 +274,42 @@ public class Identify {
         return this;
     }
 
+
+    // CLEAR ALL
+    public Identify clearAll() {
+        if (userPropertiesOperations.length() > 0) {
+            if (!userProperties.contains(Constants.AMP_OP_CLEAR_ALL)) {
+                AmplitudeLog.getLogger().w(TAG, String.format(
+                   "Need to send $clearAll on its own Identify object without any other " +
+                   "operations, ignoring $clearAll"
+                ));
+            }
+            return this;
+        }
+
+        try {
+            userPropertiesOperations.put(Constants.AMP_OP_CLEAR_ALL, "-");
+        } catch (JSONException e) {
+            AmplitudeLog.getLogger().e(TAG, e.toString());
+        }
+        return this;
+    }
+
+
     private void addToUserProperties(String operation, String property, Object value) {
         if (value == null) {
             AmplitudeLog.getLogger().w(TAG, String.format(
                 "Attempting to perform operation %s with null value for property %s, ignoring",
                 operation, property
+            ));
+            return;
+        }
+
+        // check that clearAll wasn't already used in this Identify
+        if (userPropertiesOperations.has(Constants.AMP_OP_CLEAR_ALL)) {
+            AmplitudeLog.getLogger().w(TAG, String.format(
+                "This Identify already contains a $clearAll operation, ignoring operation %s",
+                operation
             ));
             return;
         }

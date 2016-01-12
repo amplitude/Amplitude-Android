@@ -622,7 +622,7 @@ public class AmplitudeClient {
     }
 
     // maintain for backwards compatibility
-    public void setUserProperties(final JSONObject userProperties, final boolean replace){
+    public void setUserProperties(final JSONObject userProperties, final boolean replace) {
         setUserProperties(userProperties);
     }
 
@@ -656,6 +656,11 @@ public class AmplitudeClient {
                 identify(identify);
             }
         });
+    }
+
+    public void clearUserProperties() {
+        Identify identify = new Identify().clearAll();
+        identify(identify);
     }
 
     public void identify(Identify identify) {

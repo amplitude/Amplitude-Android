@@ -202,6 +202,14 @@ try {
 Amplitude.getInstance().setUserProperties(userProperties);
 ```
 
+### Clearing User Properties with `clearUserProperties` ###
+
+You may use `clearUserProperties` to clear all user properties at once. Note: the result is irreversible!
+
+```java
+Amplitude.getInstance().clearUserProperties();
+```
+
 # Tracking Revenue #
 
 To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:

@@ -34,9 +34,10 @@ public class Constants {
     public static final String PREFKEY_OPT_OUT = PACKAGE_NAME + ".optOut";
 
     public static final String IDENTIFY_EVENT = "$identify";
-    public static final String AMP_OP_SET = "$set";
-    public static final String AMP_OP_SET_ONCE = "$setOnce";
     public static final String AMP_OP_ADD = "$add";
     public static final String AMP_OP_APPEND = "$append";
+    public static final String AMP_OP_CLEAR_ALL = "$clearAll";
+    public static final String AMP_OP_SET = "$set";
+    public static final String AMP_OP_SET_ONCE = "$setOnce";
     public static final String AMP_OP_UNSET = "$unset";
 }
