@@ -132,7 +132,7 @@ public class AmplitudeClient {
     }
 
     public AmplitudeClient enableForegroundTracking(Application app) {
-        if (usingForegroundTracking) {
+        if (usingForegroundTracking || !contextAndApiKeySet("enableForegroundTracking()")) {
             return instance;
         }
 
@@ -215,6 +215,10 @@ public class AmplitudeClient {
     }
 
     public AmplitudeClient setOptOut(boolean optOut) {
+        if (!contextAndApiKeySet("setOptOut()")) {
+            return instance;
+        }
+
         this.optOut = optOut;
 
         SharedPreferences preferences = context.getSharedPreferences(
@@ -627,7 +631,8 @@ public class AmplitudeClient {
     }
 
     public void setUserProperties(final JSONObject userProperties) {
-        if (userProperties == null || userProperties.length() == 0) {
+        if (userProperties == null || userProperties.length() == 0 ||
+                !contextAndApiKeySet("setUserProperties")) {
             return;
         }
 
@@ -664,7 +669,8 @@ public class AmplitudeClient {
     }
 
     public void identify(Identify identify) {
-        if (identify == null || identify.userPropertiesOperations.length() == 0) {
+        if (identify == null || identify.userPropertiesOperations.length() == 0
+                || !contextAndApiKeySet("identify()")) {
             return;
         }
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,
