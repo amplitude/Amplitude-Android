@@ -40,6 +40,8 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
     Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE").enableForegroundTracking(getApplication());
     ```
 
+    Note: if your app has multiple entry points/exit points, you should make a `Amplitude.getInstance().initialize()` at every `onCreate()` entry point.
+
 6. To track an event anywhere in the app, call:
 
     ```java
@@ -248,18 +250,14 @@ Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseTok
 
 # Fine-grained location tracking #
 
-Amplitude access the Android location service (if possible) to add the specific coordinates (longitude and latitude)
-where an event is logged.
-
-This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
+Amplitude can access the Android location service (if possible) to add the specific coordinates (longitude and latitude) where an event is logged. This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
 
 ```java
 Amplitude.getInstance().enableLocationListening();
 Amplitude.getInstance().disableLocationListening();
 ```
 
-Even disabling the location listening, the events will have the "country" property filled. That property
-is retrieved from other sources (i.e. network or device locale).
+Even disabling the location listening, the events will have the "country" property filled. That property is retrieved from other sources (i.e. network or device locale).
 
 # Allowing Users to Opt Out
 
@@ -273,19 +271,17 @@ Logging can be restarted by calling setOptOut again with enabled set to false.
 No events will be logged during any period opt out is enabled.
 
 # Advanced #
-
 If you want to use the source files directly, you can [download them here](https://github.com/amplitude/Amplitude-Android/archive/master.zip). To include them in your project, extract the files, and then copy the five *.java files into your Android project.
-
-If your app has multiple entry points/exit points, you should make a `Amplitude.getInstance().initialize()` at every `onCreate()` entry point.
 
 This SDK automatically grabs useful data from the phone, including app version, phone model, operating system version, and carrier information. If your app has location permissions, the SDK will also grab the last known location of a user (this will not consume any extra battery, as it does not poll for a new location).
 
-User IDs are automatically generated based on device specific identifiers if not specified.
-
+### Custom Device Ids ###
 By default, device IDs are a randomly generated UUID. If you would like to use Google's Advertising ID as the device ID, you can specify this by calling `Amplitude.getInstance().useAdvertisingIdForDeviceId()` prior to initializing. You can retrieve the Device ID that Amplitude uses with `Amplitude.getDeviceId()`. This method can return null if a Device ID hasn't been generated yet.
 
 If you have your own system for tracking device IDs and would like to set a custom device ID, you can do so with `Amplitude.getInstance().setDeviceId("CUSTOM_DEVICE_ID")`. **Note: this is not recommended unless you really know what you are doing.** Make sure the device ID you set is sufficiently unique (we recommend something like a UUID - we use `UUID.randomUUID().toString()`) to prevent conflicts with other devices in our system.
 
+### SSL Pinning ###
 The SDK includes support for SSL pinning, but it is undocumented and recommended against unless you have a specific need. Please contact Amplitude support before you ship any products with SSL pinning enabled so that we are aware and can provide documentation and implementation help.
 
+### SDK Logging ###
 You can disable all logging done in the SDK by calling `Amplitude.getInstance().enableLogging(false)`. By default the logging level is Log.INFO, meaning info messages, errors, and asserts are logged, but verbose and debug messages are not. You can change the logging level, for example to enable debug messages you can do `Amplitude.getInstance().setLogLevel(Log.DEBUG)`.
