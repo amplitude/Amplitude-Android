@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.5.0 (January 15, 2016)
+
 * Add ability to clear all user properties.
 * Check that SDK is initialized when user calls enableForegroundTracking, identify, setUserProperties
 
