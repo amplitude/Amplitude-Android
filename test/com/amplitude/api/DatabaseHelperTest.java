@@ -12,6 +12,9 @@ import org.robolectric.annotation.Config;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
@@ -23,7 +26,7 @@ public class DatabaseHelperTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
-        dbInstance = DatabaseHelper.getDatabaseHelper(context);
+        dbInstance = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
     }
 
     @After
@@ -65,6 +68,17 @@ public class DatabaseHelperTest extends BaseTest {
     }
 
     protected Long getLongValue(String key) { return dbInstance.getLongValue(key); }
+
+    @Test
+    public void testGetDatabaseHelper() {
+        assertNull(DatabaseHelper.getDatabaseHelper(context, null));
+        assertNull(DatabaseHelper.getDatabaseHelper(context, ""));
+        DatabaseHelper a = DatabaseHelper.getDatabaseHelper(context, "a");
+        DatabaseHelper b = DatabaseHelper.getDatabaseHelper(context, "b");
+        assertNotSame(a, b);
+        assertSame(a, DatabaseHelper.getDatabaseHelper(context, "a"));
+        assertSame(b, DatabaseHelper.getDatabaseHelper(context, "b"));
+    }
 
     @Test
     public void testCreate() {

@@ -21,7 +21,7 @@ import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final Map<String, DatabaseHelper> instances =
+    static final Map<String, DatabaseHelper> instances =
             new HashMap<String, DatabaseHelper>();
 
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
@@ -70,8 +70,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private DatabaseHelper(Context context, String apiKeySuffix) {
-        super(context, Constants.DATABASE_NAME + apiKeySuffix, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME + apiKeySuffix);
+        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME);
     }
 
     @Override

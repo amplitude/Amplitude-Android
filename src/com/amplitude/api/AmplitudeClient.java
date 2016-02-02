@@ -93,7 +93,6 @@ public class AmplitudeClient {
         }
 
         AmplitudeClient.upgradePrefs(context);
-        AmplitudeClient.upgradeDeviceIdToDB(context);
 
         if (TextUtils.isEmpty(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
@@ -106,6 +105,7 @@ public class AmplitudeClient {
             this.apiKeySuffix = apiKey.substring(
                     0, Math.min(Constants.API_KEY_SUFFIX_LENGTH, apiKey.length())
             );
+            AmplitudeClient.upgradeDeviceIdToDB(context, null, this.apiKeySuffix);
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
                     getSharedPreferencesName(), Context.MODE_PRIVATE);
@@ -1202,11 +1202,11 @@ public class AmplitudeClient {
      * This logic needs to remain in place for quite a long time. It was first introduced in
      * August 2015 in version 1.8.0.
      */
-    static boolean upgradeDeviceIdToDB(Context context) {
-        return upgradeDeviceIdToDB(context, null);
-    }
+//    static boolean upgradeDeviceIdToDB(Context context) {
+//        return upgradeDeviceIdToDB(context, null);
+//    }
 
-    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName) {
+    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName, String apiKeySuffix) {
         if (sourcePkgName == null) {
             sourcePkgName = Constants.PACKAGE_NAME;
         }
@@ -1217,7 +1217,7 @@ public class AmplitudeClient {
 
         String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
         if (!TextUtils.isEmpty(deviceId)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
             dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
 
             // remove device id from sharedPrefs so that this upgrade occurs only once

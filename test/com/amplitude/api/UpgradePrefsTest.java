@@ -1,9 +1,7 @@
 package com.amplitude.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,8 +11,10 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -106,11 +106,9 @@ public class UpgradePrefsTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, deviceId).commit();
 
-        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
-        assertEquals(
-            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-            deviceId
-        );
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context, null, apiKeySuffix));
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        assertEquals(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY), deviceId);
 
         // deviceId should be removed from sharedPrefs after upgrade
         assertNull(prefs.getString(Constants.PREFKEY_DEVICE_ID, null));
@@ -118,10 +116,9 @@ public class UpgradePrefsTest extends BaseTest {
 
     @Test
     public void testUpgradeDeviceIdToDBEmpty() {
-        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
-        assertNull(
-            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
-        );
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context, null, apiKeySuffix));
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        assertNull(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
     }
 
     @Test
@@ -134,14 +131,12 @@ public class UpgradePrefsTest extends BaseTest {
                 .commit();
 
         assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
-        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context, null, apiKeySuffix));
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        assertEquals(
-            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-            deviceId
-        );
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        assertEquals(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY), deviceId);
 
         // deviceId should be removed from sharedPrefs after upgrade
         assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
@@ -156,13 +151,12 @@ public class UpgradePrefsTest extends BaseTest {
                 .commit();
 
         assertTrue(AmplitudeClient.upgradePrefs(context, legacyPkgName, null));
-        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context));
+        assertTrue(AmplitudeClient.upgradeDeviceIdToDB(context, null, apiKeySuffix));
 
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
         assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
-        assertNull(
-            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY)
-        );
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        assertNull(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
     }
 }

@@ -55,6 +55,8 @@ public class BaseTest {
     protected Context context;
     protected MockWebServer server;
     protected MockClock clock;
+    protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
+    protected String apiKeySuffix = apiKey.substring(0, 6);
 
     public void setUp() throws Exception {
         setUp(true);
@@ -72,7 +74,7 @@ public class BaseTest {
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
         // and https://github.com/robolectric/robolectric/issues/1622
-        DatabaseHelper.instance = null;
+        DatabaseHelper.instances.clear();
 
         if (withServer) {
             server = new MockWebServer();
@@ -88,7 +90,7 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+            amplitude.initialize(context, apiKey);
         }
 
         if (server != null) {
@@ -107,7 +109,7 @@ public class BaseTest {
             server.shutdown();
         }
 
-        DatabaseHelper.instance = null;
+        DatabaseHelper.instances.clear();
     }
 
     public RecordedRequest runRequest() {
@@ -141,11 +143,11 @@ public class BaseTest {
     }
 
     public long getUnsentEventCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getEventCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKeySuffix).getEventCount();
     }
 
     public long getUnsentIdentifyCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKeySuffix).getIdentifyCount();
     }
 
 
@@ -169,7 +171,7 @@ public class BaseTest {
 
     public JSONArray getUnsentEventsFromTable(String table, int limit) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
 
@@ -196,7 +198,7 @@ public class BaseTest {
 
     public JSONObject getLastEventFromTable(String table) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
             return events.get(events.size() - 1);
