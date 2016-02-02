@@ -27,13 +27,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-public class AmplitudeTest extends BaseTest {
+public class AmplitudeClientTest extends BaseTest {
 
     private String generateStringWithLength(int length, char c) {
         if (length < 0) return "";
@@ -50,6 +51,24 @@ public class AmplitudeTest extends BaseTest {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
+    }
+
+    @Test
+    public void testGetInstance() {
+        AmplitudeClient a = Amplitude.getInstance();
+//        a.logEvent("test");
+
+        AmplitudeClient b = Amplitude.getInstance("");
+        AmplitudeClient c = Amplitude.getInstance(null);
+        AmplitudeClient d = Amplitude.getInstance("$defaultInstance");
+        AmplitudeClient e = Amplitude.getInstance("new app");
+
+        assertEquals(a, b);
+        assertEquals(b, c);
+        assertEquals(c, d);
+        assertNotSame(d, e);
+
+        a.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
     }
 
     @Test

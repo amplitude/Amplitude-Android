@@ -1,13 +1,31 @@
 package com.amplitude.api;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Amplitude {
 
-    public static AmplitudeClient getInstance() {
-        return AmplitudeClient.getInstance();
+    private static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
+
+    public static synchronized AmplitudeClient getInstance() {
+        return getInstance(null);
+    }
+
+    public static synchronized AmplitudeClient getInstance(String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
+        }
+
+        if (!instances.containsKey(instance)) {
+            instances.put(instance, new AmplitudeClient());
+        }
+
+        return instances.get(instance);
     }
 
     @Deprecated

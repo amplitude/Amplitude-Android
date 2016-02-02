@@ -39,17 +39,12 @@ public class AmplitudeClient {
     public static final String DEVICE_ID_KEY = "device_id";
     public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
 
-    protected static AmplitudeClient instance = new AmplitudeClient();
-
-    public static AmplitudeClient getInstance() {
-        return instance;
-    }
-
     private static AmplitudeLog logger = AmplitudeLog.getLogger();
 
     protected Context context;
     protected OkHttpClient httpClient;
     protected String apiKey;
+    protected String apiKeySuffix;
     protected String userId;
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
@@ -94,7 +89,7 @@ public class AmplitudeClient {
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
-            return instance;
+            return this;
         }
 
         AmplitudeClient.upgradePrefs(context);
@@ -102,12 +97,15 @@ public class AmplitudeClient {
 
         if (TextUtils.isEmpty(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
-            return instance;
+            return this;
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
             this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
+            this.apiKeySuffix = apiKey.substring(
+                    0, Math.min(Constants.API_KEY_SUFFIX_LENGTH, apiKey.length())
+            );
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
                     getSharedPreferencesName(), Context.MODE_PRIVATE);
@@ -128,19 +126,19 @@ public class AmplitudeClient {
             initialized = true;
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableForegroundTracking(Application app) {
         if (usingForegroundTracking || !contextAndApiKeySet("enableForegroundTracking()")) {
-            return instance;
+            return this;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(instance));
+            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(this));
         }
 
-        return instance;
+        return this;
     }
 
     private void initializeDeviceInfo() {
@@ -157,12 +155,12 @@ public class AmplitudeClient {
 
     public AmplitudeClient enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
         this.newDeviceIdPerInstall = newDeviceIdPerInstall;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient useAdvertisingIdForDeviceId() {
         this.useAdvertisingIdForDeviceId = true;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableLocationListening() {
@@ -171,7 +169,7 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(true);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient disableLocationListening() {
@@ -180,43 +178,43 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(false);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadThreshold(int eventUploadThreshold) {
         this.eventUploadThreshold = eventUploadThreshold;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
         this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
         this.backoffUploadBatchSize = eventUploadMaxBatchSize;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventMaxCount(int eventMaxCount) {
         this.eventMaxCount = eventMaxCount;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadPeriodMillis(int eventUploadPeriodMillis) {
         this.eventUploadPeriodMillis = eventUploadPeriodMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setSessionTimeoutMillis(long sessionTimeoutMillis) {
         this.sessionTimeoutMillis = sessionTimeoutMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOptOut(boolean optOut) {
         if (!contextAndApiKeySet("setOptOut()")) {
-            return instance;
+            return this;
         }
 
         this.optOut = optOut;
@@ -224,17 +222,17 @@ public class AmplitudeClient {
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableLogging(boolean enableLogging) {
         logger.setEnableLogging(enableLogging);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setLogLevel(int logLevel) {
         logger.setLogLevel(logLevel);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOffline(boolean offline) {
@@ -245,12 +243,12 @@ public class AmplitudeClient {
             uploadEvents();
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
-        return instance;
+        return this;
     }
 
     void useForegroundTracking() {
@@ -392,7 +390,7 @@ public class AmplitudeClient {
     }
 
     protected long saveEvent(String eventType, JSONObject event) {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
         long eventId;
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             eventId = dbHelper.addIdentify(event.toString());
@@ -426,7 +424,7 @@ public class AmplitudeClient {
 
     // shared sequence number for ordering events and identifys
     long getNextSequenceNumber() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
 
         Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
         if (sequenceNumber == null) {
@@ -736,26 +734,27 @@ public class AmplitudeClient {
 
     public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
-            return instance;
+            return this;
         }
 
         this.userId = userId;
         SharedPreferences preferences = context.getSharedPreferences(
                 getSharedPreferencesName(), Context.MODE_PRIVATE);
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
         if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
                 invalidDeviceIds.contains(deviceId)) {
-            return instance;
+            return this;
         }
 
         this.deviceId = deviceId;
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        return instance;
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+        return this;
     }
 
     public void uploadEvents() {
@@ -796,7 +795,7 @@ public class AmplitudeClient {
         }
 
         if (!uploadingCurrently.getAndSet(true)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
             try {
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
 
@@ -906,7 +905,10 @@ public class AmplitudeClient {
                 logThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(
+                            context,
+                            apiKeySuffix
+                        );
                         if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
                         if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
@@ -935,7 +937,7 @@ public class AmplitudeClient {
             } else if (response.code() == 413) {
 
                 // If blocked by one massive event, drop it
-                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
                     if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
@@ -1010,7 +1012,7 @@ public class AmplitudeClient {
         Set<String> invalidIds = getInvalidDeviceIds();
 
         // see if device id already stored in db
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;

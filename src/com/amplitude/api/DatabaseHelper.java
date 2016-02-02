@@ -8,17 +8,22 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    static DatabaseHelper instance;
+    private static final Map<String, DatabaseHelper> instances =
+            new HashMap<String, DatabaseHelper>();
+
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
     protected static final String STORE_TABLE_NAME = "store";
@@ -48,16 +53,25 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
-        if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String apiKeySuffix) {
+        if (TextUtils.isEmpty(apiKeySuffix)) {
+            logger.e(TAG, "Cannot getDatabaseHelper with a null or empty apiKeySuffix");
+            return null;
         }
-        return instance;
+
+        if (!instances.containsKey(apiKeySuffix)) {
+            instances.put(
+                apiKeySuffix,
+                new DatabaseHelper(context.getApplicationContext(), apiKeySuffix)
+            );
+        }
+
+        return instances.get(apiKeySuffix);
     }
 
-    private DatabaseHelper(Context context) {
-        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME);
+    private DatabaseHelper(Context context, String apiKeySuffix) {
+        super(context, Constants.DATABASE_NAME + apiKeySuffix, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME + apiKeySuffix);
     }
 
     @Override
