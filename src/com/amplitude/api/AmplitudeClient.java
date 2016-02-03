@@ -19,7 +19,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -40,12 +39,12 @@ public class AmplitudeClient {
     public static final String DEVICE_ID_KEY = "device_id";
     public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
 
-    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     protected Context context;
     protected OkHttpClient httpClient;
     protected String apiKey;
-    protected String apiKeySuffix;
+    protected String instanceName;
     protected String userId;
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
@@ -79,6 +78,11 @@ public class AmplitudeClient {
     WorkerThread httpThread = new WorkerThread("httpThread");
 
     public AmplitudeClient() {
+        this(null);
+    }
+
+    public AmplitudeClient(String instance) {
+        this.instanceName = TextUtils.isEmpty(instance) ? Constants.DEFAULT_INSTANCE : instance;
         logThread.start();
         httpThread.start();
     }
@@ -87,17 +91,16 @@ public class AmplitudeClient {
         return initialize(context, apiKey, null);
     }
 
-    public AmplitudeClient initialize(Context context, String apiKey, String userId) {
-        return initialize(context, apiKey, userId, false);
-    }
-
-    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId, boolean newBlankInstance) {
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
         }
 
         AmplitudeClient.upgradePrefs(context);
+        if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+            AmplitudeClient.upgradeDeviceIdToDB(context);
+        }
 
         if (TextUtils.isEmpty(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
@@ -107,15 +110,6 @@ public class AmplitudeClient {
             this.context = context.getApplicationContext();
             this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
-            this.apiKeySuffix = apiKey.substring(
-                    0, Math.min(Constants.API_KEY_SUFFIX_LENGTH, apiKey.length())
-            );
-
-            // once apiKeySuffix is generated then we can interact with database
-            if (!newBlankInstance) {
-                AmplitudeClient.migrateDatabaseFile(context, this.apiKeySuffix);
-            }
-            AmplitudeClient.upgradeDeviceIdToDB(context, null, this.apiKeySuffix);
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
                     getSharedPreferencesName(), Context.MODE_PRIVATE);
@@ -400,7 +394,7 @@ public class AmplitudeClient {
     }
 
     protected long saveEvent(String eventType, JSONObject event) {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
         long eventId;
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             eventId = dbHelper.addIdentify(event.toString());
@@ -434,7 +428,7 @@ public class AmplitudeClient {
 
     // shared sequence number for ordering events and identifys
     long getNextSequenceNumber() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
 
         Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
         if (sequenceNumber == null) {
@@ -762,7 +756,7 @@ public class AmplitudeClient {
         }
 
         this.deviceId = deviceId;
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
         return this;
     }
@@ -805,7 +799,7 @@ public class AmplitudeClient {
         }
 
         if (!uploadingCurrently.getAndSet(true)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
             try {
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
 
@@ -916,8 +910,7 @@ public class AmplitudeClient {
                     @Override
                     public void run() {
                         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(
-                            context,
-                            apiKeySuffix
+                            context, instanceName
                         );
                         if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
                         if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
@@ -947,7 +940,7 @@ public class AmplitudeClient {
             } else if (response.code() == 413) {
 
                 // If blocked by one massive event, drop it
-                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
                     if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
@@ -1022,7 +1015,7 @@ public class AmplitudeClient {
         Set<String> invalidIds = getInvalidDeviceIds();
 
         // see if device id already stored in db
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
@@ -1212,54 +1205,32 @@ public class AmplitudeClient {
      * This logic needs to remain in place for quite a long time. It was first introduced in
      * August 2015 in version 1.8.0.
      */
-    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName, String apiKeySuffix) {
+    static boolean upgradeDeviceIdToDB(Context context) {
+        return upgradeDeviceIdToDB(context, null);
+    }
+
+    static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName) {
         if (TextUtils.isEmpty(sourcePkgName)) {
             sourcePkgName = Constants.PACKAGE_NAME;
+        }
+
+        // only perform upgrade if deviceId not yet in database
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        if (!TextUtils.isEmpty(dbHelper.getValue(DEVICE_ID_KEY))) {
+            return true;
         }
 
         String prefsName = sourcePkgName + "." + context.getPackageName();
         SharedPreferences preferences =
                 context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-
         String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
         if (!TextUtils.isEmpty(deviceId)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
             dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-
-            // remove device id from sharedPrefs so that this upgrade occurs only once
-            preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
         }
 
-        return true;
-    }
+        // remove deviceId from sharedPrefs so that this upgrade occurs only once
+        preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
 
-    /*
-     * To support multiple apps, each app needs to have its own database file
-     * Database file names will have the app's apiKeySuffix appended to the end
-     * MigrateDatabaseFile will copy the old database file to the new file name.
-     */
-    static boolean migrateDatabaseFile(Context context, String apiKeySuffix) {
-        String oldFileName = Constants.DATABASE_NAME;
-        String newFileName = oldFileName + "_" + apiKeySuffix;
-
-        File newFile = context.getDatabasePath(newFileName);
-        if (!newFile.exists()) {
-            File oldFile = context.getDatabasePath(oldFileName);
-            if (!oldFile.exists()) {
-                logger.w(
-                    TAG, "Could not find existing database file, could not migrate to new file"
-                );
-                return false;
-            }
-            try {
-                AmplitudeUtils.copyFile(oldFile, newFile);
-            } catch (Exception e) {
-                logger.w(TAG, "Could not copy existing database file to new file", e);
-                return false;
-            }
-        }
-
-        assert(newFile.exists());
         return true;
     }
 

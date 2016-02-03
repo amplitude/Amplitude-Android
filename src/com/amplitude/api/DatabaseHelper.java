@@ -54,40 +54,38 @@ class DatabaseHelper extends SQLiteOpenHelper {
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     @Deprecated
-    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
+    static DatabaseHelper getDatabaseHelper(Context context) {
         return getDatabaseHelper(context, null);
     }
 
-    static synchronized DatabaseHelper getDatabaseHelper(Context context, String apiKeySuffix) {
-        if (TextUtils.isEmpty(apiKeySuffix)) {
-            logger.w(
-                TAG, "Should not be calling getDatabaseHelper() with a null or empty apiKeySuffix"
-            );
-            apiKeySuffix = Constants.DEFAULT_INSTANCE;
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            logger.w(TAG, "Should not be calling getDatabaseHelper() with an empty instance name");
+            instance = Constants.DEFAULT_INSTANCE;
         }
 
-        DatabaseHelper dbHelper = instances.get(apiKeySuffix);
+        DatabaseHelper dbHelper = instances.get(instance);
         if (dbHelper == null) {
-            if (apiKeySuffix.equals(Constants.DEFAULT_INSTANCE)) {
+            if (instance.equals(Constants.DEFAULT_INSTANCE)) {
                 dbHelper = new DatabaseHelper(context.getApplicationContext());
             } else {
-                dbHelper = new DatabaseHelper(context.getApplicationContext(), apiKeySuffix);
+                dbHelper = new DatabaseHelper(context.getApplicationContext(), instance);
             }
-            instances.put(apiKeySuffix, dbHelper);
+            instances.put(instance, dbHelper);
         }
         return dbHelper;
     }
 
-    // Old way to create databaseHelper, using old database filename, keep for testing purposes
+    // Maintain backwards compatability, allow access to old original database file
     @Deprecated
     private DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
     }
 
-    private DatabaseHelper(Context context, String apiKeySuffix) {
-        super(context, Constants.DATABASE_NAME + "_" + apiKeySuffix, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKeySuffix);
+    private DatabaseHelper(Context context, String instance) {
+        super(context, Constants.DATABASE_NAME + "_" + instance, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + instance);
     }
 
     @Override

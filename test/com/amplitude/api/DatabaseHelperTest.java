@@ -27,7 +27,7 @@ public class DatabaseHelperTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
-        dbInstance = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        dbInstance = DatabaseHelper.getDatabaseHelper(context);
     }
 
     @After
@@ -76,6 +76,9 @@ public class DatabaseHelperTest extends BaseTest {
         DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, null));
         assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, ""));
+        assertSame(
+            oldDbHelper, DatabaseHelper.getDatabaseHelper(context, Constants.DEFAULT_INSTANCE)
+        );
         DatabaseHelper a = DatabaseHelper.getDatabaseHelper(context, "a");
         DatabaseHelper b = DatabaseHelper.getDatabaseHelper(context, "b");
         assertNotSame(oldDbHelper, a);
@@ -84,11 +87,17 @@ public class DatabaseHelperTest extends BaseTest {
         assertSame(a, DatabaseHelper.getDatabaseHelper(context, "a"));
         assertSame(b, DatabaseHelper.getDatabaseHelper(context, "b"));
 
-        assertEquals(DatabaseHelper.instances.size(), 4);
+        assertEquals(DatabaseHelper.instances.size(), 3);
         assertTrue(DatabaseHelper.instances.containsKey("$defaultInstance"));
         assertTrue(DatabaseHelper.instances.containsKey("a"));
         assertTrue(DatabaseHelper.instances.containsKey("b"));
-        assertTrue(DatabaseHelper.instances.containsKey(apiKeySuffix));
+
+        // assert defaultInstance maintains old database filename while new instances have new names
+        a.addEvent("testEvent1");
+        b.addEvent("testEvent2");
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME).exists());
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME + "_a").exists());
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME + "_b").exists());
     }
 
     @Test

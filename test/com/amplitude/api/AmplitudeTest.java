@@ -56,80 +56,90 @@ public class AmplitudeTest extends BaseTest {
 
     @Test
     public void testSeparateInstancesLogEventsSeparately() {
-        String deviceId = "testDeviceId";
-        String event1 = "testEvent1";
-        String identify1 = "testIdentify1";
-        String identify2 = "testIdentify2";
+        Amplitude.instances.clear();
+        DatabaseHelper.instances.clear();
 
+        String newInstance1 = "newApp1";
         String newApiKey1 = "1234567890";
-        String newApiKeySuffix1 = newApiKey1.substring(0, 6);
+        String newInstance2 = "newApp2";
         String newApiKey2 = "0987654321";
-        String newApiKeySuffix2 = newApiKey2.substring(0, 6);
+        File oldDbFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        File newDbFile1 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newInstance1);
+        File newDbFile2 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newInstance2);
 
         // Setup existing Databasefile
         DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
-        oldDbHelper.insertOrReplaceKeyValue("device_id", deviceId);
+        oldDbHelper.insertOrReplaceKeyValue("device_id", "oldDeviceId");
         oldDbHelper.insertOrReplaceKeyLongValue("sequence_number", 1000L);
-        oldDbHelper.addEvent(event1);
-        oldDbHelper.addIdentify(identify1);
-        oldDbHelper.addIdentify(identify2);
+        oldDbHelper.addEvent("oldEvent1");
+        oldDbHelper.addIdentify("oldIdentify1");
+        oldDbHelper.addIdentify("oldIdentify2");
 
-        File oldDbFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        // Verify persistence of old database file in default instance
+        Amplitude.getInstance().initialize(context, apiKey);
+        Shadows.shadowOf(Amplitude.getInstance().logThread.getLooper()).runToEndOfTasks();
+        assertEquals(Amplitude.getInstance().getDeviceId(), "oldDeviceId");
+        assertEquals(Amplitude.getInstance().getNextSequenceNumber(), 1001L);
         assertTrue(oldDbFile.exists());
-        File newDbFile1 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newApiKeySuffix1);
         assertFalse(newDbFile1.exists());
-        File newDbFile2 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newApiKeySuffix2);
         assertFalse(newDbFile2.exists());
 
-        // init first new app and do database file migration
-        Amplitude.getInstance("app1").initialize(context, newApiKey1);
-        assertTrue(newDbFile1.exists());
-        assertFalse(newDbFile2.exists());
+        // init first new app and verify separate database file
+        Amplitude.getInstance(newInstance1).initialize(context, newApiKey1);
+        Shadows.shadowOf(
+            Amplitude.getInstance(newInstance1).logThread.getLooper()
+        ).runToEndOfTasks();
+        assertTrue(newDbFile1.exists()); // db file is created after deviceId initialization
 
-        DatabaseHelper newDbHelper1 = DatabaseHelper.getDatabaseHelper(context, newApiKeySuffix1);
-        assertEquals(newDbHelper1.getValue("device_id"), deviceId);
-        assertEquals(newDbHelper1.getLongValue("sequence_number").longValue(), 1000L);
-        assertEquals(newDbHelper1.getEventCount(), 1);
-        assertEquals(newDbHelper1.getIdentifyCount(), 2);
+        DatabaseHelper newDbHelper1 = DatabaseHelper.getDatabaseHelper(context, newInstance1);
+        assertFalse(newDbHelper1.getValue("device_id").equals("oldDeviceId"));
+        assertEquals(
+            newDbHelper1.getValue("device_id"), Amplitude.getInstance(newInstance1).getDeviceId()
+        );
+        assertEquals(Amplitude.getInstance(newInstance1).getNextSequenceNumber(), 1L);
+        assertEquals(newDbHelper1.getEventCount(), 0);
+        assertEquals(newDbHelper1.getIdentifyCount(), 0);
 
-        // init second new app without database file migration
-        Amplitude.getInstance("app2").initialize(context, newApiKey2, null, true);
-        assertTrue(newDbFile1.exists());
-        assertFalse(newDbFile2.exists());
+        // init second new app and verify separate database file
+        Amplitude.getInstance(newInstance2).initialize(context, newApiKey2);
+        Shadows.shadowOf(
+            Amplitude.getInstance(newInstance2).logThread.getLooper()
+        ).runToEndOfTasks();
+        assertTrue(newDbFile2.exists()); // db file is created after deviceId initialization
 
-        // database file will be created once app2 goes through deviceId init process
-        Shadows.shadowOf(Amplitude.getInstance("app2").logThread.getLooper()).runToEndOfTasks();
-        assertTrue(newDbFile2.exists());
-        DatabaseHelper newDbHelper2 = DatabaseHelper.getDatabaseHelper(context, newApiKeySuffix2);
-        assertFalse(newDbHelper2.getValue("device_id").equals(deviceId));
+        DatabaseHelper newDbHelper2 = DatabaseHelper.getDatabaseHelper(context, newInstance2);
+        assertFalse(newDbHelper2.getValue("device_id").equals("oldDeviceId"));
+        assertEquals(
+            newDbHelper2.getValue("device_id"), Amplitude.getInstance(newInstance2).getDeviceId()
+        );
+        assertEquals(Amplitude.getInstance(newInstance2).getNextSequenceNumber(), 1L);
         assertEquals(newDbHelper2.getEventCount(), 0);
         assertEquals(newDbHelper2.getIdentifyCount(), 0);
 
         // verify existing database still intact
         assertTrue(oldDbFile.exists());
-        assertEquals(oldDbHelper.getValue("device_id"), deviceId);
-        assertEquals(oldDbHelper.getLongValue("sequence_number").longValue(), 1000L);
+        assertEquals(oldDbHelper.getValue("device_id"), "oldDeviceId");
+        assertEquals(oldDbHelper.getLongValue("sequence_number").longValue(), 1001L);
         assertEquals(oldDbHelper.getEventCount(), 1);
         assertEquals(oldDbHelper.getIdentifyCount(), 2);
 
-        // verify both apps can modify their database indepdently and not affect old database
+        // verify both apps can modify their database independently and not affect old database
         newDbHelper1.insertOrReplaceKeyValue("device_id", "fakeDeviceId");
         assertEquals(newDbHelper1.getValue("device_id"), "fakeDeviceId");
         assertFalse(newDbHelper2.getValue("device_id").equals("fakeDeviceId"));
-        assertEquals(oldDbHelper.getValue("device_id"), deviceId);
+        assertEquals(oldDbHelper.getValue("device_id"), "oldDeviceId");
         newDbHelper1.addIdentify("testIdentify3");
-        assertEquals(newDbHelper1.getIdentifyCount(), 3);
+        assertEquals(newDbHelper1.getIdentifyCount(), 1);
         assertEquals(newDbHelper2.getIdentifyCount(), 0);
         assertEquals(oldDbHelper.getIdentifyCount(), 2);
 
-        // verify modifying new database does not affect old database
         newDbHelper2.insertOrReplaceKeyValue("device_id", "brandNewDeviceId");
         assertEquals(newDbHelper1.getValue("device_id"), "fakeDeviceId");
         assertEquals(newDbHelper2.getValue("device_id"), "brandNewDeviceId");
-        assertEquals(oldDbHelper.getValue("device_id"), deviceId);
+        assertEquals(oldDbHelper.getValue("device_id"), "oldDeviceId");
         newDbHelper2.addEvent("testEvent2");
         newDbHelper2.addEvent("testEvent3");
-        assertEquals(newDbHelper1.getEventCount(), 1);
+        assertEquals(newDbHelper1.getEventCount(), 0);
         assertEquals(newDbHelper2.getEventCount(), 2);
         assertEquals(oldDbHelper.getEventCount(), 1);
     }

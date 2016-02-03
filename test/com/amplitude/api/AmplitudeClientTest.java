@@ -102,7 +102,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSetDeviceId() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         assertNull(amplitude.getDeviceId());
         looper.runToEndOfTasks();
@@ -228,7 +228,7 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
         assertNull(amplitude.getDeviceId());
-        DatabaseHelper.getDatabaseHelper(context, apiKeySuffix).insertOrReplaceKeyValue(
+        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
                 AmplitudeClient.DEVICE_ID_KEY,
                 deviceId
         );
@@ -249,7 +249,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.getScheduler().advanceToLastPostedRunnable();
         String deviceId = amplitude.getDeviceId();
         assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertEquals(
                 deviceId,
                 dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
@@ -265,7 +265,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(37, amplitude.getDeviceId().length());
         String deviceId = amplitude.getDeviceId();
         assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertEquals(
                 deviceId,
                 dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
@@ -604,7 +604,7 @@ public class AmplitudeClientTest extends BaseTest {
         event.remove("sequence_number");
         event.remove("event_id");
         // delete event from db and reinsert modified event
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         dbHelper.removeEvent(1);
         dbHelper.addEvent(event.toString());
         amplitude.uploadingCurrently.set(false);
@@ -994,7 +994,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testAutoIncrementSequenceNumber() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         int limit = 10;
         for (int i = 0; i < limit; i++) {
             assertEquals(amplitude.getNextSequenceNumber(), i+1);
@@ -1031,7 +1031,7 @@ public class AmplitudeClientTest extends BaseTest {
         clock.setTimestamps(timestamps);
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         int eventMaxCount = 3;
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
@@ -1067,7 +1067,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testTruncateEventsQueues() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         int eventMaxCount = 50;
         assertTrue(eventMaxCount > Constants.EVENT_REMOVE_BATCH_SIZE);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
@@ -1086,7 +1086,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testTruncateEventsQueuesWithOneEvent() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         int eventMaxCount = 1;
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setEventMaxCount(eventMaxCount).setOffline(true);

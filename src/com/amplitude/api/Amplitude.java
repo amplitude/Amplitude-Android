@@ -12,7 +12,7 @@ public class Amplitude {
 
     static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
 
-    public static synchronized AmplitudeClient getInstance() {
+    public static AmplitudeClient getInstance() {
         return getInstance(null);
     }
 
@@ -23,7 +23,7 @@ public class Amplitude {
 
         AmplitudeClient client = instances.get(instance);
         if (client == null) {
-            client = new AmplitudeClient();
+            client = new AmplitudeClient(instance);
             instances.put(instance, client);
         }
         return client;
