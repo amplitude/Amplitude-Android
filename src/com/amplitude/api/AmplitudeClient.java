@@ -1226,10 +1226,10 @@ public class AmplitudeClient {
         String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
         if (!TextUtils.isEmpty(deviceId)) {
             dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        }
 
-        // remove deviceId from sharedPrefs so that this upgrade occurs only once
-        preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
+            // remove deviceId from sharedPrefs so that this upgrade occurs only once
+            preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
+        }
 
         return true;
     }
