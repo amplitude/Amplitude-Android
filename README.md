@@ -275,6 +275,14 @@ Amplitude.getInstance().identify(identify);
 Amplitude.getInstance().logEvent("Viewed Home Page");
 ```
 
+### Synchronizing Device Ids Between Apps ###
+
+As mentioned before, each new instance will have its own deviceId. If you want your apps to share the same deviceId, you can do so *after initialization* via the `getDeviceId` and `setDeviceId` methods. Here's an example:
+```java
+String deviceId = Amplitude.getInstance().getDeviceId(); // existing deviceId
+Amplitude.getInstance("new app").setDeviceId(deviceId); // transferring existing deviceId to new app
+```
+
 # Fine-grained location tracking #
 
 Amplitude can access the Android location service (if possible) to add the specific coordinates (longitude and latitude) where an event is logged. This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
