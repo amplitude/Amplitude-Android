@@ -11,6 +11,8 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
+import java.io.File;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -158,5 +160,39 @@ public class UpgradePrefsTest extends BaseTest {
         assertNull(target.getString(Constants.PREFKEY_DEVICE_ID, null));
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
         assertNull(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
+    }
+
+    @Test
+    public void testMigrateDatabaseFile() {
+        String apiKeySuffix = "123456";
+        File oldDbFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        assertFalse(oldDbFile.exists());
+        DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
+        oldDbHelper.insertOrReplaceKeyValue("device_id", "testDeviceId");
+        assertTrue(oldDbFile.exists());
+
+        File newDbFile = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKeySuffix);
+        assertFalse(newDbFile.exists());
+
+        assertTrue(AmplitudeClient.migrateDatabaseFile(context, apiKeySuffix));
+        assertTrue(newDbFile.exists());
+        DatabaseHelper newDbHelper = DatabaseHelper.getDatabaseHelper(context, apiKeySuffix);
+        assertEquals(newDbHelper.getValue("device_id"), "testDeviceId");
+
+        // verify modifying old file does not affect new file
+        oldDbHelper.insertOrReplaceKeyValue("device_id", "fakeDeviceId");
+        assertEquals(oldDbHelper.getValue("device_id"), "fakeDeviceId");
+        assertEquals(newDbHelper.getValue("device_id"), "testDeviceId");
+    }
+
+    @Test
+    public void testMigrateDatabaseFileFail() {
+        String apiKeySuffix = "123456";
+        File oldDbFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        assertFalse(oldDbFile.exists());
+        File newDbFile = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKeySuffix);
+        assertFalse(newDbFile.exists());
+        assertFalse(AmplitudeClient.migrateDatabaseFile(context, apiKeySuffix));
+        assertFalse(newDbFile.exists());
     }
 }

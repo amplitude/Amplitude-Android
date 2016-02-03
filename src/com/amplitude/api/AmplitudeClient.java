@@ -19,6 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -86,7 +87,11 @@ public class AmplitudeClient {
         return initialize(context, apiKey, null);
     }
 
-    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
+    public AmplitudeClient initialize(Context context, String apiKey, String userId) {
+        return initialize(context, apiKey, userId, false);
+    }
+
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId, boolean newBlankInstance) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
@@ -105,6 +110,11 @@ public class AmplitudeClient {
             this.apiKeySuffix = apiKey.substring(
                     0, Math.min(Constants.API_KEY_SUFFIX_LENGTH, apiKey.length())
             );
+
+            // once apiKeySuffix is generated then we can interact with database
+            if (!newBlankInstance) {
+                AmplitudeClient.migrateDatabaseFile(context, this.apiKeySuffix);
+            }
             AmplitudeClient.upgradeDeviceIdToDB(context, null, this.apiKeySuffix);
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
@@ -1202,12 +1212,8 @@ public class AmplitudeClient {
      * This logic needs to remain in place for quite a long time. It was first introduced in
      * August 2015 in version 1.8.0.
      */
-//    static boolean upgradeDeviceIdToDB(Context context) {
-//        return upgradeDeviceIdToDB(context, null);
-//    }
-
     static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName, String apiKeySuffix) {
-        if (sourcePkgName == null) {
+        if (TextUtils.isEmpty(sourcePkgName)) {
             sourcePkgName = Constants.PACKAGE_NAME;
         }
 
@@ -1224,6 +1230,36 @@ public class AmplitudeClient {
             preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
         }
 
+        return true;
+    }
+
+    /*
+     * To support multiple apps, each app needs to have its own database file
+     * Database file names will have the app's apiKeySuffix appended to the end
+     * MigrateDatabaseFile will copy the old database file to the new file name.
+     */
+    static boolean migrateDatabaseFile(Context context, String apiKeySuffix) {
+        String oldFileName = Constants.DATABASE_NAME;
+        String newFileName = oldFileName + "_" + apiKeySuffix;
+
+        File newFile = context.getDatabasePath(newFileName);
+        if (!newFile.exists()) {
+            File oldFile = context.getDatabasePath(oldFileName);
+            if (!oldFile.exists()) {
+                logger.w(
+                    TAG, "Could not find existing database file, could not migrate to new file"
+                );
+                return false;
+            }
+            try {
+                AmplitudeUtils.copyFile(oldFile, newFile);
+            } catch (Exception e) {
+                logger.w(TAG, "Could not copy existing database file to new file", e);
+                return false;
+            }
+        }
+
+        assert(newFile.exists());
         return true;
     }
 

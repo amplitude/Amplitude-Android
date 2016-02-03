@@ -74,6 +74,7 @@ public class BaseTest {
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
         // and https://github.com/robolectric/robolectric/issues/1622
+        Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
 
         if (withServer) {
@@ -109,10 +110,11 @@ public class BaseTest {
             server.shutdown();
         }
 
+        Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
     }
 
-    public RecordedRequest runRequest() {
+    public RecordedRequest runRequest(AmplitudeClient amplitude) {
         server.enqueue(new MockResponse().setBody("success"));
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
@@ -130,7 +132,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public RecordedRequest sendIdentify(AmplitudeClient amplitude, Identify identify) {
@@ -139,7 +141,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public long getUnsentEventCount() {

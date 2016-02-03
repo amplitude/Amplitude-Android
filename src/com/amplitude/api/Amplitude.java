@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class Amplitude {
 
-    private static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
+    static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
 
     public static synchronized AmplitudeClient getInstance() {
         return getInstance(null);
@@ -21,11 +21,12 @@ public class Amplitude {
             instance = Constants.DEFAULT_INSTANCE;
         }
 
-        if (!instances.containsKey(instance)) {
-            instances.put(instance, new AmplitudeClient());
+        AmplitudeClient client = instances.get(instance);
+        if (client == null) {
+            client = new AmplitudeClient();
+            instances.put(instance, client);
         }
-
-        return instances.get(instance);
+        return client;
     }
 
     @Deprecated

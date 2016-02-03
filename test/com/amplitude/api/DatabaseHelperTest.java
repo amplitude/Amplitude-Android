@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
@@ -71,13 +72,45 @@ public class DatabaseHelperTest extends BaseTest {
 
     @Test
     public void testGetDatabaseHelper() {
-        assertNull(DatabaseHelper.getDatabaseHelper(context, null));
-        assertNull(DatabaseHelper.getDatabaseHelper(context, ""));
+        assertEquals(DatabaseHelper.instances.size(), 1);
+        DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, null));
+        assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, ""));
         DatabaseHelper a = DatabaseHelper.getDatabaseHelper(context, "a");
         DatabaseHelper b = DatabaseHelper.getDatabaseHelper(context, "b");
+        assertNotSame(oldDbHelper, a);
+        assertNotSame(oldDbHelper, b);
         assertNotSame(a, b);
         assertSame(a, DatabaseHelper.getDatabaseHelper(context, "a"));
         assertSame(b, DatabaseHelper.getDatabaseHelper(context, "b"));
+
+        assertEquals(DatabaseHelper.instances.size(), 4);
+        assertTrue(DatabaseHelper.instances.containsKey("$defaultInstance"));
+        assertTrue(DatabaseHelper.instances.containsKey("a"));
+        assertTrue(DatabaseHelper.instances.containsKey("b"));
+        assertTrue(DatabaseHelper.instances.containsKey(apiKeySuffix));
+    }
+
+    @Test
+    public void testSeparateInstances() {
+        DatabaseHelper dbHelper1 = DatabaseHelper.getDatabaseHelper(context, "a");
+        DatabaseHelper dbHelper2 = DatabaseHelper.getDatabaseHelper(context, "b");
+        DatabaseHelper dbHelper3 = DatabaseHelper.getDatabaseHelper(context, "c");
+
+        dbHelper1.insertOrReplaceKeyValue("device_id", "testDeviceId");
+        assertEquals(dbHelper1.getValue("device_id"), "testDeviceId");
+        assertNull(dbHelper2.getValue("device_id"));
+        assertNull(dbHelper3.getValue("device_id"));
+
+        dbHelper2.addEvent("test_event");
+        assertEquals(dbHelper1.getEventCount(), 0);
+        assertEquals(dbHelper2.getEventCount(), 1);
+        assertEquals(dbHelper3.getEventCount(), 0);
+
+        dbHelper3.addIdentify("test_identify_1");
+        assertEquals(dbHelper1.getIdentifyCount(), 0);
+        assertEquals(dbHelper2.getIdentifyCount(), 0);
+        assertEquals(dbHelper3.getIdentifyCount(), 1);
     }
 
     @Test

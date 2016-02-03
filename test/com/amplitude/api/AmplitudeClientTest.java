@@ -27,7 +27,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,24 +50,6 @@ public class AmplitudeClientTest extends BaseTest {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    @Test
-    public void testGetInstance() {
-        AmplitudeClient a = Amplitude.getInstance();
-//        a.logEvent("test");
-
-        AmplitudeClient b = Amplitude.getInstance("");
-        AmplitudeClient c = Amplitude.getInstance(null);
-        AmplitudeClient d = Amplitude.getInstance("$defaultInstance");
-        AmplitudeClient e = Amplitude.getInstance("new app");
-
-        assertEquals(a, b);
-        assertEquals(b, c);
-        assertEquals(c, d);
-        assertNotSame(d, e);
-
-        a.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
     }
 
     @Test
@@ -289,7 +270,6 @@ public class AmplitudeClientTest extends BaseTest {
                 deviceId,
                 dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
         );
-
     }
 
     @Test
@@ -403,7 +383,7 @@ public class AmplitudeClientTest extends BaseTest {
         }
 
         // send response and check that remove events works properly
-        runRequest();
+        runRequest(amplitude);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
@@ -457,7 +437,7 @@ public class AmplitudeClientTest extends BaseTest {
         ));
 
         // send response and check that remove events works properly
-        runRequest();
+        runRequest(amplitude);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
@@ -498,7 +478,7 @@ public class AmplitudeClientTest extends BaseTest {
         ));
 
         // send response and check that remove events works properly
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
         assertEquals(events.length(), 2);
         assertEquals(events.optJSONObject(0).optString("event_type"), "test_event");
@@ -538,7 +518,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 3);
         assertEquals(amplitude.getLastIdentifyId(), 3);
 
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
         assertEquals(events.length(), 7);
 
@@ -646,7 +626,7 @@ public class AmplitudeClientTest extends BaseTest {
         expectedIdentify2.put(Constants.AMP_OP_ADD, new JSONObject().put("photo_count", 2));
 
         // send response and check that merging events correctly ordered events
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
         assertEquals(events.length(), 4);
         assertEquals(events.optJSONObject(0).optString("event_type"), "test_event1");
@@ -690,7 +670,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD);
         assertEquals(getUnsentIdentifyCount(), 2);
 
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
         for (int i = 0; i < events.length(); i++) {
             assertEquals(events.optJSONObject(i).optString("event_type"), "test_event" + i);
@@ -766,7 +746,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals("RECEIPT", apiProps.optString("receipt"));
         assertEquals("SIG", apiProps.optString("receiptSig"));
 
-        assertNotNull(runRequest());
+        assertNotNull(runRequest(amplitude));
     }
 
     @Test
@@ -997,7 +977,7 @@ public class AmplitudeClientTest extends BaseTest {
 
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
 
         assertEquals(events.optJSONObject(0).optString("event_type"), "test");
@@ -1036,7 +1016,7 @@ public class AmplitudeClientTest extends BaseTest {
 
         amplitude.setOffline(false);
         looper.runToEndOfTasks();
-        RecordedRequest request = runRequest();
+        RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
         looper.runToEndOfTasks();
 
