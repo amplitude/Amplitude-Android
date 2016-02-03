@@ -248,6 +248,44 @@ String userId = getUserIdResponse.getUserId();
 Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseToken, userId);
 ```
 
+# Logging Events to Multiple Amplitude Apps #
+
+The Amplitude Android SDK supports logging events to multiple Amplitude apps (multiple API keys). If you want to log events to multiple Amplitude apps, you will want to use separate instances for each Amplitude app. Each instance will allow for completely independent apiKeys, userIds, deviceIds, and settings.
+
+You will need to assign a name to each Amplitude app / instance, and use that name consistently when fetching that instance to call functions. You could use names such as `app1`, `app2`, or more descriptive names such as `prod_app`, `test_app`. Note these names do not need to correspond to the names of your apps in the Amplitude dashboards. The only thing that matters is that each instance is initialized with the correct apiKey.
+
+You can fetch each instance by name by calling `Amplitude.getInstance("INSTANCE_NAME")`.
+
+Here's an example of how to set up and log events to two separate apps:
+
+```java
+Amplitude.getInstance("original_app").initialize(this, "12345");
+Amplitude.getInstance("new_app").initialize(this, "67890");
+
+Amplitude.getInstance("original_app").setUserId("joe@gmail.com");
+Amplitude.getInstance("original_app").logEvent("Clicked");
+
+Identify identify = new Identify().add("karma", 1);
+Amplitude.getInstance("new_app").identify(identify);
+Amplitude.getInstance("new_app").logEvent("Viewed Home Page");
+```
+
+**IMPORTANT - Upgrading from single app to multiple apps:** if you were tracking users with a single app before v2.6.0, you might be wondering what will happen to returning users (users who already have a deviceId and/or userId). By default any instance you initialize will inherit existing deviceId and userId values from before v2.6.0. This will maintain continuity in your existing app, and those users will appear as returning users. In your new app they will still appear as new users. If you wish to initialize an instance that does not inherit existing deviceId and userId values from before v2.6.0, you can set argument `newBlankInstance` to `true` when calling `initialize`.
+
+In the above example, both `original_app` and `new_app` inherit existing deviceId and userId values. Below is an example of how to set up and log events to two separate apps, with `new_app` starting from a clean slate (not inheriting existing deviceId and userId values):
+
+```java
+Amplitude.getInstance("original_app").initialize(this, "12345");
+Amplitude.getInstance("new_app").initialize(this, "67890", null, true); // newBlankInstance is set to true
+
+Amplitude.getInstance("original_app").setUserId("joe@gmail.com");
+Amplitude.getInstance("original_app").logEvent("Clicked");
+
+Identify identify = new Identify().add("karma", 1);
+Amplitude.getInstance("new_app").identify(identify);
+Amplitude.getInstance("new_app").logEvent("Viewed Home Page");
+```
+
 # Fine-grained location tracking #
 
 Amplitude can access the Android location service (if possible) to add the specific coordinates (longitude and latitude) where an event is logged. This behaviour is enabled by default, but can be adjusted calling the following methods *after* initializing:
