@@ -39,19 +39,15 @@ public class AmplitudeClient {
     public static final String DEVICE_ID_KEY = "device_id";
     public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
 
-    protected static AmplitudeClient instance = new AmplitudeClient();
-
-    public static AmplitudeClient getInstance() {
-        return instance;
-    }
-
-    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     protected Context context;
     protected OkHttpClient httpClient;
     protected String apiKey;
+    protected String instanceName;
     protected String userId;
     protected String deviceId;
+    protected String sharedPreferencesName;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
@@ -83,6 +79,11 @@ public class AmplitudeClient {
     WorkerThread httpThread = new WorkerThread("httpThread");
 
     public AmplitudeClient() {
+        this(null);
+    }
+
+    public AmplitudeClient(String instance) {
+        this.instanceName = TextUtils.isEmpty(instance) ? Constants.DEFAULT_INSTANCE : instance;
         logThread.start();
         httpThread.start();
     }
@@ -94,23 +95,26 @@ public class AmplitudeClient {
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
-            return instance;
+            return this;
         }
 
-        AmplitudeClient.upgradePrefs(context);
-        AmplitudeClient.upgradeDeviceIdToDB(context);
+        if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+            AmplitudeClient.upgradePrefs(context);
+            AmplitudeClient.upgradeDeviceIdToDB(context);
+        }
 
         if (TextUtils.isEmpty(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
-            return instance;
+            return this;
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
             this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
+            this.sharedPreferencesName = getSharedPreferencesName();
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
-                    getSharedPreferencesName(), Context.MODE_PRIVATE);
+                    this.sharedPreferencesName, Context.MODE_PRIVATE);
             if (userId != null) {
                 this.userId = userId;
                 preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
@@ -128,19 +132,19 @@ public class AmplitudeClient {
             initialized = true;
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableForegroundTracking(Application app) {
         if (usingForegroundTracking || !contextAndApiKeySet("enableForegroundTracking()")) {
-            return instance;
+            return this;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(instance));
+            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(this));
         }
 
-        return instance;
+        return this;
     }
 
     private void initializeDeviceInfo() {
@@ -157,12 +161,12 @@ public class AmplitudeClient {
 
     public AmplitudeClient enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
         this.newDeviceIdPerInstall = newDeviceIdPerInstall;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient useAdvertisingIdForDeviceId() {
         this.useAdvertisingIdForDeviceId = true;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableLocationListening() {
@@ -171,7 +175,7 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(true);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient disableLocationListening() {
@@ -180,61 +184,61 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(false);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadThreshold(int eventUploadThreshold) {
         this.eventUploadThreshold = eventUploadThreshold;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
         this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
         this.backoffUploadBatchSize = eventUploadMaxBatchSize;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventMaxCount(int eventMaxCount) {
         this.eventMaxCount = eventMaxCount;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadPeriodMillis(int eventUploadPeriodMillis) {
         this.eventUploadPeriodMillis = eventUploadPeriodMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setSessionTimeoutMillis(long sessionTimeoutMillis) {
         this.sessionTimeoutMillis = sessionTimeoutMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOptOut(boolean optOut) {
         if (!contextAndApiKeySet("setOptOut()")) {
-            return instance;
+            return this;
         }
 
         this.optOut = optOut;
 
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableLogging(boolean enableLogging) {
         logger.setEnableLogging(enableLogging);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setLogLevel(int logLevel) {
         logger.setLogLevel(logLevel);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOffline(boolean offline) {
@@ -245,12 +249,12 @@ public class AmplitudeClient {
             uploadEvents();
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
-        return instance;
+        return this;
     }
 
     void useForegroundTracking() {
@@ -392,7 +396,7 @@ public class AmplitudeClient {
     }
 
     protected long saveEvent(String eventType, JSONObject event) {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
         long eventId;
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             eventId = dbHelper.addIdentify(event.toString());
@@ -426,7 +430,7 @@ public class AmplitudeClient {
 
     // shared sequence number for ordering events and identifys
     long getNextSequenceNumber() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
 
         Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
         if (sequenceNumber == null) {
@@ -440,49 +444,49 @@ public class AmplitudeClient {
 
     long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1);
     }
 
     void setLastEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
     }
 
     long getLastEventId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
     }
 
     void setLastEventId(long eventId) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
     }
 
     long getLastIdentifyId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_IDENTIFY_ID, -1);
     }
 
     void setLastIdentifyId(long identifyId) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, identifyId).commit();
     }
 
     long getPreviousSessionId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
     }
 
     void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
@@ -736,26 +740,27 @@ public class AmplitudeClient {
 
     public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
-            return instance;
+            return this;
         }
 
         this.userId = userId;
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
         if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
                 invalidDeviceIds.contains(deviceId)) {
-            return instance;
+            return this;
         }
 
         this.deviceId = deviceId;
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        return instance;
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
+        dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+        return this;
     }
 
     public void uploadEvents() {
@@ -796,7 +801,7 @@ public class AmplitudeClient {
         }
 
         if (!uploadingCurrently.getAndSet(true)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
             try {
                 int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
 
@@ -906,7 +911,9 @@ public class AmplitudeClient {
                 logThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(
+                            context, instanceName
+                        );
                         if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
                         if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
@@ -935,7 +942,7 @@ public class AmplitudeClient {
             } else if (response.code() == 413) {
 
                 // If blocked by one massive event, drop it
-                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
                     if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
@@ -1010,7 +1017,7 @@ public class AmplitudeClient {
         Set<String> invalidIds = getInvalidDeviceIds();
 
         // see if device id already stored in db
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, instanceName);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
@@ -1062,7 +1069,11 @@ public class AmplitudeClient {
     }
 
     protected String getSharedPreferencesName() {
-        return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+        String baseName = Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+        if (this.instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+            return baseName;
+        }
+        return baseName + "_" + this.instanceName;
     }
 
     protected String bytesToHexString(byte[] bytes) {
@@ -1205,20 +1216,24 @@ public class AmplitudeClient {
     }
 
     static boolean upgradeDeviceIdToDB(Context context, String sourcePkgName) {
-        if (sourcePkgName == null) {
+        if (TextUtils.isEmpty(sourcePkgName)) {
             sourcePkgName = Constants.PACKAGE_NAME;
+        }
+
+        // only perform upgrade if deviceId not yet in database
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        if (!TextUtils.isEmpty(dbHelper.getValue(DEVICE_ID_KEY))) {
+            return true;
         }
 
         String prefsName = sourcePkgName + "." + context.getPackageName();
         SharedPreferences preferences =
                 context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-
         String deviceId = preferences.getString(Constants.PREFKEY_DEVICE_ID, null);
         if (!TextUtils.isEmpty(deviceId)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
 
-            // remove device id from sharedPrefs so that this upgrade occurs only once
+            // remove deviceId from sharedPrefs so that this upgrade occurs only once
             preferences.edit().remove(Constants.PREFKEY_DEVICE_ID).apply();
         }
 

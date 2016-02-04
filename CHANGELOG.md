@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add support for logging events to multiple Amplitude apps. See [Readme](https://github.com/amplitude/Amplitude-Android#tracking-events-to-multiple-amplitude-apps) for details.
+
 ## 2.5.0 (January 15, 2016)
 
 * Add ability to clear all user properties.

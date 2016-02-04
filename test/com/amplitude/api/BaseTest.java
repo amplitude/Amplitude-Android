@@ -55,6 +55,7 @@ public class BaseTest {
     protected Context context;
     protected MockWebServer server;
     protected MockClock clock;
+    protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
 
     public void setUp() throws Exception {
         setUp(true);
@@ -72,7 +73,8 @@ public class BaseTest {
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
         // and https://github.com/robolectric/robolectric/issues/1622
-        DatabaseHelper.instance = null;
+        Amplitude.instances.clear();
+        DatabaseHelper.instances.clear();
 
         if (withServer) {
             server = new MockWebServer();
@@ -88,7 +90,7 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+            amplitude.initialize(context, apiKey);
         }
 
         if (server != null) {
@@ -107,10 +109,11 @@ public class BaseTest {
             server.shutdown();
         }
 
-        DatabaseHelper.instance = null;
+        Amplitude.instances.clear();
+        DatabaseHelper.instances.clear();
     }
 
-    public RecordedRequest runRequest() {
+    public RecordedRequest runRequest(AmplitudeClient amplitude) {
         server.enqueue(new MockResponse().setBody("success"));
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
@@ -128,7 +131,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public RecordedRequest sendIdentify(AmplitudeClient amplitude, Identify identify) {
@@ -137,7 +140,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public long getUnsentEventCount() {
