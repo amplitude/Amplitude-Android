@@ -47,6 +47,7 @@ public class AmplitudeClient {
     protected String instanceName;
     protected String userId;
     protected String deviceId;
+    protected String sharedPreferencesName;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
@@ -110,9 +111,10 @@ public class AmplitudeClient {
             this.context = context.getApplicationContext();
             this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
+            this.sharedPreferencesName = getSharedPreferencesName();
             initializeDeviceInfo();
             SharedPreferences preferences = context.getSharedPreferences(
-                    getSharedPreferencesName(), Context.MODE_PRIVATE);
+                    this.sharedPreferencesName, Context.MODE_PRIVATE);
             if (userId != null) {
                 this.userId = userId;
                 preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
@@ -224,7 +226,7 @@ public class AmplitudeClient {
         this.optOut = optOut;
 
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putBoolean(Constants.PREFKEY_OPT_OUT, optOut).commit();
         return this;
     }
@@ -442,49 +444,49 @@ public class AmplitudeClient {
 
     long getLastEventTime() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_TIME, -1);
     }
 
     void setLastEventTime(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
     }
 
     long getLastEventId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_EVENT_ID, -1);
     }
 
     void setLastEventId(long eventId) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, eventId).commit();
     }
 
     long getLastIdentifyId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_LAST_IDENTIFY_ID, -1);
     }
 
     void setLastIdentifyId(long identifyId) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, identifyId).commit();
     }
 
     long getPreviousSessionId() {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         return preferences.getLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, -1);
     }
 
     void setPreviousSessionId(long timestamp) {
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
     }
 
@@ -743,7 +745,7 @@ public class AmplitudeClient {
 
         this.userId = userId;
         SharedPreferences preferences = context.getSharedPreferences(
-                getSharedPreferencesName(), Context.MODE_PRIVATE);
+                sharedPreferencesName, Context.MODE_PRIVATE);
         preferences.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
         return this;
     }
