@@ -76,8 +76,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return dbHelper;
     }
 
-    // Maintain backwards compatability, allow access to old original database file
-    @Deprecated
     private DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
@@ -386,5 +384,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (SecurityException e) {
             logger.e(TAG, "delete failed", e);
         }
+    }
+
+    boolean dbFileExists() {
+        return file.exists();
     }
 }

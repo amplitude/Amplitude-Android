@@ -1,5 +1,8 @@
 package com.amplitude.api;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,8 +10,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-
-import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,12 +64,12 @@ public class AmplitudeTest extends BaseTest {
         String newApiKey1 = "1234567890";
         String newInstance2 = "newApp2";
         String newApiKey2 = "0987654321";
-        File oldDbFile = context.getDatabasePath(Constants.DATABASE_NAME);
-        File newDbFile1 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newInstance1);
-        File newDbFile2 = context.getDatabasePath(Constants.DATABASE_NAME + "_" + newInstance2);
+
+        DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper newDbHelper1 = DatabaseHelper.getDatabaseHelper(context, newInstance1);
+        DatabaseHelper newDbHelper2 = DatabaseHelper.getDatabaseHelper(context, newInstance2);
 
         // Setup existing Databasefile
-        DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
         oldDbHelper.insertOrReplaceKeyValue("device_id", "oldDeviceId");
         oldDbHelper.insertOrReplaceKeyLongValue("sequence_number", 1000L);
         oldDbHelper.addEvent("oldEvent1");
@@ -80,18 +81,17 @@ public class AmplitudeTest extends BaseTest {
         Shadows.shadowOf(Amplitude.getInstance().logThread.getLooper()).runToEndOfTasks();
         assertEquals(Amplitude.getInstance().getDeviceId(), "oldDeviceId");
         assertEquals(Amplitude.getInstance().getNextSequenceNumber(), 1001L);
-        assertTrue(oldDbFile.exists());
-        assertFalse(newDbFile1.exists());
-        assertFalse(newDbFile2.exists());
+        assertTrue(oldDbHelper.dbFileExists());
+        assertFalse(newDbHelper1.dbFileExists());
+        assertFalse(newDbHelper2.dbFileExists());
 
         // init first new app and verify separate database file
         Amplitude.getInstance(newInstance1).initialize(context, newApiKey1);
         Shadows.shadowOf(
             Amplitude.getInstance(newInstance1).logThread.getLooper()
         ).runToEndOfTasks();
-        assertTrue(newDbFile1.exists()); // db file is created after deviceId initialization
+        assertTrue(newDbHelper1.dbFileExists()); // db file is created after deviceId initialization
 
-        DatabaseHelper newDbHelper1 = DatabaseHelper.getDatabaseHelper(context, newInstance1);
         assertFalse(newDbHelper1.getValue("device_id").equals("oldDeviceId"));
         assertEquals(
             newDbHelper1.getValue("device_id"), Amplitude.getInstance(newInstance1).getDeviceId()
@@ -105,9 +105,8 @@ public class AmplitudeTest extends BaseTest {
         Shadows.shadowOf(
             Amplitude.getInstance(newInstance2).logThread.getLooper()
         ).runToEndOfTasks();
-        assertTrue(newDbFile2.exists()); // db file is created after deviceId initialization
+        assertTrue(newDbHelper2.dbFileExists()); // db file is created after deviceId initialization
 
-        DatabaseHelper newDbHelper2 = DatabaseHelper.getDatabaseHelper(context, newInstance2);
         assertFalse(newDbHelper2.getValue("device_id").equals("oldDeviceId"));
         assertEquals(
             newDbHelper2.getValue("device_id"), Amplitude.getInstance(newInstance2).getDeviceId()
@@ -117,7 +116,7 @@ public class AmplitudeTest extends BaseTest {
         assertEquals(newDbHelper2.getIdentifyCount(), 0);
 
         // verify existing database still intact
-        assertTrue(oldDbFile.exists());
+        assertTrue(oldDbHelper.dbFileExists());
         assertEquals(oldDbHelper.getValue("device_id"), "oldDeviceId");
         assertEquals(oldDbHelper.getLongValue("sequence_number").longValue(), 1001L);
         assertEquals(oldDbHelper.getEventCount(), 1);
@@ -142,5 +141,45 @@ public class AmplitudeTest extends BaseTest {
         assertEquals(newDbHelper1.getEventCount(), 0);
         assertEquals(newDbHelper2.getEventCount(), 2);
         assertEquals(oldDbHelper.getEventCount(), 1);
+    }
+
+    @Test
+    public void testSeparateInstancesSeparateSharedPreferences() {
+        // set up existing preferences values for default instance
+        long timestamp = System.currentTimeMillis();
+        String prefName = Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+        SharedPreferences preferences = context.getSharedPreferences(
+                prefName, Context.MODE_PRIVATE);
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, 1000L).commit();
+        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
+        preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, 2000L).commit();
+        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
+
+        // init default instance, which should load preferences values
+        Amplitude.getInstance().initialize(context, apiKey);
+        assertEquals(Amplitude.getInstance().getLastEventId(), 1000L);
+        assertEquals(Amplitude.getInstance().getLastEventTime(), timestamp);
+        assertEquals(Amplitude.getInstance().getLastIdentifyId(), 2000L);
+        assertEquals(Amplitude.getInstance().getPreviousSessionId(), timestamp);
+
+        // init new instance, should have blank slate
+        Amplitude.getInstance("new_app").initialize(context, "1234567890");
+        assertEquals(Amplitude.getInstance("new_app").getLastEventId(), -1L);
+        assertEquals(Amplitude.getInstance("new_app").getLastEventTime(), -1L);
+        assertEquals(Amplitude.getInstance("new_app").getLastIdentifyId(), -1L);
+        assertEquals(Amplitude.getInstance("new_app").getPreviousSessionId(), -1L);
+
+        // shared preferences should update independently
+        Amplitude.getInstance("new_app").logEvent("testEvent");
+        Shadows.shadowOf(Amplitude.getInstance("new_app").logThread.getLooper()).runToEndOfTasks();
+        assertEquals(Amplitude.getInstance("new_app").getLastEventId(), 1L);
+        assertTrue(Amplitude.getInstance("new_app").getLastEventTime() > timestamp);
+        assertEquals(Amplitude.getInstance("new_app").getLastIdentifyId(), -1L);
+        assertTrue(Amplitude.getInstance("new_app").getPreviousSessionId() > timestamp);
+
+        assertEquals(Amplitude.getInstance().getLastEventId(), 1000L);
+        assertEquals(Amplitude.getInstance().getLastEventTime(), timestamp);
+        assertEquals(Amplitude.getInstance().getLastIdentifyId(), 2000L);
+        assertEquals(Amplitude.getInstance().getPreviousSessionId(), timestamp);
     }
 }

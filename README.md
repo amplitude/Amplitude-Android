@@ -254,6 +254,8 @@ The Amplitude Android SDK supports logging events to multiple Amplitude apps (mu
 
 You will need to assign a name to each Amplitude app / instance, and use that name consistently when fetching that instance to call functions. **IMPORTANT: Once you have chosen a name for that instance you cannot change it.** Every instance's data and settings are tied to its name, and you will need to continue using that instance name for all future versions of your app to maintain data continuity, so chose your instance names carefully. Note these names do not need to correspond to the names of your apps in the Amplitude dashboards, but they need to remain consistent throughout your code. You also need to be sure that each instance is initialized with the correct apiKey.
 
+**Instance Name Requirements:** names must be Strings that are nonnull and have length greater than 0.
+
 You can fetch each instance by name by calling `Amplitude.getInstance("INSTANCE_NAME")`.
 
 As mentioned before, each new instance created will have its own apiKey, userId, deviceId, and settings. **You will have to reconfigure all the settings for each instance.** For example if you want to enable foreground tracking you would have to call `enableForegroundTracking` on each instance.
@@ -263,6 +265,7 @@ As mentioned before, each new instance created will have its own apiKey, userId,
 If you were tracking users with a single app before v2.6.0, you might be wondering what will happen to existing data, existing settings, and returning users (users who already have a deviceId and/or userId). All of the historical data and settings are maintained on the `default` instance, which is fetched without an instance name: `Amplitude.getInstance()`. This is the way you are used to interacting with the Amplitude SDK, which means all of your existing tracking code should work as before.
 
 ### Example of how to Set Up and Log Events to Two Separate Apps ###
+
 ```java
 Amplitude.getInstance().initialize(this, "12345");  // existing app, existing settings, and existing API key
 Amplitude.getInstance("new_app").initialize(this, "67890");  // new app, new API key
@@ -277,7 +280,7 @@ Amplitude.getInstance().logEvent("Viewed Home Page");
 
 ### Synchronizing Device Ids Between Apps ###
 
-As mentioned before, each new instance will have its own deviceId. If you want your apps to share the same deviceId, you can do so *after initialization* via the `getDeviceId` and `setDeviceId` methods. Here's an example:
+As mentioned before, each new instance will have its own deviceId. If you want your apps to share the same deviceId, you can do so *after initialization* via the `getDeviceId` and `setDeviceId` methods. Here's an example of how to copy the existing deviceId to the `new_app` instance:
 ```java
 String deviceId = Amplitude.getInstance().getDeviceId(); // existing deviceId
 Amplitude.getInstance("new app").setDeviceId(deviceId); // transferring existing deviceId to new app

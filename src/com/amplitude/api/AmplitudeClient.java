@@ -97,8 +97,8 @@ public class AmplitudeClient {
             return this;
         }
 
-        AmplitudeClient.upgradePrefs(context);
         if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+            AmplitudeClient.upgradePrefs(context);
             AmplitudeClient.upgradeDeviceIdToDB(context);
         }
 
@@ -1067,7 +1067,11 @@ public class AmplitudeClient {
     }
 
     protected String getSharedPreferencesName() {
-        return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+        String baseName = Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
+        if (this.instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+            return baseName;
+        }
+        return baseName + "_" + this.instanceName;
     }
 
     protected String bytesToHexString(byte[] bytes) {
