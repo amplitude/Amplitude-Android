@@ -20,6 +20,7 @@ public class Amplitude {
         if (TextUtils.isEmpty(instance)) {
             instance = Constants.DEFAULT_INSTANCE;
         }
+        instance = instance.toLowerCase();
 
         AmplitudeClient client = instances.get(instance);
         if (client == null) {

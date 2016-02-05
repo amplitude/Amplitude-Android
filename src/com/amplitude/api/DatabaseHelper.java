@@ -60,9 +60,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     static synchronized DatabaseHelper getDatabaseHelper(Context context, String instance) {
         if (TextUtils.isEmpty(instance)) {
-            logger.w(TAG, "Should not be calling getDatabaseHelper() with an empty instance name");
             instance = Constants.DEFAULT_INSTANCE;
         }
+        instance = instance.toLowerCase();
 
         DatabaseHelper dbHelper = instances.get(instance);
         if (dbHelper == null) {

@@ -88,9 +88,17 @@ public class DatabaseHelperTest extends BaseTest {
         assertSame(b, DatabaseHelper.getDatabaseHelper(context, "b"));
 
         assertEquals(DatabaseHelper.instances.size(), 3);
-        assertTrue(DatabaseHelper.instances.containsKey("$defaultInstance"));
+        assertTrue(DatabaseHelper.instances.containsKey(Constants.DEFAULT_INSTANCE));
         assertTrue(DatabaseHelper.instances.containsKey("a"));
         assertTrue(DatabaseHelper.instances.containsKey("b"));
+
+        // test for instance name case insensitivity
+        assertSame(a, DatabaseHelper.getDatabaseHelper(context, "A"));
+        assertSame(b, DatabaseHelper.getDatabaseHelper(context, "B"));
+        assertSame(
+            oldDbHelper,
+            DatabaseHelper.getDatabaseHelper(context, Constants.DEFAULT_INSTANCE.toUpperCase())
+        );
 
         // assert defaultInstance maintains old database filename while new instances have new names
         a.addEvent("testEvent1");

@@ -49,6 +49,12 @@ public class AmplitudeTest extends BaseTest {
         assertNotSame(e, f);
         assertSame(f, Amplitude.getInstance("app2"));
 
+        // test for instance name case insensitivity
+        assertSame(e, Amplitude.getInstance("APP1"));
+        assertSame(e, Amplitude.getInstance("App1"));
+        assertSame(e, Amplitude.getInstance("aPP1"));
+        assertSame(e, Amplitude.getInstance("apP1"));
+
         assertTrue(Amplitude.instances.size() == 3);
         assertTrue(Amplitude.instances.containsKey(Constants.DEFAULT_INSTANCE));
         assertTrue(Amplitude.instances.containsKey("app1"));
