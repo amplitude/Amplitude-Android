@@ -2,10 +2,6 @@ package com.amplitude.api;
 
 import android.content.Context;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +15,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
@@ -78,7 +78,7 @@ public class BaseTest {
 
         if (withServer) {
             server = new MockWebServer();
-            server.play();
+            server.start();
         }
 
         if (clock == null) {
@@ -94,7 +94,7 @@ public class BaseTest {
         }
 
         if (server != null) {
-            amplitude.url = server.getUrl("/").toString();
+            amplitude.url = server.url("/").toString();
         }
     }
 

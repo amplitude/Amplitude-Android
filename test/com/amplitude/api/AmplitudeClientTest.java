@@ -3,9 +3,6 @@ package com.amplitude.api;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +19,9 @@ import org.robolectric.shadows.ShadowLooper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.RecordedRequest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
