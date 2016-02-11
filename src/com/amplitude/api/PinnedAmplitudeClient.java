@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
-import com.squareup.okhttp.OkHttpClient;
+import android.content.Context;
+import android.text.TextUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -8,19 +9,23 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import okhttp3.OkHttpClient;
 import okio.Buffer;
 import okio.ByteString;
 
 public class PinnedAmplitudeClient extends AmplitudeClient {
 
     public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
-    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
+
 
     /**
      * Pinned certificate chain for api.amplitude.com.
@@ -133,16 +138,52 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
     }
 
-    protected static PinnedAmplitudeClient instance = new PinnedAmplitudeClient();
+    static Map<String, PinnedAmplitudeClient> instances =
+        new HashMap<String, PinnedAmplitudeClient>();
 
     public static PinnedAmplitudeClient getInstance() {
-        return instance;
+        return getInstance(null);
+    }
+
+    public static synchronized PinnedAmplitudeClient getInstance(String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
+        }
+        instance = instance.toLowerCase();
+
+        PinnedAmplitudeClient client = instances.get(instance);
+        if (client == null) {
+            client = new PinnedAmplitudeClient(instance);
+            instances.put(instance, client);
+        }
+        return client;
     }
 
     protected SSLSocketFactory sslSocketFactory;
 
     public PinnedAmplitudeClient() {
         super();
+    }
+
+    public PinnedAmplitudeClient(String instance) {
+        super(instance);
+    }
+
+    protected boolean initializedSSLSocketFactory = false;
+
+    @Override
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId){
+        super.initialize(context, apiKey, userId);
+        if (!initializedSSLSocketFactory) {
+            SSLSocketFactory factory = getPinnedCertSslSocketFactory();
+            if (factory != null) {
+                this.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory).build();
+            } else {
+                logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
+            }
+            initializedSSLSocketFactory = true;
+        }
+        return this;
     }
 
     protected SSLSocketFactory getPinnedCertSslSocketFactory() {
@@ -162,17 +203,5 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             }
         }
         return sslSocketFactory;
-    }
-
-    @Override
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
-        SSLSocketFactory factory = getPinnedCertSslSocketFactory();
-        if (factory != null) {
-            client.setSslSocketFactory(factory);
-            super.makeEventUploadPostRequest(client, events, maxEventId, maxIdentifyId);
-        }
-        else {
-            logger.e(TAG, "Unable to pin SSL as requested. Cowardly refusing to send data.");
-        }
     }
 }

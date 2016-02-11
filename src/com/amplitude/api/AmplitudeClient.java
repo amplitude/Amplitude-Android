@@ -9,11 +9,6 @@ import android.text.TextUtils;
 import android.util.Pair;
 
 import com.amplitude.security.MD5;
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +23,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class AmplitudeClient {
 
@@ -891,7 +891,7 @@ public class AmplitudeClient {
             logger.e(TAG, e.toString());
         }
 
-        RequestBody body = new FormEncodingBuilder()
+        FormBody body = new FormBody.Builder()
             .add("v", apiVersionString)
             .add("client", apiKey)
             .add("e", events)
