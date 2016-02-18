@@ -8,9 +8,13 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.OkHttpClient;
+
 public class Amplitude {
 
     static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
+
+    static OkHttpClient httpClient = new OkHttpClient();
 
     public static AmplitudeClient getInstance() {
         return getInstance(null);
@@ -24,7 +28,7 @@ public class Amplitude {
 
         AmplitudeClient client = instances.get(instance);
         if (client == null) {
-            client = new AmplitudeClient(instance);
+            client = new AmplitudeClient(instance, httpClient);
             instances.put(instance, client);
         }
         return client;

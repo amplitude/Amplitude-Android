@@ -79,14 +79,15 @@ public class AmplitudeClient {
     WorkerThread httpThread = new WorkerThread("httpThread");
 
     public AmplitudeClient() {
-        this(null);
+        this(null, new OkHttpClient());
     }
 
-    public AmplitudeClient(String instance) {
+    public AmplitudeClient(String instance, OkHttpClient httpClient) {
         if (TextUtils.isEmpty(instance)) {
             instance = Constants.DEFAULT_INSTANCE;
         }
         this.instanceName = instance.toLowerCase();
+        this.httpClient = httpClient;
         logThread.start();
         httpThread.start();
     }
@@ -112,7 +113,6 @@ public class AmplitudeClient {
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
-            this.httpClient = new OkHttpClient();
             this.apiKey = apiKey;
             this.sharedPreferencesName = getSharedPreferencesName();
             initializeDeviceInfo();
