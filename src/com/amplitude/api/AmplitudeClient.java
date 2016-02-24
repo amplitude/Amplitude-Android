@@ -670,6 +670,24 @@ public class AmplitudeClient {
         });
     }
 
+    public void unsetUserProperties(final String[] userProperties) {
+        if (userProperties == null || userProperties.length == 0 ||
+                !contextAndApiKeySet("unsetUserProperties")) {
+            return;
+        }
+
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                Identify identify = new Identify();
+                for (int i = 0; i < userProperties.length; i++) {
+                    identify.unset(userProperties[i]);
+                }
+                identify(identify);
+            }
+        });
+    }
+
     public void clearUserProperties() {
         Identify identify = new Identify().clearAll();
         identify(identify);
