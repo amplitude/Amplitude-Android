@@ -73,6 +73,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance().setUserProperties(properties);
     }
 
+    public static void unsetUserProperties(String propertiesList) {
+        Amplitude.getInstance().unsetUserProperties(propertiesList.split(","));
+    }
+
     public static void logRevenue(double amount) {
         Amplitude.getInstance().logRevenue(amount);
     }
