@@ -212,6 +212,15 @@ You may use `clearUserProperties` to clear all user properties at once. Note: th
 Amplitude.getInstance().clearUserProperties();
 ```
 
+### Clearing Specific User Properties with `unsetUserProperties` ###
+
+You may use `unsetUserProperties` shorthand to unset multiple user properties at once.  This method is simply a wrapper around `Identify.unset` and `identify`.
+
+```java
+String[] userProperties = {"KEY_GOES_HERE", "OTHER_KEY_GOES_HERE"};
+Amplitude.getInstance().unsetUserProperties(userProperties);
+```
+
 # Tracking Revenue #
 
 To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
