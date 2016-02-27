@@ -2,6 +2,7 @@
 
 * Add support for logging events to multiple Amplitude apps. See [Readme](https://github.com/amplitude/Amplitude-Android#tracking-events-to-multiple-amplitude-apps) for details.
 * Update to OKHttp v3.0.1.
+* Add wrapper methods to unset user properties from Unity.
 
 ## 2.5.0 (January 15, 2016)
 
