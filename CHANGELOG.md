@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.5.1 (March 14, 2016)
+
 * Fix bug where updateServer sets the wrong batchLimit when limit is false.
 
 ## 2.5.0 (January 15, 2016)
