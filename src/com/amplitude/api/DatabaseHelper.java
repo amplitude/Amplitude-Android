@@ -8,21 +8,17 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    static final Map<String, DatabaseHelper> instances =
-            new HashMap<String, DatabaseHelper>();
+    static DatabaseHelper instance;
 
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
@@ -53,37 +49,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    @Deprecated
-    static DatabaseHelper getDatabaseHelper(Context context) {
-        return getDatabaseHelper(context, null);
-    }
-
-    static synchronized DatabaseHelper getDatabaseHelper(Context context, String instance) {
-        if (TextUtils.isEmpty(instance)) {
-            instance = Constants.DEFAULT_INSTANCE;
+    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
+        if (instance == null) {
+            instance = new DatabaseHelper(context.getApplicationContext());
         }
-        instance = instance.toLowerCase();
-
-        DatabaseHelper dbHelper = instances.get(instance);
-        if (dbHelper == null) {
-            if (instance.equals(Constants.DEFAULT_INSTANCE)) {
-                dbHelper = new DatabaseHelper(context.getApplicationContext());
-            } else {
-                dbHelper = new DatabaseHelper(context.getApplicationContext(), instance);
-            }
-            instances.put(instance, dbHelper);
-        }
-        return dbHelper;
+        return instance;
     }
 
     private DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
-    }
-
-    private DatabaseHelper(Context context, String instance) {
-        super(context, Constants.DATABASE_NAME + "_" + instance, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + instance);
     }
 
     @Override

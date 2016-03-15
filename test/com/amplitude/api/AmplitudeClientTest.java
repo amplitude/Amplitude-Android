@@ -53,16 +53,6 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
-    public void testConstructor() {
-        // verify that constructor lowercases the instance name
-        AmplitudeClient a = new AmplitudeClient("APP1");
-        AmplitudeClient b = new AmplitudeClient("New_App_2");
-
-        assertEquals(a.instanceName, "app1");
-        assertEquals(b.instanceName, "new_app_2");
-    }
-
-    @Test
     public void testSetUserId() {
         String sharedPreferences = Constants.SHARED_PREFERENCES_NAME_PREFIX + "."
                 + context.getPackageName();

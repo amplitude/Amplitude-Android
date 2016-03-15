@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -9,9 +8,7 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -138,35 +135,16 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
     }
 
-    static Map<String, PinnedAmplitudeClient> instances =
-        new HashMap<String, PinnedAmplitudeClient>();
+    protected static PinnedAmplitudeClient instance = new PinnedAmplitudeClient();
 
     public static PinnedAmplitudeClient getInstance() {
-        return getInstance(null);
-    }
-
-    public static synchronized PinnedAmplitudeClient getInstance(String instance) {
-        if (TextUtils.isEmpty(instance)) {
-            instance = Constants.DEFAULT_INSTANCE;
-        }
-        instance = instance.toLowerCase();
-
-        PinnedAmplitudeClient client = instances.get(instance);
-        if (client == null) {
-            client = new PinnedAmplitudeClient(instance);
-            instances.put(instance, client);
-        }
-        return client;
+        return instance;
     }
 
     protected SSLSocketFactory sslSocketFactory;
 
     public PinnedAmplitudeClient() {
         super();
-    }
-
-    public PinnedAmplitudeClient(String instance) {
-        super(instance);
     }
 
     protected boolean initializedSSLSocketFactory = false;

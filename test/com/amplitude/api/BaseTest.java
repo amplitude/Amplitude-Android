@@ -73,8 +73,7 @@ public class BaseTest {
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
         // and https://github.com/robolectric/robolectric/issues/1622
-        Amplitude.instances.clear();
-        DatabaseHelper.instances.clear();
+        DatabaseHelper.instance = null;
 
         if (withServer) {
             server = new MockWebServer();
@@ -109,8 +108,7 @@ public class BaseTest {
             server.shutdown();
         }
 
-        Amplitude.instances.clear();
-        DatabaseHelper.instances.clear();
+        DatabaseHelper.instance = null;
     }
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
