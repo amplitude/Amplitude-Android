@@ -211,17 +211,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized List<JSONObject> getEvents(
-                                        long upToId, int limit) throws JSONException {
+                                        long upToId, long limit) throws JSONException {
         return getEventsFromTable(EVENT_TABLE_NAME, upToId, limit);
     }
 
     synchronized List<JSONObject> getIdentifys(
-                                        long upToId, int limit) throws JSONException {
+                                        long upToId, long limit) throws JSONException {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
     synchronized List<JSONObject> getEventsFromTable(
-                                    String table, long upToId, int limit) throws JSONException {
+                                    String table, long upToId, long limit) throws JSONException {
         List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;
         try {

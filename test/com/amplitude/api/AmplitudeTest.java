@@ -873,6 +873,68 @@ public class AmplitudeTest extends BaseTest {
     }
 
     @Test
+    public void testUploadRemainingEvents() {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        amplitude.setEventUploadMaxBatchSize(2);
+        amplitude.setEventUploadThreshold(2);
+        amplitude.uploadingCurrently.set(true); // block uploading until we queue up enough events
+        for (int i = 0; i < 6; i++) {
+            amplitude.logEvent(String.format("test%d", i));
+            looper.runToEndOfTasks();
+            looper.runToEndOfTasks();
+            assertEquals(dbHelper.getTotalEventCount(), i+1);
+        }
+        amplitude.uploadingCurrently.set(false);
+
+        // allow event uploads
+        // 7 events in queue, should upload 2, and then 2, and then 2, and then 2
+        amplitude.logEvent("test7");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(dbHelper.getEventCount(), 7);
+        assertEquals(dbHelper.getIdentifyCount(), 0);
+        assertEquals(dbHelper.getTotalEventCount(), 7);
+
+        // server response
+        server.enqueue(new MockResponse().setBody("success"));
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
+
+        // when receive success response, continue uploading
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks(); // remove uploaded events
+        assertEquals(dbHelper.getEventCount(), 5);
+        assertEquals(dbHelper.getIdentifyCount(), 0);
+        assertEquals(dbHelper.getTotalEventCount(), 5);
+
+        // 2nd server response
+        server.enqueue(new MockResponse().setBody("success"));
+        httpLooper.runToEndOfTasks();
+        looper.runToEndOfTasks(); // remove uploaded events
+        assertEquals(dbHelper.getEventCount(), 3);
+        assertEquals(dbHelper.getIdentifyCount(), 0);
+        assertEquals(dbHelper.getTotalEventCount(), 3);
+
+        // 3rd server response
+        server.enqueue(new MockResponse().setBody("success"));
+        httpLooper.runToEndOfTasks();
+        looper.runToEndOfTasks(); // remove uploaded events
+        looper.runToEndOfTasks();
+        assertEquals(dbHelper.getEventCount(), 1);
+        assertEquals(dbHelper.getIdentifyCount(), 0);
+        assertEquals(dbHelper.getTotalEventCount(), 1);
+    }
+
+    @Test
     public void testBackoffRemoveIdentify() {
         long [] timestamps = {1, 1, 2, 3, 4, 5};
         clock.setTimestamps(timestamps);
