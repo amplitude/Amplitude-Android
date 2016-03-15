@@ -786,7 +786,7 @@ public class AmplitudeClient {
     }
 
     protected void updateServer() {
-        updateServer(true);
+        updateServer(false);
     }
 
     // Always call this from logThread
@@ -797,15 +797,23 @@ public class AmplitudeClient {
 
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-            try {
-                int batchLimit = limit ? (backoffUpload ? backoffUploadBatchSize : eventUploadMaxBatchSize) : -1;
+            long totalEventCount = dbHelper.getTotalEventCount();
+            long batchSize = Math.min(
+                limit ? backoffUploadBatchSize : eventUploadMaxBatchSize,
+                totalEventCount
+            );
 
-                List<JSONObject> events = dbHelper.getEvents(getLastEventId(), batchLimit);
-                List<JSONObject> identifys = dbHelper.getIdentifys(getLastIdentifyId(), batchLimit);
-                int numEvents = Math.min(batchLimit, events.size() + identifys.size());
+            if (batchSize <= 0) {
+                uploadingCurrently.set(false);
+                return;
+            }
+
+            try {
+                List<JSONObject> events = dbHelper.getEvents(getLastEventId(), batchSize);
+                List<JSONObject> identifys = dbHelper.getIdentifys(getLastIdentifyId(), batchSize);
 
                 final Pair<Pair<Long, Long>, JSONArray> merged = mergeEventsAndIdentifys(
-                        events, identifys, numEvents);
+                        events, identifys, batchSize);
                 final long maxEventId = merged.first.first;
                 final long maxIdentifyId = merged.first.second;
                 final String mergedEvents = merged.second.toString();
@@ -824,7 +832,7 @@ public class AmplitudeClient {
     }
 
     protected Pair<Pair<Long,Long>, JSONArray> mergeEventsAndIdentifys(List<JSONObject> events,
-                            List<JSONObject> identifys, int numEvents) throws JSONException {
+                            List<JSONObject> identifys, long numEvents) throws JSONException {
         JSONArray merged = new JSONArray();
         long maxEventId = -1;
         long maxIdentifyId = -1;
@@ -910,7 +918,7 @@ public class AmplitudeClient {
                         if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
                         if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
-                        if (dbHelper.getEventCount() > eventUploadThreshold) {
+                        if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
                             logThread.post(new Runnable() {
                                 @Override
                                 public void run() {
