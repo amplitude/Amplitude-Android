@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix bug where updateServer sets the wrong batchLimit when limit is false.
+
 ## 2.5.0 (January 15, 2016)
 
 * Add ability to clear all user properties.

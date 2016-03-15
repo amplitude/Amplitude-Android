@@ -795,6 +795,7 @@ public class AmplitudeClient {
             return;
         }
 
+        // if returning out of this block, always be sure to set uploadingCurrently to false!!
         if (!uploadingCurrently.getAndSet(true)) {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             long totalEventCount = dbHelper.getTotalEventCount();
