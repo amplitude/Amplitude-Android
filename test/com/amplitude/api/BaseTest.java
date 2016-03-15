@@ -2,10 +2,6 @@ package com.amplitude.api;
 
 import android.content.Context;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +15,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
@@ -55,6 +55,7 @@ public class BaseTest {
     protected Context context;
     protected MockWebServer server;
     protected MockClock clock;
+    protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
 
     public void setUp() throws Exception {
         setUp(true);
@@ -76,7 +77,7 @@ public class BaseTest {
 
         if (withServer) {
             server = new MockWebServer();
-            server.play();
+            server.start();
         }
 
         if (clock == null) {
@@ -88,11 +89,11 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+            amplitude.initialize(context, apiKey);
         }
 
         if (server != null) {
-            amplitude.url = server.getUrl("/").toString();
+            amplitude.url = server.url("/").toString();
         }
     }
 
@@ -110,7 +111,7 @@ public class BaseTest {
         DatabaseHelper.instance = null;
     }
 
-    public RecordedRequest runRequest() {
+    public RecordedRequest runRequest(AmplitudeClient amplitude) {
         server.enqueue(new MockResponse().setBody("success"));
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
@@ -128,7 +129,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public RecordedRequest sendIdentify(AmplitudeClient amplitude, Identify identify) {
@@ -137,7 +138,7 @@ public class BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-        return runRequest();
+        return runRequest(amplitude);
     }
 
     public long getUnsentEventCount() {

@@ -1,6 +1,6 @@
 package com.amplitude.api;
 
-import com.squareup.okhttp.OkHttpClient;
+import android.content.Context;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -14,13 +14,15 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import okhttp3.OkHttpClient;
 import okio.Buffer;
 import okio.ByteString;
 
 public class PinnedAmplitudeClient extends AmplitudeClient {
 
     public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
-    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
+
 
     /**
      * Pinned certificate chain for api.amplitude.com.
@@ -145,6 +147,23 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         super();
     }
 
+    protected boolean initializedSSLSocketFactory = false;
+
+    @Override
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId){
+        super.initialize(context, apiKey, userId);
+        if (!initializedSSLSocketFactory) {
+            SSLSocketFactory factory = getPinnedCertSslSocketFactory();
+            if (factory != null) {
+                this.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory).build();
+            } else {
+                logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
+            }
+            initializedSSLSocketFactory = true;
+        }
+        return this;
+    }
+
     protected SSLSocketFactory getPinnedCertSslSocketFactory() {
         return getPinnedCertSslSocketFactory(SSL_CONTEXT_API_AMPLITUDE_COM);
     }
@@ -162,17 +181,5 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             }
         }
         return sslSocketFactory;
-    }
-
-    @Override
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
-        SSLSocketFactory factory = getPinnedCertSslSocketFactory();
-        if (factory != null) {
-            client.setSslSocketFactory(factory);
-            super.makeEventUploadPostRequest(client, events, maxEventId, maxIdentifyId);
-        }
-        else {
-            logger.e(TAG, "Unable to pin SSL as requested. Cowardly refusing to send data.");
-        }
     }
 }

@@ -19,6 +19,7 @@ import java.util.List;
 class DatabaseHelper extends SQLiteOpenHelper {
 
     static DatabaseHelper instance;
+
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
     protected static final String STORE_TABLE_NAME = "store";
@@ -46,7 +47,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private File file;
 
-    private static AmplitudeLog logger = AmplitudeLog.getLogger();
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     static synchronized DatabaseHelper getDatabaseHelper(Context context) {
         if (instance == null) {
@@ -358,5 +359,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (SecurityException e) {
             logger.e(TAG, "delete failed", e);
         }
+    }
+
+    boolean dbFileExists() {
+        return file.exists();
     }
 }
