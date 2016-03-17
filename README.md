@@ -172,6 +172,13 @@ import com.amplitude.api.Identify;
     Amplitude.getInstance().identify(identify);
     ```
 
+6. `prepend`: this will prepend a value or values to a user property. Prepend means inserting the value(s) at the front of a given list. If the user property does not have a value set yet, it will be initialized to an empty list before the new values are prepended. If the user property has an existing value and it is not a list, it will be converted into a list with the new value prepended.
+
+    ```java
+    Identify identify = new Identify().prepend("ab-tests", "new-user-test").prepend("some_list", new JSONArray().put(1).put("some_string"));
+    Amplitude.getInstance().identify(identify);
+    ```
+
 Note: if a user property is used in multiple operations on the same `Identify` object, only the first operation will be saved, and the rest will be ignored. In this example, only the set operation will be saved, and the add and unset will be ignored:
 
 ```java
