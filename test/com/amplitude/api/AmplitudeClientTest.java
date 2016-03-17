@@ -17,6 +17,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -185,6 +186,47 @@ public class AmplitudeClientTest extends BaseTest {
 
         JSONObject setOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_SET);
         assertTrue(compareJSONObjects(userProperties, setOperations));
+    }
+
+    @Test
+    public void testUnsetUserProperties() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        // setting null or empty user properties does nothing
+        amplitude.unsetUserProperties(null);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        amplitude.unsetUserProperties(new String[0]);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        String[] userProperties = new String[] { "key1", "key2" };
+        amplitude.unsetUserProperties(userProperties);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        JSONObject event = getLastUnsentIdentify();
+        assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
+        assertEquals(event.optJSONObject("event_properties").length(), 0);
+
+        JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
+        assertEquals(userPropertiesOperations.length(), 1);
+        assertTrue(userPropertiesOperations.has(Constants.AMP_OP_UNSET));
+
+        JSONObject unsetOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_UNSET);
+        boolean matches = true;
+        Iterator<?> keys = unsetOperations.keys();
+        int i = 0;
+        while (keys.hasNext() && i < userProperties.length) {
+            if (!keys.next().equals(userProperties[i])) {
+                matches = false;
+                break;
+            }
+            ++i;
+        }
+        assertTrue(matches);
     }
 
     @Test

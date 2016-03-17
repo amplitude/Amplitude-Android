@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Update to OKHttp v3.0.1.
+* Add wrapper methods to unset user properties from Unity.
 
 ## 2.5.1 (March 14, 2016)
 
