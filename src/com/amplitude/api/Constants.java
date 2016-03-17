@@ -37,6 +37,7 @@ public class Constants {
     public static final String AMP_OP_ADD = "$add";
     public static final String AMP_OP_APPEND = "$append";
     public static final String AMP_OP_CLEAR_ALL = "$clearAll";
+    public static final String AMP_OP_PREPEND = "$prepend";
     public static final String AMP_OP_SET = "$set";
     public static final String AMP_OP_SET_ONCE = "$setOnce";
     public static final String AMP_OP_UNSET = "$unset";
