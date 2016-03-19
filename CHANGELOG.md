@@ -2,6 +2,7 @@
 
 * Update to OKHttp v3.0.1.
 * Add support for prepend user property operation.
+* Add support setting groups for users and events.
 
 ## 2.5.1 (March 14, 2016)
 
