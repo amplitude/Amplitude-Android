@@ -271,12 +271,12 @@ public class AmplitudeClient {
         logEvent(eventType, eventProperties, false);
     }
 
-    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups) {
-        logEvent(eventType, eventProperties, groups, false);
-    }
-
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEvent(eventType, eventProperties, null, outOfSession);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups) {
+        logEvent(eventType, eventProperties, groups, false);
     }
 
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
@@ -287,12 +287,20 @@ public class AmplitudeClient {
         }
     }
 
+    public void logEventSync(String eventType) {
+        logEventSync(eventType, null);
+    }
+
     public void logEventSync(String eventType, JSONObject eventProperties) {
         logEventSync(eventType, eventProperties, false);
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEventSync(eventType, eventProperties, null, outOfSession);
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject group) {
+        logEventSync(eventType, eventProperties, group, false);
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
@@ -317,7 +325,7 @@ public class AmplitudeClient {
     }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            final JSONObject apiProperties, final JSONObject userProperties,
+            final JSONObject apiProperties, JSONObject userProperties,
             JSONObject groups, final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
@@ -328,18 +336,23 @@ public class AmplitudeClient {
             eventProperties = cloneJSONObject(eventProperties);
         }
 
+        if (userProperties != null) {
+            userProperties = cloneJSONObject(userProperties);
+        }
+
         if (groups != null) {
             groups = cloneJSONObject(groups);
         }
 
         final JSONObject copyEventProperties = eventProperties;
+        final JSONObject copyUserProperties = userProperties;
         final JSONObject copyGroups = groups;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
                 logEvent(
                     eventType, copyEventProperties, apiProperties,
-                    userProperties, copyGroups, timestamp, outOfSession
+                    copyUserProperties, copyGroups, timestamp, outOfSession
                 );
             }
         });
