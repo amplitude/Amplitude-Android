@@ -139,8 +139,8 @@ public class UpgradePrefsTest extends BaseTest {
         String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences target = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
         assertEquals(
-                DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
-                deviceId
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.DEVICE_ID_KEY),
+            deviceId
         );
 
         // deviceId should be removed from sharedPrefs after upgrade
@@ -174,9 +174,9 @@ public class UpgradePrefsTest extends BaseTest {
 
         assertTrue(AmplitudeClient.upgradeSharedPrefsToDB(context));
         assertEquals(
-                (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
-                        AmplitudeClient.OPT_OUT_KEY
-                ), 1L
+            (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
+                    AmplitudeClient.OPT_OUT_KEY
+            ), 1L
         );
 
         // deviceId should be removed from sharedPrefs after upgrade
@@ -195,9 +195,9 @@ public class UpgradePrefsTest extends BaseTest {
 
         assertTrue(AmplitudeClient.upgradeSharedPrefsToDB(context));
         assertEquals(
-                (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
-                        AmplitudeClient.OPT_OUT_KEY
-                ), 0L
+            (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
+                    AmplitudeClient.OPT_OUT_KEY
+            ), 0L
         );
 
         // shared prefs not deleted since migration skipped
