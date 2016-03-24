@@ -1296,9 +1296,10 @@ public class AmplitudeClient {
 
         // only perform upgrade if deviceId and previous_session_id not yet in database
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        String existingDeviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        Long existingPreviousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
-        if (!TextUtils.isEmpty(existingDeviceId) && existingPreviousSessionId != null) {
+        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
+        Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
+        Long lastEventTime = dbHelper.getLongValue(LAST_EVENT_TIME_KEY);
+        if (!TextUtils.isEmpty(deviceId) && previousSessionId != null && lastEventTime != null) {
             return true;
         }
 

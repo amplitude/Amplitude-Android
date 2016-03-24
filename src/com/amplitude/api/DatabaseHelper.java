@@ -112,10 +112,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
+        if (value == null) {
+            return deleteKeyFromTable(STORE_TABLE_NAME, key);
+        }
         return insertOrReplaceKeyValueToTable(STORE_TABLE_NAME, key, value);
     }
 
     synchronized long insertOrReplaceKeyLongValue(String key, Long value) {
+        if (value == null) {
+            return deleteKeyFromTable(LONG_STORE_TABLE_NAME, key);
+        }
         return insertOrReplaceKeyValueToTable(LONG_STORE_TABLE_NAME, key, value);
     }
 
@@ -143,6 +149,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
             logger.e(TAG, "insertOrReplaceKeyValue failed", e);
             // Not much we can do, just start fresh
             delete();
+        } finally {
+            close();
+        }
+        return result;
+    }
+
+    synchronized long deleteKeyFromTable(String table, String key) {
+        long result = -1;
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            result = db.delete(table, KEY_FIELD + "=?", new String[]{key});
+        } catch (SQLiteException e) {
+            logger.e(TAG, "deleteKeyFromTable failed", e);
         } finally {
             close();
         }

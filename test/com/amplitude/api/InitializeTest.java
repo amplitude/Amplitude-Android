@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.content.Context;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,13 +33,10 @@ public class InitializeTest extends BaseTest {
         Amplitude.getInstance().initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e", userId);
 
         // Test that the user id is set.
-        String sharedPreferences = Constants.SHARED_PREFERENCES_NAME_PREFIX + "."
-                + context.getPackageName();
-        assertEquals(sharedPreferences, "com.amplitude.api.com.amplitude.test");
         assertEquals(
-                userId,
-                context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
-                        Constants.PREFKEY_USER_ID, null));
+            userId,
+            DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.USER_ID_KEY)
+        );
 
         // Test that events are logged.
         RecordedRequest request = sendEvent(amplitude, "init_test_event", null);
