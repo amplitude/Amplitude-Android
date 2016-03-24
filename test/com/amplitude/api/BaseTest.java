@@ -89,7 +89,6 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude.initialize(context, apiKey);
         }
 
         if (server != null) {

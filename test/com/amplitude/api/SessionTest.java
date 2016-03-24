@@ -40,6 +40,7 @@ public class SessionTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(true);
+        amplitude.initialize(context, apiKey);
     }
 
     @After

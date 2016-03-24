@@ -45,6 +45,7 @@ public class AmplitudeClientTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        amplitude.initialize(context, apiKey);
     }
 
     @After

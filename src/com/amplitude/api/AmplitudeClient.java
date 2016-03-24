@@ -70,7 +70,7 @@ public class AmplitudeClient {
 
     private DeviceInfo deviceInfo;
 
-    private long sessionId = -1;
+    long sessionId = -1;
     private int eventUploadThreshold = Constants.EVENT_UPLOAD_THRESHOLD;
     private int eventUploadMaxBatchSize = Constants.EVENT_UPLOAD_MAX_BATCH_SIZE;
     private int eventMaxCount = Constants.EVENT_MAX_COUNT;
@@ -127,8 +127,8 @@ public class AmplitudeClient {
             } else {
                 this.userId = dbHelper.getValue(USER_ID_KEY);
             }
-
-            this.optOut = dbHelper.getLongValue(OPT_OUT_KEY) == 1;
+            Long optOut = dbHelper.getLongValue(OPT_OUT_KEY);
+            this.optOut = optOut != null && optOut == 1;
 
             // try to restore previous session id
             long previousSessionId = getPreviousSessionId();
@@ -491,17 +491,8 @@ public class AmplitudeClient {
     // shared sequence number for ordering events and identifys
     long getNextSequenceNumber() {
         long sequenceNumber = getLongvalue(SEQUENCE_NUMBER_KEY, 0);
-//
-//        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-//
-//        Long sequenceNumber = dbHelper.getLongValue(SEQUENCE_NUMBER_KEY);
-//        if (sequenceNumber == null) {
-//            sequenceNumber = 0L;
-//        }
-
         sequenceNumber++;
         setLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
-//        dbHelper.insertOrReplaceKeyLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
         return sequenceNumber;
     }
 

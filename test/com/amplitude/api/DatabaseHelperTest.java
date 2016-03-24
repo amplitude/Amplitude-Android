@@ -25,6 +25,7 @@ public class DatabaseHelperTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
+        amplitude.initialize(context, apiKey);
         dbInstance = DatabaseHelper.getDatabaseHelper(context);
     }
 
