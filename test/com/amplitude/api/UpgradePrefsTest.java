@@ -175,7 +175,7 @@ public class UpgradePrefsTest extends BaseTest {
         assertTrue(AmplitudeClient.upgradeSharedPrefsToDB(context));
         assertEquals(
             (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
-                    AmplitudeClient.OPT_OUT_KEY
+                AmplitudeClient.OPT_OUT_KEY
             ), 1L
         );
 
@@ -196,7 +196,7 @@ public class UpgradePrefsTest extends BaseTest {
         assertTrue(AmplitudeClient.upgradeSharedPrefsToDB(context));
         assertEquals(
             (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
-                    AmplitudeClient.OPT_OUT_KEY
+                AmplitudeClient.OPT_OUT_KEY
             ), 0L
         );
 
@@ -220,7 +220,7 @@ public class UpgradePrefsTest extends BaseTest {
         assertFalse(target.getBoolean(Constants.PREFKEY_DEVICE_ID, false));
         assertEquals(
             (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
-                    AmplitudeClient.OPT_OUT_KEY
+                AmplitudeClient.OPT_OUT_KEY
             ), 1L
         );
     }

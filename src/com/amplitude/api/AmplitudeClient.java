@@ -62,7 +62,6 @@ public class AmplitudeClient {
     protected String apiKey;
     protected String userId;
     protected String deviceId;
-    protected String sharedPreferencesName;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean initialized = false;
@@ -120,7 +119,6 @@ public class AmplitudeClient {
             this.httpClient = new OkHttpClient();
             this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
             this.apiKey = apiKey;
-            this.sharedPreferencesName = getSharedPreferencesName();
             initializeDeviceInfo();
 
             if (userId != null) {
@@ -895,7 +893,13 @@ public class AmplitudeClient {
             boolean noIdentifys = identifys.isEmpty();
 
             // case 0: no events or identifys, nothing to grab
+            // this case should never happen, as it means there are less identifys and events
+            // than expected
             if (noEvents && noIdentifys) {
+                logger.w(TAG, String.format(
+                    "mergeEventsAndIdentifys: number of events and identifys " +
+                    "less than expected by %d", numEvents - merged.length())
+                );
                 break;
 
             // case 1: no identifys, grab from events
@@ -1126,10 +1130,6 @@ public class AmplitudeClient {
         return true;
     }
 
-    protected String getSharedPreferencesName() {
-        return Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
-    }
-
     protected String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
@@ -1270,7 +1270,7 @@ public class AmplitudeClient {
             sourcePkgName = Constants.PACKAGE_NAME;
         }
 
-        // only perform upgrade if deviceId and previous_session_id not yet in database
+        // check if upgrade needed
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
@@ -1283,38 +1283,31 @@ public class AmplitudeClient {
         SharedPreferences preferences =
                 context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
 
-        // migrate deviceId
         migrateStringValue(
             preferences, Constants.PREFKEY_DEVICE_ID, null, dbHelper, DEVICE_ID_KEY
         );
 
-        // migrate lastEventTime
         migrateLongValue(
             preferences, Constants.PREFKEY_LAST_EVENT_TIME, -1, dbHelper, LAST_EVENT_TIME_KEY
         );
 
-        // migrate lastEventId
         migrateLongValue(
             preferences, Constants.PREFKEY_LAST_EVENT_ID, -1, dbHelper, LAST_EVENT_ID_KEY
         );
 
-        // migrate lastIdentifyId
         migrateLongValue(
             preferences, Constants.PREFKEY_LAST_IDENTIFY_ID, -1, dbHelper, LAST_IDENTIFY_ID_KEY
         );
 
-        // migrate previousSessionId
         migrateLongValue(
             preferences, Constants.PREFKEY_PREVIOUS_SESSION_ID, -1,
             dbHelper, PREVIOUS_SESSION_ID_KEY
         );
 
-        // migrate userId
         migrateStringValue(
             preferences, Constants.PREFKEY_USER_ID, null, dbHelper, USER_ID_KEY
         );
 
-        // migrate optOut
         migrateBooleanValue(
             preferences, Constants.PREFKEY_OPT_OUT, false, dbHelper, OPT_OUT_KEY
         );

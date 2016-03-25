@@ -112,17 +112,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized long insertOrReplaceKeyValue(String key, String value) {
-        if (value == null) {
-            return deleteKeyFromTable(STORE_TABLE_NAME, key);
-        }
-        return insertOrReplaceKeyValueToTable(STORE_TABLE_NAME, key, value);
+        return value == null ? deleteKeyFromTable(STORE_TABLE_NAME, key) :
+            insertOrReplaceKeyValueToTable(STORE_TABLE_NAME, key, value);
     }
 
     synchronized long insertOrReplaceKeyLongValue(String key, Long value) {
-        if (value == null) {
-            return deleteKeyFromTable(LONG_STORE_TABLE_NAME, key);
-        }
-        return insertOrReplaceKeyValueToTable(LONG_STORE_TABLE_NAME, key, value);
+        return value == null ? deleteKeyFromTable(LONG_STORE_TABLE_NAME, key) :
+            insertOrReplaceKeyValueToTable(LONG_STORE_TABLE_NAME, key, value);
     }
 
     synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) {
@@ -176,7 +172,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return addEventToTable(IDENTIFY_TABLE_NAME, identifyEvent);
     }
 
-    synchronized long addEventToTable(String table, String event) {
+    private synchronized long addEventToTable(String table, String event) {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
@@ -204,7 +200,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
     }
 
-    synchronized Object getValueFromTable(String table, String key) {
+    private synchronized Object getValueFromTable(String table, String key) {
         Object value = null;
         Cursor cursor = null;
         try {
@@ -240,7 +236,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
-    synchronized List<JSONObject> getEventsFromTable(
+    private synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
         List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;
@@ -281,7 +277,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventCount() + getIdentifyCount();
     }
 
-    synchronized long getEventCountFromTable(String table) {
+    private synchronized long getEventCountFromTable(String table) {
         long numberRows = 0;
         SQLiteStatement statement = null;
         try {
@@ -308,7 +304,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getNthEventIdFromTable(IDENTIFY_TABLE_NAME, n);
     }
 
-    synchronized long getNthEventIdFromTable(String table, long n) {
+    private synchronized long getNthEventIdFromTable(String table, long n) {
         long nthEventId = -1;
         SQLiteStatement statement = null;
         try {
@@ -341,7 +337,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         removeEventsFromTable(IDENTIFY_TABLE_NAME, maxId);
     }
 
-    synchronized void removeEventsFromTable(String table, long maxId) {
+    private synchronized void removeEventsFromTable(String table, long maxId) {
         try {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " <= " + maxId, null);
@@ -360,7 +356,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         removeEventFromTable(IDENTIFY_TABLE_NAME, id);
     }
 
-    synchronized void removeEventFromTable(String table, long id) {
+    private synchronized void removeEventFromTable(String table, long id) {
         try {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " = " + id, null);
