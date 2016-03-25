@@ -47,6 +47,7 @@ public class InitializeTest extends BaseTest {
             userId,
             DatabaseHelper.getDatabaseHelper(context).getValue(AmplitudeClient.USER_ID_KEY)
         );
+        assertEquals(userId, amplitude.userId);
 
         // Test that events are logged.
         RecordedRequest request = sendEvent(amplitude, "init_test_event", null);
@@ -102,7 +103,7 @@ public class InitializeTest extends BaseTest {
 
         amplitude.initialize(context, apiKey);
 
-        assertTrue(amplitude.isOptOut());
+        assertTrue(amplitude.isOptedOut());
         assertEquals(
             (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
                     AmplitudeClient.OPT_OUT_KEY
@@ -110,7 +111,7 @@ public class InitializeTest extends BaseTest {
         );
 
         amplitude.setOptOut(false);
-        assertFalse(amplitude.isOptOut());
+        assertFalse(amplitude.isOptedOut());
 
         assertEquals(
             (long) DatabaseHelper.getDatabaseHelper(context).getLongValue(
@@ -120,6 +121,26 @@ public class InitializeTest extends BaseTest {
 
         // verify shared prefs deleted
         assertFalse(prefs.getBoolean(Constants.PREFKEY_OPT_OUT, false));
+    }
+
+    @Test
+    public void testInitializeOptOutFromDB() {
+        String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(Constants.PREFKEY_OPT_OUT, true).commit();
+
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.OPT_OUT_KEY, 0L);
+
+        amplitude.initialize(context, apiKey);
+
+        assertFalse(amplitude.isOptedOut());
+        assertEquals(
+            (long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L
+        );
+
+        // verify shared prefs not deleted
+        assertTrue(prefs.getBoolean(Constants.PREFKEY_OPT_OUT, false));
     }
 
 

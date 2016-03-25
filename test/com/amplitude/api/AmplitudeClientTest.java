@@ -270,18 +270,18 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
 
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertFalse(amplitude.isOptOut());
+        assertFalse(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
 
         amplitude.setOptOut(true);
-        assertTrue(amplitude.isOptOut());
+        assertTrue(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 1L);
         RecordedRequest request = sendEvent(amplitude, "test_opt_out", null);
         assertNull(request);
 
         // Event shouldn't be sent event once opt out is turned off.
         amplitude.setOptOut(false);
-        assertFalse(amplitude.isOptOut());
+        assertFalse(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();

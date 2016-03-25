@@ -58,6 +58,7 @@ public class AmplitudeClient {
 
     protected Context context;
     protected OkHttpClient httpClient;
+    protected DatabaseHelper dbHelper;
     protected String apiKey;
     protected String userId;
     protected String deviceId;
@@ -117,12 +118,13 @@ public class AmplitudeClient {
         if (!initialized) {
             this.context = context.getApplicationContext();
             this.httpClient = new OkHttpClient();
+            this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
             this.apiKey = apiKey;
             this.sharedPreferencesName = getSharedPreferencesName();
             initializeDeviceInfo();
 
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
             if (userId != null) {
+                this.userId = userId;
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
             } else {
                 this.userId = dbHelper.getValue(USER_ID_KEY);
@@ -231,14 +233,11 @@ public class AmplitudeClient {
         }
 
         this.optOut = optOut;
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyLongValue(
-            OPT_OUT_KEY, optOut ? 1L : 0L
-        );
-
+        dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
         return instance;
     }
 
-    public boolean isOptOut() {
+    public boolean isOptedOut() {
         return optOut;
     }
 
@@ -330,11 +329,7 @@ public class AmplitudeClient {
             return false;
         }
 
-        if (!contextAndApiKeySet("logEvent()")) {
-            return false;
-        }
-
-        return true;
+        return contextAndApiKeySet("logEvent()");
     }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
@@ -445,7 +440,6 @@ public class AmplitudeClient {
     }
 
     protected long saveEvent(String eventType, JSONObject event) {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         long eventId;
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             eventId = dbHelper.addIdentify(event.toString());
@@ -480,19 +474,15 @@ public class AmplitudeClient {
     // fetches key from dbHelper longValueStore
     // if key does not exist, return defaultValue instead
     private long getLongvalue(String key, long defaultValue) {
-        Long value = DatabaseHelper.getDatabaseHelper(context).getLongValue(key);
+        Long value = dbHelper.getLongValue(key);
         return value == null ? defaultValue : value;
-    }
-
-    private void setLongValue(String key, long value) {
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyLongValue(key, value);
     }
 
     // shared sequence number for ordering events and identifys
     long getNextSequenceNumber() {
         long sequenceNumber = getLongvalue(SEQUENCE_NUMBER_KEY, 0);
         sequenceNumber++;
-        setLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
+        dbHelper.insertOrReplaceKeyLongValue(SEQUENCE_NUMBER_KEY, sequenceNumber);
         return sequenceNumber;
     }
 
@@ -501,7 +491,7 @@ public class AmplitudeClient {
     }
 
     void setLastEventTime(long timestamp) {
-        setLongValue(LAST_EVENT_TIME_KEY, timestamp);
+        dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, timestamp);
     }
 
     long getLastEventId() {
@@ -509,7 +499,7 @@ public class AmplitudeClient {
     }
 
     void setLastEventId(long eventId) {
-        setLongValue(LAST_EVENT_ID_KEY, eventId);
+        dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_ID_KEY, eventId);
     }
 
     long getLastIdentifyId() {
@@ -517,7 +507,7 @@ public class AmplitudeClient {
     }
 
     void setLastIdentifyId(long identifyId) {
-        setLongValue(LAST_IDENTIFY_ID_KEY, identifyId);
+        dbHelper.insertOrReplaceKeyLongValue(LAST_IDENTIFY_ID_KEY, identifyId);
     }
 
     long getPreviousSessionId() {
@@ -525,7 +515,7 @@ public class AmplitudeClient {
     }
 
     void setPreviousSessionId(long timestamp) {
-        setLongValue(PREVIOUS_SESSION_ID_KEY, timestamp);
+        dbHelper.insertOrReplaceKeyLongValue(PREVIOUS_SESSION_ID_KEY, timestamp);
     }
 
     boolean startNewSessionIfNeeded(long timestamp) {
@@ -800,7 +790,7 @@ public class AmplitudeClient {
         }
 
         this.userId = userId;
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(USER_ID_KEY, userId);
+        dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
         return instance;
     }
 
@@ -812,7 +802,6 @@ public class AmplitudeClient {
         }
 
         this.deviceId = deviceId;
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
         return instance;
     }
@@ -856,7 +845,6 @@ public class AmplitudeClient {
 
         // if returning out of this block, always be sure to set uploadingCurrently to false!!
         if (!uploadingCurrently.getAndSet(true)) {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             long totalEventCount = dbHelper.getTotalEventCount();
             long batchSize = Math.min(
                 limit ? backoffUploadBatchSize : eventUploadMaxBatchSize,
@@ -986,7 +974,6 @@ public class AmplitudeClient {
                 logThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                         if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
                         if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
                         uploadingCurrently.set(false);
@@ -1015,7 +1002,6 @@ public class AmplitudeClient {
             } else if (response.code() == 413) {
 
                 // If blocked by one massive event, drop it
-                DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
                     if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
@@ -1090,7 +1076,6 @@ public class AmplitudeClient {
         Set<String> invalidIds = getInvalidDeviceIds();
 
         // see if device id already stored in db
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
