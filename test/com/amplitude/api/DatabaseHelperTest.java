@@ -12,6 +12,7 @@ import org.robolectric.annotation.Config;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
@@ -23,6 +24,7 @@ public class DatabaseHelperTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
+        amplitude.initialize(context, apiKey);
         dbInstance = DatabaseHelper.getDatabaseHelper(context);
     }
 
@@ -70,7 +72,9 @@ public class DatabaseHelperTest extends BaseTest {
     public void testCreate() {
         dbInstance.onCreate(dbInstance.getWritableDatabase());
         assertEquals(1, insertOrReplaceKeyValue("test_key", "test_value"));
-        assertEquals(1, insertOrReplaceKeyLongValue("test_key", 1L));
+        // due to upgradeSharedPrefsToDb, there are already 5 entries in long table
+        // so this next insertion will be row 6
+        assertEquals(6, insertOrReplaceKeyLongValue("test_key", 1L));
         assertEquals(1, addEvent("test_create"));
         assertEquals(1, addIdentify("test_create"));
     }
@@ -207,6 +211,23 @@ public class DatabaseHelperTest extends BaseTest {
 
         insertOrReplaceKeyLongValue(key, value2);
         assertEquals(value2, getLongValue(key));
+    }
+
+    @Test
+    public void testInsertNullValues() {
+        String key = "test_key";
+
+        assertNull(getValue(key));
+        insertOrReplaceKeyValue(key, "test");
+        assertEquals(getValue(key), "test");
+        insertOrReplaceKeyValue(key, null);
+        assertNull(getValue(key));
+
+        assertNull(getLongValue(key));
+        insertOrReplaceKeyLongValue(key, 15L);
+        assertEquals((long)getLongValue(key), 15L);
+        insertOrReplaceKeyLongValue(key, null);
+        assertNull(getValue(key));
     }
 
     @Test

@@ -45,6 +45,7 @@ public class AmplitudeClientTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        amplitude.initialize(context, apiKey);
     }
 
     @After
@@ -54,25 +55,16 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSetUserId() {
-        String sharedPreferences = Constants.SHARED_PREFERENCES_NAME_PREFIX + "."
-                + context.getPackageName();
-        assertEquals(sharedPreferences, "com.amplitude.api.com.amplitude.test");
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         String userId = "user_id";
         amplitude.setUserId(userId);
-        assertEquals(
-                userId,
-                context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
-                        Constants.PREFKEY_USER_ID, null));
+        assertEquals(userId, dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
         assertEquals(userId, amplitude.getUserId());
 
         // try setting to null
-       amplitude.setUserId(null);
-        assertEquals(
-                null,
-                context.getSharedPreferences(sharedPreferences, Context.MODE_PRIVATE).getString(
-                        Constants.PREFKEY_USER_ID, null));
+        amplitude.setUserId(null);
+        assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
         assertNull(amplitude.getUserId());
-
     }
 
     @Test
@@ -277,12 +269,20 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
 
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertFalse(amplitude.isOptedOut());
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
+
         amplitude.setOptOut(true);
+        assertTrue(amplitude.isOptedOut());
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 1L);
         RecordedRequest request = sendEvent(amplitude, "test_opt_out", null);
         assertNull(request);
 
         // Event shouldn't be sent event once opt out is turned off.
         amplitude.setOptOut(false);
+        assertFalse(amplitude.isOptedOut());
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         httplooper.runToEndOfTasks();
@@ -341,6 +341,14 @@ public class AmplitudeClientTest extends BaseTest {
         JSONObject expected = new JSONObject();
         expected.put("key", "value");
         assertTrue(compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
+
+        // verify db state
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), -1L);
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 1L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[0]);
     }
 
     @Test
@@ -578,6 +586,14 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
         assertEquals(getUnsentIdentifyCount(), 0);
+
+        // verify db state
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 3L);
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 4L);
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 7L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[6]);
     }
 
     @Test
