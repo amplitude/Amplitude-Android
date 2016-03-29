@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.6.0 (March 29, 2016)
+
 * Update to OKHttp v3.0.1.
 * Add support for prepend user property operation.
 * Fix bug where merging events for upload causes array index out of bounds exception.
