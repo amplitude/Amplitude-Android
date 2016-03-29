@@ -1250,4 +1250,37 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(eventGroups.optInt("orgId"), 10);
         assertEquals(eventGroups.optString("sport"), "tennis");
     }
+
+    @Test
+    public void testMergeEventsArrayIndexOutOfBounds() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        amplitude.setOffline(true);
+
+        amplitude.logEvent("testEvent1");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        // force failure case
+        amplitude.setLastEventId(0);
+
+        amplitude.setOffline(false);
+        looper.runToEndOfTasks();
+
+        // make sure next upload succeeds
+        amplitude.setLastEventId(1);
+        amplitude.logEvent("testEvent2");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 2);
+
+        assertEquals(events.getJSONObject(0).optString("event_type"), "testEvent1");
+        assertEquals(events.getJSONObject(0).optLong("event_id"), 1);
+
+        assertEquals(events.getJSONObject(1).optString("event_type"), "testEvent2");
+        assertEquals(events.getJSONObject(1).optLong("event_id"), 2);
+    }
 }
