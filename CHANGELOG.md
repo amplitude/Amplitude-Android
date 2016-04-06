@@ -1,8 +1,12 @@
 ## Unreleased
 
+* Add support setting groups for users and events. See [Readme](https://github.com/amplitude/Amplitude-Android#setting-groups) for more information.
+
+## 2.6.0 (March 29, 2016)
+
 * Update to OKHttp v3.0.1.
 * Add support for prepend user property operation.
-* Add support setting groups for users and events.
+* Fix bug where merging events for upload causes array index out of bounds exception.
 * Migrate shared preferences (userId and event meta data) to Sqlite db to support apps with multiple processes.
 
 ## 2.5.1 (March 14, 2016)

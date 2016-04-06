@@ -10,22 +10,22 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
 # Setup #
 1. If you haven't already, go to https://amplitude.com/signup and register for an account. Then, add an app. You will receive an API Key.
 
-2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-2.5.1-with-dependencies.jar) and copy it into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
+2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-2.6.0-with-dependencies.jar) and copy it into the "libs" folder in your Android project in Eclipse. If you're using an older build of Android, you may need to [add the jar file to your build path](http://stackoverflow.com/questions/3280353/how-to-import-a-jar-in-eclipse).
 
-  Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C2.5.1%7Cjar) using the following configuration in your pom.xml:
+  Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C2.6.0%7Cjar) using the following configuration in your pom.xml:
 
     ```
     <dependency>
       <groupId>com.amplitude</groupId>
       <artifactId>android-sdk</artifactId>
-      <version>2.5.1</version>
+      <version>2.6.0</version>
     </dependency>
     ```
 
   Or if you are using gradle in your project, include in your build.gradle file:
 
     ```
-    compile 'com.amplitude:android-sdk:2.5.1'
+    compile 'com.amplitude:android-sdk:2.6.0'
     ```
 
 3.  In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
@@ -299,14 +299,14 @@ Amplitude supports assigning users to groups, and performing queries such as cou
 
 In the above example, 'orgId' is a `groupType`, and the value 10 or 15 is the `groupName`. Another example of a `groupType` could a sport that the user participates in, and possible `groupNames` within that type would be tennis, baseball, etc.
 
-You can use `setGroup(groupType, groupName)` to designate which groups a user belongs to. Few things to note: this will also set the `groupType: groupName` as a user property. **This will overwrite any existing groupName value set for that user's groupType, as well as the corresponding user property value.** For example if Joe was in orgId 10, and you call `setGroup('orgId', 20)`, 20 would replace 10. You can also call `setGroup` multiple times with different groupTypes to add a user to different groups. For example Sue is in orgId: 15, and she also plays sport: soccer. Now when querying, you can Count By both orgId and sport. **You are allowed to set up to 5 different groupTypes per user.** Any more than that will be ignored from the query UI, although they will still appear as user properties.
+You can use `setGroup(groupType, groupName)` to designate which groups a user belongs to. Few things to note: this will also set the `groupType: groupName` as a user property. **This will overwrite any existing groupName value set for that user's groupType, as well as the corresponding user property value.** For example if Joe was in orgId 10, and you call `setGroup('orgId', 20)`, 20 would replace 10. You can also call `setGroup` multiple times with different groupTypes to add a user to different groups. For example Sue can be in orgId: 15, and she also plays sport: soccer. Now when querying, you can Count By both orgId and sport (although as separate queries). **You are allowed to set up to 5 different groupTypes per user.** Any more than that will be ignored from the Count By Distinct query UI, although they will still appear as user properties for that user.
 
 ```java
 Amplitude.getInstance().setGroup("orgId", 15);
 Amplitude.getInstance().setGroup("sport", "tennis");
 ```
 
-You can also use `logEvent` with the groups argument to set event-level groups, meaning the group designation only applies for the specific event being logged and does not persist on the user unless you explicitly set it with `setGroup`.
+You can also use `logEvent` with the groups argument to set event-level groups, meaning the group designation only applies for the specific event being logged and does not persist on the user (unless you explicitly set it with `setGroup`).
 
 ```java
 JSONObject eventProperties = new JSONObject().put("key", "value");
