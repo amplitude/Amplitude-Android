@@ -710,7 +710,7 @@ public class AmplitudeClient {
     }
 
     public void setGroup(String groupType, Object groupName) {
-        if (TextUtils.isEmpty(groupType) || !contextAndApiKeySet("setGroup()")) {
+        if (!contextAndApiKeySet("setGroup()") || TextUtils.isEmpty(groupType)) {
             return;
         }
         JSONObject group = null;

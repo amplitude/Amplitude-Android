@@ -1206,7 +1206,7 @@ public class AmplitudeClientTest extends BaseTest {
     public void testSetGroup() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
-        amplitude.setGroup("orgId", 15);
+        amplitude.setGroup("orgId", new JSONArray().put(10).put(15));
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 
@@ -1222,11 +1222,11 @@ public class AmplitudeClientTest extends BaseTest {
 
         JSONObject groups = event.optJSONObject("groups");
         assertEquals(groups.length(), 1);
-        assertEquals(groups.optInt("orgId"), 15);
+        assertEquals(groups.optJSONArray("orgId"), new JSONArray().put(10).put(15));
 
         JSONObject setOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_SET);
         assertEquals(setOperations.length(), 1);
-        assertEquals(setOperations.optInt("orgId"), 15);
+        assertEquals(setOperations.optJSONArray("orgId"), new JSONArray().put(10).put(15));
     }
 
     @Test
