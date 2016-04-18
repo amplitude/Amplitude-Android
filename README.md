@@ -96,6 +96,13 @@ Other Session Options:
     Amplitude.getInstance().logEvent("EVENT", null, true);
     ```
 
+### Getting the Session Id ###
+
+You can use the helper method `getSessionId` to get the value of the current sessionId:
+```java
+long sessionId = Amplitude.getInstance().getSessionId();
+```
+
 # Setting Custom User IDs #
 
 If your app has its own login system that you want to track users with, you can call `setUserId()` at any time:
