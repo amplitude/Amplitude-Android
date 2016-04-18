@@ -807,6 +807,21 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(obj.optString("$receiptSig"), receiptSig);
         assertEquals(obj.optString("$revenueType"), revenueType);
         assertEquals(obj.optString("city"), "Boston");
+
+        // user properties should be empty
+        assertEquals(
+            compareJSONObjects(event.optJSONObject("user_properties"), new JSONObject()), true
+        );
+
+        // api properties should not have any revenue info
+        JSONObject apiProps = event.optJSONObject("api_properties");
+        assertTrue(apiProps.length() > 0);
+        assertFalse(apiProps.has("special"));
+        assertFalse(apiProps.has("productId"));
+        assertFalse(apiProps.has("quantity"));
+        assertFalse(apiProps.has("price"));
+        assertFalse(apiProps.has("receipt"));
+        assertFalse(apiProps.has("receiptSig"));
     }
 
     @Test
