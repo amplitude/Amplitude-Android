@@ -76,7 +76,9 @@
                srcdir="${src}"
                destdir="${build}"
                includeantruntime="false"
-               debug="true">
+               debug="true"
+               target="1.7"
+               source="1.7">
             <classpath refid="dependency.classpath" />
         </javac>
     </target>
