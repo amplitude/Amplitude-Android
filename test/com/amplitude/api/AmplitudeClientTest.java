@@ -726,8 +726,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(1, apiProps.optInt("quantity"));
         assertNull(apiProps.optString("productId", null));
         assertEquals(10.99, apiProps.optDouble("price"), .01);
@@ -740,8 +740,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");;
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(2, apiProps.optInt("quantity"));
         assertEquals("ID1", apiProps.optString("productId"));
         assertEquals(9.99, apiProps.optDouble("price"), .01);
@@ -754,8 +754,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(3, apiProps.optInt("quantity"));
         assertEquals("ID2", apiProps.optString("productId"));
         assertEquals(8.99, apiProps.optDouble("price"), .01);
