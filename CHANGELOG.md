@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add helper method `getSessionId` to expose the current sessionId value.
+
 ## 2.6.0 (March 29, 2016)
 
 * Update to OKHttp v3.0.1.

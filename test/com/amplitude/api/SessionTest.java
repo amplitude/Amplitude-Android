@@ -87,6 +87,9 @@ public class SessionTest extends BaseTest {
         assertEquals(event1.optString("session_id"), String.valueOf(timestamp1));
         assertEquals(event2.optString("event_type"), "test2");
         assertEquals(event2.optString("session_id"), String.valueOf(timestamp2));
+
+        // also test getSessionId
+        assertEquals(amplitude.getSessionId(), timestamp2);
     }
 
     @Test
