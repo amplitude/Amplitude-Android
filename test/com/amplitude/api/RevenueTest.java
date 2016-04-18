@@ -82,19 +82,13 @@ public class RevenueTest extends BaseTest {
         double price = 10.99;
         revenue.setPrice(price);
         assertEquals(revenue.price.doubleValue(), price, 0);
-        assertEquals(revenue.revenue.doubleValue(), 2*price, 0);
+        assertEquals(revenue.revenue.doubleValue(), 2 * price, 0);
 
         revenue.setQuantity(1);
         assertEquals(revenue.revenue.doubleValue(), price, 0);
 
-        double revenueAmt = 15.99;
-        revenue.setRevenue(revenueAmt);
-        assertEquals(revenue.revenue.doubleValue(), revenueAmt, 0);
-        assertEquals(revenue.quantity, 1);
-        assertEquals(revenue.price.doubleValue(), revenueAmt, 0);
-
         JSONObject obj = revenue.toJSONObject();
-        assertEquals(obj.optDouble("$revenue"), revenueAmt, 0);
+        assertEquals(obj.optDouble("$revenue"), price, 0);
     }
 
     @Test
@@ -181,12 +175,31 @@ public class RevenueTest extends BaseTest {
         assertEquals(revenue2.isValidRevenue(), false);
         revenue2.setProductId("testProductId");
         assertEquals(revenue2.isValidRevenue(), true);
+    }
 
-        Revenue revenue3 = new Revenue();
-        assertEquals(revenue3.isValidRevenue(), false);
-        revenue3.setRevenue(10.99);
-        assertEquals(revenue3.isValidRevenue(), false);
-        revenue3.setProductId("testProductId");
-        assertEquals(revenue3.isValidRevenue(), true);
+    @Test
+    public void testToJSONObject() throws JSONException {
+        double price = 10.99;
+        int quantity = 15;
+        String productId = "testProductId";
+        boolean verified = true;
+        String receipt = "testReceipt";
+        String receiptSig = "testReceiptSig";
+        String revenueType = "testRevenueType";
+        JSONObject props = new JSONObject().put("city", "Boston");
+
+        Revenue revenue = new Revenue().setProductId(productId).setPrice(price);
+        revenue.setQuantity(quantity).setVerified(verified).setReceipt(receipt, receiptSig);
+        revenue.setRevenueType(revenueType).setRevenueProperties(props);
+
+        JSONObject obj = revenue.toJSONObject();
+        assertEquals(obj.optDouble("$price"), price, 0);
+        assertEquals(obj.optInt("$quantity"), 15);
+        assertEquals(obj.optString("$productId"), productId);
+        assertEquals(obj.optBoolean("$verified"), verified);
+        assertEquals(obj.optString("$receipt"), receipt);
+        assertEquals(obj.optString("$receiptSig"), receiptSig);
+        assertEquals(obj.optString("$revenueType"), revenueType);
+        assertEquals(obj.optString("city"), "Boston");
     }
 }

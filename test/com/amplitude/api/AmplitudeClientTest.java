@@ -766,6 +766,50 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testLogRevenueV2() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        // ignore invalid revenue objects
+        amplitude.logRevenueV2(null);
+        looper.runToEndOfTasks();
+        amplitude.logRevenueV2(new Revenue());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        // log valid revenue object
+        double price = 10.99;
+        int quantity = 15;
+        String productId = "testProductId";
+        boolean verified = true;
+        String receipt = "testReceipt";
+        String receiptSig = "testReceiptSig";
+        String revenueType = "testRevenueType";
+        JSONObject props = new JSONObject().put("city", "Boston");
+
+        Revenue revenue = new Revenue().setProductId(productId).setPrice(price);
+        revenue.setQuantity(quantity).setVerified(verified).setReceipt(receipt, receiptSig);
+        revenue.setRevenueType(revenueType).setRevenueProperties(props);
+
+        amplitude.logRevenueV2(revenue);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "revenue_amount");
+
+        JSONObject obj = event.optJSONObject("event_properties");
+        assertEquals(obj.optDouble("$price"), price, 0);
+        assertEquals(obj.optInt("$quantity"), 15);
+        assertEquals(obj.optString("$productId"), productId);
+        assertEquals(obj.optBoolean("$verified"), verified);
+        assertEquals(obj.optString("$receipt"), receipt);
+        assertEquals(obj.optString("$receiptSig"), receiptSig);
+        assertEquals(obj.optString("$revenueType"), revenueType);
+        assertEquals(obj.optString("city"), "Boston");
+    }
+
+    @Test
     public void testLogEventSync() {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
