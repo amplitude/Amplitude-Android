@@ -48,7 +48,6 @@ public class RevenueTest extends BaseTest {
         int quantity = 100;
         revenue.setQuantity(quantity);
         assertEquals(revenue.quantity, quantity);
-        assertEquals(revenue.revenue, null);
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optInt("$quantity"), quantity);
@@ -58,49 +57,13 @@ public class RevenueTest extends BaseTest {
     public void testPrice() {
         Revenue revenue = new Revenue();
         assertEquals(revenue.price, null);
-        assertEquals(revenue.revenue, null);
 
         double price = 10.99;
         revenue.setPrice(price);
         assertEquals(revenue.price.doubleValue(), price, 0);
-        assertEquals(revenue.revenue.doubleValue(), price, 0);
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optDouble("$price"), price, 0);
-    }
-
-    @Test
-    public void testRevenue() {
-        Revenue revenue = new Revenue();
-        assertEquals(revenue.price, null);
-        assertEquals(revenue.revenue, null);
-
-        revenue.setQuantity(2);
-        assertEquals(revenue.quantity, 2);
-        assertEquals(revenue.revenue, null);
-
-        double price = 10.99;
-        revenue.setPrice(price);
-        assertEquals(revenue.price.doubleValue(), price, 0);
-        assertEquals(revenue.revenue.doubleValue(), 2 * price, 0);
-
-        revenue.setQuantity(1);
-        assertEquals(revenue.revenue.doubleValue(), price, 0);
-
-        JSONObject obj = revenue.toJSONObject();
-        assertEquals(obj.optDouble("$revenue"), price, 0);
-    }
-
-    @Test
-    public void testVerified() {
-        Revenue revenue = new Revenue();
-        assertEquals(revenue.verified, false);
-
-        revenue.setVerified(true);
-        assertEquals(revenue.verified, true);
-
-        JSONObject obj = revenue.toJSONObject();
-        assertEquals(obj.optBoolean("$verified"), true);
     }
 
     @Test
@@ -182,21 +145,19 @@ public class RevenueTest extends BaseTest {
         double price = 10.99;
         int quantity = 15;
         String productId = "testProductId";
-        boolean verified = true;
         String receipt = "testReceipt";
         String receiptSig = "testReceiptSig";
         String revenueType = "testRevenueType";
         JSONObject props = new JSONObject().put("city", "Boston");
 
         Revenue revenue = new Revenue().setProductId(productId).setPrice(price);
-        revenue.setQuantity(quantity).setVerified(verified).setReceipt(receipt, receiptSig);
+        revenue.setQuantity(quantity).setReceipt(receipt, receiptSig);
         revenue.setRevenueType(revenueType).setRevenueProperties(props);
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optDouble("$price"), price, 0);
         assertEquals(obj.optInt("$quantity"), 15);
         assertEquals(obj.optString("$productId"), productId);
-        assertEquals(obj.optBoolean("$verified"), verified);
         assertEquals(obj.optString("$receipt"), receipt);
         assertEquals(obj.optString("$receiptSig"), receiptSig);
         assertEquals(obj.optString("$revenueType"), revenueType);

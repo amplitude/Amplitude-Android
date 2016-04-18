@@ -46,8 +46,6 @@ public class Constants {
     public static final String AMP_REVENUE_PRODUCT_ID = "$productId";
     public static final String AMP_REVENUE_QUANTITY = "$quantity";
     public static final String AMP_REVENUE_PRICE = "$price";
-    public static final String AMP_REVENUE_REVENUE = "$revenue";
-    public static final String AMP_REVENUE_VERIFIED = "$verified";
     public static final String AMP_REVENUE_REVENUE_TYPE = "$revenueType";
     public static final String AMP_REVENUE_RECEIPT = "$receipt";
     public static final String AMP_REVENUE_RECEIPT_SIG = "$receiptSig";

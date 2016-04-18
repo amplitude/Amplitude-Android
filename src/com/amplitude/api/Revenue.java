@@ -20,8 +20,6 @@ public class Revenue {
     protected Double price = null;
 
     // optional fields
-    protected Double revenue = null;
-    protected boolean verified = false;
     protected String revenueType = null;
     protected String receipt = null;
     protected String receiptSig = null;
@@ -52,18 +50,11 @@ public class Revenue {
 
     public Revenue setQuantity(int quantity) {
         this.quantity = quantity;
-        this.revenue = this.price == null ? null : this.price * this.quantity;
         return this;
     }
 
     public Revenue setPrice(double price) {
         this.price = price;
-        this.revenue = this.price * this.quantity;
-        return this;
-    }
-
-    public Revenue setVerified(boolean verified) {
-        this.verified = verified;
         return this;
     }
 
@@ -90,8 +81,6 @@ public class Revenue {
             obj.put(Constants.AMP_REVENUE_PRODUCT_ID, productId);
             obj.put(Constants.AMP_REVENUE_QUANTITY, quantity);
             obj.put(Constants.AMP_REVENUE_PRICE, price);
-            obj.put(Constants.AMP_REVENUE_REVENUE, revenue);
-            obj.put(Constants.AMP_REVENUE_VERIFIED, verified);
             obj.put(Constants.AMP_REVENUE_REVENUE_TYPE, revenueType);
             obj.put(Constants.AMP_REVENUE_RECEIPT, receipt);
             obj.put(Constants.AMP_REVENUE_RECEIPT_SIG, receiptSig);

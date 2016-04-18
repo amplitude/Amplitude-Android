@@ -239,25 +239,46 @@ Amplitude.getInstance().clearUserProperties();
 
 # Tracking Revenue #
 
-To track revenue from a user, call `logRevenue()` each time a user generates revenue. For example:
+The preferred method of tracking revenue for a user now is to use `logRevenueV2()` in conjunction with the provided `Revenue` interface. `Revenue` instances will store each revenue transaction and allow you to define several special revenue properties (such as revenueType, productId, etc) that are used in Amplitude dashboard's Revenue tab. You can now also add event properties to the revenue event, via the revenueProperties field. These `Revenue` instance objects are then passed into `logRevenueV2` to send as revenue events to Amplitude servers. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
 
+To use the `Revenue` interface, you will first need to import the class:
 ```java
-Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99);
+import com.amplitude.api.Revenue;
 ```
 
-`logRevenue()` takes a takes a string to identify the product (the product ID from Google Play), an int with the quantity of product purchased, and a double with the dollar amount of the sale. This allows us to automatically display data relevant to revenue on the Amplitude website, including average revenue per daily active user (ARPDAU), 1, 7, 14, 30, 60, and 90 day revenue, lifetime value (LTV) estimates, and revenue by advertising campaign cohort and daily/weekly/monthly cohorts.
+Each time a user generates revenue, you create a `Revenue` object and fill out the revenue properties:
+```java
+Revenue revenue = new Revenue().setProductId("com.company.productId").setPrice(3.99).setQuantity(3);
+Amplitude.getInstance().logRevenueV2(revenue);
+```
 
-**To enable revenue verification, copy your Google Play License Public Key into the manage section of your app on Amplitude. You must put a key for every single app in Amplitude where you want revenue verification.**
+`productId`, `price`, and `quantity` are required fields. `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc), as well as a corresponding event property key (see below for how to send revenue properties in event properties). This table describes the different fields available:
 
-Then after a successful purchase transaction, call `logRevenue()` with the purchase data and receipt signature:
+| Name               | Type       | Description                                                                                              | default | property key |
+|--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|--------------|
+| productId          | String     | Required: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    | $productId   |
+| quantity           | int        | Required: the quantity of products purchased. Defaults to 1 if not specified. Revenue = quantity * price | 1       | $quantity    |
+| price              | Double     | Required: the price of the products purchased. Revenue = quantity * price                                | null    | $price       |
+| revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    | $revenueType |
+| receipt            | String     | Optional: required if you want to verify the revenue event                                               | null    | $receipt     |
+| receiptSignature   | String     | Optional: required if you want to verify the revenue event                                               | null    | $receiptSig  |
+| revenueProperties  | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    | n/a          |
+
+### Revenue Verification ###
+
+By default Revenue events recorded on the Android SDK appear in Amplitude dashboards as unverified revenue events. **To enable revenue verification, copy your Google Play License Public Key into the manage section of your app on Amplitude. You must put a key for every single app in Amplitude where you want revenue verification.**
+
+Then after a successful purchase transaction, add the purchase data and receipt signature to the `Revenue` object:
 
 ```java
-
 // for a purchase request onActivityResult
 String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
 String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
 
-Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseData, dataSignature);
+Revenue revenue = new Revenue().setProductId("com.company.productId").setQuantity(1);
+revenue.setPrice(3.99).setReceipt(purchaseData, dataSignature);
+
+Amplitude.getInstance().logRevenueV2(revenue);
 ```
 
 See the [Google In App Billing Documentation](http://developer.android.com/google/play/billing/billing_integrate.html#Purchase) for details on how to retrieve the purchase data and receipt signature.
@@ -267,11 +288,37 @@ See the [Google In App Billing Documentation](http://developer.android.com/googl
 For purchases on the Amazon Store, you should copy your Amazon Shared Secret into the manage section of your app on Amplitude. After a successful purchase transaction, you should send the purchase token as the receipt and the user id as the receiptSignature:
 
 ```java
+// for a purchase request onActivityResult
 String purchaseToken = purchaseResponse.getReceipt();
 String userId = getUserIdResponse.getUserId();
 
-Amplitude.getInstance().logRevenue("com.company.productid", 1, 3.99, purchaseToken, userId);
+Revenue revenue = new Revenue().setProductId("com.company.productId").setQuantity(1);
+revenue.setPrice(3.99).setReceipt(purchaseToken, userId);
+
+Amplitude.getInstance().logRevenueV2(revenue);
 ```
+
+### Sending Revenue as Event Properties ###
+
+Instead of sending revenue through Amplitude's special revenue event, you can send revenue properties as event properties on any event you log. The `property key` column in the above table denotes the string key to use when declaring the event property. Note: you still need to set a productId and a price. If quantity is not set, it is assumed to be 1:
+
+```java
+JSONObject eventProperties = new JSONObject();
+try {
+    eventProperties.put("description", "some event description");
+    eventProperties.put("color", "green");
+    eventProperties.put("$productId", "com.company.productId");
+    eventProperties.put("$price", 10.99);
+    eventProperties.put("$quantity", 2);
+} catch (JSONException e) {
+}
+Amplitude.getInstance().logEvent("Completed Purchase", eventProperties);
+```
+
+### Backwards compatibility ###
+
+The existing `logRevenue` methods still work but are deprecated. Fields such as `revenueType` will be missing from events logged with the old methods, so Revenue segmentation on those events will be limited in Amplitude dashboards.
+
 
 # Fine-grained location tracking #
 

@@ -781,14 +781,13 @@ public class AmplitudeClientTest extends BaseTest {
         double price = 10.99;
         int quantity = 15;
         String productId = "testProductId";
-        boolean verified = true;
         String receipt = "testReceipt";
         String receiptSig = "testReceiptSig";
         String revenueType = "testRevenueType";
         JSONObject props = new JSONObject().put("city", "Boston");
 
         Revenue revenue = new Revenue().setProductId(productId).setPrice(price);
-        revenue.setQuantity(quantity).setVerified(verified).setReceipt(receipt, receiptSig);
+        revenue.setQuantity(quantity).setReceipt(receipt, receiptSig);
         revenue.setRevenueType(revenueType).setRevenueProperties(props);
 
         amplitude.logRevenueV2(revenue);
@@ -802,7 +801,6 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(obj.optDouble("$price"), price, 0);
         assertEquals(obj.optInt("$quantity"), 15);
         assertEquals(obj.optString("$productId"), productId);
-        assertEquals(obj.optBoolean("$verified"), verified);
         assertEquals(obj.optString("$receipt"), receipt);
         assertEquals(obj.optString("$receiptSig"), receiptSig);
         assertEquals(obj.optString("$revenueType"), revenueType);

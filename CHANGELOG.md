@@ -1,7 +1,7 @@
 ## Unreleased
 
 * Add helper method `getSessionId` to expose the current sessionId value.
-* Add `logRevenueV2` and new `Revenue` class to support logging revenue events with properties, revenue type, and verified. See [Readme]() for more info.
+* Add `logRevenueV2` and new `Revenue` class to support logging revenue events with properties, revenue type, and verified. See [Readme](https://github.com/amplitude/Amplitude-Android#tracking-revenue) for more info.
 
 ## 2.6.0 (March 29, 2016)
 
