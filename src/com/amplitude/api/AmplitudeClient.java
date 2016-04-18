@@ -508,6 +508,13 @@ public class AmplitudeClient {
         dbHelper.insertOrReplaceKeyLongValue(LAST_IDENTIFY_ID_KEY, identifyId);
     }
 
+    /**
+     * @return The current sessionId value.
+     */
+    public long getSessionId() {
+        return sessionId;
+    }
+
     long getPreviousSessionId() {
         return getLongvalue(PREVIOUS_SESSION_ID_KEY, -1);
     }

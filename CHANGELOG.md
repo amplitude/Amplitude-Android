@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Add helper method `getSessionId` to expose the current sessionId value.
 * Add support setting groups for users and events. See [Readme](https://github.com/amplitude/Amplitude-Android#setting-groups) for more information.
 
 ## 2.6.0 (March 29, 2016)
