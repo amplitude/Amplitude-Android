@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Add helper method `getSessionId` to expose the current sessionId value.
+* Fix crash when trying to enableForegroundTracking with the PinnedAmplitudeClient. The PinnedAmplitudeClient needs to override the method and pass in itself as the instance.
 
 ## 2.6.0 (March 29, 2016)
 

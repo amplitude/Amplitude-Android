@@ -1,6 +1,8 @@
 package com.amplitude.api;
 
+import android.app.Application;
 import android.content.Context;
+import android.os.Build;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -145,6 +147,19 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
 
     public PinnedAmplitudeClient() {
         super();
+    }
+
+    @Override
+    public PinnedAmplitudeClient enableForegroundTracking(Application app) {
+        if (isUsingForegroundTracking() || !contextAndApiKeySet("enableForegroundTracking()")) {
+            return instance;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(instance));
+        }
+
+        return instance;
     }
 
     protected boolean initializedSSLSocketFactory = false;
