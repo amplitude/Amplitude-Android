@@ -252,7 +252,7 @@ Revenue revenue = new Revenue().setProductId("com.company.productId").setPrice(3
 Amplitude.getInstance().logRevenueV2(revenue);
 ```
 
-`productId`, `price`, and `quantity` are required fields (`quantity` defaults to 1 if unspecified). `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc). This table describes the different fields available:
+`productId`, and `price` are required fields. `quantity` defaults to 1 if unspecified. `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc). This table describes the different fields available:
 
 | Name               | Type       | Description                                                                                              | default |
 |--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|
