@@ -70,8 +70,7 @@ public class Revenue {
     }
 
     public Revenue setRevenueProperties(JSONObject revenueProperties) {
-        this.properties = revenueProperties == null ? null :
-                Utils.cloneJSONObject(revenueProperties);
+        this.properties = Utils.cloneJSONObject(revenueProperties);
         return this;
     }
 
