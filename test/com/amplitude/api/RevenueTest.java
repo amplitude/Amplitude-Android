@@ -10,6 +10,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest=Config.NONE)
@@ -24,7 +27,7 @@ public class RevenueTest extends BaseTest {
     @Test
     public void testProductId() {
         Revenue revenue = new Revenue();
-        assertEquals(revenue.productId, null);
+        assertNull(revenue.productId);
 
         String productId = "testProductId";
         revenue.setProductId(productId);
@@ -56,7 +59,7 @@ public class RevenueTest extends BaseTest {
     @Test
     public void testPrice() {
         Revenue revenue = new Revenue();
-        assertEquals(revenue.price, null);
+        assertNull(revenue.price);
 
         double price = 10.99;
         revenue.setPrice(price);
@@ -77,7 +80,7 @@ public class RevenueTest extends BaseTest {
 
         // verify that null and empty strings allowed
         revenue.setRevenueType(null);
-        assertEquals(revenue.revenueType, null);
+        assertNull(revenue.revenueType);
         revenue.setRevenueType("");
         assertEquals(revenue.revenueType, "");
 
@@ -91,8 +94,8 @@ public class RevenueTest extends BaseTest {
     @Test
     public void testReceipt() {
         Revenue revenue = new Revenue();
-        assertEquals(revenue.receipt, null);
-        assertEquals(revenue.receiptSig, null);
+        assertNull(revenue.receipt);
+        assertNull(revenue.receiptSig);
 
         String receipt = "testReceipt";
         String receiptSig = "testReceiptSig";
@@ -108,36 +111,36 @@ public class RevenueTest extends BaseTest {
     @Test
     public void testRevenueProperties() throws JSONException {
         Revenue revenue = new Revenue();
-        assertEquals(revenue.properties, null);
+        assertNull(revenue.properties);
 
         JSONObject properties = new JSONObject().put("city", "san francisco");
         revenue.setRevenueProperties(properties);
-        assertEquals(compareJSONObjects(properties, revenue.properties), true);
+        assertTrue(compareJSONObjects(properties, revenue.properties));
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optString("city"), "san francisco");
         assertEquals(obj.optInt("$quantity"), 1);
 
         // assert original json object was not modified
-        assertEquals(properties.has("$quantity"), false);
+        assertFalse(properties.has("$quantity"));
     }
 
     @Test
     public void testValidRevenue() {
         Revenue revenue = new Revenue();
-        assertEquals(revenue.isValidRevenue(), false);
+        assertFalse(revenue.isValidRevenue());
         revenue.setProductId("testProductId");
-        assertEquals(revenue.isValidRevenue(), false);
+        assertFalse(revenue.isValidRevenue());
         revenue.setPrice(10.99);
-        assertEquals(revenue.isValidRevenue(), true);
+        assertTrue(revenue.isValidRevenue());
 
         Revenue revenue2 = new Revenue();
-        assertEquals(revenue2.isValidRevenue(), false);
+        assertFalse(revenue2.isValidRevenue());
         revenue2.setPrice(10.99);
         revenue2.setQuantity(15);
-        assertEquals(revenue2.isValidRevenue(), false);
+        assertFalse(revenue2.isValidRevenue());
         revenue2.setProductId("testProductId");
-        assertEquals(revenue2.isValidRevenue(), true);
+        assertTrue(revenue2.isValidRevenue());
     }
 
     @Test

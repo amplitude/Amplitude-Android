@@ -299,7 +299,7 @@ public class AmplitudeClient {
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
-                    eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -611,7 +611,6 @@ public class AmplitudeClient {
     public void logRevenue(double amount) {
         // Amount is in dollars
         // ex. $3.99 would be pass as logRevenue(3.99)
-
         logRevenue(null, 1, amount);
     }
 
@@ -638,7 +637,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-                Constants.AMP_REVENUE_EVENT, null, apiProperties, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, getCurrentTimeMillis(), false
         );
     }
 
