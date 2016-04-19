@@ -252,17 +252,17 @@ Revenue revenue = new Revenue().setProductId("com.company.productId").setPrice(3
 Amplitude.getInstance().logRevenueV2(revenue);
 ```
 
-`productId`, `price`, and `quantity` are required fields. `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc), as well as a corresponding event property key (see below for how to send revenue properties in event properties). This table describes the different fields available:
+`productId`, `price`, and `quantity` are required fields (`quantity` defaults to 1 if unspecified). `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc). This table describes the different fields available:
 
-| Name               | Type       | Description                                                                                              | default | property key |
-|--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|--------------|
-| productId          | String     | Required: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    | $productId   |
-| quantity           | int        | Required: the quantity of products purchased. Defaults to 1 if not specified. Revenue = quantity * price | 1       | $quantity    |
-| price              | Double     | Required: the price of the products purchased (can be negative). Revenue = quantity * price              | null    | $price       |
-| revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    | $revenueType |
-| receipt            | String     | Optional: required if you want to verify the revenue event                                               | null    | $receipt     |
-| receiptSignature   | String     | Optional: required if you want to verify the revenue event                                               | null    | $receiptSig  |
-| revenueProperties  | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    | n/a          |
+| Name               | Type       | Description                                                                                              | default |
+|--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|
+| productId          | String     | Required: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    |
+| quantity           | int        | Required: the quantity of products purchased. Defaults to 1 if not specified. Revenue = quantity * price | 1       |
+| price              | Double     | Required: the price of the products purchased (can be negative). Revenue = quantity * price              | null    |
+| revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    |
+| receipt            | String     | Optional: required if you want to verify the revenue event                                               | null    |
+| receiptSignature   | String     | Optional: required if you want to verify the revenue event                                               | null    |
+| revenueProperties  | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    |
 
 Note: the price can be negative, which might be useful for tracking revenue lost, for example refunds or costs.
 
@@ -298,23 +298,6 @@ Revenue revenue = new Revenue().setProductId("com.company.productId").setQuantit
 revenue.setPrice(3.99).setReceipt(purchaseToken, userId);
 
 Amplitude.getInstance().logRevenueV2(revenue);
-```
-
-### Sending Revenue as Event Properties ###
-
-Instead of sending revenue through Amplitude's special revenue event, you can send revenue properties as event properties on any event you log. The `property key` column in the above table denotes the string key to use when declaring the event property. Note: you still need to set a productId and a price. If quantity is not set, it is assumed to be 1:
-
-```java
-JSONObject eventProperties = new JSONObject();
-try {
-    eventProperties.put("description", "some event description");
-    eventProperties.put("color", "green");
-    eventProperties.put("$productId", "com.company.productId");
-    eventProperties.put("$price", 10.99);
-    eventProperties.put("$quantity", 2);
-} catch (JSONException e) {
-}
-Amplitude.getInstance().logEvent("Completed Purchase", eventProperties);
 ```
 
 ### Backwards compatibility ###
