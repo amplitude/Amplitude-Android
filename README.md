@@ -258,11 +258,13 @@ Amplitude.getInstance().logRevenueV2(revenue);
 |--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|--------------|
 | productId          | String     | Required: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    | $productId   |
 | quantity           | int        | Required: the quantity of products purchased. Defaults to 1 if not specified. Revenue = quantity * price | 1       | $quantity    |
-| price              | Double     | Required: the price of the products purchased. Revenue = quantity * price                                | null    | $price       |
+| price              | Double     | Required: the price of the products purchased (can be negative). Revenue = quantity * price              | null    | $price       |
 | revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    | $revenueType |
 | receipt            | String     | Optional: required if you want to verify the revenue event                                               | null    | $receipt     |
 | receiptSignature   | String     | Optional: required if you want to verify the revenue event                                               | null    | $receiptSig  |
 | revenueProperties  | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    | n/a          |
+
+Note: the price can be negative, which might be useful for tracking revenue lost, for example refunds or costs.
 
 ### Revenue Verification ###
 
