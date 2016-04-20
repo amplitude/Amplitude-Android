@@ -1260,6 +1260,55 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testSetGroup() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        amplitude.setGroup("orgId", new JSONArray().put(10).put(15));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 1);
+        JSONObject event = getLastUnsentIdentify();
+        assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
+        assertEquals(event.optJSONObject("event_properties").length(), 0);
+
+        JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
+        assertEquals(userPropertiesOperations.length(), 1);
+        assertTrue(userPropertiesOperations.has(Constants.AMP_OP_SET));
+
+        JSONObject groups = event.optJSONObject("groups");
+        assertEquals(groups.length(), 1);
+        assertEquals(groups.optJSONArray("orgId"), new JSONArray().put(10).put(15));
+
+        JSONObject setOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_SET);
+        assertEquals(setOperations.length(), 1);
+        assertEquals(setOperations.optJSONArray("orgId"), new JSONArray().put(10).put(15));
+    }
+
+    @Test
+    public void testLogEventWithGroups() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        JSONObject groups = new JSONObject().put("orgId", 10).put("sport", "tennis");
+        amplitude.logEvent("test", null, groups);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test");
+        assertEquals(event.optJSONObject("event_properties").length(), 0);
+        assertEquals(event.optJSONObject("user_properties").length(), 0);
+
+        JSONObject eventGroups = event.optJSONObject("groups");
+        assertEquals(eventGroups.length(), 2);
+        assertEquals(eventGroups.optInt("orgId"), 10);
+        assertEquals(eventGroups.optString("sport"), "tennis");
+    }
+
+    @Test
     public void testMergeEventsArrayIndexOutOfBounds() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
