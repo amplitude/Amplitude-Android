@@ -41,4 +41,12 @@ public class Constants {
     public static final String AMP_OP_SET = "$set";
     public static final String AMP_OP_SET_ONCE = "$setOnce";
     public static final String AMP_OP_UNSET = "$unset";
+
+    public static final String AMP_REVENUE_EVENT = "revenue_amount";
+    public static final String AMP_REVENUE_PRODUCT_ID = "$productId";
+    public static final String AMP_REVENUE_QUANTITY = "$quantity";
+    public static final String AMP_REVENUE_PRICE = "$price";
+    public static final String AMP_REVENUE_REVENUE_TYPE = "$revenueType";
+    public static final String AMP_REVENUE_RECEIPT = "$receipt";
+    public static final String AMP_REVENUE_RECEIPT_SIG = "$receiptSig";
 }

@@ -726,8 +726,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(1, apiProps.optInt("quantity"));
         assertNull(apiProps.optString("productId", null));
         assertEquals(10.99, apiProps.optDouble("price"), .01);
@@ -740,8 +740,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");;
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(2, apiProps.optInt("quantity"));
         assertEquals("ID1", apiProps.optString("productId"));
         assertEquals(9.99, apiProps.optDouble("price"), .01);
@@ -754,8 +754,8 @@ public class AmplitudeClientTest extends BaseTest {
 
         event = getLastUnsentEvent();
         apiProps = event.optJSONObject("api_properties");
-        assertEquals(AmplitudeClient.REVENUE_EVENT, event.optString("event_type"));
-        assertEquals(AmplitudeClient.REVENUE_EVENT, apiProps.optString("special"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, event.optString("event_type"));
+        assertEquals(Constants.AMP_REVENUE_EVENT, apiProps.optString("special"));
         assertEquals(3, apiProps.optInt("quantity"));
         assertEquals("ID2", apiProps.optString("productId"));
         assertEquals(8.99, apiProps.optDouble("price"), .01);
@@ -763,6 +763,63 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals("SIG", apiProps.optString("receiptSig"));
 
         assertNotNull(runRequest(amplitude));
+    }
+
+    @Test
+    public void testLogRevenueV2() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        // ignore invalid revenue objects
+        amplitude.logRevenueV2(null);
+        looper.runToEndOfTasks();
+        amplitude.logRevenueV2(new Revenue());
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+
+        // log valid revenue object
+        double price = 10.99;
+        int quantity = 15;
+        String productId = "testProductId";
+        String receipt = "testReceipt";
+        String receiptSig = "testReceiptSig";
+        String revenueType = "testRevenueType";
+        JSONObject props = new JSONObject().put("city", "Boston");
+
+        Revenue revenue = new Revenue().setProductId(productId).setPrice(price);
+        revenue.setQuantity(quantity).setReceipt(receipt, receiptSig);
+        revenue.setRevenueType(revenueType).setRevenueProperties(props);
+
+        amplitude.logRevenueV2(revenue);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "revenue_amount");
+
+        JSONObject obj = event.optJSONObject("event_properties");
+        assertEquals(obj.optDouble("$price"), price, 0);
+        assertEquals(obj.optInt("$quantity"), 15);
+        assertEquals(obj.optString("$productId"), productId);
+        assertEquals(obj.optString("$receipt"), receipt);
+        assertEquals(obj.optString("$receiptSig"), receiptSig);
+        assertEquals(obj.optString("$revenueType"), revenueType);
+        assertEquals(obj.optString("city"), "Boston");
+
+        // user properties should be empty
+        assertEquals(
+            compareJSONObjects(event.optJSONObject("user_properties"), new JSONObject()), true
+        );
+
+        // api properties should not have any revenue info
+        JSONObject apiProps = event.optJSONObject("api_properties");
+        assertTrue(apiProps.length() > 0);
+        assertFalse(apiProps.has("special"));
+        assertFalse(apiProps.has("productId"));
+        assertFalse(apiProps.has("quantity"));
+        assertFalse(apiProps.has("price"));
+        assertFalse(apiProps.has("receipt"));
+        assertFalse(apiProps.has("receiptSig"));
     }
 
     @Test

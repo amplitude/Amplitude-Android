@@ -35,7 +35,6 @@ public class AmplitudeClient {
 
     public static final String START_SESSION_EVENT = "session_start";
     public static final String END_SESSION_EVENT = "session_end";
-    public static final String REVENUE_EVENT = "revenue_amount";
 
     // database valueStore keys
     public static final String DEVICE_ID_KEY = "device_id";
@@ -339,15 +338,15 @@ public class AmplitudeClient {
         // Only does a shallow copy, so it's still possible, though unlikely,
         // to hit concurrent access if the caller mutates deep in the object.
         if (eventProperties != null) {
-            eventProperties = cloneJSONObject(eventProperties);
+            eventProperties = Utils.cloneJSONObject(eventProperties);
         }
 
         if (userProperties != null) {
-            userProperties = cloneJSONObject(userProperties);
+            userProperties = Utils.cloneJSONObject(userProperties);
         }
 
         if (groups != null) {
-            groups = cloneJSONObject(groups);
+            groups = Utils.cloneJSONObject(groups);
         }
 
         final JSONObject copyEventProperties = eventProperties;
@@ -650,7 +649,7 @@ public class AmplitudeClient {
         // Log revenue in events
         JSONObject apiProperties = new JSONObject();
         try {
-            apiProperties.put("special", REVENUE_EVENT);
+            apiProperties.put("special", Constants.AMP_REVENUE_EVENT);
             apiProperties.put("productId", productId);
             apiProperties.put("quantity", quantity);
             apiProperties.put("price", price);
@@ -660,8 +659,16 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-                REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
         );
+    }
+
+    public void logRevenueV2(Revenue revenue) {
+        if (!contextAndApiKeySet("logRevenueV2()") || revenue == null || !revenue.isValidRevenue()) {
+            return;
+        }
+
+        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject());
     }
 
     // maintain for backwards compatibility
@@ -1148,37 +1155,6 @@ public class AmplitudeClient {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
-    }
-
-    /**
-     * Do a shallow copy of a JSONObject. Takes a bit of code to avoid
-     * stringify and reparse given the API.
-     */
-    private JSONObject cloneJSONObject(final JSONObject obj) {
-        if (obj == null) {
-            return null;
-        }
-
-        // obj.names returns null if the json obj is empty.
-        JSONArray nameArray = null;
-        try {
-            nameArray = obj.names();
-        } catch (ArrayIndexOutOfBoundsException e) {
-            logger.e(TAG, e.toString());
-        }
-        int len = (nameArray != null ? nameArray.length() : 0);
-
-        String[] names = new String[len];
-        for (int i = 0; i < len; i++) {
-            names[i] = nameArray.optString(i);
-        }
-
-        try {
-            return new JSONObject(obj, names);
-        } catch (JSONException e) {
-            logger.e(TAG, e.toString());
-            return null;
-        }
     }
 
     /**
