@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.7.1 (April 19, 2016)
+
 * RevenueProperties is a confusing name and should actually be eventProperties. Deprecating Revenue.setRevenueProperties and replacing it with Revenue.setEventProperties, and clarified in Readme.
 
 ## 2.7.0 (April 19, 2016)
