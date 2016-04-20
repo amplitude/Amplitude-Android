@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.7.0 (April 19, 2016)
+
 * Add support setting groups for users and events. See [Readme](https://github.com/amplitude/Amplitude-Android#setting-groups) for more information.
 * Add helper method `getSessionId` to expose the current sessionId value.
 * Add `logRevenueV2` and new `Revenue` class to support logging revenue events with properties, revenue type, and verified. See [Readme](https://github.com/amplitude/Amplitude-Android#tracking-revenue) for more info.
