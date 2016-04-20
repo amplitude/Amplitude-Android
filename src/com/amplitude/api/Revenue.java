@@ -75,6 +75,7 @@ public class Revenue {
      * @deprecated - use setEventProperties instead
      */
     public Revenue setRevenueProperties(JSONObject revenueProperties) {
+        logger.w(TAG, "setRevenueProperties is deprecated, please use setEventProperties instead");
         return setEventProperties(revenueProperties);
     }
 
