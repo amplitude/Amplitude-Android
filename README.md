@@ -111,12 +111,6 @@ If your app has its own login system that you want to track users with, you can 
 Amplitude.getInstance().setUserId("USER_ID_HERE");
 ```
 
-A user's data will be merged on the backend so that any events up to that point on the same device will be tracked under the same user. Note: if a user logs out, or you want to log events under an anonymous user, you can also clear the user ID by calling `setUserId` with input `null`:
-
-```java
-Amplitude.getInstance().setUserId(null); // not string "null"
-```
-
 You can also add a user ID as an argument to the `initialize()` call:
 
 ```
