@@ -1,5 +1,7 @@
 ## Unreleased
 
+* RevenueProperties is a confusing name and should actually be eventProperties. Deprecating Revenue.setRevenueProperties and replacing it with Revenue.setEventProperties, and clarified in Readme.
+
 ## 2.7.0 (April 19, 2016)
 
 * Add support setting groups for users and events. See [Readme](https://github.com/amplitude/Amplitude-Android#setting-groups) for more information.

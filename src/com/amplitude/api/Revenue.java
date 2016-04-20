@@ -69,8 +69,17 @@ public class Revenue {
         return this;
     }
 
+    /**
+     * This is deprecated. RevenueProperties is a confusing name, should be EventProperties
+     * Keeping for backwards compatability.
+     * @deprecated - use setEventProperties instead
+     */
     public Revenue setRevenueProperties(JSONObject revenueProperties) {
-        this.properties = Utils.cloneJSONObject(revenueProperties);
+        return setEventProperties(revenueProperties);
+    }
+
+    public Revenue setEventProperties(JSONObject eventProperties) {
+        this.properties = Utils.cloneJSONObject(eventProperties);
         return this;
     }
 

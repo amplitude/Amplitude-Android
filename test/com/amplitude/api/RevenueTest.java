@@ -126,6 +126,23 @@ public class RevenueTest extends BaseTest {
     }
 
     @Test
+    public void testEventProperties() throws JSONException {
+        Revenue revenue = new Revenue();
+        assertNull(revenue.properties);
+
+        JSONObject properties = new JSONObject().put("city", "san francisco");
+        revenue.setEventProperties(properties);
+        assertTrue(compareJSONObjects(properties, revenue.properties));
+
+        JSONObject obj = revenue.toJSONObject();
+        assertEquals(obj.optString("city"), "san francisco");
+        assertEquals(obj.optInt("$quantity"), 1);
+
+        // assert original json object was not modified
+        assertFalse(properties.has("$quantity"));
+    }
+
+    @Test
     public void testValidRevenue() {
         Revenue revenue = new Revenue();
         assertFalse(revenue.isValidRevenue());

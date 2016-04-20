@@ -256,9 +256,9 @@ Amplitude.getInstance().logRevenueV2(revenue);
 | revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    |
 | receipt            | String     | Optional: required if you want to verify the revenue event                                               | null    |
 | receiptSignature   | String     | Optional: required if you want to verify the revenue event                                               | null    |
-| revenueProperties  | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    |
+| eventProperties    | JSONObject | Optional: a JSONObject of event properties to include in the revenue event                               | null    |
 
-Note: the price can be negative, which might be useful for tracking revenue lost, for example refunds or costs.
+Note: the price can be negative, which might be useful for tracking revenue lost, for example refunds or costs. Also note, you can set event properties on the revenue event just as you would with logEvent by passing in a JSONObject of string key value pairs. These event properties, however, will only appear in the Event Segmentation tab, not in the Revenue tab.
 
 ### Revenue Verification ###
 
