@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Add support setting groups for users and events. See [Readme](https://github.com/amplitude/Amplitude-Android#setting-groups) for more information.
 * Add helper method `getSessionId` to expose the current sessionId value.
 * Fix crash when trying to enableForegroundTracking with the PinnedAmplitudeClient. AmplitudeClient methods should be using `this` instead of static `instance` variable.
 

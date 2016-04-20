@@ -282,9 +282,17 @@ public class AmplitudeClient {
     }
 
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
+        logEvent(eventType, eventProperties, null, outOfSession);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups) {
+        logEvent(eventType, eventProperties, groups, false);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
-                eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -298,9 +306,17 @@ public class AmplitudeClient {
     }
 
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
+        logEventSync(eventType, eventProperties, null, outOfSession);
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject group) {
+        logEventSync(eventType, eventProperties, group, false);
+    }
+
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
-                eventType, eventProperties, null, null, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -316,7 +332,7 @@ public class AmplitudeClient {
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
             final JSONObject apiProperties, JSONObject userProperties,
-            final long timestamp, final boolean outOfSession) {
+            JSONObject groups, final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -330,21 +346,26 @@ public class AmplitudeClient {
             userProperties = cloneJSONObject(userProperties);
         }
 
+        if (groups != null) {
+            groups = cloneJSONObject(groups);
+        }
+
         final JSONObject copyEventProperties = eventProperties;
         final JSONObject copyUserProperties = userProperties;
+        final JSONObject copyGroups = groups;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
                 logEvent(
                     eventType, copyEventProperties, apiProperties,
-                    copyUserProperties, timestamp, outOfSession
+                    copyUserProperties, copyGroups, timestamp, outOfSession
                 );
             }
         });
     }
 
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
-            JSONObject userProperties, long timestamp, boolean outOfSession) {
+            JSONObject userProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -408,6 +429,7 @@ public class AmplitudeClient {
                     : truncate(eventProperties));
             event.put("user_properties", (userProperties == null) ? new JSONObject()
                     : truncate(userProperties));
+            event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
         } catch (JSONException e) {
             logger.e(TAG, e.toString());
         }
@@ -586,7 +608,7 @@ public class AmplitudeClient {
         }
 
         long timestamp = getLastEventTime();
-        logEvent(sessionEvent, null, apiProperties, null, timestamp, false);
+        logEvent(sessionEvent, null, apiProperties, null, null, timestamp, false);
     }
 
     void onExitForeground(final long timestamp) {
@@ -638,7 +660,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-                REVENUE_EVENT, null, apiProperties, null, getCurrentTimeMillis(), false
+                REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
         );
     }
 
@@ -691,7 +713,23 @@ public class AmplitudeClient {
             return;
         }
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,
-                identify.userPropertiesOperations, getCurrentTimeMillis(), false);
+                identify.userPropertiesOperations, null, getCurrentTimeMillis(), false);
+    }
+
+    public void setGroup(String groupType, Object groupName) {
+        if (!contextAndApiKeySet("setGroup()") || TextUtils.isEmpty(groupType)) {
+            return;
+        }
+        JSONObject group = null;
+        try {
+            group = new JSONObject().put(groupType, groupName);
+        }
+        catch (JSONException e) {
+            logger.e(TAG, e.toString());
+        }
+        Identify identify = new Identify().setUserProperty(groupType, groupName);
+        logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
+                group, getCurrentTimeMillis(), false);
     }
 
     public JSONObject truncate(JSONObject object) {
