@@ -104,7 +104,7 @@ public class AmplitudeClient {
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
-            return instance;
+            return this;
         }
 
         AmplitudeClient.upgradePrefs(context);
@@ -112,7 +112,7 @@ public class AmplitudeClient {
 
         if (TextUtils.isEmpty(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
-            return instance;
+            return this;
         }
         if (!initialized) {
             this.context = context.getApplicationContext();
@@ -139,19 +139,19 @@ public class AmplitudeClient {
             initialized = true;
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableForegroundTracking(Application app) {
         if (usingForegroundTracking || !contextAndApiKeySet("enableForegroundTracking()")) {
-            return instance;
+            return this;
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(instance));
+            app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(this));
         }
 
-        return instance;
+        return this;
     }
 
     private void initializeDeviceInfo() {
@@ -168,12 +168,12 @@ public class AmplitudeClient {
 
     public AmplitudeClient enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
         this.newDeviceIdPerInstall = newDeviceIdPerInstall;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient useAdvertisingIdForDeviceId() {
         this.useAdvertisingIdForDeviceId = true;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient enableLocationListening() {
@@ -182,7 +182,7 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(true);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient disableLocationListening() {
@@ -191,48 +191,48 @@ public class AmplitudeClient {
                     "Must initialize before acting on location listening.");
         }
         deviceInfo.setLocationListening(false);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadThreshold(int eventUploadThreshold) {
         this.eventUploadThreshold = eventUploadThreshold;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
         this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
         this.backoffUploadBatchSize = eventUploadMaxBatchSize;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventMaxCount(int eventMaxCount) {
         this.eventMaxCount = eventMaxCount;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setEventUploadPeriodMillis(int eventUploadPeriodMillis) {
         this.eventUploadPeriodMillis = eventUploadPeriodMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setSessionTimeoutMillis(long sessionTimeoutMillis) {
         this.sessionTimeoutMillis = sessionTimeoutMillis;
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOptOut(boolean optOut) {
         if (!contextAndApiKeySet("setOptOut()")) {
-            return instance;
+            return this;
         }
 
         this.optOut = optOut;
         dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
-        return instance;
+        return this;
     }
 
     public boolean isOptedOut() {
@@ -241,12 +241,12 @@ public class AmplitudeClient {
 
     public AmplitudeClient enableLogging(boolean enableLogging) {
         logger.setEnableLogging(enableLogging);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setLogLevel(int logLevel) {
         logger.setLogLevel(logLevel);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setOffline(boolean offline) {
@@ -257,12 +257,12 @@ public class AmplitudeClient {
             uploadEvents();
         }
 
-        return instance;
+        return this;
     }
 
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
-        return instance;
+        return this;
     }
 
     void useForegroundTracking() {
@@ -791,24 +791,24 @@ public class AmplitudeClient {
 
     public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
-            return instance;
+            return this;
         }
 
         this.userId = userId;
         dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
-        return instance;
+        return this;
     }
 
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
         if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
                 invalidDeviceIds.contains(deviceId)) {
-            return instance;
+            return this;
         }
 
         this.deviceId = deviceId;
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        return instance;
+        return this;
     }
 
     public void uploadEvents() {
