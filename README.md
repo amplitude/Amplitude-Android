@@ -28,13 +28,19 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
     compile 'com.amplitude:android-sdk:2.7.1'
     ```
 
-3.  In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
+3. If you haven't already, add the [INTERNET](https://developer.android.com/reference/android/Manifest.permission.html#INTERNET) permission to your manifest file:
+
+    ``` xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    ```
+
+4.  In every file that uses analytics, import com.amplitude.api.Amplitude at the top:
 
     ```java
     import com.amplitude.api.Amplitude;
     ```
 
-4. In the `onCreate()` of your main activity, initialize the SDK:
+5. In the `onCreate()` of your main activity, initialize the SDK:
 
     ```java
     Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE").enableForegroundTracking(getApplication());
@@ -42,22 +48,22 @@ A [demo application](https://github.com/amplitude/Android-Demo) is available to 
 
     Note: if your app has multiple entry points/exit points, you should make a `Amplitude.getInstance().initialize()` at every `onCreate()` entry point.
 
-5. To track an event anywhere in the app, call:
+6. To track an event anywhere in the app, call:
 
     ```java
     Amplitude.getInstance().logEvent("EVENT_IDENTIFIER_HERE");
     ```
 
-6. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project. _This is required for integrating with third party attribution services_
+7. If you want to use Google Advertising IDs, make sure to add [Google Play Services](https://developer.android.com/google/play-services/setup.html) to your project. _This is required for integrating with third party attribution services_
 
-7. If you are using Proguard, add these exceptions to ```proguard.pro``` for Google Play Advertising IDs and Amplitude dependencies:
+8. If you are using Proguard, add these exceptions to ```proguard.pro``` for Google Play Advertising IDs and Amplitude dependencies:
 
     ```yaml
         -keep class com.google.android.gms.ads.** { *; }
         -dontwarn okio.**
     ```
 
-8. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
 
 # Tracking Events #
 
