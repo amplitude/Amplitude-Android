@@ -83,6 +83,21 @@
         </javac>
     </target>
 
+    <target name="docs" >
+        <javadoc classpathref="project.classpath" destdir="javadoc">
+            <fileset dir="${src}" defaultexcludes="yes">
+                <exclude name="com/amplitude/security/**"/>
+                <exclude name="com/amplitude/unity/**"/>
+                <exclude name="com/amplitude/api/AmplitudeLog.java"/>
+                <exclude name="com/amplitude/api/Constants.java"/>
+                <exclude name="com/amplitude/api/DeviceInfo.java"/>
+                <exclude name="**SSLContextBuilder**"/>
+                <exclude name="com/amplitude/api/Utils.java"/>
+                <exclude name="com/amplitude/api/WorkerThread.java"/>
+            </fileset>
+        </javadoc>
+    </target>
+
     <target name="jar" depends="build">
         <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" />
         <jar destfile="${uberjar}">
