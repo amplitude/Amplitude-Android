@@ -7,10 +7,12 @@ import org.json.JSONObject;
 
 /**
  * <h1>Amplitude</h1>
- * This is the main Amplitude class that manages SDK instances. <b>NOTE:</b> All of the methods
- * except {@code getInstance()} have been deprecated. Please call those methods on the
- * AmplitudeClient instance instead, for example: {@code Amplitude.getInstance().logEvent();}
- * See the documentation for AmplitudeClient for a full list and description of SDK methods.
+ * This is the main Amplitude class that manages SDK instances. <br><br>
+ * <b>NOTE:</b> All of the methods except {@code getInstance()} have been deprecated.
+ * Please call those methods on the AmplitudeClient instance instead, for example:
+ * {@code Amplitude.getInstance().logEvent();}
+ *
+ * @see com.amplitude.api.AmplitudeClient AmplitudeClient
  */
 public class Amplitude {
 
