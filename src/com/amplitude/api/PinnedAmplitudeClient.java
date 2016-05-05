@@ -18,8 +18,18 @@ import okhttp3.OkHttpClient;
 import okio.Buffer;
 import okio.ByteString;
 
+/**
+ * <h1>PinnedAmplitudeClient</h1>
+ * This is a version of the AmplitudeClient that supports SSL pinning for encrypted requests.
+ * Please contact <a href="mailto:support@amplitude.com">Amplitude Support</a> before you ship any
+ * products with SSL pinning enabled so that we are aware and can provide documentation
+ * and implementation help.
+ */
 public class PinnedAmplitudeClient extends AmplitudeClient {
 
+    /**
+     * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.PinnedAmplitudeClient";}
+     */
     public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
@@ -96,14 +106,28 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             + "uLt29G9HvxPUsE2JOAWVrgQSQdso8VYFhH2+9uRv0V9dlfmrPb2LjkQLPNlzmuhbsd"
             + "jrzch5vRpu/xO28QOG8=");
 
+    /**
+     * SSl context builder, used to generate the SSL context.
+     */
     protected static class SSLContextBuilder {
         private final List<String> certificateBase64s = new ArrayList<String>();
 
+        /**
+         * Add certificate ssl context builder.
+         *
+         * @param certificateBase64 the certificate base 64
+         * @return the ssl context builder
+         */
         public SSLContextBuilder addCertificate(String certificateBase64) {
             certificateBase64s.add(certificateBase64);
             return this;
         }
 
+        /**
+         * Build ssl context.
+         *
+         * @return the ssl context
+         */
         public SSLContext build() {
             try {
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
@@ -135,18 +159,35 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
     }
 
+    /**
+     * The default instance.
+     */
     protected static PinnedAmplitudeClient instance = new PinnedAmplitudeClient();
 
+    /**
+     * Gets the default instance. Call SDK method on the default instance.
+     *
+     * @return the default instance
+     */
     public static PinnedAmplitudeClient getInstance() {
         return instance;
     }
 
+    /**
+     * The SSl socket factory.
+     */
     protected SSLSocketFactory sslSocketFactory;
 
+    /**
+     * Instantiates a new Pinned amplitude client.
+     */
     public PinnedAmplitudeClient() {
         super();
     }
 
+    /**
+     * The Initialized ssl socket factory.
+     */
     protected boolean initializedSSLSocketFactory = false;
 
     @Override
@@ -164,10 +205,21 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         return this;
     }
 
+    /**
+     * Gets pinned cert ssl socket factory.
+     *
+     * @return the pinned cert ssl socket factory
+     */
     protected SSLSocketFactory getPinnedCertSslSocketFactory() {
         return getPinnedCertSslSocketFactory(SSL_CONTEXT_API_AMPLITUDE_COM);
     }
 
+    /**
+     * Gets pinned cert ssl socket factory.
+     *
+     * @param context the context
+     * @return the pinned cert ssl socket factory
+     */
     protected SSLSocketFactory getPinnedCertSslSocketFactory(SSLContextBuilder context) {
         if (context == null) {
             return null;
