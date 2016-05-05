@@ -1165,6 +1165,7 @@ public class AmplitudeClient {
      * properties, and log it as a revenue event using {@code logRevenueV2}.
      *
      * @param revenue a {@link com.amplitude.api.Revenue} object
+     * @see com.amplitude.api.Revenue
      * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
      *     Tracking Revenue</a>
      */
@@ -1184,6 +1185,8 @@ public class AmplitudeClient {
      * @param userProperties the user properties
      * @param replace        the replace - has no effect
      * @deprecated
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
      */
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
         setUserProperties(userProperties);
@@ -1195,6 +1198,8 @@ public class AmplitudeClient {
      * command.
      *
      * @param userProperties the user properties
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
      */
     public void setUserProperties(final JSONObject userProperties) {
         if (userProperties == null || userProperties.length() == 0 ||
@@ -1230,7 +1235,10 @@ public class AmplitudeClient {
     }
 
     /**
-     * Clear user properties.
+     * Clear user properties. This will clear all user properties at once. <b>Note: the
+     * result is irreversible!</b>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
      */
     public void clearUserProperties() {
         Identify identify = new Identify().clearAll();
@@ -1238,9 +1246,13 @@ public class AmplitudeClient {
     }
 
     /**
-     * Identify.
+     * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
+     * user property operations to Amplitude server.
      *
-     * @param identify the identify
+     * @param identify an {@link com.amplitude.api.Identify} object
+     * @see com.amplitude.api.Identify
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
      */
     public void identify(Identify identify) {
         if (identify == null || identify.userPropertiesOperations.length() == 0
@@ -1252,10 +1264,12 @@ public class AmplitudeClient {
     }
 
     /**
-     * Sets group.
+     * Sets the user's group(s).
      *
-     * @param groupType the group type
-     * @param groupName the group name
+     * @param groupType the group type (ex: orgId)
+     * @param groupName the group name (ex: 15)
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
      */
     public void setGroup(String groupType, Object groupName) {
         if (!contextAndApiKeySet("setGroup()") || TextUtils.isEmpty(groupType)) {
@@ -1274,10 +1288,11 @@ public class AmplitudeClient {
     }
 
     /**
-     * Truncate json object.
+     * Truncate values in a JSON object. Any string values longer than 1024 characters will be
+     * truncated to 1024 characters.
      *
      * @param object the object
-     * @return the json object
+     * @return the truncated JSON object
      */
     public JSONObject truncate(JSONObject object) {
         if (object == null) {
@@ -1305,10 +1320,11 @@ public class AmplitudeClient {
     }
 
     /**
-     * Truncate json array.
+     * Truncate values in a JSON array. Any string values longer than 1024 characters will be
+     * truncated to 1024 characters.
      *
      * @param array the array
-     * @return the json array
+     * @return the truncated JSON array
      * @throws JSONException the json exception
      */
     public JSONArray truncate(JSONArray array) throws JSONException {
@@ -1330,10 +1346,10 @@ public class AmplitudeClient {
     }
 
     /**
-     * Truncate string.
+     * Truncate a string to 1024 characters.
      *
      * @param value the value
-     * @return the string
+     * @return the truncated string
      */
     public String truncate(String value) {
         return value.length() <= Constants.MAX_STRING_LENGTH ? value :
@@ -1342,19 +1358,19 @@ public class AmplitudeClient {
 
 
     /**
-     * Gets user id.
+     * Gets the user's id. Can be null.
      *
-     * @return The developer specified identifier for tracking within the analytics system.         Can be null.
+     * @return The developer specified identifier for tracking within the analytics system.
      */
     public String getUserId() {
         return userId;
     }
 
     /**
-     * Sets user id.
+     * Sets the user id (can be null).
      *
      * @param userId the user id
-     * @return the user id
+     * @return the AmplitudeClient
      */
     public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
@@ -1367,10 +1383,12 @@ public class AmplitudeClient {
     }
 
     /**
-     * Sets device id.
+     * Sets a custom device id. <b>Note: only do this if you know what you are doing!</b>
      *
      * @param deviceId the device id
-     * @return the device id
+     * @return the AmplitudeClient
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#custom-device-ids">
+     *     Custom Device Ids</a>
      */
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
@@ -1385,7 +1403,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Upload events.
+     * Force SDK to upload any unsent events.
      */
     public void uploadEvents() {
         if (!contextAndApiKeySet("uploadEvents()")) {
@@ -1415,18 +1433,18 @@ public class AmplitudeClient {
     }
 
     /**
-     * Update server.
+     * Internal method to upload unsent events.
      */
     protected void updateServer() {
         updateServer(false);
     }
 
     /**
-     * Update server.
+     * Internal method to upload unsent events. Limit controls whether to use event upload max
+     * batch size or backoff upload batch size. <b>Note: </b> always call this on logThread
      *
      * @param limit the limit
      */
-// Always call this from logThread
     protected void updateServer(boolean limit) {
         if (optOut || offline) {
             return;
@@ -1474,12 +1492,12 @@ public class AmplitudeClient {
     }
 
     /**
-     * Merge events and identifys pair.
+     * Internal method to merge unsent events and identifies into a single array by sequence number.
      *
      * @param events    the events
      * @param identifys the identifys
      * @param numEvents the num events
-     * @return the pair
+     * @return the merged array, max event id, and max identify id
      * @throws JSONException the json exception
      */
     protected Pair<Pair<Long,Long>, JSONArray> mergeEventsAndIdentifys(List<JSONObject> events,
@@ -1535,7 +1553,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Make event upload post request.
+     * Internal method to generate the event upload post request.
      *
      * @param client        the client
      * @param events        the events
@@ -1664,9 +1682,9 @@ public class AmplitudeClient {
     }
 
     /**
-     * Gets device id.
+     * Get the current device id. Can be null if deviceId hasn't been initialized yet.
      *
-     * @return A unique identifier for tracking within the analytics system. Can be null if         deviceId hasn't been initialized yet;
+     * @return A unique identifier for tracking within the analytics system.
      */
     public String getDeviceId() {
         return deviceId;
@@ -1721,7 +1739,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Replace with json null object.
+     * Internal method to replace null event fields with JSON null object.
      *
      * @param obj the obj
      * @return the object
@@ -1731,10 +1749,10 @@ public class AmplitudeClient {
     }
 
     /**
-     * Context and api key set boolean.
+     * Internal method to check whether application context and api key are set
      *
-     * @param methodName the method name
-     * @return the boolean
+     * @param methodName the parent method name to print in error message
+     * @return whether application context and api key are set
      */
     protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
@@ -1752,7 +1770,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Bytes to hex string string.
+     * Internal method to convert bytes to hex string
      *
      * @param bytes the bytes
      * @return the string
@@ -1968,7 +1986,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Gets current time millis.
+     * Internal method to fetch the current time millis. Used for testing.
      *
      * @return the current time millis
      */

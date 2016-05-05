@@ -1,6 +1,6 @@
 ## Unreleased
 
-* Add documentation for SDK functions. You can take a look [here](https://rawgit.com/amplitude/Amplitude-Android/add_javadocs/javadoc/index.html). A link has also been added to the Readme.
+* Add documentation for SDK functions. You can take a look [here](https://rawgit.com/amplitude/Amplitude-Android/master/javadoc/index.html). A link has also been added to the Readme.
 
 ## 2.7.1 (April 19, 2016)
 
