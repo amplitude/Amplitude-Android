@@ -7,6 +7,8 @@ An Android SDK for tracking events and revenue to [Amplitude](http://www.amplitu
 
 A [demo application](https://github.com/amplitude/Android-Demo) is available to show a simple integration.
 
+See our [SDK documentation](https://rawgit.com/amplitude/Amplitude-Android/add_javadocs/javadoc/index.html) for a description of all available SDK methods.
+
 # Setup #
 1. If you haven't already, go to https://amplitude.com/signup and register for an account. Then, add an app. You will receive an API Key.
 
