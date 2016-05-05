@@ -29,37 +29,103 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+/**
+ * <h1>AmplitudeClient</h1>
+ * This is the SDK instance class that contains all of the SDK functionality.<br><br>
+ * <b>Note:</b> call the methods on the default shared instance in the Amplitude class,
+ * for example: {@code Amplitude.getInstance().logEvent();}<br><br>
+ * Many of the SDK functions return the SDK instance back, allowing you to chain multiple method
+ * calls together, for example: {@code Amplitude.getInstance().initialize(this, "APIKEY").enableForegroundTracking(getApplication())}
+ */
 public class AmplitudeClient {
 
+    /**
+     * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.AmplitudeClient";}
+     */
     public static final String TAG = "com.amplitude.api.AmplitudeClient";
 
+    /**
+     * The event type for start session events.
+     */
     public static final String START_SESSION_EVENT = "session_start";
+    /**
+     * The event type for end session events.
+     */
     public static final String END_SESSION_EVENT = "session_end";
 
-    // database valueStore keys
+    /**
+     * The pref/database key for the device ID value.
+     */
     public static final String DEVICE_ID_KEY = "device_id";
+    /**
+     * The pref/database key for the user ID value.
+     */
     public static final String USER_ID_KEY = "user_id";
+    /**
+     * The pref/database key for the opt out flag.
+     */
     public static final String OPT_OUT_KEY = "opt_out";
+    /**
+     * The pref/database key for the sequence number.
+     */
     public static final String SEQUENCE_NUMBER_KEY = "sequence_number";
+    /**
+     * The pref/database key for the last event time.
+     */
     public static final String LAST_EVENT_TIME_KEY = "last_event_time";
+    /**
+     * The pref/database key for the last event ID value.
+     */
     public static final String LAST_EVENT_ID_KEY = "last_event_id";
+    /**
+     * The pref/database key for the last identify ID value.
+     */
     public static final String LAST_IDENTIFY_ID_KEY = "last_identify_id";
+    /**
+     * The pref/database key for the previous session ID value.
+     */
     public static final String PREVIOUS_SESSION_ID_KEY = "previous_session_id";
 
 
+    /**
+     * The default shared instance. This is fetched by {@code Amplitude.getInstance()}
+     */
     protected static AmplitudeClient instance = new AmplitudeClient();
 
+    /**
+     * Gets the default AmplitudeClient instance.
+     *
+     * @return the default instance
+     */
     public static AmplitudeClient getInstance() {
         return instance;
     }
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
+    /**
+     * The Android App Context.
+     */
     protected Context context;
+    /**
+     * The shared OkHTTPClient instance.
+     */
     protected OkHttpClient httpClient;
+    /**
+     * The shared Amplitude database helper instance.
+     */
     protected DatabaseHelper dbHelper;
+    /**
+     * The Amplitude App API key.
+     */
     protected String apiKey;
+    /**
+     * The user's ID value.
+     */
     protected String userId;
+    /**
+     * The user's Device ID value.
+     */
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
@@ -69,6 +135,9 @@ public class AmplitudeClient {
 
     private DeviceInfo deviceInfo;
 
+    /**
+     * The current session ID value.
+     */
     long sessionId = -1;
     private int eventUploadThreshold = Constants.EVENT_UPLOAD_THRESHOLD;
     private int eventUploadMaxBatchSize = Constants.EVENT_UPLOAD_MAX_BATCH_SIZE;
@@ -83,23 +152,59 @@ public class AmplitudeClient {
     private boolean inForeground = false;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
+    /**
+     * Whether or not the SDK is in the process of uploading events.
+     */
     AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
-    // Let test classes have access to these properties.
+    /**
+     * The last SDK error - used for testing.
+     */
     Throwable lastError;
+    /**
+     * The url for Amplitude API endpoint
+     */
     String url = Constants.EVENT_LOG_URL;
+    /**
+     * The background event logging worker thread instance.
+     */
     WorkerThread logThread = new WorkerThread("logThread");
+    /**
+     * The background event uploading worker thread instance.
+     */
     WorkerThread httpThread = new WorkerThread("httpThread");
 
+    /**
+     * Instantiates a new AmplitudeClient and starts worker threads.
+     */
     public AmplitudeClient() {
         logThread.start();
         httpThread.start();
     }
 
+    /**
+     * Initialize the Amplitude SDK with the Android application context and your Amplitude
+     * App API key. <b>Note:</b> initialization is required before you log events and modify
+     * user properties.
+     *
+     * @param context the Android application context
+     * @param apiKey  your Amplitude App API key
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient initialize(Context context, String apiKey) {
         return initialize(context, apiKey, null);
     }
 
+    /**
+     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
+     * key, and a user ID for the current user. <b>Note:</b> initialization is required before
+     * you log events and modify user properties.
+     *
+     * @param context the Android application context
+     * @param apiKey  your Amplitude App API key
+     * @param userId  the user id to set
+     * @return the AmplitudeClient
+     */
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
@@ -141,6 +246,15 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Enable foreground tracking for the SDK. This is <b>HIGHLY RECOMMENDED</b>, and will allow
+     * for accurate session tracking.
+     *
+     * @param app the Android application
+     * @return the AmplitudeClient
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public AmplitudeClient enableForegroundTracking(Application app) {
         if (usingForegroundTracking || !contextAndApiKeySet("enableForegroundTracking()")) {
             return this;
@@ -165,16 +279,35 @@ public class AmplitudeClient {
         });
     }
 
+    /**
+     * Whether to set a new device ID per install. If true, then the SDK will always generate a new
+     * device ID on app install (as opposed to re-using an existing value like ADID).
+     *
+     * @param newDeviceIdPerInstall whether to set a new device ID on app install.
+     * @return the AmplitudeClient
+     * @deprecated
+     */
     public AmplitudeClient enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
         this.newDeviceIdPerInstall = newDeviceIdPerInstall;
         return this;
     }
 
+    /**
+     * Whether to use the Android advertising ID (ADID) as the user's device ID.
+     *
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
         this.useAdvertisingIdForDeviceId = true;
         return this;
     }
 
+    /**
+     * Enable location listening in the SDK. This will add the user's current lat/lon coordinates
+     * to every event logged.
+     *
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient enableLocationListening() {
         if (deviceInfo == null) {
             throw new IllegalStateException(
@@ -184,6 +317,12 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Disable location listening in the SDK. This will stop the sending of the user's current
+     * lat/lon coordinates.
+     *
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient disableLocationListening() {
         if (deviceInfo == null) {
             throw new IllegalStateException(
@@ -193,37 +332,89 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Sets event upload threshold. The SDK will attempt to batch upload unsent events
+     * every eventUploadPeriodMillis milliseconds, or if the unsent event count exceeds the
+     * event upload threshold.
+     *
+     * @param eventUploadThreshold the event upload threshold
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setEventUploadThreshold(int eventUploadThreshold) {
         this.eventUploadThreshold = eventUploadThreshold;
         return this;
     }
 
+    /**
+     * Sets event upload max batch size. This controls the maximum number of events sent with
+     * each upload request.
+     *
+     * @param eventUploadMaxBatchSize the event upload max batch size
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setEventUploadMaxBatchSize(int eventUploadMaxBatchSize) {
         this.eventUploadMaxBatchSize = eventUploadMaxBatchSize;
         this.backoffUploadBatchSize = eventUploadMaxBatchSize;
         return this;
     }
 
+    /**
+     * Sets event max count. This is the maximum number of unsent events to keep on the device
+     * (for example if the device does not have internet connectivity and cannot upload events).
+     * If the number of unsent events exceeds the max count, then the SDK begins dropping events,
+     * starting from the earliest logged.
+     *
+     * @param eventMaxCount the event max count
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setEventMaxCount(int eventMaxCount) {
         this.eventMaxCount = eventMaxCount;
         return this;
     }
 
+    /**
+     * Sets event upload period millis. The SDK will attempt to batch upload unsent events
+     * every eventUploadPeriodMillis milliseconds, or if the unsent event count exceeds the
+     * event upload threshold.
+     *
+     * @param eventUploadPeriodMillis the event upload period millis
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setEventUploadPeriodMillis(int eventUploadPeriodMillis) {
         this.eventUploadPeriodMillis = eventUploadPeriodMillis;
         return this;
     }
 
+    /**
+     * Sets min time between sessions millis.
+     *
+     * @param minTimeBetweenSessionsMillis the min time between sessions millis
+     * @return the min time between sessions millis
+     */
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
         return this;
     }
 
+    /**
+     * Sets session timeout millis. If foreground tracking has not been enabled with
+     * @{code enableForegroundTracking()}, then new sessions will be started after
+     * sessionTimeoutMillis milliseconds have passed since the last event logged.
+     *
+     * @param sessionTimeoutMillis the session timeout millis
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setSessionTimeoutMillis(long sessionTimeoutMillis) {
         this.sessionTimeoutMillis = sessionTimeoutMillis;
         return this;
     }
 
+    /**
+     * Sets opt out. If true then the SDK does not track any events for the user.
+     *
+     * @param optOut whether or not to opt the user out of tracking
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setOptOut(boolean optOut) {
         if (!contextAndApiKeySet("setOptOut()")) {
             return this;
@@ -234,20 +425,45 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Returns whether or not the user is opted out of tracking.
+     *
+     * @return the optOut flag value
+     */
     public boolean isOptedOut() {
         return optOut;
     }
 
+    /**
+     * Enable/disable message logging by the SDK.
+     *
+     * @param enableLogging whether to enable message logging by the SDK.
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient enableLogging(boolean enableLogging) {
         logger.setEnableLogging(enableLogging);
         return this;
     }
 
+    /**
+     * Sets the logging level. Logging messages will only appear if they are the same severity
+     * level or higher than the set log level.
+     *
+     * @param logLevel the log level
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setLogLevel(int logLevel) {
         logger.setLogLevel(logLevel);
         return this;
     }
 
+    /**
+     * Sets offline. If offline is true, then the SDK will not upload events to Amplitude servers;
+     * however, it will still log events.
+     *
+     * @param offline whether or not the SDK should be offline
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setOffline(boolean offline) {
         this.offline = offline;
 
@@ -259,35 +475,119 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Track session events amplitude client. If enabled then the SDK will automatically send
+     * start and end session events to mark the start and end of the user's sessions.
+     *
+     * @param trackingSessionEvents whether to enable tracking of session events
+     * @return the AmplitudeClient
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
         return this;
     }
 
+    /**
+     * Set foreground tracking to true.
+     */
     void useForegroundTracking() {
         usingForegroundTracking = true;
     }
 
+    /**
+     * Whether foreground tracking is enabled.
+     *
+     * @return whether foreground tracking is enabled
+     */
     boolean isUsingForegroundTracking() { return usingForegroundTracking; }
 
+    /**
+     * Whether app is in the foreground.
+     *
+     * @return whether app is in the foreground
+     */
     boolean isInForeground() { return inForeground; }
 
+    /**
+     * Log an event with the specified event type.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType the event type
+     */
     public void logEvent(String eventType) {
         logEvent(eventType, null);
     }
 
+    /**
+     * Log an event with the specified event type and event properties.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     */
     public void logEvent(String eventType, JSONObject eventProperties) {
         logEvent(eventType, eventProperties, false);
     }
 
+    /**
+     * Log an event with the specified event type, event properties, with optional out of session
+     * flag. If out of session is true, then the sessionId will be -1 for the event, indicating
+     * that it is not part of the current session. Note: this might be useful when logging events
+     * for notifications received.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEvent(eventType, eventProperties, null, outOfSession);
     }
 
+    /**
+     * Log an event with the specified event type, event properties, and groups. Use this to set
+     * event-level groups, meaning the group(s) set only apply for this specific event and does
+     * not persist on the user.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups) {
         logEvent(eventType, eventProperties, groups, false);
     }
 
+    /**
+     * Log event with the specified event type, event properties, groups, with optional out of
+     * session flag. If out of session is true, then the sessionId will be -1 for the event,
+     * indicating that it is not part of the current session. Note: this might be useful when
+     * logging events for notifications received.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
@@ -296,22 +596,84 @@ public class AmplitudeClient {
         }
     }
 
+    /**
+     * Log an event with the specified event type.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType the event type
+     */
     public void logEventSync(String eventType) {
         logEventSync(eventType, null);
     }
 
+    /**
+     * Log an event with the specified event type and event properties.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     */
     public void logEventSync(String eventType, JSONObject eventProperties) {
         logEventSync(eventType, eventProperties, false);
     }
 
+    /**
+     * Log an event with the specified event type, event properties, with optional out of session
+     * flag. If out of session is true, then the sessionId will be -1 for the event, indicating
+     * that it is not part of the current session. Note: this might be useful when logging events
+     * for notifications received.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEventSync(eventType, eventProperties, null, outOfSession);
     }
 
+    /**
+     * Log an event with the specified event type, event properties, and groups. Use this to set
+     * event-level groups, meaning the group(s) set only apply for this specific event and does
+     * not persist on the user.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject group) {
         logEventSync(eventType, eventProperties, group, false);
     }
 
+    /**
+     * Log event with the specified event type, event properties, groups, with optional out of
+     * session flag. If out of session is true, then the sessionId will be -1 for the event,
+     * indicating that it is not part of the current session. Note: this might be useful when
+     * logging events for notifications received.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
@@ -320,6 +682,13 @@ public class AmplitudeClient {
         }
     }
 
+    /**
+     * Validate the event type being logged. Also verifies that the context and API key
+     * have been set already with an initialize call.
+     *
+     * @param eventType the event type
+     * @return true if the event type is valid
+     */
     protected boolean validateLogEvent(String eventType) {
         if (TextUtils.isEmpty(eventType)) {
             logger.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
@@ -329,6 +698,17 @@ public class AmplitudeClient {
         return contextAndApiKeySet("logEvent()");
     }
 
+    /**
+     * Log event async. Internal method to handle the synchronous logging of events.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param apiProperties   the api properties
+     * @param userProperties  the user properties
+     * @param groups          the groups
+     * @param timestamp       the timestamp
+     * @param outOfSession    the out of session
+     */
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
             final JSONObject apiProperties, JSONObject userProperties,
             JSONObject groups, final long timestamp, final boolean outOfSession) {
@@ -363,6 +743,19 @@ public class AmplitudeClient {
         });
     }
 
+    /**
+     * Log event. Internal method to handle the asynchronous logging of events on background
+     * thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param apiProperties   the api properties
+     * @param userProperties  the user properties
+     * @param groups          the groups
+     * @param timestamp       the timestamp
+     * @param outOfSession    the out of session
+     * @return the event ID if succeeded, else -1.
+     */
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
             JSONObject userProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
@@ -436,6 +829,13 @@ public class AmplitudeClient {
         return saveEvent(eventType, event);
     }
 
+    /**
+     * Save event long. Internal method to save an event to the database.
+     *
+     * @param eventType the event type
+     * @param event     the event
+     * @return the event ID if succeeded, else -1
+     */
     protected long saveEvent(String eventType, JSONObject event) {
         long eventId;
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
@@ -475,7 +875,11 @@ public class AmplitudeClient {
         return value == null ? defaultValue : value;
     }
 
-    // shared sequence number for ordering events and identifys
+    /**
+     * Internal method to increment and fetch the next event sequence number.
+     *
+     * @return the next sequence number
+     */
     long getNextSequenceNumber() {
         long sequenceNumber = getLongvalue(SEQUENCE_NUMBER_KEY, 0);
         sequenceNumber++;
@@ -483,45 +887,93 @@ public class AmplitudeClient {
         return sequenceNumber;
     }
 
+    /**
+     * Internal method to get the last event time.
+     *
+     * @return the last event time
+     */
     long getLastEventTime() {
         return getLongvalue(LAST_EVENT_TIME_KEY, -1);
     }
 
+    /**
+     * Internal method to set the last event time.
+     *
+     * @param timestamp the timestamp
+     */
     void setLastEventTime(long timestamp) {
         dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, timestamp);
     }
 
+    /**
+     * Internal method to get the last event id.
+     *
+     * @return the last event id
+     */
     long getLastEventId() {
         return getLongvalue(LAST_EVENT_ID_KEY, -1);
     }
 
+    /**
+     * Internal method to set the last event id.
+     *
+     * @param eventId the event id
+     */
     void setLastEventId(long eventId) {
         dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_ID_KEY, eventId);
     }
 
+    /**
+     * Internal method to get the last identify id.
+     *
+     * @return the last identify id
+     */
     long getLastIdentifyId() {
         return getLongvalue(LAST_IDENTIFY_ID_KEY, -1);
     }
 
+    /**
+     * Internal method to set the last identify id.
+     *
+     * @param identifyId the identify id
+     */
     void setLastIdentifyId(long identifyId) {
         dbHelper.insertOrReplaceKeyLongValue(LAST_IDENTIFY_ID_KEY, identifyId);
     }
 
     /**
+     * Gets the current session id.
+     *
      * @return The current sessionId value.
      */
     public long getSessionId() {
         return sessionId;
     }
 
+    /**
+     * Internal method to get the previous session id.
+     *
+     * @return the previous session id
+     */
     long getPreviousSessionId() {
         return getLongvalue(PREVIOUS_SESSION_ID_KEY, -1);
     }
 
+    /**
+     * Internal method to set the previous session id.
+     *
+     * @param timestamp the timestamp
+     */
     void setPreviousSessionId(long timestamp) {
         dbHelper.insertOrReplaceKeyLongValue(PREVIOUS_SESSION_ID_KEY, timestamp);
     }
 
+    /**
+     * Internal method to start a new session if needed.
+     *
+     * @param timestamp the timestamp
+     * @return whether or not a new session was started
+     */
     boolean startNewSessionIfNeeded(long timestamp) {
         if (inSession()) {
 
@@ -582,6 +1034,11 @@ public class AmplitudeClient {
         setPreviousSessionId(timestamp);
     }
 
+    /**
+     * Internal method to refresh the current session time.
+     *
+     * @param timestamp the timestamp
+     */
     void refreshSessionTime(long timestamp) {
         if (!inSession()) {
             return;
@@ -610,6 +1067,11 @@ public class AmplitudeClient {
         logEvent(sessionEvent, null, apiProperties, null, null, timestamp, false);
     }
 
+    /**
+     * Internal method to handle on app exit foreground behavior.
+     *
+     * @param timestamp the timestamp
+     */
     void onExitForeground(final long timestamp) {
         runOnLogThread(new Runnable() {
             @Override
@@ -620,6 +1082,11 @@ public class AmplitudeClient {
         });
     }
 
+    /**
+     * Internal method to handle on app enter foreground behavior.
+     *
+     * @param timestamp the timestamp
+     */
     void onEnterForeground(final long timestamp) {
         runOnLogThread(new Runnable() {
             @Override
@@ -630,16 +1097,46 @@ public class AmplitudeClient {
         });
     }
 
+    /**
+     * Log revenue amount via a revenue event.
+     *
+     * @param amount the amount
+     * @deprecated - use {@code logRevenueV2} instead
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
+     *     Tracking Revenue</a>
+     */
     public void logRevenue(double amount) {
         // Amount is in dollars
         // ex. $3.99 would be pass as logRevenue(3.99)
         logRevenue(null, 1, amount);
     }
 
+    /**
+     * Log revenue with a productId, quantity, and price.
+     *
+     * @param productId the product id
+     * @param quantity  the quantity
+     * @param price     the price
+     * @deprecated - use {@code logRevenueV2} instead
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
+     *     Tracking Revenue</a>
+     */
     public void logRevenue(String productId, int quantity, double price) {
         logRevenue(productId, quantity, price, null, null);
     }
 
+    /**
+     * Log revenue with a productId, quantity, price, and receipt data for revenue verification.
+     *
+     * @param productId        the product id
+     * @param quantity         the quantity
+     * @param price            the price
+     * @param receipt          the receipt
+     * @param receiptSignature the receipt signature
+     * @deprecated - use {@code logRevenueV2} instead
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
+     *     Tracking Revenue</a>
+     */
     public void logRevenue(String productId, int quantity, double price, String receipt,
             String receiptSignature) {
         if (!contextAndApiKeySet("logRevenue()")) {
@@ -663,6 +1160,15 @@ public class AmplitudeClient {
         );
     }
 
+    /**
+     * Log revenue v2. Create a {@link com.amplitude.api.Revenue} object to hold your revenue data and
+     * properties, and log it as a revenue event using {@code logRevenueV2}.
+     *
+     * @param revenue a {@link com.amplitude.api.Revenue} object
+     * @see com.amplitude.api.Revenue
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
+     *     Tracking Revenue</a>
+     */
     public void logRevenueV2(Revenue revenue) {
         if (!contextAndApiKeySet("logRevenueV2()") || revenue == null || !revenue.isValidRevenue()) {
             return;
@@ -671,11 +1177,30 @@ public class AmplitudeClient {
         logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject());
     }
 
-    // maintain for backwards compatibility
+    /**
+     * Sets user properties. This is a convenience wrapper around the
+     * {@link com.amplitude.api.Identify} API to set multiple user properties with a single
+     * command. <b>Note:</b> the replace parameter is deprecated and has no effect.
+     *
+     * @param userProperties the user properties
+     * @param replace        the replace - has no effect
+     * @deprecated
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
+     */
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
         setUserProperties(userProperties);
     }
 
+    /**
+     * Sets user properties. This is a convenience wrapper around the
+     * {@link com.amplitude.api.Identify} API to set multiple user properties with a single
+     * command.
+     *
+     * @param userProperties the user properties
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
+     */
     public void setUserProperties(final JSONObject userProperties) {
         if (userProperties == null || userProperties.length() == 0 ||
                 !contextAndApiKeySet("setUserProperties")) {
@@ -709,11 +1234,26 @@ public class AmplitudeClient {
         });
     }
 
+    /**
+     * Clear user properties. This will clear all user properties at once. <b>Note: the
+     * result is irreversible!</b>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
+     */
     public void clearUserProperties() {
         Identify identify = new Identify().clearAll();
         identify(identify);
     }
 
+    /**
+     * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
+     * user property operations to Amplitude server.
+     *
+     * @param identify an {@link com.amplitude.api.Identify} object
+     * @see com.amplitude.api.Identify
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
+     */
     public void identify(Identify identify) {
         if (identify == null || identify.userPropertiesOperations.length() == 0
                 || !contextAndApiKeySet("identify()")) {
@@ -723,6 +1263,14 @@ public class AmplitudeClient {
                 identify.userPropertiesOperations, null, getCurrentTimeMillis(), false);
     }
 
+    /**
+     * Sets the user's group(s).
+     *
+     * @param groupType the group type (ex: orgId)
+     * @param groupName the group name (ex: 15)
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     */
     public void setGroup(String groupType, Object groupName) {
         if (!contextAndApiKeySet("setGroup()") || TextUtils.isEmpty(groupType)) {
             return;
@@ -739,6 +1287,13 @@ public class AmplitudeClient {
                 group, getCurrentTimeMillis(), false);
     }
 
+    /**
+     * Truncate values in a JSON object. Any string values longer than 1024 characters will be
+     * truncated to 1024 characters.
+     *
+     * @param object the object
+     * @return the truncated JSON object
+     */
     public JSONObject truncate(JSONObject object) {
         if (object == null) {
             return null;
@@ -764,6 +1319,14 @@ public class AmplitudeClient {
         return object;
     }
 
+    /**
+     * Truncate values in a JSON array. Any string values longer than 1024 characters will be
+     * truncated to 1024 characters.
+     *
+     * @param array the array
+     * @return the truncated JSON array
+     * @throws JSONException the json exception
+     */
     public JSONArray truncate(JSONArray array) throws JSONException {
         if (array == null) {
             return null;
@@ -782,6 +1345,12 @@ public class AmplitudeClient {
         return array;
     }
 
+    /**
+     * Truncate a string to 1024 characters.
+     *
+     * @param value the value
+     * @return the truncated string
+     */
     public String truncate(String value) {
         return value.length() <= Constants.MAX_STRING_LENGTH ? value :
                 value.substring(0, Constants.MAX_STRING_LENGTH);
@@ -789,13 +1358,20 @@ public class AmplitudeClient {
 
 
     /**
+     * Gets the user's id. Can be null.
+     *
      * @return The developer specified identifier for tracking within the analytics system.
-     *         Can be null.
      */
     public String getUserId() {
         return userId;
     }
 
+    /**
+     * Sets the user id (can be null).
+     *
+     * @param userId the user id
+     * @return the AmplitudeClient
+     */
     public AmplitudeClient setUserId(String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
@@ -806,6 +1382,14 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Sets a custom device id. <b>Note: only do this if you know what you are doing!</b>
+     *
+     * @param deviceId the device id
+     * @return the AmplitudeClient
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#custom-device-ids">
+     *     Custom Device Ids</a>
+     */
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
         if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
@@ -818,6 +1402,9 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Force SDK to upload any unsent events.
+     */
     public void uploadEvents() {
         if (!contextAndApiKeySet("uploadEvents()")) {
             return;
@@ -845,11 +1432,19 @@ public class AmplitudeClient {
         }, delayMillis);
     }
 
+    /**
+     * Internal method to upload unsent events.
+     */
     protected void updateServer() {
         updateServer(false);
     }
 
-    // Always call this from logThread
+    /**
+     * Internal method to upload unsent events. Limit controls whether to use event upload max
+     * batch size or backoff upload batch size. <b>Note: </b> always call this on logThread
+     *
+     * @param limit the limit
+     */
     protected void updateServer(boolean limit) {
         if (optOut || offline) {
             return;
@@ -896,6 +1491,15 @@ public class AmplitudeClient {
         }
     }
 
+    /**
+     * Internal method to merge unsent events and identifies into a single array by sequence number.
+     *
+     * @param events    the events
+     * @param identifys the identifys
+     * @param numEvents the num events
+     * @return the merged array, max event id, and max identify id
+     * @throws JSONException the json exception
+     */
     protected Pair<Pair<Long,Long>, JSONArray> mergeEventsAndIdentifys(List<JSONObject> events,
                             List<JSONObject> identifys, long numEvents) throws JSONException {
         JSONArray merged = new JSONArray();
@@ -948,6 +1552,14 @@ public class AmplitudeClient {
         return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
     }
 
+    /**
+     * Internal method to generate the event upload post request.
+     *
+     * @param client        the client
+     * @param events        the events
+     * @param maxEventId    the max event id
+     * @param maxIdentifyId the max identify id
+     */
     protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
@@ -1070,8 +1682,9 @@ public class AmplitudeClient {
     }
 
     /**
-     * @return A unique identifier for tracking within the analytics system. Can be null if
-     *         deviceId hasn't been initialized yet;
+     * Get the current device id. Can be null if deviceId hasn't been initialized yet.
+     *
+     * @return A unique identifier for tracking within the analytics system.
      */
     public String getDeviceId() {
         return deviceId;
@@ -1125,10 +1738,22 @@ public class AmplitudeClient {
         }
     }
 
+    /**
+     * Internal method to replace null event fields with JSON null object.
+     *
+     * @param obj the obj
+     * @return the object
+     */
     protected Object replaceWithJSONNull(Object obj) {
         return obj == null ? JSONObject.NULL : obj;
     }
 
+    /**
+     * Internal method to check whether application context and api key are set
+     *
+     * @param methodName the parent method name to print in error message
+     * @return whether application context and api key are set
+     */
     protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
             logger.e(TAG, "context cannot be null, set context with initialize() before calling "
@@ -1144,6 +1769,12 @@ public class AmplitudeClient {
         return true;
     }
 
+    /**
+     * Internal method to convert bytes to hex string
+     *
+     * @param bytes the bytes
+     * @return the string
+     */
     protected String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
@@ -1159,22 +1790,33 @@ public class AmplitudeClient {
 
     /**
      * Move all preference data from the legacy name to the new, static name if needed.
-     *
+     * <p/>
      * Constants.PACKAGE_NAME used to be set using "Constants.class.getPackage().getName()"
      * Some aggressive proguard optimizations broke the reflection and caused apps
      * to crash on startup.
-     *
+     * <p/>
      * Now that Constants.PACKAGE_NAME is changed, old data on devices needs to be
      * moved over to the new location so that device ids remain consistent.
-     *
+     * <p/>
      * This should only happen once -- the first time a user loads the app after updating.
      * This logic needs to remain in place for quite a long time. It was first introduced in
      * April 2015 in version 1.6.0.
+     *
+     * @param context the context
+     * @return the boolean
      */
     static boolean upgradePrefs(Context context) {
         return upgradePrefs(context, null, null);
     }
 
+    /**
+     * Upgrade prefs boolean.
+     *
+     * @param context       the context
+     * @param sourcePkgName the source pkg name
+     * @param targetPkgName the target pkg name
+     * @return the boolean
+     */
     static boolean upgradePrefs(Context context, String sourcePkgName, String targetPkgName) {
         try {
             if (sourcePkgName == null) {
@@ -1240,7 +1882,13 @@ public class AmplitudeClient {
         }
     }
 
-    /*
+    /**
+     * Upgrade shared prefs to db boolean.
+     *
+     * @param context the context
+     * @return the boolean
+     */
+/*
      * Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
      * sharedPrefs is known to not be process-safe.
      */
@@ -1248,6 +1896,13 @@ public class AmplitudeClient {
         return upgradeSharedPrefsToDB(context, null);
     }
 
+    /**
+     * Upgrade shared prefs to db boolean.
+     *
+     * @param context       the context
+     * @param sourcePkgName the source pkg name
+     * @return the boolean
+     */
     static boolean upgradeSharedPrefsToDB(Context context, String sourcePkgName) {
         if (sourcePkgName == null) {
             sourcePkgName = Constants.PACKAGE_NAME;
@@ -1330,5 +1985,10 @@ public class AmplitudeClient {
         prefs.edit().remove(prefKey).apply();
     }
 
+    /**
+     * Internal method to fetch the current time millis. Used for testing.
+     *
+     * @return the current time millis
+     */
     protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 }
