@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ *  <h1>Identify</h1>
  *  Identify objects are a wrapper for user property operations. Each method adds a user
  *  property operation to the Identify object, and returns the same Identify object, allowing
  *  you to chain multiple method calls together, for example:
@@ -23,12 +24,12 @@ import java.util.Set;
  *  servers by calling {@code Amplitude.getInstance().identify(identify);} and pass in the object.
  *
  *  @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
- *  Android SDK README</a> for more information on the Identify API and user property operations.
+ *      Android SDK README</a> for more information on the Identify API and user property operations.
  */
 public class Identify {
 
     /**
-     * The class identifier tag used in logging. TAG = {@code"com.amplitude.api.Identify";}
+     * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.Identify";}
      */
     public static final String TAG = "com.amplitude.api.Identify";
 
@@ -796,7 +797,7 @@ public class Identify {
      * new value(s) prepended.
      *
      * @param property the user property to which to append
-     * @param value    the value being prepended
+     * @param values    the value being prepended
      * @return the same Identify object
      */
     public Identify prepend(String property, JSONArray values) {
@@ -1089,7 +1090,7 @@ public class Identify {
      * <b>Note:</b> this method has been deprecated. Please use one with a different signature.
      *
      * @param property the user property to set
-     * @param values    the value of the user property
+     * @param value    the value of the user property
      * @return the same Identify object
      * @deprecated
      */
