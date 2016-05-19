@@ -306,10 +306,14 @@ public class DeviceInfo {
             return null;
         }
 
-        List<String> providers = locationManager.getProviders(true);
-
         // It's possible that the location service is running out of process
         // and the remote getProviders call fails. Handle null provider lists.
+        List<String> providers = null;
+        try {
+            providers = locationManager.getProviders(true);
+        } catch (SecurityException e) {
+            // failed to get providers list
+        }
         if (providers == null) {
             return null;
         }
@@ -320,6 +324,8 @@ public class DeviceInfo {
             try {
                 location = locationManager.getLastKnownLocation(provider);
             } catch (IllegalArgumentException e) {
+                // failed to get last known location from provider
+            } catch (SecurityException e) {
                 // failed to get last known location from provider
             }
             if (location != null) {
