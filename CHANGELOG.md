@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Add documentation for SDK functions. You can take a look [here](https://rawgit.com/amplitude/Amplitude-Android/master/javadoc/index.html). A link has also been added to the Readme.
+* Fix bug where fetching the user's location on select devices throws a SecurityException, causing a crash.
 
 ## 2.7.1 (April 19, 2016)
 
