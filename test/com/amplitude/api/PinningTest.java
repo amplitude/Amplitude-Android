@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import android.os.SystemClock;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +21,8 @@ public class PinningTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
+        // need to set clock > 0 so that logThread posts in order
+        SystemClock.setCurrentTimeMillis(1000);
     }
 
     @After
@@ -30,9 +34,9 @@ public class PinningTest extends BaseTest {
     public void testSslPinning() {
         amplitude = PinnedAmplitudeClient.getInstance();
         amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
-
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.runToEndOfTasks();
+        looper.runOneTask();
+        looper.runOneTask();
 
         amplitude.logEvent("pinned_test_event", null);
         looper.runToEndOfTasks();

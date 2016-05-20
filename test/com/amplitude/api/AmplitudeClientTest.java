@@ -46,6 +46,7 @@ public class AmplitudeClientTest extends BaseTest {
     public void setUp() throws Exception {
         super.setUp();
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
     }
 
     @After

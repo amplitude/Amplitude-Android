@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class DatabaseHelperTest extends BaseTest {
     public void setUp() throws Exception {
         super.setUp(false);
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
         dbInstance = DatabaseHelper.getDatabaseHelper(context);
     }
 

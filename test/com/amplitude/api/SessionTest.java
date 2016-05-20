@@ -41,6 +41,7 @@ public class SessionTest extends BaseTest {
     public void setUp() throws Exception {
         super.setUp(true);
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
     }
 
     @After

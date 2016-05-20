@@ -49,6 +49,7 @@ public class InitializeTest extends BaseTest {
 
         String userId = "newUserId";
         amplitude.initialize(context, apiKey, userId);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         // Test that the user id is set.
         assertEquals(userId, amplitude.userId);
@@ -76,6 +77,7 @@ public class InitializeTest extends BaseTest {
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         // Test that the user id is set.
         assertEquals(amplitude.userId, userId);
@@ -97,6 +99,7 @@ public class InitializeTest extends BaseTest {
         dbHelper.insertOrReplaceKeyValue(AmplitudeClient.USER_ID_KEY, userId);
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         // Test that the user id is set.
         assertEquals(amplitude.userId, userId);
@@ -116,6 +119,7 @@ public class InitializeTest extends BaseTest {
         assertNull(dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY));
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertTrue(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 1L);
@@ -138,6 +142,7 @@ public class InitializeTest extends BaseTest {
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.OPT_OUT_KEY, 0L);
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertFalse(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
@@ -156,6 +161,7 @@ public class InitializeTest extends BaseTest {
         prefs.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, 3L).commit();
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertEquals(amplitude.getLastEventId(), 3L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 3L);
@@ -185,6 +191,7 @@ public class InitializeTest extends BaseTest {
         prefs.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, 4000L).commit();
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertEquals(amplitude.sessionId, 4000L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY), 4000L);
@@ -203,6 +210,7 @@ public class InitializeTest extends BaseTest {
         prefs.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, 4000L).commit();
 
         amplitude.initialize(context, apiKey);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertEquals(amplitude.getLastEventTime(), 5000L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), 5000L);
@@ -231,7 +239,9 @@ public class InitializeTest extends BaseTest {
         prefs.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, 3000L).commit();
 
         amplitude.initialize(context, apiKey);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runOneTask();
+        looper.runToEndOfTasks();
 
         assertEquals(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY), "testDeviceId");
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY), 1000L);
@@ -275,6 +285,7 @@ public class InitializeTest extends BaseTest {
 
         amplitude.initialize(context, apiKey);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runOneTask();
         looper.runToEndOfTasks();
 
         assertEquals(amplitude.deviceId, "testDeviceId");
