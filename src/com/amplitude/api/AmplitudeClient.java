@@ -216,6 +216,10 @@ public class AmplitudeClient {
             return this;
         }
 
+        this.context = context.getApplicationContext();
+        this.apiKey = apiKey;
+        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
+
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
             @Override
@@ -223,10 +227,7 @@ public class AmplitudeClient {
                 if (!initialized) {
                     AmplitudeClient.upgradePrefs(context);
                     AmplitudeClient.upgradeSharedPrefsToDB(context);
-                    client.context = context.getApplicationContext();
                     client.httpClient = new OkHttpClient();
-                    client.dbHelper = DatabaseHelper.getDatabaseHelper(client.context);
-                    client.apiKey = apiKey;
                     initializeDeviceInfo();
 
                     if (userId != null) {
@@ -1380,13 +1381,19 @@ public class AmplitudeClient {
      * @param userId the user id
      * @return the AmplitudeClient
      */
-    public AmplitudeClient setUserId(String userId) {
+    public AmplitudeClient setUserId(final String userId) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
         }
 
-        this.userId = userId;
-        dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+        final AmplitudeClient client = this;
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                client.userId = userId;
+                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+            }
+        });
         return this;
     }
 
@@ -1405,8 +1412,14 @@ public class AmplitudeClient {
             return this;
         }
 
-        this.deviceId = deviceId;
-        dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+        final AmplitudeClient client = this;
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                client.deviceId = deviceId;
+                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+            }
+        });
         return this;
     }
 
