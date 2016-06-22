@@ -1699,6 +1699,7 @@ public class AmplitudeClient {
         invalidDeviceIds.add("000000000000000"); // Common Serial Number
         invalidDeviceIds.add("Android");
         invalidDeviceIds.add("DEFACE");
+        invalidDeviceIds.add("00000000-0000-0000-0000-000000000000");
 
         return invalidDeviceIds;
     }

@@ -135,6 +135,10 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
 
+        amplitude.setDeviceId("00000000-0000-0000-0000-000000000000");
+        assertEquals(amplitude.getDeviceId(), deviceId);
+        assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+
         // set valid device id
         String newDeviceId = UUID.randomUUID().toString();
         amplitude.setDeviceId(newDeviceId);
