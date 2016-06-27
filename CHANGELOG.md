@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Run the `initialize` logic on the background thread so that the SQLite database operations do not delay the main thread.
+
 ## 2.7.2 (May 24, 2016)
 
 * Add documentation for SDK functions. You can take a look [here](https://rawgit.com/amplitude/Amplitude-Android/master/javadoc/index.html). A link has also been added to the Readme.

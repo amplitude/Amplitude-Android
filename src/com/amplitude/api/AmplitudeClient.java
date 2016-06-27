@@ -232,11 +232,11 @@ public class AmplitudeClient {
 
                     if (userId != null) {
                         client.userId = userId;
-                        dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+                        client.dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
                     } else {
-                        client.userId = dbHelper.getValue(USER_ID_KEY);
+                        client.userId = client.dbHelper.getValue(USER_ID_KEY);
                     }
-                    Long optOut = dbHelper.getLongValue(OPT_OUT_KEY);
+                    Long optOut = client.dbHelper.getLongValue(OPT_OUT_KEY);
                     client.optOut = optOut != null && optOut == 1;
 
                     // try to restore previous session id
@@ -249,8 +249,6 @@ public class AmplitudeClient {
                 }
             }
         });
-
-
 
         return this;
     }
