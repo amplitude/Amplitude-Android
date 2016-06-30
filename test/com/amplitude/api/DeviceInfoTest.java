@@ -1,11 +1,13 @@
 package com.amplitude.api;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
@@ -34,10 +36,7 @@ import org.robolectric.util.ReflectionHelpers;
 
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 
 @RunWith(RobolectricTestRunner.class)
@@ -166,7 +165,7 @@ public class DeviceInfoTest {
     }
 
     @Test
-    public void testGetAdvertisingId() {
+    public void testGetAdvertisingIdFromGoogleDevice() {
         PowerMockito.mockStatic(AdvertisingIdClient.class);
         String advertisingId = "advertisingId";
         AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
@@ -184,6 +183,23 @@ public class DeviceInfoTest {
         // still get advertisingId even if limit ad tracking disabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
         assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+    }
+
+    @Test
+    public void testGetAdvertisingIdFromAmazonDevice() {
+        ReflectionHelpers.setStaticField(Build.class, "MANUFACTURER", "Amazon");
+
+        String advertisingId = "advertisingId";
+        ContentResolver cr = context.getContentResolver();
+
+        Secure.putInt(cr, "limit_ad_tracking", 1);
+        Secure.putString(cr, "advertising_id", advertisingId);
+
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+
+        // still get advertisingID even if limit ad tracking enabled
+        assertEquals(advertisingId, deviceInfo.getAdvertisingId());
+        assertTrue(deviceInfo.isLimitAdTrackingEnabled());
     }
 
     @Test

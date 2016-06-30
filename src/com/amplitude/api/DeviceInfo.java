@@ -1,5 +1,6 @@
 package com.amplitude.api;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -8,6 +9,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
@@ -24,6 +26,9 @@ public class DeviceInfo {
     public static final String TAG = "com.amplitude.api.DeviceInfo";
 
     public static final String OS_NAME = "android";
+
+    private static final String SETTING_LIMIT_AD_TRACKING = "limit_ad_tracking";
+    private static final String SETTING_ADVERTISING_ID = "advertising_id";
 
     private boolean locationListening = true;
 
@@ -176,6 +181,23 @@ public class DeviceInfo {
 
         private String getAdvertisingId() {
             // This should not be called on the main thread.
+            if ("Amazon".equals(getManufacturer())) {
+                return getAndCacheAmazonAdvertisingId();
+            } else {
+                return getAndCacheGoogleAdvertisingId();
+            }
+        }
+
+        private String getAndCacheAmazonAdvertisingId() {
+            ContentResolver cr = context.getContentResolver();
+
+            limitAdTrackingEnabled = Secure.getInt(cr, SETTING_LIMIT_AD_TRACKING, 0) == 1;
+            advertisingId = Secure.getString(cr, SETTING_ADVERTISING_ID);
+
+            return advertisingId;
+        }
+
+        private String getAndCacheGoogleAdvertisingId() {
             try {
                 Class AdvertisingIdClient = Class
                         .forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
@@ -197,6 +219,7 @@ public class DeviceInfo {
             } catch (Exception e) {
                 AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
+
             return advertisingId;
         }
 
