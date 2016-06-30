@@ -193,18 +193,18 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     @Override
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId){
         super.initialize(context, apiKey, userId);
-        final AmplitudeClient client = this;
+        final PinnedAmplitudeClient client = this;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (!initializedSSLSocketFactory) {
+                if (!client.initializedSSLSocketFactory) {
                     SSLSocketFactory factory = getPinnedCertSslSocketFactory();
                     if (factory != null) {
                         client.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory).build();
                     } else {
-                        logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
+                        client.logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
                     }
-                    initializedSSLSocketFactory = true;
+                    client.initializedSSLSocketFactory = true;
                 }
             }
         });

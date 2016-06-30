@@ -224,11 +224,11 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (!initialized) {
+                if (!client.initialized) {
                     AmplitudeClient.upgradePrefs(context);
                     AmplitudeClient.upgradeSharedPrefsToDB(context);
                     client.httpClient = new OkHttpClient();
-                    initializeDeviceInfo();
+                    client.initializeDeviceInfo();
 
                     if (userId != null) {
                         client.userId = userId;
@@ -240,12 +240,12 @@ public class AmplitudeClient {
                     client.optOut = optOut != null && optOut == 1;
 
                     // try to restore previous session id
-                    long previousSessionId = getPreviousSessionId();
+                    long previousSessionId = client.getPreviousSessionId();
                     if (previousSessionId >= 0) {
-                        sessionId = previousSessionId;
+                        client.sessionId = previousSessionId;
                     }
 
-                    initialized = true;
+                    client.initialized = true;
                 }
             }
         });
