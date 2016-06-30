@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.8.0 (June 29, 2016)
+
 * Run the `initialize` logic on the background thread so that the SQLite database operations do not delay the main thread.
 * Add support for Amazon Advertising ID (use in place of Google Advertising ID on Amazon devices). Thanks to @jcomo for the pull request.
 
