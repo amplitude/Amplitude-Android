@@ -1085,6 +1085,7 @@ public class AmplitudeClient {
             public void run() {
                 refreshSessionTime(timestamp);
                 inForeground = false;
+                updateServer();
             }
         });
     }
