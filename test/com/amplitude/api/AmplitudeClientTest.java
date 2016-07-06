@@ -1096,6 +1096,8 @@ public class AmplitudeClientTest extends BaseTest {
         object.put("long string", longString);
         object.put("array", new JSONArray().put(longString).put(10));
         object.put("jsonobject", new JSONObject().put("long string", longString));
+        object.put(Constants.AMP_REVENUE_RECEIPT, longString);
+        object.put(Constants.AMP_REVENUE_RECEIPT_SIG, longString);
 
         object = amplitude.truncate(object);
         assertEquals(object.optInt("int value"), 10);
@@ -1106,6 +1108,10 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(object.optJSONArray("array").getInt(1), 10);
         assertEquals(object.optJSONObject("jsonobject").length(), 1);
         assertEquals(object.optJSONObject("jsonobject").optString("long string"), truncString);
+
+        // receipt and receipt sig should not be truncated
+        assertEquals(object.optString(Constants.AMP_REVENUE_RECEIPT), longString);
+        assertEquals(object.optString(Constants.AMP_REVENUE_RECEIPT_SIG), longString);
     }
 
     @Test
