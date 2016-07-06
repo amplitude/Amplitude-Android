@@ -1,5 +1,7 @@
 ## Unreleased
 
+* `productId` is no longer a required field for `Revenue` logged via `logRevenueV2`.
+
 ## 2.8.0 (June 29, 2016)
 
 * Run the `initialize` logic on the background thread so that the SQLite database operations do not delay the main thread.

@@ -155,7 +155,7 @@ public class RevenueTest extends BaseTest {
         assertFalse(revenue2.isValidRevenue());
         revenue2.setPrice(10.99);
         revenue2.setQuantity(15);
-        assertFalse(revenue2.isValidRevenue());
+        assertTrue(revenue2.isValidRevenue());
         revenue2.setProductId("testProductId");
         assertTrue(revenue2.isValidRevenue());
     }
