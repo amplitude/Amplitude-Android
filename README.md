@@ -65,7 +65,7 @@ See our [SDK documentation](https://rawgit.com/amplitude/Amplitude-Android/maste
         -dontwarn okio.**
     ```
 
-9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website.
+9. Events are saved locally. Uploads are batched to occur every 30 events and every 30 seconds. After calling `logEvent()` in your app, you will immediately see data appear on the Amplitude website. *NOTE:* by default unsent events are uploaded when your app is minimized or closed via the Activity Lifecycle `onPause` callback. If you wish to disable this behavior you can call `Amplitude.getInstance().setFlushEventsOnClose(false);`
 
 # Tracking Events #
 

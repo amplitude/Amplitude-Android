@@ -150,6 +150,7 @@ public class AmplitudeClient {
     private boolean usingForegroundTracking = false;
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
+    private boolean flushEventsOnClose = true;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -479,6 +480,17 @@ public class AmplitudeClient {
             uploadEvents();
         }
 
+        return this;
+    }
+
+    /**
+     * Enable/disable flushing of unsent events on app close (enabled by default).
+     *
+     * @param flushEventsOnClose whether to flush unsent events on app close
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setFlushEventsOnClose(boolean flushEventsOnClose) {
+        this.flushEventsOnClose = flushEventsOnClose;
         return this;
     }
 
@@ -1085,7 +1097,9 @@ public class AmplitudeClient {
             public void run() {
                 refreshSessionTime(timestamp);
                 inForeground = false;
-                updateServer();
+                if (flushEventsOnClose) {
+                    updateServer();
+                }
             }
         });
     }
