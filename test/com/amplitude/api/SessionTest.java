@@ -1,18 +1,23 @@
 package com.amplitude.api;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
+import okhttp3.mockwebserver.RecordedRequest;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -874,5 +879,63 @@ public class SessionTest extends BaseTest {
         assertEquals(outOfSessionEvent.optString("session_id"), String.valueOf(-1));
         assertEquals(event2.optString("event_type"), "test2");
         assertEquals(event2.optString("session_id"), String.valueOf(timestamp3));
+    }
+
+    @Test
+    public void testOnPauseFlushEvents() throws JSONException {
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+            timestamp, timestamp + 1, timestamp + 2,
+            timestamp + 3, timestamp + 4, timestamp + 5,
+        };
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        // log an event, should not be uploaded
+        amplitude.logEventAsync("testEvent", null, null, null, null, timestamps[0], false);
+        looper.runOneTask();
+        looper.runOneTask();
+        assertEquals(getUnsentEventCount(), 1);
+
+        // force client into background and verify flushing of events
+        callBacks.onActivityPaused(null);
+        looper.runOneTask();  // run the update server
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 1);
+        assertEquals(events.getJSONObject(0).optString("event_type"), "testEvent");
+
+        // verify that events have been cleared from client
+        looper.runOneTask();
+        assertEquals(getUnsentEventCount(), 0);
+    }
+
+    @Test
+    public void testOnPauseFlushEventsDisabled() throws JSONException {
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {
+            timestamp, timestamp + 1, timestamp + 2,
+            timestamp + 3, timestamp + 4, timestamp + 5,
+        };
+        amplitude.setFlushEventsOnClose(false);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        // log an event, should not be uploaded
+        amplitude.logEventAsync("testEvent", null, null, null, null, timestamps[0], false);
+        looper.runOneTask();
+        looper.runOneTask();
+        assertEquals(getUnsentEventCount(), 1);
+
+        // force client into background and verify no flushing of events
+        callBacks.onActivityPaused(null);
+        looper.runOneTask();  // run the update server
+        RecordedRequest request = runRequest(amplitude);
+
+        // flushing disabled, so no request should be sent
+        assertNull(request);
+        assertEquals(getUnsentEventCount(), 1);
     }
 }
