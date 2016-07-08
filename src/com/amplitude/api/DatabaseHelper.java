@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,18 +50,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    // assumes apiKey is not null or empty string
+    // apiKey should only be null for testing - AmplitudeClient.initialize will guard
     static synchronized DatabaseHelper getDatabaseHelper(Context context, String apiKey) {
         if (instance == null) {
-            migrateDatabaseFile(context, apiKey);
-            instance = new DatabaseHelper(context.getApplicationContext(), apiKey);
+            String fileName = Constants.DATABASE_NAME;
+            if (!TextUtils.isEmpty(apiKey)) {
+                migrateDatabaseFile(context, apiKey);
+                fileName = Constants.DATABASE_NAME + "_" + apiKey;
+            }
+            instance = new DatabaseHelper(context.getApplicationContext(), fileName);
         }
         return instance;
     }
 
-    private DatabaseHelper(Context context, String apiKey) {
-        super(context, Constants.DATABASE_NAME + "_" + apiKey, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKey);
+    private DatabaseHelper(Context context, String fileName) {
+        super(context, fileName, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(fileName);
     }
 
     // one time migration of database file to new apiKey-scoped file
