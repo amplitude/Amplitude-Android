@@ -141,11 +141,11 @@ public class BaseTest {
     }
 
     public long getUnsentEventCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getEventCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKey).getEventCount();
     }
 
     public long getUnsentIdentifyCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKey).getIdentifyCount();
     }
 
 
@@ -169,7 +169,7 @@ public class BaseTest {
 
     public JSONArray getUnsentEventsFromTable(String table, int limit) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
 
@@ -196,7 +196,7 @@ public class BaseTest {
 
     public JSONObject getLastEventFromTable(String table) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
             return events.get(events.size() - 1);

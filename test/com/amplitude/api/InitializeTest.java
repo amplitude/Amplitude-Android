@@ -44,7 +44,7 @@ public class InitializeTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putString(Constants.PREFKEY_USER_ID, "oldestUserId").commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyValue(AmplitudeClient.USER_ID_KEY, "oldUserId");
 
         String userId = "newUserId";
@@ -73,7 +73,7 @@ public class InitializeTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putString(Constants.PREFKEY_USER_ID, userId).commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
 
         amplitude.initialize(context, apiKey);
@@ -95,7 +95,7 @@ public class InitializeTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putString(Constants.PREFKEY_USER_ID, "oldUserId").commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyValue(AmplitudeClient.USER_ID_KEY, userId);
 
         amplitude.initialize(context, apiKey);
@@ -115,7 +115,7 @@ public class InitializeTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(Constants.PREFKEY_OPT_OUT, true).commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertNull(dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY));
 
         amplitude.initialize(context, apiKey);
@@ -138,7 +138,7 @@ public class InitializeTest extends BaseTest {
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(Constants.PREFKEY_OPT_OUT, true).commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.OPT_OUT_KEY, 0L);
 
         amplitude.initialize(context, apiKey);
@@ -154,7 +154,7 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testInitializeLastEventId() throws JSONException {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
 
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
@@ -184,7 +184,7 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testInitializePreviousSessionId() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
 
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
@@ -202,7 +202,7 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testInitializeLastEventTime() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY, 5000L);
 
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
@@ -221,7 +221,7 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testSkipSharedPrefsToDb() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyValue(AmplitudeClient.DEVICE_ID_KEY, "testDeviceId");
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY, 1000L);
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY, 2000L);
@@ -277,7 +277,7 @@ public class InitializeTest extends BaseTest {
         prefs.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, 6000L).commit();
         prefs.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, 6000L).commit();
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.insertOrReplaceKeyLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY, 7000L);
 
         long [] timestamps = {8000, 14000};

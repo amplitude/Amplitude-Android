@@ -1,5 +1,10 @@
 package com.amplitude.api;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -10,8 +15,11 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
+import java.io.File;
 import java.util.List;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -20,6 +28,27 @@ import static org.junit.Assert.fail;
 @Config(manifest = Config.NONE)
 public class DatabaseHelperTest extends BaseTest {
 
+    // Use this to re-create the old database file
+    class BasicDatabaseHelper extends SQLiteOpenHelper {
+
+        private String createTable = "CREATE TABLE IF NOT EXISTS test " +
+                "(id INT AUTO_INCREMENT, value TEXT);";
+
+        public BasicDatabaseHelper(Context context, String filename) {
+            super(context, filename, null, 1);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(createTable);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            db.execSQL(createTable);
+        }
+    }
+
     protected DatabaseHelper dbInstance;
 
     @Before
@@ -27,7 +56,7 @@ public class DatabaseHelperTest extends BaseTest {
         super.setUp(false);
         amplitude.initialize(context, apiKey);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
-        dbInstance = DatabaseHelper.getDatabaseHelper(context);
+        dbInstance = DatabaseHelper.getDatabaseHelper(context, apiKey);
     }
 
     @After
@@ -479,6 +508,31 @@ public class DatabaseHelperTest extends BaseTest {
         dbInstance.removeEvents(4);
         assertEquals(0, dbInstance.getEventCount());
         assertEquals(1, dbInstance.getIdentifyCount());
+    }
+
+    @Test
+    public void testMigrateDatabaseFile() {
+        // use basic database helper to re-create old db file
+        BasicDatabaseHelper basic = new BasicDatabaseHelper(context, Constants.DATABASE_NAME);
+        basic.getWritableDatabase().execSQL("INSERT INTO test(value) VALUES (\"test\")");
+        File oldFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        assertTrue(oldFile.exists());
+
+        // initialize database helper
+        DatabaseHelper.instance = null;
+        SQLiteDatabase db = DatabaseHelper.getDatabaseHelper(context, apiKey).getReadableDatabase();
+
+        // test that db data is preserved
+        SQLiteStatement statement = db.compileStatement(
+            "SELECT value FROM test WHERE value = \"test\""
+        );
+        String value = statement.simpleQueryForString();
+        assertEquals(value, "test");
+
+        // test migration of files
+        assertFalse(oldFile.exists());
+        File newFile = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKey);
+        assertTrue(newFile.exists());
     }
 }
 

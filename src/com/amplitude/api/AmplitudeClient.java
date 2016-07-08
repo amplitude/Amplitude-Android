@@ -219,7 +219,7 @@ public class AmplitudeClient {
 
         this.context = context.getApplicationContext();
         this.apiKey = apiKey;
-        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
+        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, apiKey);
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -227,7 +227,7 @@ public class AmplitudeClient {
             public void run() {
                 if (!client.initialized) {
                     AmplitudeClient.upgradePrefs(context);
-                    AmplitudeClient.upgradeSharedPrefsToDB(context);
+                    AmplitudeClient.upgradeSharedPrefsToDB(context, apiKey);
                     client.httpClient = new OkHttpClient();
                     client.initializeDeviceInfo();
 
@@ -665,7 +665,7 @@ public class AmplitudeClient {
      *
      * @param eventType       the event type
      * @param eventProperties the event properties
-     * @param groups          the groups
+     * @param group          the groups
      * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
      *     Setting Event Properties</a>
      * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
@@ -1927,8 +1927,8 @@ public class AmplitudeClient {
      * Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
      * sharedPrefs is known to not be process-safe.
      */
-    static boolean upgradeSharedPrefsToDB(Context context) {
-        return upgradeSharedPrefsToDB(context, null);
+    static boolean upgradeSharedPrefsToDB(Context context, String apiKey) {
+        return upgradeSharedPrefsToDB(context, null, apiKey);
     }
 
     /**
@@ -1938,13 +1938,13 @@ public class AmplitudeClient {
      * @param sourcePkgName the source pkg name
      * @return the boolean
      */
-    static boolean upgradeSharedPrefsToDB(Context context, String sourcePkgName) {
+    static boolean upgradeSharedPrefsToDB(Context context, String sourcePkgName, String apiKey) {
         if (sourcePkgName == null) {
             sourcePkgName = Constants.PACKAGE_NAME;
         }
 
         // check if upgrade needed
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
         Long lastEventTime = dbHelper.getLongValue(LAST_EVENT_TIME_KEY);

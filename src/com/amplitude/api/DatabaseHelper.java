@@ -49,16 +49,31 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
+    // assumes apiKey is not null or empty string
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String apiKey) {
         if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+            migrateDatabaseFile(context, apiKey);
+            instance = new DatabaseHelper(context.getApplicationContext(), apiKey);
         }
         return instance;
     }
 
-    private DatabaseHelper(Context context) {
-        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME);
+    private DatabaseHelper(Context context, String apiKey) {
+        super(context, Constants.DATABASE_NAME + "_" + apiKey, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + apiKey);
+    }
+
+    // one time migration of database file to new apiKey-scoped file
+    private static void migrateDatabaseFile(Context context, String apiKey) {
+        File oldFile = context.getDatabasePath(Constants.DATABASE_NAME);
+        if (!oldFile.exists()) {
+            return;
+        }
+
+        oldFile.renameTo(new File(
+            context.getDatabasePath(Constants.DATABASE_NAME).getParent(),
+            Constants.DATABASE_NAME + "_" + apiKey
+        ));
     }
 
     @Override
