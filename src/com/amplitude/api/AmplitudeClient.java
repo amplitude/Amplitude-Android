@@ -423,13 +423,19 @@ public class AmplitudeClient {
      * @param optOut whether or not to opt the user out of tracking
      * @return the AmplitudeClient
      */
-    public AmplitudeClient setOptOut(boolean optOut) {
+    public AmplitudeClient setOptOut(final boolean optOut) {
         if (!contextAndApiKeySet("setOptOut()")) {
             return this;
         }
 
-        this.optOut = optOut;
-        dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
+        final AmplitudeClient client = this;
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                client.optOut = optOut;
+                dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
+            }
+        });
         return this;
     }
 
