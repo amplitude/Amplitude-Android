@@ -1,5 +1,8 @@
 ## Unreleased
 
+* `productId` is no longer a required field for `Revenue` logged via `logRevenueV2`.
+* Fix bug where receipt and receiptSignature were being truncated if they were too long (exceeded 1024 characters).
+
 ## 2.9.0 (July 07, 2016)
 
 * Add automatic flushing of unsent events on app close/minimize (through the Activity Lifecycle `onPause` callback). This only works if you call `Amplitude.getInstance().enableForegroundTracking(getApplication());`, which is recommended in the README by default for Setup. To disable you can call `Amplitude.getInstance().setFlushEventsOnClose(false);`

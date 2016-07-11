@@ -1324,9 +1324,14 @@ public class AmplitudeClient {
         Iterator<?> keys = object.keys();
         while (keys.hasNext()) {
             String key = (String) keys.next();
+
             try {
                 Object value = object.get(key);
-                if (value.getClass().equals(String.class)) {
+                // do not truncate revenue receipt and receipt sig fields
+                if (key.equals(Constants.AMP_REVENUE_RECEIPT) ||
+                        key.equals(Constants.AMP_REVENUE_RECEIPT_SIG)) {
+                    object.put(key, value);
+                } else if (value.getClass().equals(String.class)) {
                     object.put(key, truncate((String) value));
                 } else if (value.getClass().equals(JSONObject.class)) {
                     object.put(key, truncate((JSONObject) value));

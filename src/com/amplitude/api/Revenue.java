@@ -13,9 +13,9 @@ import org.json.JSONObject;
  * you to chain multiple set calls together, for example:
  * {@code Revenue revenue = new Revenue().setProductId("com.product.id").setPrice(3.99);}
  * <br><br>
- * <b>Note:</b> {@code productId} and {@code price} are required fields. If {@code quantity} is not
- * specified, it will default to 1. {@code receipt} and {@code receiptSignature} are required
- * if you want to verify the revenue event.
+ * <b>Note:</b> {@code price} is a required field. If {@code quantity} is not
+ * specified, it will default to 1. {@code productId}, {@code receipt} and {@code receiptSignature}
+ * re required if you want to verify the revenue event.
  * <br><br>
  * <b>Note:</b> the total revenue amount is calculated as price * quantity.
  * <br><br>
@@ -35,7 +35,7 @@ public class Revenue {
     private static AmplitudeLog logger =  AmplitudeLog.getLogger();
 
     /**
-     * The Product ID field (required).
+     * The Product ID field.
      */
     protected String productId = null;
     /**
@@ -65,16 +65,11 @@ public class Revenue {
     protected JSONObject properties = null;
 
     /**
-     * Verifies that revenue object is valid and contains the required fields (productId, price)
+     * Verifies that revenue object is valid and contains the required fields
      *
      * @return true if revenue object is valid, else false
      */
     protected boolean isValidRevenue() {
-        if (TextUtils.isEmpty(productId)) {
-            logger.w(TAG, "Invalid revenue, need to set productId field");
-            return false;
-        }
-
         if (price == null) {
             logger.w(TAG, "Invalid revenue, need to set price");
             return false;
