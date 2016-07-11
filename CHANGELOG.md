@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.9.1 (July 11, 2016)
+
 * Fix bug where `setOptOut` was not being run on background thread.
 * `productId` is no longer a required field for `Revenue` logged via `logRevenueV2`.
 * Fix bug where receipt and receiptSignature were being truncated if they were too long (exceeded 1024 characters).
