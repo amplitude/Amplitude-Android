@@ -11,6 +11,7 @@ import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -182,5 +183,29 @@ public class RevenueTest extends BaseTest {
         assertEquals(obj.optString("$receiptSig"), receiptSig);
         assertEquals(obj.optString("$revenueType"), revenueType);
         assertEquals(obj.optString("city"), "Boston");
+    }
+
+    @Test
+    public void testEquals() {
+        Revenue r1 = new Revenue();
+        Revenue r2 = new Revenue();
+
+        r1.setPrice(10.00).setQuantity(2).setProductId("testProductId");
+        r2.setPrice(9.99).setQuantity(2).setProductId("testProductId");
+        assertFalse(r1.equals(r2));
+        r2.setPrice(10.00);
+        assertTrue(r1.equals(r2));
+    }
+
+    @Test
+    public void testHashCode() {
+        Revenue r1 = new Revenue();
+        Revenue r2 = new Revenue();
+
+        r1.setPrice(10.00).setQuantity(2).setProductId("testProductId");
+        r2.setPrice(9.99).setQuantity(2).setProductId("testProductId");
+        assertNotEquals(r1.hashCode(), r2.hashCode());
+        r2.setPrice(10.00);
+        assertEquals(r1.hashCode(), r2.hashCode());
     }
 }

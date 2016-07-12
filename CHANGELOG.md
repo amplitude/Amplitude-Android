@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Update `Revenue` class to expose public `equals` and `hashCode` methods.
+
 ## 2.9.1 (July 11, 2016)
 
 * Fix bug where `setOptOut` was not being run on background thread.
