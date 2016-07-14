@@ -116,7 +116,7 @@ public class RevenueTest extends BaseTest {
 
         JSONObject properties = new JSONObject().put("city", "san francisco");
         revenue.setRevenueProperties(properties);
-        assertTrue(compareJSONObjects(properties, revenue.properties));
+        assertTrue(Utils.compareJSONObjects(properties, revenue.properties));
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optString("city"), "san francisco");
@@ -133,7 +133,7 @@ public class RevenueTest extends BaseTest {
 
         JSONObject properties = new JSONObject().put("city", "san francisco");
         revenue.setEventProperties(properties);
-        assertTrue(compareJSONObjects(properties, revenue.properties));
+        assertTrue(Utils.compareJSONObjects(properties, revenue.properties));
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optString("city"), "san francisco");
@@ -186,15 +186,19 @@ public class RevenueTest extends BaseTest {
     }
 
     @Test
-    public void testEquals() {
+    public void testEquals() throws JSONException {
         Revenue r1 = new Revenue();
         Revenue r2 = new Revenue();
 
         r1.setPrice(10.00).setQuantity(2).setProductId("testProductId");
+        r1.setEventProperties(new JSONObject().put("testProp", "testValue"));
         r2.setPrice(9.99).setQuantity(2).setProductId("testProductId");
+        r2.setEventProperties(new JSONObject().put("testProp", "testValue"));
         assertFalse(r1.equals(r2));
         r2.setPrice(10.00);
         assertTrue(r1.equals(r2));
+        r2.setEventProperties(new JSONObject().put("testProp", "fakeValue"));
+        assertFalse(r1.equals(r2));
     }
 
     @Test
