@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.9.2 (July 14, 2016)
+
 * Fix bug where `enableLocationListening` and `disableLocationListening` were not being run on background thread. Thanks to @elevenfive for PR.
 * Update `Revenue` class to expose public `equals` and `hashCode` methods.
 
