@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix bug where `enableLocationListening` and `disableLocationListening` were not being run on background thread. Thanks to @elevenfive for PR.
+
 ## 2.9.1 (July 11, 2016)
 
 * Fix bug where `setOptOut` was not being run on background thread.

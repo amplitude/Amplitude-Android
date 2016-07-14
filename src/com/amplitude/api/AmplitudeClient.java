@@ -317,11 +317,16 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient enableLocationListening() {
-        if (deviceInfo == null) {
-            throw new IllegalStateException(
-                    "Must initialize before acting on location listening.");
-        }
-        deviceInfo.setLocationListening(true);
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                if (deviceInfo == null) {
+		    throw new IllegalStateException(
+		            "Must initialize before acting on location listening.");
+                }
+                deviceInfo.setLocationListening(true);
+            }
+        });
         return this;
     }
 
@@ -332,11 +337,16 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient disableLocationListening() {
-        if (deviceInfo == null) {
-            throw new IllegalStateException(
-                    "Must initialize before acting on location listening.");
-        }
-        deviceInfo.setLocationListening(false);
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                if (deviceInfo == null) {
+		    throw new IllegalStateException(
+		            "Must initialize before acting on location listening.");
+                }
+                deviceInfo.setLocationListening(false);
+            }
+        });
         return this;
     }
 
