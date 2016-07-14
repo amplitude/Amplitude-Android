@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 /**
  * Created by danieljih on 4/18/16.
  */
@@ -44,4 +46,46 @@ public class Utils {
         }
     }
 
+    static boolean compareJSONObjects(JSONObject o1, JSONObject o2) {
+        try {
+
+            if (o1 == o2) {
+                return true;
+            }
+
+            if ((o1 != null && o2 == null) || (o1 == null && o2 != null)) {
+                return false;
+            }
+
+            if (o1.length() != o2.length()) {
+                return false;
+            }
+
+            Iterator<?> keys = o1.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                if (!o2.has(key)) {
+                    return false;
+                }
+
+                Object value1 = o1.get(key);
+                Object value2 = o2.get(key);
+
+                if (!value1.getClass().equals(value2.getClass())) {
+                    return false;
+                }
+
+                if (value1.getClass() == JSONObject.class) {
+                    if (!compareJSONObjects((JSONObject) value1, (JSONObject) value2)) {
+                        return false;
+                    }
+                } else if (!value1.equals(value2)) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (JSONException e) {}
+        return false;
+    }
 }
