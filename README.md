@@ -12,22 +12,22 @@ See our [SDK documentation](https://rawgit.com/amplitude/Amplitude-Android/maste
 # Setup #
 1. If you haven't already, go to https://amplitude.com/signup and register for an account. Then, add an app. You will receive an API Key.
 
-2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-2.9.0-with-dependencies.jar) and copy it into the "libs" folder in your Android project in Android Studio.
+2. [Download the jar](https://github.com/amplitude/Amplitude-Android/raw/master/amplitude-android-2.9.2-with-dependencies.jar) and copy it into the "libs" folder in your Android project in Android Studio.
 
-  Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C2.9.0%7Cjar) using the following configuration in your pom.xml:
+  Alternatively, if you are using Maven in your project, the jar is available on [Maven Central](http://search.maven.org/#artifactdetails%7Ccom.amplitude%7Candroid-sdk%7C2.9.2%7Cjar) using the following configuration in your pom.xml:
 
     ```
     <dependency>
       <groupId>com.amplitude</groupId>
       <artifactId>android-sdk</artifactId>
-      <version>2.9.0</version>
+      <version>2.9.2</version>
     </dependency>
     ```
 
   Or if you are using gradle in your project, include in your build.gradle file:
 
     ```
-    compile 'com.amplitude:android-sdk:2.9.0'
+    compile 'com.amplitude:android-sdk:2.9.2'
     ```
 
 3. If you haven't already, add the [INTERNET](https://developer.android.com/reference/android/Manifest.permission.html#INTERNET) permission to your manifest file:
@@ -254,11 +254,11 @@ Revenue revenue = new Revenue().setProductId("com.company.productId").setPrice(3
 Amplitude.getInstance().logRevenueV2(revenue);
 ```
 
-`productId`, and `price` are required fields. `quantity` defaults to 1 if unspecified. `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc). This table describes the different fields available:
+`price` is a required field. `quantity` defaults to 1 if unspecified. `productId`, `receipt` and `receiptSignature` are required if you want to verify the revenue event. Each field has a corresponding `set` method (for example `setProductId`, `setQuantity`, etc). This table describes the different fields available:
 
 | Name               | Type       | Description                                                                                              | default |
 |--------------------|------------|----------------------------------------------------------------------------------------------------------|---------|
-| productId          | String     | Required: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    |
+| productId          | String     | Optional: an identifier for the product (we recommend something like the Google Play Store product Id)   | null    |
 | quantity           | int        | Required: the quantity of products purchased. Defaults to 1 if not specified. Revenue = quantity * price | 1       |
 | price              | Double     | Required: the price of the products purchased (can be negative). Revenue = quantity * price              | null    |
 | revenueType        | String     | Optional: the type of revenue (ex: tax, refund, income)                                                  | null    |

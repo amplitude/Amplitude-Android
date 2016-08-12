@@ -31,7 +31,7 @@ public class IdentifyTest extends BaseTest {
         JSONObject expected = new JSONObject();
         JSONObject expectedOperations = new JSONObject().put(property1, "-").put(property2, "-");
         expected.put(Constants.AMP_OP_UNSET, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class IdentifyTest extends BaseTest {
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
         expectedOperations.put(property5, value5Expected);
         expected.put(Constants.AMP_OP_SET, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -97,7 +97,7 @@ public class IdentifyTest extends BaseTest {
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
         expectedOperations.put(property5, value5Expected);
         expected.put(Constants.AMP_OP_SET_ONCE, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -128,7 +128,7 @@ public class IdentifyTest extends BaseTest {
         expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
         expectedOperations.put(property5, value5);
         expected.put(Constants.AMP_OP_ADD, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -186,7 +186,7 @@ public class IdentifyTest extends BaseTest {
         expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
         expectedOperations.put(property9, value9Expected);
         expected.put(Constants.AMP_OP_APPEND, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -244,7 +244,7 @@ public class IdentifyTest extends BaseTest {
         expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
         expectedOperations.put(property9, value9Expected);
         expected.put(Constants.AMP_OP_PREPEND, expectedOperations);
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -282,7 +282,7 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         expected.put(Constants.AMP_OP_APPEND, new JSONObject().put(property5, value5));
         expected.put(Constants.AMP_OP_PREPEND, new JSONObject().put(property6, value6));
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -297,7 +297,7 @@ public class IdentifyTest extends BaseTest {
 
         JSONObject expected = new JSONObject();
         expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property, value1));
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -312,7 +312,7 @@ public class IdentifyTest extends BaseTest {
 
         JSONObject expected = new JSONObject();
         expected.put(Constants.AMP_OP_CLEAR_ALL, "-");
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
     @Test
@@ -327,6 +327,6 @@ public class IdentifyTest extends BaseTest {
 
         JSONObject expected = new JSONObject();
         expected.put(Constants.AMP_OP_SET_ONCE, new JSONObject().put(property, value1));
-        assertTrue(compareJSONObjects(expected, identify.userPropertiesOperations));
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 }

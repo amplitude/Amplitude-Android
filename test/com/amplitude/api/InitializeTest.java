@@ -111,6 +111,8 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testInitializeOptOut() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);
         prefs.edit().putBoolean(Constants.PREFKEY_OPT_OUT, true).commit();
@@ -119,12 +121,13 @@ public class InitializeTest extends BaseTest {
         assertNull(dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY));
 
         amplitude.initialize(context, apiKey);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
+        looper.runOneTask();
 
         assertTrue(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 1L);
 
         amplitude.setOptOut(false);
+        looper.runOneTask();
         assertFalse(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
 

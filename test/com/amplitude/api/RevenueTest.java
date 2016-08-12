@@ -11,6 +11,7 @@ import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -115,7 +116,7 @@ public class RevenueTest extends BaseTest {
 
         JSONObject properties = new JSONObject().put("city", "san francisco");
         revenue.setRevenueProperties(properties);
-        assertTrue(compareJSONObjects(properties, revenue.properties));
+        assertTrue(Utils.compareJSONObjects(properties, revenue.properties));
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optString("city"), "san francisco");
@@ -132,7 +133,7 @@ public class RevenueTest extends BaseTest {
 
         JSONObject properties = new JSONObject().put("city", "san francisco");
         revenue.setEventProperties(properties);
-        assertTrue(compareJSONObjects(properties, revenue.properties));
+        assertTrue(Utils.compareJSONObjects(properties, revenue.properties));
 
         JSONObject obj = revenue.toJSONObject();
         assertEquals(obj.optString("city"), "san francisco");
@@ -155,7 +156,7 @@ public class RevenueTest extends BaseTest {
         assertFalse(revenue2.isValidRevenue());
         revenue2.setPrice(10.99);
         revenue2.setQuantity(15);
-        assertFalse(revenue2.isValidRevenue());
+        assertTrue(revenue2.isValidRevenue());
         revenue2.setProductId("testProductId");
         assertTrue(revenue2.isValidRevenue());
     }
@@ -182,5 +183,33 @@ public class RevenueTest extends BaseTest {
         assertEquals(obj.optString("$receiptSig"), receiptSig);
         assertEquals(obj.optString("$revenueType"), revenueType);
         assertEquals(obj.optString("city"), "Boston");
+    }
+
+    @Test
+    public void testEquals() throws JSONException {
+        Revenue r1 = new Revenue();
+        Revenue r2 = new Revenue();
+
+        r1.setPrice(10.00).setQuantity(2).setProductId("testProductId");
+        r1.setEventProperties(new JSONObject().put("testProp", "testValue"));
+        r2.setPrice(9.99).setQuantity(2).setProductId("testProductId");
+        r2.setEventProperties(new JSONObject().put("testProp", "testValue"));
+        assertFalse(r1.equals(r2));
+        r2.setPrice(10.00);
+        assertTrue(r1.equals(r2));
+        r2.setEventProperties(new JSONObject().put("testProp", "fakeValue"));
+        assertFalse(r1.equals(r2));
+    }
+
+    @Test
+    public void testHashCode() {
+        Revenue r1 = new Revenue();
+        Revenue r2 = new Revenue();
+
+        r1.setPrice(10.00).setQuantity(2).setProductId("testProductId");
+        r2.setPrice(9.99).setQuantity(2).setProductId("testProductId");
+        assertNotEquals(r1.hashCode(), r2.hashCode());
+        r2.setPrice(10.00);
+        assertEquals(r1.hashCode(), r2.hashCode());
     }
 }
