@@ -359,7 +359,7 @@ Amplitude.getInstance().logEvent("initialize_game", eventProperties, groups);
 ```
 
 ### Custom Device Ids ###
-By default, device IDs are a randomly generated UUID. If you would like to use Google's Advertising ID as the device ID, you can specify this by calling `Amplitude.getInstance().useAdvertisingIdForDeviceId()` prior to initializing. You can retrieve the Device ID that Amplitude uses with `Amplitude.getDeviceId()`. This method can return null if a Device ID hasn't been generated yet.
+By default, device IDs are a randomly generated UUID. If you would like to use Google's Advertising ID as the device ID, you can specify this by calling `Amplitude.getInstance().useAdvertisingIdForDeviceId()` prior to initializing. You can retrieve the Device ID that Amplitude uses with `Amplitude.getInstance().getDeviceId()`. This method can return null if a Device ID hasn't been generated yet.
 
 If you have your own system for tracking device IDs and would like to set a custom device ID, you can do so with `Amplitude.getInstance().setDeviceId("CUSTOM_DEVICE_ID")`. **Note: this is not recommended unless you really know what you are doing.** Make sure the device ID you set is sufficiently unique (we recommend something like a UUID - we use `UUID.randomUUID().toString()`) to prevent conflicts with other devices in our system.
 
