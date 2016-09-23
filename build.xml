@@ -25,6 +25,7 @@
     <property name="jar" value="${dist}/lib/${artifactId}-${version}.jar" />
     <property name="uberjar" value="${dist}/lib/${artifactId}-${version}-with-dependencies.jar" />
     <property name="unity-jar" value="amplitude-unity-${version}.jar" />
+    <property name="unity-uberjar" value="amplitude-unity-${version}-with-dependencies.jar" />
     <property name="javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
     <property name="sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
 
@@ -109,7 +110,9 @@
     <target name="unity" depends="build" description="creates jar for unity plugin">
         <jar destfile="${unity-jar}">
             <fileset dir="${build}" includes="com/amplitude/api/*.class, com/amplitude/unity/plugins/*.class, com/amplitude/security/*.class" />
-            <fileset dir="${src}" includes="com/amplitude/api/*.java, com/amplitude/unity/plugins/*.java, com/amplitude/security/*.java" />
+        </jar>
+        <jar destfile="${unity-uberjar}">
+            <fileset dir="${build}" includes="com/amplitude/api/*.class, com/amplitude/unity/plugins/*.class, com/amplitude/security/*.class" />
             <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
         </jar>
     </target>
