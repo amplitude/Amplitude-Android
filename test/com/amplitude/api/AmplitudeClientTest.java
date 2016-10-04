@@ -187,7 +187,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertEquals(event.optJSONObject("event_properties").length(), 0);
+        assertNull(event.optJSONObject("event_properties"));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -827,9 +827,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(obj.optString("city"), "Boston");
 
         // user properties should be empty
-        assertEquals(
-            Utils.compareJSONObjects(event.optJSONObject("user_properties"), new JSONObject()), true
-        );
+        assertNull(event.optJSONObject("user_properties"));
 
         // api properties should not have any revenue info
         JSONObject apiProps = event.optJSONObject("api_properties");
@@ -1274,7 +1272,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertEquals(event.optJSONObject("event_properties").length(), 0);
+        assertNull(event.optJSONObject("event_properties"));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -1297,7 +1295,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertEquals(event.optJSONObject("event_properties").length(), 0);
+        assertNull(event.optJSONObject("event_properties"));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -1325,8 +1323,8 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 0);
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test");
-        assertEquals(event.optJSONObject("event_properties").length(), 0);
-        assertEquals(event.optJSONObject("user_properties").length(), 0);
+        assertNull(event.optJSONObject("event_properties"));
+        assertNull(event.optJSONObject("user_properties"));
 
         JSONObject eventGroups = event.optJSONObject("groups");
         assertEquals(eventGroups.length(), 2);
@@ -1365,5 +1363,44 @@ public class AmplitudeClientTest extends BaseTest {
 
         assertEquals(events.getJSONObject(1).optString("event_type"), "testEvent2");
         assertEquals(events.getJSONObject(1).optLong("event_id"), 2);
+    }
+
+    @Test
+    public void testBlockTooManyEventUserProperties() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        JSONObject eventProperties = new JSONObject();
+        JSONObject userProperties = new JSONObject();
+        Identify identify = new Identify();
+
+        for (int i = 0; i < Constants.MAX_PROPERTY_KEYS + 1; i++) {
+            eventProperties.put(String.valueOf(i), i);
+            userProperties.put(String.valueOf(i*2), i*2);
+            identify.setOnce(String.valueOf(i), i);
+        }
+
+        // verify user properties is filtered out
+        amplitude.setUserProperties(userProperties);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        // verify scrubbed from events
+        amplitude.logEvent("test event", eventProperties);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optString("event_type"), "test event");
+        assertNull(event.optJSONObject("event_properties"));
+
+        // verify scrubbed from identifys - but leaves an empty JSONObject
+        amplitude.identify(identify);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentIdentifyCount(), 1);
+        JSONObject identifyEvent = getLastUnsentIdentify();
+        assertEquals(identifyEvent.optString("event_type"), "$identify");
+        assertTrue(Utils.compareJSONObjects(
+                identifyEvent.optJSONObject("user_properties"), new JSONObject()
+        ));
     }
 }
