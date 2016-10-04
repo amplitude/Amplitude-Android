@@ -852,8 +852,10 @@ public class AmplitudeClient {
             apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
 
             event.put("api_properties", apiProperties);
-            event.put("event_properties", replaceWithJSONNull(truncate(eventProperties)));
-            event.put("user_properties", replaceWithJSONNull(truncate(userProperties)));
+            event.put("event_properties", (eventProperties == null) ? new JSONObject()
+                : truncate(eventProperties));
+            event.put("user_properties", (userProperties == null) ? new JSONObject()
+                : truncate(userProperties));
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
         } catch (JSONException e) {
             logger.e(TAG, e.toString());
@@ -1257,7 +1259,7 @@ public class AmplitudeClient {
 
                 // sanitize and truncate properties before trying to convert to identify
                 JSONObject sanitized = truncate(copy);
-                if (sanitized == null) {
+                if (sanitized.length() == 0) {
                     return;
                 }
 
@@ -1339,12 +1341,12 @@ public class AmplitudeClient {
      */
     public JSONObject truncate(JSONObject object) {
         if (object == null) {
-            return null;
+            return new JSONObject();
         }
 
         if (object.length() > Constants.MAX_PROPERTY_KEYS) {
             logger.w(TAG, "Warning: too many properties (more than 1000), ignoring");
-            return null;
+            return new JSONObject();
         }
 
         Iterator<?> keys = object.keys();
@@ -1382,7 +1384,7 @@ public class AmplitudeClient {
      */
     public JSONArray truncate(JSONArray array) throws JSONException {
         if (array == null) {
-            return null;
+            return new JSONArray();
         }
 
         for (int i = 0; i < array.length(); i++) {

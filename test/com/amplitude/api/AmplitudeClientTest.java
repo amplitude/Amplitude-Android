@@ -187,7 +187,9 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertNull(event.optJSONObject("event_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("event_properties"), new JSONObject()
+        ));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -827,7 +829,9 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(obj.optString("city"), "Boston");
 
         // user properties should be empty
-        assertNull(event.optJSONObject("user_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("user_properties"), new JSONObject()
+        ));
 
         // api properties should not have any revenue info
         JSONObject apiProps = event.optJSONObject("api_properties");
@@ -1116,8 +1120,10 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testTruncateNullJSONObject() throws JSONException {
-        assertNull(amplitude.truncate((JSONObject) null));
-        assertNull(amplitude.truncate((JSONArray) null));
+        assertTrue(Utils.compareJSONObjects(
+            amplitude.truncate((JSONObject) null), new JSONObject()
+        ));
+        assertEquals(amplitude.truncate((JSONArray) null).length(), 0);
     }
 
     @Test
@@ -1272,7 +1278,9 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertNull(event.optJSONObject("event_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("event_properties"), new JSONObject()
+        ));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -1295,7 +1303,9 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         JSONObject event = getLastUnsentIdentify();
         assertEquals(Constants.IDENTIFY_EVENT, event.optString("event_type"));
-        assertNull(event.optJSONObject("event_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("event_properties"), new JSONObject()
+        ));
 
         JSONObject userPropertiesOperations = event.optJSONObject("user_properties");
         assertEquals(userPropertiesOperations.length(), 1);
@@ -1323,8 +1333,12 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 0);
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test");
-        assertNull(event.optJSONObject("event_properties"));
-        assertNull(event.optJSONObject("user_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("event_properties"), new JSONObject()
+        ));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("user_properties"), new JSONObject()
+        ));
 
         JSONObject eventGroups = event.optJSONObject("groups");
         assertEquals(eventGroups.length(), 2);
@@ -1391,7 +1405,9 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentEventCount(), 1);
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test event");
-        assertNull(event.optJSONObject("event_properties"));
+        assertTrue(Utils.compareJSONObjects(
+            event.optJSONObject("event_properties"), new JSONObject()
+        ));
 
         // verify scrubbed from identifys - but leaves an empty JSONObject
         amplitude.identify(identify);
@@ -1400,7 +1416,8 @@ public class AmplitudeClientTest extends BaseTest {
         JSONObject identifyEvent = getLastUnsentIdentify();
         assertEquals(identifyEvent.optString("event_type"), "$identify");
         assertTrue(Utils.compareJSONObjects(
-                identifyEvent.optJSONObject("user_properties"), new JSONObject()
+            identifyEvent.optJSONObject("user_properties"),
+            new JSONObject().put("$setOnce", new JSONObject())
         ));
     }
 }
