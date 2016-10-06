@@ -2,6 +2,8 @@ package com.amplitude.api;
 
 import android.content.Context;
 
+
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +50,26 @@ public class BaseTest {
 
         @Override
         protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
+    }
+
+    // override AmplitudeDatabaseHelper to throw Cursor Allocation Exception
+    protected class MockDatabaseHelper extends DatabaseHelper {
+        protected MockDatabaseHelper(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected synchronized Object getValueFromTable(String table, String key) {
+            // cannot import CursorWindowAllocationException, so we throw the base class instead
+            throw new RuntimeException("Cursor window allocation of 2048 kb failed.");
+        }
+
+        @Override
+        protected synchronized List<JSONObject> getEventsFromTable(
+                String table, long upToId, long limit) throws JSONException {
+            // cannot import CursorWindowAllocationException, so we throw the base class instead
+            throw new RuntimeException("Cursor window allocation of 2048 kb failed.");
+        }
     }
 
     protected AmplitudeClient amplitude;

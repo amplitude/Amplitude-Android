@@ -56,7 +56,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return instance;
     }
 
-    private DatabaseHelper(Context context) {
+    protected DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
     }
@@ -200,7 +200,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
     }
 
-    private synchronized Object getValueFromTable(String table, String key) {
+    protected synchronized Object getValueFromTable(String table, String key) {
         Object value = null;
         Cursor cursor = null;
         try {
@@ -236,7 +236,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
-    private synchronized List<JSONObject> getEventsFromTable(
+    protected synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
         List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;

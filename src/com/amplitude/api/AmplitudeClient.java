@@ -129,7 +129,7 @@ public class AmplitudeClient {
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
-    private boolean initialized = false;
+    protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
 
@@ -226,27 +226,37 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 if (!client.initialized) {
-                    AmplitudeClient.upgradePrefs(context);
-                    AmplitudeClient.upgradeSharedPrefsToDB(context);
-                    client.httpClient = new OkHttpClient();
-                    client.initializeDeviceInfo();
+                    try {
+                        AmplitudeClient.upgradePrefs(context);
+                        AmplitudeClient.upgradeSharedPrefsToDB(context);
+                        client.httpClient = new OkHttpClient();
+                        client.initializeDeviceInfo();
 
-                    if (userId != null) {
-                        client.userId = userId;
-                        client.dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
-                    } else {
-                        client.userId = client.dbHelper.getValue(USER_ID_KEY);
+                        if (userId != null) {
+                            client.userId = userId;
+                            client.dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+                        } else {
+                            client.userId = client.dbHelper.getValue(USER_ID_KEY);
+                        }
+                        Long optOut = client.dbHelper.getLongValue(OPT_OUT_KEY);
+                        client.optOut = optOut != null && optOut == 1;
+
+                        // try to restore previous session id
+                        long previousSessionId = client.getPreviousSessionId();
+                        if (previousSessionId >= 0) {
+                            client.sessionId = previousSessionId;
+                        }
+
+                        client.initialized = true;
+                    } catch (RuntimeException e) {
+                        String message = e.getMessage();
+                        // catch CursorWindowAllocationExceptions and treat as uninitialized SDK
+                        if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window")) {
+                            client.apiKey = null;
+                        } else {
+                            throw e;  // if it's some other exception then rethrow
+                        }
                     }
-                    Long optOut = client.dbHelper.getLongValue(OPT_OUT_KEY);
-                    client.optOut = optOut != null && optOut == 1;
-
-                    // try to restore previous session id
-                    long previousSessionId = client.getPreviousSessionId();
-                    if (previousSessionId >= 0) {
-                        client.sessionId = previousSessionId;
-                    }
-
-                    client.initialized = true;
                 }
             }
         });
@@ -275,16 +285,11 @@ public class AmplitudeClient {
         return this;
     }
 
+    // this method should only be called from the background log thread
     private void initializeDeviceInfo() {
         deviceInfo = new DeviceInfo(context);
-        runOnLogThread(new Runnable() {
-
-            @Override
-            public void run() {
-                deviceId = initializeDeviceId();
-                deviceInfo.prefetch();
-            }
-        });
+        deviceId = initializeDeviceId();
+        deviceInfo.prefetch();
     }
 
     /**

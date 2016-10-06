@@ -102,7 +102,6 @@ public class AmplitudeClientTest extends BaseTest {
     public void testSetDeviceId() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        assertNull(amplitude.getDeviceId());
         looper.runToEndOfTasks();
 
         String deviceId = amplitude.getDeviceId(); // Randomly generated device ID
@@ -236,19 +235,20 @@ public class AmplitudeClientTest extends BaseTest {
     public void testReloadDeviceIdFromDatabase() {
         String deviceId = "test_device_id";
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-
-        assertNull(amplitude.getDeviceId());
         DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
                 AmplitudeClient.DEVICE_ID_KEY,
                 deviceId
         );
-        looper.getScheduler().advanceToLastPostedRunnable();
+
+        // force re-initialize to re-load deviceId from DB
+        amplitude.initialized = false;
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
         assertEquals(deviceId, amplitude.getDeviceId());
     }
 
     @Test
     public void testDoesNotUpgradeDeviceIdFromSharedPrefsToDatabase() {
-        assertNull(amplitude.getDeviceId());
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
         // initializeDeviceId no longer fetches from SharedPrefs, will get advertising ID instead
@@ -268,7 +268,6 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testGetDeviceIdWithoutAdvertisingId() {
-        assertNull(amplitude.getDeviceId());
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.getScheduler().advanceToLastPostedRunnable();
         assertNotNull(amplitude.getDeviceId());
@@ -1365,5 +1364,19 @@ public class AmplitudeClientTest extends BaseTest {
 
         assertEquals(events.getJSONObject(1).optString("event_type"), "testEvent2");
         assertEquals(events.getJSONObject(1).optLong("event_id"), 2);
+    }
+
+    @Test
+    public void testCursorWindowAllocationException() {
+        DatabaseHelper.instance = new MockDatabaseHelper(context);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+        looper.runToEndOfTasks();
+
+        // make sure we catch it during initialization and treat as uninitialized
+        amplitude.initialized = false;
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        assertNull(amplitude.apiKey);
     }
 }
