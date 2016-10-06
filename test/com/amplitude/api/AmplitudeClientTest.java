@@ -1368,10 +1368,22 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testCursorWindowAllocationException() {
-        DatabaseHelper.instance = new MockDatabaseHelper(context);
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        // log an event successfully
+        amplitude.logEvent("testEvent1");
         looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+
+        // mock out database helper to force CursorWindowAllocationExceptions
+        DatabaseHelper.instance = new MockDatabaseHelper(context);
+
+        // force an upload and verify no request sent
+        // make sure we catch it during sending of events and defer sending
+        RecordedRequest request = runRequest(amplitude);
+        assertNull(request);
+        assertEquals(getUnsentEventCount(), 1);
 
         // make sure we catch it during initialization and treat as uninitialized
         amplitude.initialized = false;

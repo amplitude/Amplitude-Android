@@ -13,6 +13,7 @@ import com.amplitude.security.MD5;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -248,10 +249,14 @@ public class AmplitudeClient {
                         }
 
                         client.initialized = true;
+
+                    // catch CursorWindowAllocationExceptions and treat as uninitialized SDK
                     } catch (RuntimeException e) {
                         String message = e.getMessage();
-                        // catch CursorWindowAllocationExceptions and treat as uninitialized SDK
                         if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window")) {
+                            logger.e(TAG, String.format(
+                               "Failed to initialize Amplitude SDK due to: %s", message
+                            ));
                             client.apiKey = null;
                         } else {
                             throw e;  // if it's some other exception then rethrow
@@ -1547,6 +1552,19 @@ public class AmplitudeClient {
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
+
+            // handle CursorWindowAllocationException when fetching events, defer upload
+            } catch (RuntimeException e) {
+                String message = e.getMessage();
+                if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window")) {
+                    uploadingCurrently.set(false);
+                    logger.e(TAG, String.format(
+                        "Caught Cursor window exception during event upload, deferring upload: %s",
+                        message
+                    ));
+                } else {
+                    throw e; // only handle CursorWindowAllocationException
+                }
             }
         }
     }
