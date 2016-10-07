@@ -739,7 +739,7 @@ public class AmplitudeClient {
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
-                    eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }

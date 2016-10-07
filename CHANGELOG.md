@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Catch and handle `CursorWindowAllocationException` thrown when the SDK is querying from the Sqlite DB when app memory is low. If the exception is caught during `initialize`, then it is treated as if `initialize` was never called. If the exception is caught during the uploading of unsent events, then the upload is deferred to a later time.
+
 ## 2.9.2 (July 14, 2016)
 
 * Fix bug where `enableLocationListening` and `disableLocationListening` were not being run on background thread. Thanks to @elevenfive for PR.
