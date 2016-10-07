@@ -926,7 +926,6 @@ public class SessionTest extends BaseTest {
         // log an event, should not be uploaded
         amplitude.logEventAsync("testEvent", null, null, null, null, timestamps[0], false);
         looper.runOneTask();
-        looper.runOneTask();
         assertEquals(getUnsentEventCount(), 1);
 
         // force client into background and verify no flushing of events

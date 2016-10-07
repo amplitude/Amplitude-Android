@@ -73,7 +73,8 @@ public class DatabaseHelperTest extends BaseTest {
     @Test
     public void testCreate() {
         dbInstance.onCreate(dbInstance.getWritableDatabase());
-        assertEquals(1, insertOrReplaceKeyValue("test_key", "test_value"));
+        // AmplitudeClient.initialize will deviceId to DB, so there's already 1 entry in str table
+        assertEquals(2, insertOrReplaceKeyValue("test_key", "test_value"));
         // due to upgradeSharedPrefsToDb, there are already 5 entries in long table
         // so this next insertion will be row 6
         assertEquals(6, insertOrReplaceKeyLongValue("test_key", 1L));

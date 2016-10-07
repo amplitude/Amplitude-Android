@@ -13,7 +13,6 @@ import com.amplitude.security.MD5;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -452,6 +451,10 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
                 client.optOut = optOut;
                 dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
             }
@@ -697,8 +700,8 @@ public class AmplitudeClient {
      * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
      *     Setting Groups</a>
      */
-    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject group) {
-        logEventSync(eventType, eventProperties, group, false);
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups) {
+        logEventSync(eventType, eventProperties, groups, false);
     }
 
     /**
@@ -777,9 +780,14 @@ public class AmplitudeClient {
         final JSONObject copyEventProperties = eventProperties;
         final JSONObject copyUserProperties = userProperties;
         final JSONObject copyGroups = groups;
+        final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
                 logEvent(
                     eventType, copyEventProperties, apiProperties,
                     copyUserProperties, copyGroups, timestamp, outOfSession
@@ -1255,9 +1263,15 @@ public class AmplitudeClient {
             return;
         }
 
+        final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
+
                 // Create deep copy to try and prevent ConcurrentModificationException
                 JSONObject copy;
                 try {
@@ -1434,6 +1448,10 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
                 client.userId = userId;
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
             }
@@ -1460,6 +1478,10 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
                 client.deviceId = deviceId;
                 dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
             }
@@ -1475,9 +1497,14 @@ public class AmplitudeClient {
             return;
         }
 
+        final AmplitudeClient client = this;
         logThread.post(new Runnable() {
             @Override
             public void run() {
+                // one more apiKey check, in case initialization failed
+                if (TextUtils.isEmpty(client.apiKey)) {
+                    return;
+                }
                 updateServer();
             }
         });
