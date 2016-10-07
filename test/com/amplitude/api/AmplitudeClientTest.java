@@ -486,9 +486,9 @@ public class AmplitudeClientTest extends BaseTest {
 
         // verify some internal counters
         assertEquals(getUnsentEventCount(), 1);
-        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.lastEventId, 1);
         assertEquals(getUnsentIdentifyCount(), 1);
-        assertEquals(amplitude.getLastIdentifyId(), 1);
+        assertEquals(amplitude.lastIdentifyId, 1);
 
         JSONArray unsentEvents = getUnsentEvents(1);
         assertEquals(unsentEvents.optJSONObject(0).optString("event_type"), "test_event");
@@ -541,9 +541,9 @@ public class AmplitudeClientTest extends BaseTest {
 
         // verify some internal counters
         assertEquals(getUnsentEventCount(), 4);
-        assertEquals(amplitude.getLastEventId(), 4);
+        assertEquals(amplitude.lastEventId, 4);
         assertEquals(getUnsentIdentifyCount(), 3);
-        assertEquals(amplitude.getLastIdentifyId(), 3);
+        assertEquals(amplitude.lastIdentifyId, 3);
 
         RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
@@ -651,9 +651,9 @@ public class AmplitudeClientTest extends BaseTest {
 
         // verify some internal counters
         assertEquals(getUnsentEventCount(), 2);
-        assertEquals(amplitude.getLastEventId(), 3);
+        assertEquals(amplitude.lastEventId, 3);
         assertEquals(getUnsentIdentifyCount(), 2);
-        assertEquals(amplitude.getLastIdentifyId(), 2);
+        assertEquals(amplitude.lastIdentifyId, 2);
 
         JSONObject expectedIdentify1 = new JSONObject();
         expectedIdentify1.put(Constants.AMP_OP_ADD, new JSONObject().put("photo_count", 1));
@@ -882,6 +882,7 @@ public class AmplitudeClientTest extends BaseTest {
     public void testSaveEventLogic() {
         amplitude.trackSessionEvents(true);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
 
@@ -1375,6 +1376,7 @@ public class AmplitudeClientTest extends BaseTest {
         amplitude.logEvent("testEvent1");
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
 
         // mock out database helper to force CursorWindowAllocationExceptions
         DatabaseHelper.instance = new MockDatabaseHelper(context);
@@ -1384,11 +1386,23 @@ public class AmplitudeClientTest extends BaseTest {
         RecordedRequest request = runRequest(amplitude);
         assertNull(request);
         assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
 
         // make sure we catch it during initialization and treat as uninitialized
         amplitude.initialized = false;
         amplitude.initialize(context, apiKey);
         looper.runToEndOfTasks();
         assertNull(amplitude.apiKey);
+
+        // since event meta data is loaded during initialize, in theory we should
+        // be able to log an event even if we can't query from it
+        amplitude.context = context;
+        amplitude.apiKey = apiKey;
+        Identify identify = new Identify().set("car", "blue");
+        amplitude.identify(identify);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 1);
     }
 }
