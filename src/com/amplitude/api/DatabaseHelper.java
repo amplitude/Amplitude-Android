@@ -29,6 +29,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String EVENT_TABLE_NAME = "events";
     protected static final String IDENTIFY_TABLE_NAME = "identifys";
+    protected static final String DIAGNOSTIC_TABLE_NAME = "diagnostic_events";
     private static final String ID_FIELD = "id";
     private static final String EVENT_FIELD = "event";
 
@@ -43,6 +44,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + EVENT_FIELD + " TEXT);";
     private static final String CREATE_IDENTIFYS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + IDENTIFY_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + EVENT_FIELD + " TEXT);";
+    private static final String CREATE_DIAGNOSTIC_EVENT_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + DIAGNOSTIC_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
     private File file;
@@ -70,6 +74,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         // lifetime of the table, even if rows get removed
         db.execSQL(CREATE_EVENTS_TABLE);
         db.execSQL(CREATE_IDENTIFYS_TABLE);
+        db.execSQL(CREATE_DIAGNOSTIC_EVENT_TABLE);
     }
 
     @Override
@@ -95,6 +100,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 if (newVersion <= 3) break;
 
             case 3:
+                db.execSQL(CREATE_DIAGNOSTIC_EVENT_TABLE);
+                if (newVersion <= 4) break;
+
+            case 4:
                 break;
 
             default:
@@ -108,6 +117,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + LONG_STORE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + IDENTIFY_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DIAGNOSTIC_TABLE_NAME);
         onCreate(db);
     }
 
@@ -172,6 +182,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return addEventToTable(IDENTIFY_TABLE_NAME, identifyEvent);
     }
 
+    synchronized long addDiagnosticEvent(String event) {
+        return addEventToTable(DIAGNOSTIC_TABLE_NAME, event);
+    }
+
     private synchronized long addEventToTable(String table, String event) {
         long result = -1;
         try {
@@ -198,6 +212,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized Long getLongValue(String key) {
         return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
+    }
+
+    // safe get, catches exceptions and handles missing key
+    synchronized long getLongValueSafe(String key, long defaultValue) {
+        try {
+            Long value = getLongValue(key);
+            if (value != null) {
+                return value;
+            }
+        } catch (Exception e) {}
+        return defaultValue;
     }
 
     private synchronized Object getValueFromTable(String table, String key) {
@@ -234,6 +259,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
     synchronized List<JSONObject> getIdentifys(
                                         long upToId, long limit) throws JSONException {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
+    }
+
+    synchronized List<JSONObject> getDiagnosticEvents(
+                                        long upToId, long limit) throws JSONException {
+        return getEventsFromTable(DIAGNOSTIC_TABLE_NAME, upToId, limit);
     }
 
     private synchronized List<JSONObject> getEventsFromTable(
@@ -273,6 +303,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventCountFromTable(IDENTIFY_TABLE_NAME);
     }
 
+    synchronized long getDiagnosticEventCount() {
+        return getEventCountFromTable(DIAGNOSTIC_TABLE_NAME);
+    }
+
+    // does not include diagnostic events in count
     synchronized long getTotalEventCount() {
         return getEventCount() + getIdentifyCount();
     }
@@ -302,6 +337,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long getNthIdentifyId(long n) {
         return getNthEventIdFromTable(IDENTIFY_TABLE_NAME, n);
+    }
+
+    synchronized long getNthDiagnosticEventId(long n) {
+        return getNthEventIdFromTable(DIAGNOSTIC_TABLE_NAME, n);
     }
 
     private synchronized long getNthEventIdFromTable(String table, long n) {
@@ -337,6 +376,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
         removeEventsFromTable(IDENTIFY_TABLE_NAME, maxId);
     }
 
+    synchronized void removeDiagnosticEvents(long maxId) {
+        removeEventsFromTable(DIAGNOSTIC_TABLE_NAME, maxId);
+    }
+
     private synchronized void removeEventsFromTable(String table, long maxId) {
         try {
             SQLiteDatabase db = getWritableDatabase();
@@ -355,6 +398,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
     synchronized void removeIdentify(long id) {
         removeEventFromTable(IDENTIFY_TABLE_NAME, id);
     }
+
+    synchronized void removeDiagnosticEvent(long id) {
+        removeEventsFromTable(DIAGNOSTIC_TABLE_NAME, id);}
 
     private synchronized void removeEventFromTable(String table, long id) {
         try {

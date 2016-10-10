@@ -56,6 +56,11 @@ public class DatabaseHelperTest extends BaseTest {
         return addEventToTable(DatabaseHelper.IDENTIFY_TABLE_NAME, identifyEvent, new JSONObject());
     }
 
+    protected long addDiagnosticEvent(String error) throws JSONException {
+        JSONObject event = new JSONObject().put("error", error);
+        return dbInstance.addDiagnosticEvent(event.toString());
+    }
+
     protected long insertOrReplaceKeyValue(String key, String value) {
         return dbInstance.insertOrReplaceKeyValue(key, value);
     }
@@ -479,6 +484,25 @@ public class DatabaseHelperTest extends BaseTest {
         dbInstance.removeEvents(4);
         assertEquals(0, dbInstance.getEventCount());
         assertEquals(1, dbInstance.getIdentifyCount());
+    }
+
+    @Test
+    public void testAddDiagnosticEvents() throws JSONException {
+        assertEquals(1, addDiagnosticEvent("test_error"));
+        List<JSONObject> unsentEvents = dbInstance.getDiagnosticEvents(-1, -1);
+        assertEquals(1, unsentEvents.get(0).optLong("event_id"));
+        assertEquals(unsentEvents.get(0).optString("error"), "test_error");
+
+        assertEquals(2, addDiagnosticEvent("test_error2"));
+        assertEquals(2, dbInstance.getNthDiagnosticEventId(2));
+        dbInstance.removeDiagnosticEvent(1);
+        assertEquals(2, dbInstance.getNthDiagnosticEventId(1));
+        dbInstance.removeDiagnosticEvents(1);
+        assertEquals(2, dbInstance.getNthDiagnosticEventId(1));
+
+        assertEquals(3, addDiagnosticEvent("test_error3"));
+        dbInstance.removeDiagnosticEvents(3);
+        assertEquals(0, dbInstance.getDiagnosticEventCount());
     }
 }
 
