@@ -672,7 +672,7 @@ public class AmplitudeClient {
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
-                    eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -758,7 +758,7 @@ public class AmplitudeClient {
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
-                    eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -1243,7 +1243,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-                Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
         );
     }
 
