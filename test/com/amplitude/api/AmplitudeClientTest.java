@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -1365,5 +1366,53 @@ public class AmplitudeClientTest extends BaseTest {
 
         assertEquals(events.getJSONObject(1).optString("event_type"), "testEvent2");
         assertEquals(events.getJSONObject(1).optLong("event_id"), 2);
+    }
+
+    @Test
+    public void testLogDiagnosticEventsOnUploadFail() throws JSONException {
+        long timestamp = System.currentTimeMillis();
+        Diagnostics logger = Diagnostics.getLogger(context);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        ShadowLooper diagLooper = Shadows.shadowOf(logger.diagnosticThread.getLooper());
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+
+        // separate mock server for diagnostic endpoint
+        MockWebServer diagnosticServer = new MockWebServer();
+        Diagnostics.getLogger(context).url = diagnosticServer.url("/").toString();
+        diagLooper.runToEndOfTasks();
+        amplitude.enableDiagnosticLogging(true);
+        assertEquals(dbHelper.getDiagnosticEventCount(), 0);
+        assertEquals(dbHelper.getEventCount(), 0);
+
+        // log an event - force 413 server response
+        amplitude.logEvent(AmplitudeClient.START_SESSION_EVENT);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(dbHelper.getEventCount(), 1);
+        server.enqueue(new MockResponse().setResponseCode(413));
+        httpLooper.runToEndOfTasks();
+
+        // verify that a diagnostic event was logged
+        diagLooper.runToEndOfTasks();
+        assertEquals(dbHelper.getDiagnosticEventCount(), 1);
+
+        // verify that the diagnostic events are flushed with next event upload
+        amplitude.logEvent("test_event");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        runRequest(amplitude);
+
+        diagnosticServer.enqueue(new MockResponse().setResponseCode(200));
+        diagLooper.runToEndOfTasks();
+        try {
+            RecordedRequest request = diagnosticServer.takeRequest(1, SECONDS);
+            JSONArray events = getEventsFromRequest(request);
+            assertEquals(events.length(), 1);
+            assertEquals(events.optJSONObject(0).optString("error"), "upload_failed:413");
+            assertTrue(events.optJSONObject(0).optLong("timestamp") >= timestamp);
+        } catch (Exception e) {}
+
+
     }
 }

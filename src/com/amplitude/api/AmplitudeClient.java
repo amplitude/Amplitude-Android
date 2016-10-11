@@ -132,6 +132,7 @@ public class AmplitudeClient {
     private boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
+    private boolean logDiagnosticEvents = false;
 
     private DeviceInfo deviceInfo;
 
@@ -297,6 +298,36 @@ public class AmplitudeClient {
      */
     public AmplitudeClient enableNewDeviceIdPerInstall(boolean newDeviceIdPerInstall) {
         this.newDeviceIdPerInstall = newDeviceIdPerInstall;
+        return this;
+    }
+
+    /**
+     * Whether to enable diagnostic logging. If true, then the SDK will log diagnostic events
+     * for upload failures to a separate Diagnostic Event endpoint.
+     * @param enableDiagnosticLogging whether to enable diagnostic logging. If false then disable.
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient enableDiagnosticLogging(boolean enableDiagnosticLogging) {
+        this.logDiagnosticEvents = enableDiagnosticLogging;
+        if (enableDiagnosticLogging) {
+            Diagnostics.getLogger(context).enableLogging(httpClient, apiKey);
+        } else {
+            Diagnostics.getLogger(context).disableLogging();
+        }
+        return this;
+    }
+
+    /**
+     * Sets diagnostic event max count. This is the maximum number of unsent diagnostic
+     * events to keep on the device. If the number of unsent diagnostic events exceeds the
+     * max count, then the SDK begins dropping events, starting from the earliest logged.
+     * Default value is 50.
+     *
+     * @param eventMaxCount the event max count
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setDiagnosticEventMaxCount(int eventMaxCount) {
+        Diagnostics.getLogger(context).setDiagnosticEventMaxCount(eventMaxCount);
         return this;
     }
 
@@ -626,7 +657,7 @@ public class AmplitudeClient {
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
-                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                    eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -687,8 +718,8 @@ public class AmplitudeClient {
      * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
      *     Setting Groups</a>
      */
-    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject group) {
-        logEventSync(eventType, eventProperties, group, false);
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups) {
+        logEventSync(eventType, eventProperties, groups, false);
     }
 
     /**
@@ -712,7 +743,7 @@ public class AmplitudeClient {
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEvent(
-                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                    eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
             );
         }
     }
@@ -1194,7 +1225,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
+                Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
         );
     }
 
@@ -1492,6 +1523,9 @@ public class AmplitudeClient {
      */
     protected void updateServer() {
         updateServer(false);
+        if (logDiagnosticEvents) {
+            Diagnostics.getLogger(context).flushEvents();
+        }
     }
 
     /**
@@ -1650,6 +1684,7 @@ public class AmplitudeClient {
             .build();
 
         boolean uploadSuccess = false;
+        String diagnosticError = null;
 
         try {
             Response response = client.newCall(request).execute();
@@ -1678,14 +1713,17 @@ public class AmplitudeClient {
                 });
             } else if (stringResponse.equals("invalid_api_key")) {
                 logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+                diagnosticError = "invalid_api_key";
             } else if (stringResponse.equals("bad_checksum")) {
                 logger.w(TAG,
                         "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+                diagnosticError = "bad_checksum";
             } else if (stringResponse.equals("request_db_write_failed")) {
                 logger.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
+                diagnosticError = "request_db_write_failed";
             } else if (response.code() == 413) {
-
+                diagnosticError = "413";
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
@@ -1708,26 +1746,39 @@ public class AmplitudeClient {
             } else {
                 logger.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
+                diagnosticError = "unknown";
             }
         } catch (java.net.ConnectException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            diagnosticError = "no_connection";
         } catch (java.net.UnknownHostException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            diagnosticError = "no_connection";
         } catch (IOException e) {
             logger.e(TAG, e.toString());
             lastError = e;
+            diagnosticError = "io_exception";
         } catch (AssertionError e) {
             // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            diagnosticError = "assertion_error";
         } catch (Exception e) {
             // Just log any other exception so things don't crash on upload
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            diagnosticError = "exception";
+        }
+
+        if (logDiagnosticEvents && !TextUtils.isEmpty(diagnosticError)
+                && events.contains(AmplitudeClient.START_SESSION_EVENT)) {
+            Diagnostics.getLogger(context).logError(
+                String.format("upload_failed:%s", diagnosticError)
+            );
         }
 
         if (!uploadSuccess) {
