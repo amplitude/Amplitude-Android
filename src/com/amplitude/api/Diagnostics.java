@@ -69,7 +69,10 @@ public class Diagnostics {
                 try {
                     event.put("error", error);
                     event.put("timestamp", System.currentTimeMillis());
-                    dbHelper.addDiagnosticEvent(event.toString());
+                    lastDiagnosticEventId = dbHelper.addDiagnosticEvent(event.toString());
+                    dbHelper.insertOrReplaceKeyLongValue(
+                        LAST_DIAGNOSTIC_EVENT_ID, lastDiagnosticEventId
+                    );
                     if (dbHelper.getDiagnosticEventCount() > diagnosticEventMaxCount) {
                         dbHelper.removeDiagnosticEvents(dbHelper.getNthDiagnosticEventId(5));
                     }
