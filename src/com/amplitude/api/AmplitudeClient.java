@@ -133,6 +133,7 @@ public class AmplitudeClient {
     private boolean optOut = false;
     private boolean offline = false;
     private boolean logDiagnosticEvents = false;
+    private boolean flushSessionEventsOnLog = false;
 
     private DeviceInfo deviceInfo;
 
@@ -308,6 +309,10 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient enableDiagnosticLogging(boolean enableDiagnosticLogging) {
+        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
+            return this;
+        }
+
         this.logDiagnosticEvents = enableDiagnosticLogging;
         if (enableDiagnosticLogging) {
             Diagnostics.getLogger(context).enableLogging(httpClient, apiKey);
@@ -328,6 +333,16 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setDiagnosticEventMaxCount(int eventMaxCount) {
         Diagnostics.getLogger(context).setDiagnosticEventMaxCount(eventMaxCount);
+        return this;
+    }
+
+    /**
+     * Whether to immediately flush session events when they are logged.
+     * @param enable whether to immediately flush session events when they are logged.
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient enableFlushSessionEventsOnLog(boolean enable) {
+        this.flushSessionEventsOnLog = enable;
         return this;
     }
 
@@ -1081,6 +1096,9 @@ public class AmplitudeClient {
         refreshSessionTime(timestamp);
         if (trackingSessionEvents) {
             sendSessionEvent(START_SESSION_EVENT);
+            if (flushSessionEventsOnLog) {
+                updateServer();
+            }
         }
     }
 

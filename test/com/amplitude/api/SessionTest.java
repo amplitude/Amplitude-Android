@@ -938,4 +938,39 @@ public class SessionTest extends BaseTest {
         assertNull(request);
         assertEquals(getUnsentEventCount(), 1);
     }
+
+    @Test
+    public void testAccurateOnResumeStartSessionWithTrackingAndImmediateFlushing() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.trackSessionEvents(true).enableFlushSessionEventsOnLog(true);
+        long timestamp = System.currentTimeMillis();
+        long [] timestamps = {timestamp};
+        AmplitudeCallbacks callBacks = new AmplitudeCallbacksWithTime(amplitude, timestamps);
+        looper.runToEndOfTasks();
+
+        assertEquals(amplitude.getPreviousSessionId(), -1);
+        assertEquals(amplitude.getLastEventId(), -1);
+        assertEquals(amplitude.getLastEventTime(), -1);
+        assertFalse(amplitude.isInForeground());
+        assertEquals(getUnsentEventCount(), 0);
+
+        callBacks.onActivityResumed(null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertTrue(amplitude.isInForeground());
+        assertEquals(amplitude.getPreviousSessionId(), timestamp);
+        assertEquals(amplitude.getLastEventId(), 1);
+        assertEquals(amplitude.getLastEventTime(), timestamp);
+
+        // verify that start session event sent
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 1);
+        assertEquals(
+            events.getJSONObject(0).optString("event_type"), AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(events.getJSONObject(0).optLong("timestamp"), timestamp);
+
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);
+    }
 }

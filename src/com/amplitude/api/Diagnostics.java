@@ -20,7 +20,7 @@ import okhttp3.Response;
  */
 public class Diagnostics {
 
-    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://diagnostics.amplitude.com";
+    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://api.amplitude.com/diagnostic";
 
     public static final int DIAGNOSTIC_EVENT_API_VERSION = 1;
 
@@ -126,7 +126,10 @@ public class Diagnostics {
                         return;
                     }
                     eventJson = new JSONArray(events).toString();
-                } catch (JSONException e) {}
+                } catch (JSONException e) {
+                } catch (RuntimeException e) {  // cursorWindowAllocationException
+                } catch (Exception e) {}
+
                 if (!TextUtils.isEmpty(eventJson)) {
                     makeEventUploadPostRequest(eventJson);
                 }
