@@ -235,6 +235,7 @@ public class AmplitudeClient {
             @Override
             public void run() {
                 if (!initialized) {
+                    // this try block is idempotent, so it's safe to retry initialize if failed
                     try {
                         AmplitudeClient.upgradePrefs(context);
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
@@ -264,17 +265,11 @@ public class AmplitudeClient {
 
                         initialized = true;
 
-                    // catch CursorWindowAllocationExceptions and treat as uninitialized SDK
-                    } catch (RuntimeException e) {
-                        String message = e.getMessage();
-                        if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window")) {
-                            logger.e(TAG, String.format(
-                               "Failed to initialize Amplitude SDK due to: %s", message
-                            ));
-                            client.apiKey = null;
-                        } else {
-                            throw e;  // if it's some other exception then rethrow
-                        }
+                    } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
+                        logger.e(TAG, String.format(
+                           "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
+                        ));
+                        client.apiKey = null;
                     }
                 }
             }
@@ -1556,17 +1551,12 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
 
             // handle CursorWindowAllocationException when fetching events, defer upload
-            } catch (RuntimeException e) {
-                String message = e.getMessage();
-                if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window")) {
-                    uploadingCurrently.set(false);
-                    logger.e(TAG, String.format(
-                        "Caught Cursor window exception during event upload, deferring upload: %s",
-                        message
-                    ));
-                } else {
-                    throw e; // only handle CursorWindowAllocationException
-                }
+            } catch (CursorWindowAllocationException e) {
+                uploadingCurrently.set(false);
+                logger.e(TAG, String.format(
+                    "Caught Cursor window exception during event upload, deferring upload: %s",
+                    e.getMessage()
+                ));
             }
         }
     }
