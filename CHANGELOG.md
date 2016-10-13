@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Handle IllegalArgumentException thrown by Android Geocoder for bad lat / lon values.
+
 ## 2.9.2 (July 14, 2016)
 
 * Fix bug where `enableLocationListening` and `disableLocationListening` were not being run on background thread. Thanks to @elevenfive for PR.
