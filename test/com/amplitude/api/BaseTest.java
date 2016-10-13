@@ -1,6 +1,8 @@
 package com.amplitude.api;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,6 +50,23 @@ public class BaseTest {
 
         @Override
         protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
+    }
+
+    // override AmplitudeDatabaseHelper to throw Cursor Allocation Exception
+    protected class MockDatabaseHelper extends DatabaseHelper {
+
+        protected MockDatabaseHelper(Context context) {
+            super(context);
+        }
+
+        @Override
+        Cursor queryDb(
+            SQLiteDatabase db, String table, String[] columns, String selection,
+            String[] selectionArgs, String groupBy, String having, String orderBy, String limit
+        ) {
+            // cannot import CursorWindowAllocationException, so we throw the base class instead
+            throw new RuntimeException("Cursor window allocation of 2048 kb failed.");
+        }
     }
 
     protected AmplitudeClient amplitude;

@@ -4,7 +4,7 @@ public class Constants {
 
     public static final String LIBRARY = "amplitude-android";
     public static final String PLATFORM = "Android";
-    public static final String VERSION = "2.9.2";
+    public static final String VERSION = "2.10.0";
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
 
@@ -23,6 +23,7 @@ public class Constants {
     public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 5 * 60 * 1000; // 5m
     public static final long SESSION_TIMEOUT_MILLIS = 30 * 60 * 1000; // 30m
     public static final int MAX_STRING_LENGTH = 1024;
+    public static final int MAX_PROPERTY_KEYS = 1000;
 
     public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
     public static final String PREFKEY_LAST_EVENT_ID = PACKAGE_NAME + ".lastEventId";

@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 2.10.0 (October 12, 2016)
+
+* Catch and handle `CursorWindowAllocationException` thrown when the SDK is querying from the SQLite DB when app memory is low. If the exception is caught during `initialize`, then it is treated as if `initialize` was never called. If the exception is caught during the uploading of unsent events, then the upload is deferred to a later time.
+* Block event property and user property dictionaries that have more than 1000 items. This is to block properties that are set unintentionally (for example in a loop). A single call to `logEvent` should not have more than 1000 event properties. Similarly a single call to `setUserProperties` should not have more than 1000 user properties.
+* Handle IllegalArgumentException thrown by Android Geocoder for bad lat / lon values.
+
 ## 2.9.2 (July 14, 2016)
 
 * Fix bug where `enableLocationListening` and `disableLocationListening` were not being run on background thread. Thanks to @elevenfive for PR.

@@ -150,6 +150,8 @@ public class DeviceInfo {
                     // Failed to reverse geocode location
                 } catch (NoSuchMethodError e) {
                     // failed to fetch geocoder
+                } catch (IllegalArgumentException e) {
+                    // Bad lat / lon values can cause Geocoder to throw IllegalArgumentExceptions
                 }
             }
             return null;
