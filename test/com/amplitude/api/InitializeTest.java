@@ -166,7 +166,7 @@ public class InitializeTest extends BaseTest {
         amplitude.initialize(context, apiKey);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
-        assertEquals(amplitude.getLastEventId(), 3L);
+        assertEquals(amplitude.lastEventId, 3L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 3L);
 
         amplitude.logEvent("testEvent");
@@ -178,7 +178,7 @@ public class InitializeTest extends BaseTest {
 
         assertEquals(events.getJSONObject(0).getLong("event_id"), 1L);
 
-        assertEquals(amplitude.getLastEventId(), 1L);
+        assertEquals(amplitude.lastEventId, 1L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 1L);
 
         // verify shared prefs deleted
@@ -215,7 +215,7 @@ public class InitializeTest extends BaseTest {
         amplitude.initialize(context, apiKey);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
-        assertEquals(amplitude.getLastEventTime(), 5000L);
+        assertEquals(amplitude.lastEventTime, 5000L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), 5000L);
 
         // verify shared prefs deleted
@@ -261,8 +261,8 @@ public class InitializeTest extends BaseTest {
 
         // after upgrade, pref values still there since they weren't deleted
         assertEquals(amplitude.deviceId, "testDeviceId");
-        assertEquals(amplitude.getPreviousSessionId(), 1000L);
-        assertEquals(amplitude.getLastEventTime(), 2000L);
+        assertEquals(amplitude.previousSessionId, 1000L);
+        assertEquals(amplitude.lastEventTime, 2000L);
         assertNull(amplitude.userId);
     }
 
@@ -292,20 +292,20 @@ public class InitializeTest extends BaseTest {
         looper.runToEndOfTasks();
 
         assertEquals(amplitude.deviceId, "testDeviceId");
-        assertEquals(amplitude.getPreviousSessionId(), 6000L);
-        assertEquals(amplitude.getLastEventTime(), 7000L);
+        assertEquals(amplitude.previousSessionId, 6000L);
+        assertEquals(amplitude.lastEventTime, 7000L);
         assertNull(amplitude.userId);
 
         // log first event
         amplitude.logEvent("testEvent1");
         looper.runToEndOfTasks();
-        assertEquals(amplitude.getPreviousSessionId(), 6000L);
-        assertEquals(amplitude.getLastEventTime(), 8000L);
+        assertEquals(amplitude.previousSessionId, 6000L);
+        assertEquals(amplitude.lastEventTime, 8000L);
 
         // log second event
         amplitude.logEvent("testEvent2");
         looper.runToEndOfTasks();
-        assertEquals(amplitude.getPreviousSessionId(), 14000L);
-        assertEquals(amplitude.getLastEventTime(), 14000L);
+        assertEquals(amplitude.previousSessionId, 14000L);
+        assertEquals(amplitude.lastEventTime, 14000L);
     }
 }

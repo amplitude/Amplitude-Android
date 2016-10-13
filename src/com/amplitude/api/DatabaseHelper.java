@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
+import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -56,7 +57,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return instance;
     }
 
-    private DatabaseHelper(Context context) {
+    protected DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
     }
@@ -200,23 +201,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
     }
 
-    private synchronized Object getValueFromTable(String table, String key) {
+    protected synchronized Object getValueFromTable(String table, String key) {
         Object value = null;
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            cursor = db.query(
-                    table,
-                    new String[]{KEY_FIELD, VALUE_FIELD},
-                    KEY_FIELD + " = ?",
-                    new String[]{key},
-                    null, null, null, null
+            cursor = queryDb(
+                db, table, new String[]{KEY_FIELD, VALUE_FIELD}, KEY_FIELD + " = ?",
+                new String[]{key}, null, null, null, null
             );
             if (cursor.moveToFirst()) {
                 value = table.equals(STORE_TABLE_NAME) ? cursor.getString(1) : cursor.getLong(1);
             }
         } catch (SQLiteException e) {
             logger.e(TAG, "getValue failed", e);
+        } catch (RuntimeException e) {
+            convertIfCursorWindowException(e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -236,15 +236,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
-    private synchronized List<JSONObject> getEventsFromTable(
+    protected synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
         List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            cursor = db.query(table, new String[] { ID_FIELD, EVENT_FIELD },
-                    upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
-                    ID_FIELD + " ASC", limit >= 0 ? "" + limit : null);
+            cursor = queryDb(
+                db, table, new String[] { ID_FIELD, EVENT_FIELD },
+                upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
+                ID_FIELD + " ASC", limit >= 0 ? "" + limit : null
+            );
 
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
@@ -256,6 +258,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("getEvents from %s failed", table), e);
+        } catch (RuntimeException e) {
+            convertIfCursorWindowException(e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -378,5 +382,27 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     boolean dbFileExists() {
         return file.exists();
+    }
+
+    // add level of indirection to facilitate mocking during unit tests
+    Cursor queryDb(
+        SQLiteDatabase db, String table, String[] columns, String selection,
+        String[] selectionArgs, String groupBy, String having, String orderBy, String limit
+    ) {
+        return db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+    }
+
+    /*
+        Checks if the RuntimeException is an android.database.CursorWindowAllocationException.
+        If it is, then wrap the message in Amplitude's CursorWindowAllocationException so the
+        AmplitudeClient can handle it. If not then rethrow.
+     */
+    private static void convertIfCursorWindowException(RuntimeException e) {
+        String message = e.getMessage();
+        if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window allocation of")) {
+            throw new CursorWindowAllocationException(message);
+        } else {
+            throw e;
+        }
     }
 }
