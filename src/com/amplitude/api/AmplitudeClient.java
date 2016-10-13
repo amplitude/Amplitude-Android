@@ -878,9 +878,9 @@ public class AmplitudeClient {
 
             event.put("api_properties", apiProperties);
             event.put("event_properties", (eventProperties == null) ? new JSONObject()
-                    : truncate(eventProperties));
+                : truncate(eventProperties));
             event.put("user_properties", (userProperties == null) ? new JSONObject()
-                    : truncate(userProperties));
+                : truncate(userProperties));
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
         } catch (JSONException e) {
             logger.e(TAG, e.toString());
@@ -1255,12 +1255,18 @@ public class AmplitudeClient {
                     return; // could not create copy
                 }
 
+                // sanitize and truncate properties before trying to convert to identify
+                JSONObject sanitized = truncate(copy);
+                if (sanitized.length() == 0) {
+                    return;
+                }
+
                 Identify identify = new Identify();
-                Iterator<?> keys = copy.keys();
+                Iterator<?> keys = sanitized.keys();
                 while (keys.hasNext()) {
                     String key = (String) keys.next();
                     try {
-                        identify.setUserProperty(key, copy.get(key));
+                        identify.setUserProperty(key, sanitized.get(key));
                     } catch (JSONException e) {
                         logger.e(TAG, e.toString());
                     }
@@ -1326,13 +1332,19 @@ public class AmplitudeClient {
     /**
      * Truncate values in a JSON object. Any string values longer than 1024 characters will be
      * truncated to 1024 characters.
+     * Any dictionary with more than 1000 items will be ignored.
      *
      * @param object the object
      * @return the truncated JSON object
      */
     public JSONObject truncate(JSONObject object) {
         if (object == null) {
-            return null;
+            return new JSONObject();
+        }
+
+        if (object.length() > Constants.MAX_PROPERTY_KEYS) {
+            logger.w(TAG, "Warning: too many properties (more than 1000), ignoring");
+            return new JSONObject();
         }
 
         Iterator<?> keys = object.keys();
@@ -1370,7 +1382,7 @@ public class AmplitudeClient {
      */
     public JSONArray truncate(JSONArray array) throws JSONException {
         if (array == null) {
-            return null;
+            return new JSONArray();
         }
 
         for (int i = 0; i < array.length(); i++) {
