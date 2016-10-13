@@ -327,17 +327,25 @@ public class AmplitudeClient {
      * @param enableDiagnosticLogging whether to enable diagnostic logging. If false then disable.
      * @return the AmplitudeClient
      */
-    public AmplitudeClient enableDiagnosticLogging(boolean enableDiagnosticLogging) {
+    public AmplitudeClient enableDiagnosticLogging(final boolean enableDiagnosticLogging) {
         if (!contextAndApiKeySet("enableDiagnosticLogging")) {
             return this;
         }
 
-        this.logDiagnosticEvents = enableDiagnosticLogging;
-        if (enableDiagnosticLogging) {
-            Diagnostics.getLogger(context).enableLogging(httpClient, apiKey);
-        } else {
-            Diagnostics.getLogger(context).disableLogging();
-        }
+        final AmplitudeClient client = this;
+        runOnLogThread(new Runnable() {
+            public void run() {
+                if (TextUtils.isEmpty(apiKey)) {  // in case initialization failed
+                    return;
+                }
+                client.logDiagnosticEvents = enableDiagnosticLogging;
+                if (enableDiagnosticLogging) {
+                    Diagnostics.getLogger(context).enableLogging(httpClient, apiKey);
+                } else {
+                    Diagnostics.getLogger(context).disableLogging();
+                }
+            }
+        });
         return this;
     }
 
@@ -1816,7 +1824,10 @@ public class AmplitudeClient {
             // Just log any other exception so things don't crash on upload
             logger.e(TAG, "Exception:", e);
             lastError = e;
-            diagnosticError = "exception";
+            String msg = e.getMessage();
+            diagnosticError = TextUtils.isEmpty(msg) ? "exception" : msg.substring(
+                0, Math.min(msg.length(), 20)
+            );
         }
 
         if (logDiagnosticEvents && !TextUtils.isEmpty(diagnosticError)

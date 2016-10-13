@@ -1394,6 +1394,7 @@ public class AmplitudeClientTest extends BaseTest {
         Diagnostics.getLogger(context).url = diagnosticServer.url("/").toString();
         diagLooper.runToEndOfTasks();
         amplitude.enableDiagnosticLogging(true);
+        looper.runToEndOfTasks();
         assertEquals(dbHelper.getDiagnosticEventCount(), 0);
         assertEquals(dbHelper.getEventCount(), 0);
 
