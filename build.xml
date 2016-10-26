@@ -94,6 +94,7 @@
                 <exclude name="**SSLContextBuilder**"/>
                 <exclude name="com/amplitude/api/Utils.java"/>
                 <exclude name="com/amplitude/api/WorkerThread.java"/>
+                <exclude name="com/amplitude/api/CursorWindowAllocationException.java"/>
             </fileset>
         </javadoc>
     </target>
