@@ -937,4 +937,59 @@ public class SessionTest extends BaseTest {
         assertNull(request);
         assertEquals(getUnsentEventCount(), 1);
     }
+
+    @Test
+    public void testIdentifyTriggerNewSession() throws JSONException {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        // log 1st identify, initialize first session
+        Identify identify = new Identify().set("key", "value");
+        amplitude.identify(identify);
+        looper.runToEndOfTasks();
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 1);
+
+        JSONArray events = getUnsentEvents(1);
+        assertEquals(
+            events.getJSONObject(0).optString("event_type"), AmplitudeClient.START_SESSION_EVENT
+        );
+        JSONArray identifies = getUnsentIdentifys(1);
+        JSONObject expected = new JSONObject().put("$set", new JSONObject().put("key", "value"));
+        assertTrue(Utils.compareJSONObjects(
+            identifies.getJSONObject(0).getJSONObject("user_properties"), expected
+        ));
+    }
+
+    @Test
+    public void testOutOfSessionIdentifyDoesNotTriggerNewSession() throws JSONException {
+        amplitude.trackSessionEvents(true);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        long sessionTimeoutMillis = 5 * 1000; //5s
+        amplitude.setSessionTimeoutMillis(sessionTimeoutMillis);
+
+        assertEquals(getUnsentEventCount(), 0);
+        assertEquals(getUnsentIdentifyCount(), 0);
+
+        // log 1st identify, initialize first session
+        Identify identify = new Identify().set("key", "value");
+        amplitude.identify(identify, true);
+        looper.runToEndOfTasks();
+        assertEquals(getUnsentEventCount(), 0);  // out of session, start session is not added
+        assertEquals(getUnsentIdentifyCount(), 1);
+
+        JSONArray identifies = getUnsentIdentifys(1);
+        JSONObject expected = new JSONObject().put("$set", new JSONObject().put("key", "value"));
+        assertTrue(Utils.compareJSONObjects(
+            identifies.getJSONObject(0).getJSONObject("user_properties"), expected
+        ));
+    }
 }

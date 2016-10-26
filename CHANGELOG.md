@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add ability to log identify events outOfSession, this is useful for updating user properties without triggering session-handling logic.
+
 ## 2.10.0 (October 12, 2016)
 
 * Catch and handle `CursorWindowAllocationException` thrown when the SDK is querying from the SQLite DB when app memory is low. If the exception is caught during `initialize`, then it is treated as if `initialize` was never called. If the exception is caught during the uploading of unsent events, then the upload is deferred to a later time.

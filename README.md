@@ -106,6 +106,13 @@ Other Session Options:
     Amplitude.getInstance().logEvent("EVENT", null, true);
     ```
 
+3. You can also log Identify events as out of session by setting input parameter `outOfSession` to `true` when calling `identify()`:
+
+    ```java
+    Identify identify = new Identify().set("key", "value);
+    Amplitude.getInstance().identify(identify, true);
+    ```
+
 ### Getting the Session Id ###
 
 You can use the helper method `getSessionId` to get the value of the current sessionId:
