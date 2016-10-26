@@ -1312,12 +1312,14 @@ public class AmplitudeClient {
      *     User Properties</a>
      */
     public void identify(Identify identify, boolean outOfSession) {
-        if (identify == null || identify.userPropertiesOperations.length() == 0
-            || !contextAndApiKeySet("identify()")) {
-            return;
-        }
-        logEventAsync(Constants.IDENTIFY_EVENT, null, null,
-            identify.userPropertiesOperations, null, getCurrentTimeMillis(), outOfSession);
+        if (
+            identify == null || identify.userPropertiesOperations.length() == 0 ||
+            !contextAndApiKeySet("identify()")
+        ) return;
+        logEventAsync(
+            Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
+            null, getCurrentTimeMillis(), outOfSession
+        );
     }
 
     /**
