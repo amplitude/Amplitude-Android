@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.11.0 (October 26, 2016)
+
 * Add ability to log identify events outOfSession, this is useful for updating user properties without triggering session-handling logic.
 
 ## 2.10.0 (October 12, 2016)
