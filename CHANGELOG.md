@@ -2,7 +2,7 @@
 
 ## 2.11.0 (October 26, 2016)
 
-* Add ability to log identify events outOfSession, this is useful for updating user properties without triggering session-handling logic.
+* Add ability to log identify events outOfSession, this is useful for updating user properties without triggering session-handling logic. See [Readme](https://github.com/amplitude/Amplitude-Android#tracking-sessions) for more information.
 
 ## 2.10.0 (October 12, 2016)
 
