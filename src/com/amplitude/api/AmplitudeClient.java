@@ -1297,12 +1297,27 @@ public class AmplitudeClient {
      *     User Properties</a>
      */
     public void identify(Identify identify) {
+        identify(identify, false);
+    }
+
+    /**
+     * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
+     * user property operations to Amplitude server. If outOfSession is true, then the identify
+     * event is sent with a session id of -1, and does not trigger any session-handling logic.
+     *
+     * @param identify an {@link com.amplitude.api.Identify} object
+     * @param outOfSession whther to log the identify event out of session
+     * @see com.amplitude.api.Identify
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
+     *     User Properties</a>
+     */
+    public void identify(Identify identify, boolean outOfSession) {
         if (identify == null || identify.userPropertiesOperations.length() == 0
-                || !contextAndApiKeySet("identify()")) {
+            || !contextAndApiKeySet("identify()")) {
             return;
         }
         logEventAsync(Constants.IDENTIFY_EVENT, null, null,
-                identify.userPropertiesOperations, null, getCurrentTimeMillis(), false);
+            identify.userPropertiesOperations, null, getCurrentTimeMillis(), outOfSession);
     }
 
     /**
