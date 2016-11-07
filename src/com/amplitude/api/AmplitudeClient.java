@@ -646,9 +646,32 @@ public class AmplitudeClient {
      *     Tracking Sessions</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
+        logEvent(eventType, eventProperties, groups, getCurrentTimeMillis(), outOfSession);
+    }
+
+    /**
+     * Log event with the specified event type, event properties, groups, timestamp, with optional
+     * out of session flag. If out of session is true, then the sessionId will be -1 for the event,
+     * indicating that it is not part of the current session. Note: this might be useful when
+     * logging events for notifications received.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @param timestamp       the timestamp in millisecond since epoch
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
-                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
+                eventType, eventProperties, null, null, groups, timestamp, outOfSession
             );
         }
     }
@@ -732,10 +755,31 @@ public class AmplitudeClient {
      *     Tracking Sessions</a>
      */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
+        logEventSync(eventType, eventProperties, groups, getCurrentTimeMillis(), outOfSession);
+    }
+
+    /**
+     * Log event with the specified event type, event properties, groups, timestamp,  with optional
+     * sout of ession flag. If out of session is true, then the sessionId will be -1 for the event,
+     * indicating that it is not part of the current session. Note: this might be useful when
+     * logging events for notifications received.
+     * <b>Note:</b> this is version is synchronous and blocks the main thread until done.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param groups          the groups
+     * @param timestamp       the timestamp in milliseconds since epoch
+     * @param outOfSession    the out of session
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
+     *     Setting Event Properties</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
+     *     Setting Groups</a>
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
+     *     Tracking Sessions</a>
+     */
+    public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(
-                eventType, eventProperties, null, null, groups, getCurrentTimeMillis(), outOfSession
-            );
+            logEvent(eventType, eventProperties, null, null, groups, timestamp, outOfSession);
         }
     }
 
