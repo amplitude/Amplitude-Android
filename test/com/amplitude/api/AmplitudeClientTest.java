@@ -503,7 +503,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(unsentIdentifys.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
         assertEquals(unsentIdentifys.optJSONObject(0).optLong("sequence_number"), 2);
         assertTrue(Utils.compareJSONObjects(
-                unsentIdentifys.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify
+            unsentIdentifys.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify
         ));
 
         // send response and check that remove events works properly
@@ -513,7 +513,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(events.optJSONObject(0).optString("event_type"), "test_event");
         assertEquals(events.optJSONObject(1).optString("event_type"), Constants.IDENTIFY_EVENT);
         assertTrue(Utils.compareJSONObjects(
-                events.optJSONObject(1).optJSONObject("user_properties"), expectedIdentify
+            events.optJSONObject(1).optJSONObject("user_properties"), expectedIdentify
         ));
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
@@ -1457,5 +1457,19 @@ public class AmplitudeClientTest extends BaseTest {
             identifyEvent.optJSONObject("user_properties"),
             new JSONObject().put("$setOnce", new JSONObject())
         ));
+    }
+
+    public void testLogEventWithTimestamp() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        amplitude.logEvent("test", null, null, 1000, false);
+        looper.runToEndOfTasks();
+        JSONObject event = getLastUnsentEvent();
+        assertEquals(event.optLong("timestamp"), 1000);
+
+        amplitude.logEventSync("test", null, null, 2000, false);
+        looper.runToEndOfTasks();
+        event = getLastUnsentEvent();
+        assertEquals(event.optLong("timestamp"), 2000);
     }
 }
