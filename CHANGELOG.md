@@ -1,6 +1,6 @@
 ## Unreleased
 
-* Allow `logEvent` with a custom timestamp (long milliseconds since epoch).
+* Allow `logEvent` with a custom timestamp (milliseconds since epoch). See [documentation](https://rawgit.com/amplitude/Amplitude-Android/master/javadoc/com/amplitude/api/AmplitudeClient.html#logEvent-java.lang.String-org.json.JSONObject-org.json.JSONObject-org.json.JSONObject-org.json.JSONObject-long-boolean-) for more details.
 
 ## 2.11.0 (October 26, 2016)
 
