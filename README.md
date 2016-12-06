@@ -134,6 +134,14 @@ You can also add a user ID as an argument to the `initialize()` call:
 Amplitude.getInstance().initialize(this, "YOUR_API_KEY_HERE", "USER_ID_HERE");
 ```
 
+### Logging Out and Anonymous Users ###
+If a user logs out, or you want to log events under an anonymous user, you need to do 2 things: 1) set the userId to `null` 2) regenerate a new deviceId. After doing that, events coming from the current user/device will appear as a brand new user in Amplitude dashboards. Note: if you choose to do this, you won't be able to see that the 2 users were using the same device.
+
+```java
+Amplitude.getInstance().setUserId(null);
+Amplitude.getInstance().regenerateDeviceId();
+```
+
 # Setting Event Properties #
 
 You can attach additional data to any event by passing a JSONObject as the second argument to `logEvent()`:

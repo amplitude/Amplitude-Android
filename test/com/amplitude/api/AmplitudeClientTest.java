@@ -26,6 +26,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -1418,6 +1419,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
     }
 
+    @Test
     public void testBlockTooManyEventUserProperties() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
@@ -1459,6 +1461,7 @@ public class AmplitudeClientTest extends BaseTest {
         ));
     }
 
+    @Test
     public void testLogEventWithTimestamp() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
@@ -1471,5 +1474,19 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         event = getLastUnsentEvent();
         assertEquals(event.optLong("timestamp"), 2000);
+    }
+
+    @Test
+    public void testRegenerateDeviceId() {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        String oldDeviceId = amplitude.getDeviceId();
+        assertEquals(oldDeviceId, dbHelper.getValue("device_id"));
+
+        amplitude.regenerateDeviceId();
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        String newDeviceId = amplitude.getDeviceId();
+        assertNotEquals(oldDeviceId, newDeviceId);
+        assertEquals(newDeviceId, dbHelper.getValue("device_id"));
+        assertTrue(newDeviceId.endsWith("R"));
     }
 }

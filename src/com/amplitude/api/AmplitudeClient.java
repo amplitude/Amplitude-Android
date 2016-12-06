@@ -1535,6 +1535,20 @@ public class AmplitudeClient {
     }
 
     /**
+     * Regenerates a new random deviceId for current user. Note: this is not recommended unless you
+     * know what you are doing. This can be used in conjunction with setUserId(null) to anonymize
+     * users after they log out. With a null userId and a completely new deviceId, the current user
+     * would appear as a brand new user in dashboard.
+     *
+     * @see <a href="https://github.com/amplitude/Amplitude-Android#logging-out-and-anonymous-users">
+     *     Logging Out Users</a>
+     */
+    public void regenerateDeviceId() {
+        String randomId = deviceInfo.generateUUID() + "R";
+        setDeviceId(randomId);
+    }
+
+    /**
      * Force SDK to upload any unsent events.
      */
     public void uploadEvents() {
