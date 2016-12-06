@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add helper method to regenerate a new random deviceId. This can be used in conjunction with `setUserId(null)` to anonymize a user after they log out. Note this is not recommended unless you know what you are doing. See [Readme](https://github.com/amplitude/Amplitude-Android#logging-out-and-anonymous-users) for more information.
+
 ## 2.12.0 (November 07, 2016)
 
 * Allow `logEvent` with a custom timestamp (milliseconds since epoch). See [documentation](https://rawgit.com/amplitude/Amplitude-Android/master/javadoc/com/amplitude/api/AmplitudeClient.html#logEvent-java.lang.String-org.json.JSONObject-org.json.JSONObject-org.json.JSONObject-org.json.JSONObject-long-boolean-) for more details.
