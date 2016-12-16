@@ -1543,9 +1543,23 @@ public class AmplitudeClient {
      * @see <a href="https://github.com/amplitude/Amplitude-Android#logging-out-and-anonymous-users">
      *     Logging Out Users</a>
      */
-    public void regenerateDeviceId() {
-        String randomId = deviceInfo.generateUUID() + "R";
-        setDeviceId(randomId);
+    public AmplitudeClient regenerateDeviceId() {
+        if (!contextAndApiKeySet("regenerateDeviceId()")) {
+            return this;
+        }
+
+        final AmplitudeClient client = this;
+        runOnLogThread(new Runnable() {
+            @Override
+            public void run() {
+                if (TextUtils.isEmpty(client.apiKey)) { // in case initialization failed
+                    return;
+                }
+                String randomId = DeviceInfo.generateUUID() + "R";
+                setDeviceId(randomId);
+            }
+        });
+        return this;
     }
 
     /**

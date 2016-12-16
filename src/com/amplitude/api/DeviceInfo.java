@@ -268,7 +268,7 @@ public class DeviceInfo {
         getCachedInfo();
     }
 
-    public String generateUUID() {
+    public static String generateUUID() {
         return UUID.randomUUID().toString();
     }
 

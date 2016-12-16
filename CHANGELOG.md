@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Fix bug where `regenerateDeviceId` was not being run on background thread. DeviceInfo.generateUUID() should be a static method.
+
 ## 2.13.0 (December 05, 2016)
 
 * Add helper method to regenerate a new random deviceId. This can be used in conjunction with `setUserId(null)` to anonymize a user after they log out. Note this is not recommended unless you know what you are doing. See [Readme](https://github.com/amplitude/Amplitude-Android#logging-out-and-anonymous-users) for more information.
