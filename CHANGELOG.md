@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.13.1 (December 15, 2016)
+
 * Fix bug where `regenerateDeviceId` was not being run on background thread. DeviceInfo.generateUUID() should be a static method.
 
 ## 2.13.0 (December 05, 2016)
