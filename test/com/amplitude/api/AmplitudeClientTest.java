@@ -1489,4 +1489,24 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(newDeviceId, dbHelper.getValue("device_id"));
         assertTrue(newDeviceId.endsWith("R"));
     }
+
+    @Test
+    public void testSendNullEvents() throws JSONException {
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        dbHelper.addEvent(null);
+        amplitude.setLastEventId(1);
+        amplitude.getNextSequenceNumber();
+        assertEquals(getUnsentEventCount(), 1);
+
+        amplitude.logEvent("test event");
+        looper.runToEndOfTasks();
+
+        amplitude.updateServer();
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 1);
+        assertEquals(events.optJSONObject(0).optString("event_type"), "test event");
+    }
 }

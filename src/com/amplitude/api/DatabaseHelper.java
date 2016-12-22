@@ -251,6 +251,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
                 String event = cursor.getString(1);
+                if (TextUtils.isEmpty(event)) {
+                    continue;
+                }
 
                 JSONObject obj = new JSONObject(event);
                 obj.put("event_id", eventId);
