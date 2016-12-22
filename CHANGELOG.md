@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.13.2 (December 22, 2016)
+
 * Fix crash when pulling null unsent event strings during upload.
 * Fix bug where unserializable events were being saved to unsent events table.
 * Added more logging around JSON serialization errors when logging events.
