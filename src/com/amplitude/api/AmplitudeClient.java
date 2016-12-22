@@ -881,6 +881,7 @@ public class AmplitudeClient {
             }
         }
 
+        long result = -1;
         JSONObject event = new JSONObject();
         try {
             event.put("event_type", replaceWithJSONNull(eventType));
@@ -926,11 +927,15 @@ public class AmplitudeClient {
             event.put("user_properties", (userProperties == null) ? new JSONObject()
                 : truncate(userProperties));
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
+
+            result = saveEvent(eventType, event);
         } catch (JSONException e) {
-            logger.e(TAG, e.toString());
+            logger.e(TAG, String.format(
+                "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
+            ));
         }
 
-        return saveEvent(eventType, event);
+        return result;
     }
 
     /**
@@ -941,11 +946,19 @@ public class AmplitudeClient {
      * @return the event ID if succeeded, else -1
      */
     protected long saveEvent(String eventType, JSONObject event) {
+        String eventString = event.toString();
+        if (TextUtils.isEmpty(eventString)) {
+            logger.e(TAG, String.format(
+                "Detected empty event string for event type %s, skipping", eventType
+            ));
+            return -1;
+        }
+
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
-            lastIdentifyId = dbHelper.addIdentify(event.toString());
+            lastIdentifyId = dbHelper.addIdentify(eventString);
             setLastIdentifyId(lastIdentifyId);
         } else {
-            lastEventId = dbHelper.addEvent(event.toString());
+            lastEventId = dbHelper.addEvent(eventString);
             setLastEventId(lastEventId);
         }
 

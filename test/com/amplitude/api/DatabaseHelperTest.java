@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
@@ -480,6 +481,13 @@ public class DatabaseHelperTest extends BaseTest {
         dbInstance.removeEvents(4);
         assertEquals(0, dbInstance.getEventCount());
         assertEquals(1, dbInstance.getIdentifyCount());
+    }
+
+    @Test
+    public void testNullEventString() throws JSONException {
+        dbInstance.addEvent(null);
+        List<JSONObject> events = dbInstance.getEvents(-1, -1);
+        assertTrue(events.isEmpty());
     }
 }
 
