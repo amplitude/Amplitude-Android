@@ -484,7 +484,7 @@ public class DatabaseHelperTest extends BaseTest {
     }
 
     @Test
-    public void testNullEventSTring() throws JSONException {
+    public void testNullEventString() throws JSONException {
         dbInstance.addEvent(null);
         List<JSONObject> events = dbInstance.getEvents(-1, -1);
         assertTrue(events.isEmpty());

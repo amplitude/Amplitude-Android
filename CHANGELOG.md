@@ -1,5 +1,9 @@
 ## Unreleased
 
+* Fix crash when pulling null unsent event strings during upload.
+* Fix bug where unserializable events were being saved to unsent events table.
+* Added more logging around JSON serialization errors when logging events.
+
 ## 2.13.1 (December 15, 2016)
 
 * Fix bug where `regenerateDeviceId` was not being run on background thread. DeviceInfo.generateUUID() should be a static method.
