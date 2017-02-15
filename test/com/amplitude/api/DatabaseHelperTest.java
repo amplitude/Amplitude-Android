@@ -28,7 +28,7 @@ public class DatabaseHelperTest extends BaseTest {
         super.setUp(false);
         amplitude.initialize(context, apiKey);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
-        dbInstance = DatabaseHelper.getDatabaseHelper(context);
+        dbInstance = DatabaseHelper.getDatabaseHelper(context, apiKey);
     }
 
     @After
