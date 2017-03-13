@@ -1773,10 +1773,17 @@ public class AmplitudeClient {
             .add("checksum", checksumString)
             .build();
 
-        Request request = new Request.Builder()
-            .url(url)
-            .post(body)
-            .build();
+        Request request;
+        try {
+             request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        } catch (IllegalArgumentException e) {
+            logger.e(TAG, e.toString());
+            uploadingCurrently.set(false);
+            return;
+        }
 
         boolean uploadSuccess = false;
 
