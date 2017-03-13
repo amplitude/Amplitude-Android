@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Handle exceptions when building request to upload event data. Affects only certain Lenovo Android devices.
+
 ## 2.13.2 (December 22, 2016)
 
 * Fix crash when pulling null unsent event strings during upload.
