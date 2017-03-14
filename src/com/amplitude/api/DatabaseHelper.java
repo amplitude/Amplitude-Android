@@ -143,8 +143,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 logger.w(TAG, "Insert failed");
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, "insertOrReplaceKeyValue failed", e);
-            // Not much we can do, just start fresh
+            logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
             delete();
         } finally {
             close();
@@ -158,7 +162,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
             SQLiteDatabase db = getWritableDatabase();
             result = db.delete(table, KEY_FIELD + "=?", new String[]{key});
         } catch (SQLiteException e) {
-            logger.e(TAG, "deleteKeyFromTable failed", e);
+            logger.e(TAG, String.format("deleteKey from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("deleteKey from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } finally {
             close();
         }
@@ -185,7 +195,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("addEvent to %s failed", table), e);
-            // Not much we can do, just start fresh
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("addEvent to %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
             delete();
         } finally {
             close();
@@ -214,7 +228,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 value = table.equals(STORE_TABLE_NAME) ? cursor.getString(1) : cursor.getLong(1);
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, "getValue failed", e);
+            logger.e(TAG, String.format("getValue from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("getValue from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } catch (RuntimeException e) {
             convertIfCursorWindowException(e);
         } finally {
@@ -261,6 +281,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("getEvents from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } catch (RuntimeException e) {
             convertIfCursorWindowException(e);
         } finally {
@@ -294,6 +320,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
             numberRows = statement.simpleQueryForLong();
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } finally {
             if (statement != null) {
                 statement.close();
@@ -327,6 +359,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("getNthEventId from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("getNthEventId from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } finally {
             if (statement != null) {
                 statement.close();
@@ -350,6 +388,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
             db.delete(table, ID_FIELD + " <= " + maxId, null);
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("removeEvents from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("removeEvents from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } finally {
             close();
         }
@@ -369,6 +413,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
             db.delete(table, ID_FIELD + " = " + id, null);
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            // Hard to recover from SQLiteExceptions, just start fresh
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            // potential stack overflow error when getting database on custom Android versions
+            delete();
         } finally {
             close();
         }
