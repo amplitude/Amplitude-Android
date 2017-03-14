@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.13.3 (March 13, 2017)
+
 * Handle exceptions when reading from database. Only affects certain Fairphone and LG devices.
 * Handle exceptions when building request to upload event data. Only affects certain Lenovo devices.
 
