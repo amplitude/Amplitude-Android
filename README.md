@@ -13,10 +13,12 @@ Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/artic
 # Android SDK Reference #
 See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/115004749807) for a list and description of all available SDK methods.
 
-# Demo Application #
-A [demo application](https://github.com/amplitude/Android-Demo) showing a simple integration.
+# Demo Applications #
+* A [demo application](https://github.com/amplitude/Android-Demo) showing the integration of our SDK using Gradle.
+* A [demo application](https://github.com/amplitude/Segment-Android-Demo) showing the integration of our SDK using [Segment's](https://segment.com) Android SDK.
+* A [demo application](https://github.com/amplitude/GTM-Android-Demo) demonstrating a potential integration with Google Tag Manager.
 
-# Changelog
+# Changelog #
 Click [here](https://github.com/amplitude/Amplitude-Android/blob/master/CHANGELOG.md) to view the Android SDK Changelog.
 
 # Questions? #
