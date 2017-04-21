@@ -1,15 +1,14 @@
-[![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
-
 Amplitude Android SDK
 ====================
 
-An Android SDK for tracking events and revenue to [Amplitude](http://www.amplitude.com).
+An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
 
 # Setup #
 Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/articles/115002935588-Android-SDK-Installation) for instructions on installing and using our Android SDK.
 
 # Latest Version #
 [2.13.3 - Released on March 13, 2017](https://github.com/amplitude/Amplitude-Android/releases/latest)
+[![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
 
 # Android SDK Reference #
 See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/115004749807) for a list and description of all available SDK methods.
@@ -25,7 +24,6 @@ If you have questions about using or installing our Android SDK, you can send an
 
 # License #
 ```text
-
 Amplitude
 
 The MIT License (MIT)
