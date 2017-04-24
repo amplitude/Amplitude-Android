@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Migrating setup instructions and SDK documentation in the README file to Zendesk articles.
+
 ## 2.13.3 (March 13, 2017)
 
 * Handle exceptions when reading from database. Only affects certain Fairphone and LG devices.
