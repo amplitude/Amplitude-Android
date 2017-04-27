@@ -102,9 +102,14 @@ public class DeviceInfo {
         }
 
         private String getCarrier() {
-            TelephonyManager manager = (TelephonyManager) context
-                    .getSystemService(Context.TELEPHONY_SERVICE);
-            return manager.getNetworkOperatorName();
+            try {
+                TelephonyManager manager = (TelephonyManager) context
+                        .getSystemService(Context.TELEPHONY_SERVICE);
+                return manager.getNetworkOperatorName();
+            } catch (Exception e) {
+                // Failed to get network operator name from network
+            }
+            return null;
         }
 
         private String getCountry() {
