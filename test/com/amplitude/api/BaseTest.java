@@ -56,7 +56,7 @@ public class BaseTest {
     protected class MockDatabaseHelper extends DatabaseHelper {
 
         protected MockDatabaseHelper(Context context) {
-            super(context);
+            super(context, apiKey);
         }
 
         @Override
@@ -91,7 +91,7 @@ public class BaseTest {
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
         // and https://github.com/robolectric/robolectric/issues/1622
-        DatabaseHelper.instance = null;
+        DatabaseHelper.instances.clear();
 
         if (withServer) {
             server = new MockWebServer();
@@ -125,7 +125,7 @@ public class BaseTest {
             server.shutdown();
         }
 
-        DatabaseHelper.instance = null;
+        DatabaseHelper.instances.clear();
     }
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
@@ -159,11 +159,11 @@ public class BaseTest {
     }
 
     public long getUnsentEventCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getEventCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKey).getEventCount();
     }
 
     public long getUnsentIdentifyCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
+        return DatabaseHelper.getDatabaseHelper(context, apiKey).getIdentifyCount();
     }
 
 
@@ -187,7 +187,7 @@ public class BaseTest {
 
     public JSONArray getUnsentEventsFromTable(String table, int limit) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
 
@@ -214,7 +214,7 @@ public class BaseTest {
 
     public JSONObject getLastEventFromTable(String table) {
         try {
-            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
             return events.get(events.size() - 1);

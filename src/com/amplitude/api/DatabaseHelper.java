@@ -14,12 +14,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    static DatabaseHelper instance;
+    static Map<String, DatabaseHelper> instances = new HashMap<>(1);
 
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
@@ -50,16 +52,18 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String key) {
+        DatabaseHelper instance = instances.get(key);
         if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+            instance = new DatabaseHelper(context.getApplicationContext(), key);
+            instances.put(key, instance);
         }
         return instance;
     }
 
-    protected DatabaseHelper(Context context) {
-        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME);
+    protected DatabaseHelper(Context context, String key) {
+        super(context, Constants.DATABASE_NAME + "." + key, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME + "." + key);
     }
 
     @Override

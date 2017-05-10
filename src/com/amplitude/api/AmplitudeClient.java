@@ -228,7 +228,7 @@ public class AmplitudeClient {
 
         this.context = context.getApplicationContext();
         this.apiKey = apiKey;
-        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
+        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, apiKey);
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -238,7 +238,7 @@ public class AmplitudeClient {
                     // this try block is idempotent, so it's safe to retry initialize if failed
                     try {
                         AmplitudeClient.upgradePrefs(context);
-                        AmplitudeClient.upgradeSharedPrefsToDB(context);
+                        AmplitudeClient.upgradeSharedPrefsToDB(context, apiKey);
                         httpClient = new OkHttpClient();
                         initializeDeviceInfo();
 
@@ -2066,8 +2066,8 @@ public class AmplitudeClient {
      * Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
      * sharedPrefs is known to not be process-safe.
      */
-    static boolean upgradeSharedPrefsToDB(Context context) {
-        return upgradeSharedPrefsToDB(context, null);
+    static boolean upgradeSharedPrefsToDB(Context context, String apiKey) {
+        return upgradeSharedPrefsToDB(context, apiKey, null);
     }
 
     /**
@@ -2077,13 +2077,13 @@ public class AmplitudeClient {
      * @param sourcePkgName the source pkg name
      * @return the boolean
      */
-    static boolean upgradeSharedPrefsToDB(Context context, String sourcePkgName) {
+    static boolean upgradeSharedPrefsToDB(Context context, String apiKey, String sourcePkgName) {
         if (sourcePkgName == null) {
             sourcePkgName = Constants.PACKAGE_NAME;
         }
 
         // check if upgrade needed
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
         Long lastEventTime = dbHelper.getLongValue(LAST_EVENT_TIME_KEY);

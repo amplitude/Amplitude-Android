@@ -57,7 +57,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSetUserId() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         String userId = "user_id";
         amplitude.setUserId(userId);
@@ -101,7 +101,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSetDeviceId() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
@@ -238,7 +238,7 @@ public class AmplitudeClientTest extends BaseTest {
     public void testReloadDeviceIdFromDatabase() {
         String deviceId = "test_device_id";
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+        DatabaseHelper.getDatabaseHelper(context, apiKey).insertOrReplaceKeyValue(
                 AmplitudeClient.DEVICE_ID_KEY,
                 deviceId
         );
@@ -262,7 +262,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.getScheduler().advanceToLastPostedRunnable();
         String deviceId = amplitude.getDeviceId();
         assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertEquals(
                 deviceId,
                 dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
@@ -277,7 +277,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(37, amplitude.getDeviceId().length());
         String deviceId = amplitude.getDeviceId();
         assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertEquals(
                 deviceId,
                 dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
@@ -289,7 +289,7 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertFalse(amplitude.isOptedOut());
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
 
@@ -365,7 +365,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
 
         // verify db state
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), -1L);
@@ -610,7 +610,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 0);
 
         // verify db state
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 3L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 4L);
@@ -642,7 +642,7 @@ public class AmplitudeClientTest extends BaseTest {
         event.remove("sequence_number");
         event.remove("event_id");
         // delete event from db and reinsert modified event
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         dbHelper.removeEvent(1);
         dbHelper.addEvent(event.toString());
         amplitude.uploadingCurrently.set(false);
@@ -975,7 +975,7 @@ public class AmplitudeClientTest extends BaseTest {
         clock.setTimestamps(timestamps);
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);
@@ -1160,7 +1160,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testAutoIncrementSequenceNumber() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         int limit = 10;
         for (int i = 0; i < limit; i++) {
             assertEquals(amplitude.getNextSequenceNumber(), i+1);
@@ -1197,7 +1197,7 @@ public class AmplitudeClientTest extends BaseTest {
         clock.setTimestamps(timestamps);
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
 
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         int eventMaxCount = 3;
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
@@ -1233,7 +1233,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testTruncateEventsQueues() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         int eventMaxCount = 50;
         assertTrue(eventMaxCount > Constants.EVENT_REMOVE_BATCH_SIZE);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
@@ -1252,7 +1252,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testTruncateEventsQueuesWithOneEvent() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         int eventMaxCount = 1;
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.setEventMaxCount(eventMaxCount).setOffline(true);
@@ -1392,7 +1392,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 0);
 
         // mock out database helper to force CursorWindowAllocationExceptions
-        DatabaseHelper.instance = new MockDatabaseHelper(context);
+        DatabaseHelper.instances.put(apiKey, new MockDatabaseHelper(context));
 
         // force an upload and verify no request sent
         // make sure we catch it during sending of events and defer sending
@@ -1478,7 +1478,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testRegenerateDeviceId() {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         String oldDeviceId = amplitude.getDeviceId();
         assertEquals(oldDeviceId, dbHelper.getValue("device_id"));
 
@@ -1492,7 +1492,7 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSendNullEvents() throws JSONException {
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, apiKey);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
 
         dbHelper.addEvent(null);
