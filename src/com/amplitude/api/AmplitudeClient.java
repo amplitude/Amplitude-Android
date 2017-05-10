@@ -1296,41 +1296,23 @@ public class AmplitudeClient {
             return;
         }
 
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (TextUtils.isEmpty(apiKey)) {  // in case initialization failed
-                    return;
-                }
+        // sanitize and truncate properties before trying to convert to identify
+        JSONObject sanitized = truncate(userProperties);
+        if (sanitized.length() == 0) {
+            return;
+        }
 
-                // Create deep copy to try and prevent ConcurrentModificationException
-                JSONObject copy;
-                try {
-                    copy = new JSONObject(userProperties.toString());
-                } catch (JSONException e) {
-                    logger.e(TAG, e.toString());
-                    return; // could not create copy
-                }
-
-                // sanitize and truncate properties before trying to convert to identify
-                JSONObject sanitized = truncate(copy);
-                if (sanitized.length() == 0) {
-                    return;
-                }
-
-                Identify identify = new Identify();
-                Iterator<?> keys = sanitized.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    try {
-                        identify.setUserProperty(key, sanitized.get(key));
-                    } catch (JSONException e) {
-                        logger.e(TAG, e.toString());
-                    }
-                }
-                identify(identify);
+        Identify identify = new Identify();
+        Iterator<?> keys = sanitized.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                identify.setUserProperty(key, sanitized.get(key));
+            } catch (JSONException e) {
+                logger.e(TAG, e.toString());
             }
-        });
+        }
+        identify(identify);
     }
 
     /**

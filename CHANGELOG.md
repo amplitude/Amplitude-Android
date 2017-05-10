@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Handle exceptions when fetching device carrier information. Thanks to @fkam-tt for the pull request.
+* Copy userProperties on main thread in `setUserProperties` to prevent ConcurrentModificationExceptions.
 * Migrating setup instructions and SDK documentation in the README file to Zendesk articles.
 
 ## 2.13.3 (March 13, 2017)
