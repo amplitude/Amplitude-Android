@@ -21,6 +21,7 @@ public class PinningTest extends BaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp(false);
+        PinnedAmplitudeClient.instances.clear();
         // need to set clock > 0 so that logThread posts in order
         SystemClock.setCurrentTimeMillis(1000);
     }
@@ -28,6 +29,7 @@ public class PinningTest extends BaseTest {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
+        PinnedAmplitudeClient.instances.clear();
     }
 
     @Test
@@ -81,7 +83,7 @@ public class PinningTest extends BaseTest {
               + "XCBeVmjEX3kh4bkRPHJ5vyASNXUkF3nwVAe4cwOoLHN8o=");
 
         public InvalidPinnedAmplitudeClient() {
-            super();
+            super(Constants.DEFAULT_INSTANCE);
             super.getPinnedCertSslSocketFactory(INVALID_SSL_CONTEXT);
         }
     }

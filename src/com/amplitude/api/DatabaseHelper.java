@@ -14,12 +14,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    static DatabaseHelper instance;
+    static final Map<String, DatabaseHelper> instances = new HashMap<String, DatabaseHelper>();
 
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
@@ -47,19 +49,37 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + EVENT_FIELD + " TEXT);";
 
     private File file;
+    private String instanceName;
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    static synchronized DatabaseHelper getDatabaseHelper(Context context) {
-        if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+    @Deprecated
+    static DatabaseHelper getDatabaseHelper(Context context) {
+        return getDatabaseHelper(context, null);
+    }
+
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String instance) {
+        instance = Utils.normalizeInstanceName(instance);
+        DatabaseHelper dbHelper = instances.get(instance);
+        if (dbHelper == null) {
+            dbHelper = new DatabaseHelper(context.getApplicationContext(), instance);
+            instances.put(instance, dbHelper);
         }
-        return instance;
+        return dbHelper;
+    }
+
+    private static String getDatabaseName(String instance) {
+        return (TextUtils.isEmpty(instance) || instance.equals(Constants.DEFAULT_INSTANCE)) ? Constants.DATABASE_NAME : Constants.DATABASE_NAME + "_" + instance;
     }
 
     protected DatabaseHelper(Context context) {
-        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
-        file = context.getDatabasePath(Constants.DATABASE_NAME);
+        this(context, null);
+    }
+
+    protected DatabaseHelper(Context context, String instance) {
+        super(context, getDatabaseName(instance), null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(getDatabaseName(instance));
+        instanceName = Utils.normalizeInstanceName(instance);
     }
 
     @Override

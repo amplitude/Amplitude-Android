@@ -4,6 +4,9 @@ import android.content.Context;
 
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * <h1>Amplitude</h1>
@@ -16,14 +19,32 @@ import org.json.JSONObject;
  */
 public class Amplitude {
 
+    static final Map<String, AmplitudeClient> instances = new HashMap<String, AmplitudeClient>();
+
     /**
-     * Gets the default instance. This is the only method you should be calling on the
-     * Amplitude class.
+     * Gets the default instance.
      *
      * @return the default instance
      */
     public static AmplitudeClient getInstance() {
-        return AmplitudeClient.getInstance();
+        return getInstance(null);
+    }
+
+    /**
+     * Gets the specified instance. If instance is null or empty string, fetches the default
+     * instance instead.
+     *
+     * @param instance name to get "ex app 1"
+     * @return the specified instance
+     */
+    public static synchronized AmplitudeClient getInstance(String instance) {
+        instance = Utils.normalizeInstanceName(instance);
+        AmplitudeClient client = instances.get(instance);
+        if (client == null) {
+            client = new AmplitudeClient(instance);
+            instances.put(instance, client);
+        }
+        return client;
     }
 
     /**
