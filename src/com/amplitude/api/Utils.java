@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import android.text.TextUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,5 +89,12 @@ public class Utils {
             return true;
         } catch (JSONException e) {}
         return false;
+    }
+
+    static String normalizeInstanceName(String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
+        }
+        return instance.toLowerCase();
     }
 }

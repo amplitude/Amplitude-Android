@@ -185,10 +185,7 @@ public class AmplitudeClient {
      * @param instance
      */
     public AmplitudeClient(String instance) {
-        if (TextUtils.isEmpty(instance)) {
-            instance = Constants.DEFAULT_INSTANCE;
-        }
-        this.instanceName = instance.toLowerCase();
+        this.instanceName = Utils.normalizeInstanceName(instance);
         logThread.start();
         httpThread.start();
     }

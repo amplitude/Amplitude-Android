@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -181,11 +180,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
      * @return the specified instance
      */
     public static synchronized PinnedAmplitudeClient getInstance(String instance) {
-        if (TextUtils.isEmpty(instance)) {
-            instance = Constants.DEFAULT_INSTANCE;
-        }
-        instance = instance.toLowerCase();
-
+        instance = Utils.normalizeInstanceName(instance);
         PinnedAmplitudeClient client = instances.get(instance);
         if (client == null) {
             client = new PinnedAmplitudeClient(instance);

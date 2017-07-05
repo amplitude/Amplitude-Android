@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import org.json.JSONObject;
 
@@ -38,12 +37,8 @@ public class Amplitude {
      * @param instance name to get "ex app 1"
      * @return the specified instance
      */
-    public static synchronized  AmplitudeClient getInstance(String instance) {
-        if (TextUtils.isEmpty(instance)) {
-            instance = Constants.DEFAULT_INSTANCE;
-        }
-        instance = instance.toLowerCase();
-
+    public static synchronized AmplitudeClient getInstance(String instance) {
+        instance = Utils.normalizeInstanceName(instance);
         AmplitudeClient client = instances.get(instance);
         if (client == null) {
             client = new AmplitudeClient(instance);
