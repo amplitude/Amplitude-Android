@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add support for logging events to multiple Amplitude apps. See our [Help Center Documentation](https://amplitude.zendesk.com/hc/en-us/articles/115002935588#logging-events-to-multiple-projects) for details.
+
 ## 2.13.4 (May 09, 2017)
 
 * Handle exceptions when fetching device carrier information. Thanks to @fkam-tt for the pull request.
