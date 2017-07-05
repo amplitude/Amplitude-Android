@@ -14,12 +14,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 
-    static DatabaseHelper instance;
+    static final Map<String, DatabaseHelper> instances = new HashMap<String, DatabaseHelper>();
 
     private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
@@ -47,19 +49,43 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + EVENT_FIELD + " TEXT);";
 
     private File file;
+    private String instanceName;
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
+    @Deprecated
     static synchronized DatabaseHelper getDatabaseHelper(Context context) {
-        if (instance == null) {
-            instance = new DatabaseHelper(context.getApplicationContext());
+        return getDatabaseHelper(context, null);
+    }
+
+    static synchronized DatabaseHelper getDatabaseHelper(Context context, String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
         }
-        return instance;
+        instance = instance.toLowerCase();
+
+        DatabaseHelper dbHelper = instances.get(instance);
+        if (dbHelper == null) {
+            if (instance.equalsIgnoreCase(Constants.DEFAULT_INSTANCE)) {
+                dbHelper = new DatabaseHelper(context.getApplicationContext());
+            } else {
+                dbHelper = new DatabaseHelper(context.getApplicationContext(), instance);
+            }
+            instances.put(instance, dbHelper);
+        }
+        return dbHelper;
     }
 
     protected DatabaseHelper(Context context) {
         super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
         file = context.getDatabasePath(Constants.DATABASE_NAME);
+        instanceName = Constants.DEFAULT_INSTANCE;
+    }
+
+    protected DatabaseHelper(Context context, String instance) {
+        super(context, Constants.DATABASE_NAME + "_" + instance, null, Constants.DATABASE_VERSION);
+        file = context.getDatabasePath(Constants.DATABASE_NAME + "_" + instance);
+        instanceName = instance;
     }
 
     @Override

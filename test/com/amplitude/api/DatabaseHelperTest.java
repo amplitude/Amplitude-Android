@@ -13,7 +13,9 @@ import org.robolectric.annotation.Config;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -169,7 +171,7 @@ public class DatabaseHelperTest extends BaseTest {
         // long store table doesn't exist in v1, insert will fail
         Long longValue = 1L;
         dbInstance.getWritableDatabase().execSQL(
-                "DROP TABLE IF EXISTS " + DatabaseHelper.LONG_STORE_TABLE_NAME);
+            "DROP TABLE IF EXISTS " + DatabaseHelper.LONG_STORE_TABLE_NAME);
         assertEquals(-1, insertOrReplaceKeyLongValue(key, longValue));
 
         // only event inserts will work
@@ -488,6 +490,66 @@ public class DatabaseHelperTest extends BaseTest {
         dbInstance.addEvent(null);
         List<JSONObject> events = dbInstance.getEvents(-1, -1);
         assertTrue(events.isEmpty());
+    }
+
+    @Test
+    public void testGetDatabaseHelper() {
+        assertEquals(DatabaseHelper.instances.size(), 1);
+        DatabaseHelper oldDbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, null));
+        assertSame(oldDbHelper, DatabaseHelper.getDatabaseHelper(context, ""));
+        assertSame(
+            oldDbHelper, DatabaseHelper.getDatabaseHelper(context, Constants.DEFAULT_INSTANCE)
+        );
+        DatabaseHelper a = DatabaseHelper.getDatabaseHelper(context, "a");
+        DatabaseHelper b = DatabaseHelper.getDatabaseHelper(context, "b");
+        assertNotSame(oldDbHelper, a);
+        assertNotSame(oldDbHelper, b);
+        assertNotSame(a, b);
+        assertSame(a, DatabaseHelper.getDatabaseHelper(context, "a"));
+        assertSame(b, DatabaseHelper.getDatabaseHelper(context, "b"));
+
+        assertEquals(DatabaseHelper.instances.size(), 3);
+        assertTrue(DatabaseHelper.instances.containsKey(Constants.DEFAULT_INSTANCE));
+        assertTrue(DatabaseHelper.instances.containsKey("a"));
+        assertTrue(DatabaseHelper.instances.containsKey("b"));
+
+        // test for instance name case insensitivity
+        assertSame(a, DatabaseHelper.getDatabaseHelper(context, "A"));
+        assertSame(b, DatabaseHelper.getDatabaseHelper(context, "B"));
+        assertSame(
+            oldDbHelper,
+            DatabaseHelper.getDatabaseHelper(context, Constants.DEFAULT_INSTANCE.toUpperCase())
+        );
+
+        // assert defaultInstance maintains old database filename while new instances have new names
+        a.addEvent("testEvent1");
+        b.addEvent("testEvent2");
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME).exists());
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME + "_a").exists());
+        assertTrue(context.getDatabasePath(Constants.DATABASE_NAME + "_b").exists());
+    }
+
+    @Test
+    public void testSeparateInstances() {
+        DatabaseHelper dbHelper1 = DatabaseHelper.getDatabaseHelper(context, "a");
+        DatabaseHelper dbHelper2 = DatabaseHelper.getDatabaseHelper(context, "b");
+        DatabaseHelper dbHelper3 = DatabaseHelper.getDatabaseHelper(context, "c");
+
+        dbHelper1.insertOrReplaceKeyValue("device_id", "testDeviceId");
+        assertEquals(dbHelper1.getValue("device_id"), "testDeviceId");
+        assertNull(dbHelper2.getValue("device_id"));
+        assertNull(dbHelper3.getValue("device_id"));
+
+        dbHelper2.addEvent("test_event");
+        assertEquals(dbHelper1.getEventCount(), 0);
+        assertEquals(dbHelper2.getEventCount(), 1);
+        assertEquals(dbHelper3.getEventCount(), 0);
+
+        dbHelper3.addIdentify("test_identify_1");
+        assertEquals(dbHelper1.getIdentifyCount(), 0);
+        assertEquals(dbHelper2.getIdentifyCount(), 0);
+        assertEquals(dbHelper3.getIdentifyCount(), 1);
     }
 }
 

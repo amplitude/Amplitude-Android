@@ -86,21 +86,6 @@ public class AmplitudeClient {
      */
     public static final String PREVIOUS_SESSION_ID_KEY = "previous_session_id";
 
-
-    /**
-     * The default shared instance. This is fetched by {@code Amplitude.getInstance()}
-     */
-    protected static AmplitudeClient instance = new AmplitudeClient();
-
-    /**
-     * Gets the default AmplitudeClient instance.
-     *
-     * @return the default instance
-     */
-    public static AmplitudeClient getInstance() {
-        return instance;
-    }
-
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     /**
@@ -119,6 +104,10 @@ public class AmplitudeClient {
      * The Amplitude App API key.
      */
     protected String apiKey;
+    /**
+     * The name for this instance of AmplitudeClient.
+     */
+    protected String instanceName;
     /**
      * The user's ID value.
      */
@@ -185,9 +174,21 @@ public class AmplitudeClient {
     WorkerThread httpThread = new WorkerThread("httpThread");
 
     /**
-     * Instantiates a new AmplitudeClient and starts worker threads.
+     * Instantiates a new default instance AmplitudeClient and starts worker threads.
      */
     public AmplitudeClient() {
+        this(null);
+    }
+
+    /**
+     * Instantiates a new AmplitudeClient with instance name and starts worker threads.
+     * @param instance
+     */
+    public AmplitudeClient(String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
+        }
+        this.instanceName = instance.toLowerCase();
         logThread.start();
         httpThread.start();
     }
@@ -228,7 +229,7 @@ public class AmplitudeClient {
 
         this.context = context.getApplicationContext();
         this.apiKey = apiKey;
-        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context);
+        this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -237,8 +238,10 @@ public class AmplitudeClient {
                 if (!initialized) {
                     // this try block is idempotent, so it's safe to retry initialize if failed
                     try {
-                        AmplitudeClient.upgradePrefs(context);
-                        AmplitudeClient.upgradeSharedPrefsToDB(context);
+                        if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+                            AmplitudeClient.upgradePrefs(context);
+                            AmplitudeClient.upgradeSharedPrefsToDB(context);
+                        }
                         httpClient = new OkHttpClient();
                         initializeDeviceInfo();
 

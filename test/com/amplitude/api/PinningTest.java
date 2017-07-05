@@ -81,7 +81,7 @@ public class PinningTest extends BaseTest {
               + "XCBeVmjEX3kh4bkRPHJ5vyASNXUkF3nwVAe4cwOoLHN8o=");
 
         public InvalidPinnedAmplitudeClient() {
-            super();
+            super(Constants.DEFAULT_INSTANCE);
             super.getPinnedCertSslSocketFactory(INVALID_SSL_CONTEXT);
         }
     }

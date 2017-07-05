@@ -56,6 +56,16 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testConstructor() {
+        // verify that the constructor lowercases the instance name
+        AmplitudeClient a = new AmplitudeClient("APP1");
+        AmplitudeClient b = new AmplitudeClient("New_App_2");
+
+        assertEquals(a.instanceName, "app1");
+        assertEquals(b.instanceName, "new_app_2");
+    }
+
+    @Test
     public void testSetUserId() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
@@ -1392,7 +1402,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 0);
 
         // mock out database helper to force CursorWindowAllocationExceptions
-        DatabaseHelper.instance = new MockDatabaseHelper(context);
+        DatabaseHelper.instances.put(Constants.DEFAULT_INSTANCE, new MockDatabaseHelper(context));
 
         // force an upload and verify no request sent
         // make sure we catch it during sending of events and defer sending

@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -8,7 +9,9 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -159,18 +162,36 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
     }
 
-    /**
-     * The default instance.
-     */
-    protected static PinnedAmplitudeClient instance = new PinnedAmplitudeClient();
+    static Map<String, PinnedAmplitudeClient> instances = new HashMap<String, PinnedAmplitudeClient>();
 
     /**
-     * Gets the default instance. Call SDK method on the default instance.
+     * Gets the default instance.
      *
      * @return the default instance
      */
     public static PinnedAmplitudeClient getInstance() {
-        return instance;
+        return getInstance(null);
+    }
+
+    /**
+     * Gets the specified instance. If instance is null or empty string, fetches the default
+     * instance instead.
+     *
+     * @param instance name to get "ex app 1"
+     * @return the specified instance
+     */
+    public static synchronized PinnedAmplitudeClient getInstance(String instance) {
+        if (TextUtils.isEmpty(instance)) {
+            instance = Constants.DEFAULT_INSTANCE;
+        }
+        instance = instance.toLowerCase();
+
+        PinnedAmplitudeClient client = instances.get(instance);
+        if (client == null) {
+            client = new PinnedAmplitudeClient(instance);
+            instances.put(instance, client);
+        }
+        return client;
     }
 
     /**
@@ -181,8 +202,8 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     /**
      * Instantiates a new Pinned amplitude client.
      */
-    public PinnedAmplitudeClient() {
-        super();
+    public PinnedAmplitudeClient(String instance) {
+        super(instance);
     }
 
     /**
