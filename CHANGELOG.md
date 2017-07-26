@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Switch to an internal implementation of `isEmptyString` instead of Android TextUtils.
+
 ## 2.14.0 (July 05, 2017)
 
 * Add support for logging events to multiple Amplitude apps. See our [Help Center Documentation](https://amplitude.zendesk.com/hc/en-us/articles/115002935588#logging-events-to-multiple-projects) for details.

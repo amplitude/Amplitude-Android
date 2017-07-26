@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.Pair;
 
 import com.amplitude.security.MD5;
@@ -219,7 +218,7 @@ public class AmplitudeClient {
             return this;
         }
 
-        if (TextUtils.isEmpty(apiKey)) {
+        if (Utils.isEmptyString(apiKey)) {
             logger.e(TAG, "Argument apiKey cannot be null or blank in initialize()");
             return this;
         }
@@ -461,7 +460,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(apiKey)) { // in case initialization failed
+                if (Utils.isEmptyString(apiKey)) { // in case initialization failed
                     return;
                 }
                 client.optOut = optOut;
@@ -791,7 +790,7 @@ public class AmplitudeClient {
      * @return true if the event type is valid
      */
     protected boolean validateLogEvent(String eventType) {
-        if (TextUtils.isEmpty(eventType)) {
+        if (Utils.isEmptyString(eventType)) {
             logger.e(TAG, "Argument eventType cannot be null or blank in logEvent()");
             return false;
         }
@@ -836,7 +835,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(apiKey)) {  // in case initialization failed
+                if (Utils.isEmptyString(apiKey)) {  // in case initialization failed
                     return;
                 }
                 logEvent(
@@ -947,7 +946,7 @@ public class AmplitudeClient {
      */
     protected long saveEvent(String eventType, JSONObject event) {
         String eventString = event.toString();
-        if (TextUtils.isEmpty(eventString)) {
+        if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
                 "Detected empty event string for event type %s, skipping", eventType
             ));
@@ -1156,7 +1155,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(apiKey)) {
+                if (Utils.isEmptyString(apiKey)) {
                     return;
                 }
                 refreshSessionTime(timestamp);
@@ -1177,7 +1176,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(apiKey)) {
+                if (Utils.isEmptyString(apiKey)) {
                     return;
                 }
                 startNewSessionIfNeeded(timestamp);
@@ -1370,7 +1369,7 @@ public class AmplitudeClient {
      *     Setting Groups</a>
      */
     public void setGroup(String groupType, Object groupName) {
-        if (!contextAndApiKeySet("setGroup()") || TextUtils.isEmpty(groupType)) {
+        if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
             return;
         }
         JSONObject group = null;
@@ -1490,7 +1489,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(client.apiKey)) {  // in case initialization failed
+                if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
                     return;
                 }
                 client.userId = userId;
@@ -1510,7 +1509,7 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
-        if (!contextAndApiKeySet("setDeviceId()") || TextUtils.isEmpty(deviceId) ||
+        if (!contextAndApiKeySet("setDeviceId()") || Utils.isEmptyString(deviceId) ||
                 invalidDeviceIds.contains(deviceId)) {
             return this;
         }
@@ -1519,7 +1518,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(client.apiKey)) {  // in case initialization failed
+                if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
                     return;
                 }
                 client.deviceId = deviceId;
@@ -1547,7 +1546,7 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(client.apiKey)) { // in case initialization failed
+                if (Utils.isEmptyString(client.apiKey)) { // in case initialization failed
                     return;
                 }
                 String randomId = DeviceInfo.generateUUID() + "R";
@@ -1568,7 +1567,7 @@ public class AmplitudeClient {
         logThread.post(new Runnable() {
             @Override
             public void run() {
-                if (TextUtils.isEmpty(apiKey)) {  // in case initialization failed
+                if (Utils.isEmptyString(apiKey)) {  // in case initialization failed
                     return;
                 }
                 updateServer();
@@ -1882,7 +1881,7 @@ public class AmplitudeClient {
 
         // see if device id already stored in db
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        if (!(TextUtils.isEmpty(deviceId) || invalidIds.contains(deviceId))) {
+        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
             return deviceId;
         }
 
@@ -1891,7 +1890,7 @@ public class AmplitudeClient {
             // We are required to use Advertising ID, and respect the advertising ID preference
 
             String advertisingId = deviceInfo.getAdvertisingId();
-            if (!(TextUtils.isEmpty(advertisingId) || invalidIds.contains(advertisingId))) {
+            if (!(Utils.isEmptyString(advertisingId) || invalidIds.contains(advertisingId))) {
                 dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, advertisingId);
                 return advertisingId;
             }
@@ -1934,7 +1933,7 @@ public class AmplitudeClient {
                     + methodName);
             return false;
         }
-        if (TextUtils.isEmpty(apiKey)) {
+        if (Utils.isEmptyString(apiKey)) {
             logger.e(TAG,
                     "apiKey cannot be null or empty, set apiKey with initialize() before calling "
                             + methodName);
@@ -2087,7 +2086,7 @@ public class AmplitudeClient {
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
         Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
         Long lastEventTime = dbHelper.getLongValue(LAST_EVENT_TIME_KEY);
-        if (!TextUtils.isEmpty(deviceId) && previousSessionId != null && lastEventTime != null) {
+        if (!Utils.isEmptyString(deviceId) && previousSessionId != null && lastEventTime != null) {
             return true;
         }
 
@@ -2139,11 +2138,11 @@ public class AmplitudeClient {
 
     private static void migrateStringValue(SharedPreferences prefs, String prefKey, String defValue, DatabaseHelper dbHelper, String dbKey) {
         String value = dbHelper.getValue(dbKey);
-        if (!TextUtils.isEmpty(value)) {
+        if (!Utils.isEmptyString(value)) {
             return;
         }
         String oldValue = prefs.getString(prefKey, defValue);
-        if (!TextUtils.isEmpty(oldValue)) {
+        if (!Utils.isEmptyString(oldValue)) {
             dbHelper.insertOrReplaceKeyValue(dbKey, oldValue);
             prefs.edit().remove(prefKey).apply();
         }

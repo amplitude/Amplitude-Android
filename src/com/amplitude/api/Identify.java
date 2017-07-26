@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.text.TextUtils;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -958,7 +956,7 @@ public class Identify {
 
 
     private void addToUserProperties(String operation, String property, Object value) {
-        if (TextUtils.isEmpty(property)) {
+        if (Utils.isEmptyString(property)) {
             AmplitudeLog.getLogger().w(TAG, String.format(
                "Attempting to perform operation %s with a null or empty string property, ignoring",
                 operation
