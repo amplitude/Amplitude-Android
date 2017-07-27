@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.text.TextUtils;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -84,7 +82,7 @@ public class Revenue {
      * @return the same Revenue object
      */
     public Revenue setProductId(String productId) {
-        if (TextUtils.isEmpty(productId)) {
+        if (Utils.isEmptyString(productId)) {
             logger.w(TAG, "Invalid empty productId");
             return this;
         }

@@ -2,11 +2,11 @@ package com.amplitude.unity.plugins;
 
 import android.app.Application;
 import android.content.Context;
-import android.text.TextUtils;
 
 import com.amplitude.api.Amplitude;
 import com.amplitude.api.Identify;
 import com.amplitude.api.Revenue;
+import com.amplitude.api.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -79,16 +79,16 @@ public class AmplitudePlugin {
 
     public static void logRevenue(String productId, int quantity, double price, String receipt, String receiptSignature, String revenueType, String jsonProperties) {
         Revenue revenue = new Revenue().setQuantity(quantity).setPrice(price);
-        if (!TextUtils.isEmpty(productId)) {
+        if (!Utils.isEmptyString(productId)) {
             revenue.setProductId(productId);
         }
-        if (!TextUtils.isEmpty(receipt) && !TextUtils.isEmpty(receiptSignature)) {
+        if (!Utils.isEmptyString(receipt) && !Utils.isEmptyString(receiptSignature)) {
             revenue.setReceipt(receipt, receiptSignature);
         }
-        if (!TextUtils.isEmpty(revenueType)) {
+        if (!Utils.isEmptyString(revenueType)) {
             revenue.setRevenueType(revenueType);
         }
-        if (!TextUtils.isEmpty(jsonProperties)) {
+        if (!Utils.isEmptyString(jsonProperties)) {
             revenue.setEventProperties(ToJSONObject(jsonProperties));
         }
         Amplitude.getInstance().logRevenueV2(revenue);

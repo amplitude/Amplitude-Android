@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,7 +68,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private static String getDatabaseName(String instance) {
-        return (TextUtils.isEmpty(instance) || instance.equals(Constants.DEFAULT_INSTANCE)) ? Constants.DATABASE_NAME : Constants.DATABASE_NAME + "_" + instance;
+        return (Utils.isEmptyString(instance) || instance.equals(Constants.DEFAULT_INSTANCE)) ? Constants.DATABASE_NAME : Constants.DATABASE_NAME + "_" + instance;
     }
 
     protected DatabaseHelper(Context context) {
@@ -291,7 +290,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
                 String event = cursor.getString(1);
-                if (TextUtils.isEmpty(event)) {
+                if (Utils.isEmptyString(event)) {
                     continue;
                 }
 
@@ -472,7 +471,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
      */
     private static void convertIfCursorWindowException(RuntimeException e) {
         String message = e.getMessage();
-        if (!TextUtils.isEmpty(message) && message.startsWith("Cursor window allocation of")) {
+        if (!Utils.isEmptyString(message) && message.startsWith("Cursor window allocation of")) {
             throw new CursorWindowAllocationException(message);
         } else {
             throw e;

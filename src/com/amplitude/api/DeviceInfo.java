@@ -11,7 +11,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -118,12 +117,12 @@ public class DeviceInfo {
             // Prioritize reverse geocode, but until we have a result from that,
             // we try to grab the country from the network, and finally the locale
             String country = getCountryFromLocation();
-            if (!TextUtils.isEmpty(country)) {
+            if (!Utils.isEmptyString(country)) {
                 return country;
             }
 
             country = getCountryFromNetwork();
-            if (!TextUtils.isEmpty(country)) {
+            if (!Utils.isEmptyString(country)) {
                 return country;
             }
             return getCountryFromLocale();
