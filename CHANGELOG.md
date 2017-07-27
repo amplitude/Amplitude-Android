@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.14.1 (July 27, 2017)
+
 * Switch to an internal implementation of `isEmptyString` instead of Android TextUtils.
 
 ## 2.14.0 (July 05, 2017)
