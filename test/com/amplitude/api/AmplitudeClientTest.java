@@ -10,16 +10,23 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
 
@@ -1518,5 +1525,34 @@ public class AmplitudeClientTest extends BaseTest {
         JSONArray events = getEventsFromRequest(request);
         assertEquals(events.length(), 1);
         assertEquals(events.optJSONObject(0).optString("event_type"), "test event");
+    }
+
+    @Test
+    @PrepareForTest(OkHttpClient.class)
+    public void testHandleUploadExceptions() throws Exception {
+        ShadowLooper logLooper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        IOException error = new IOException("test IO Exception");
+
+        // mock out client
+        OkHttpClient oldClient = amplitude.httpClient;
+        OkHttpClient mockClient = PowerMockito.mock(OkHttpClient.class);
+
+        // need to have mock client return mock call that throws exception
+        Call mockCall = PowerMockito.mock(Call.class);
+        PowerMockito.when(mockCall.execute()).thenThrow(error);
+        PowerMockito.when(mockClient.newCall(Matchers.any(Request.class))).thenReturn(mockCall);
+
+        // attach mock client to amplitude
+        amplitude.httpClient = mockClient;
+        amplitude.logEvent("test event");
+        logLooper.runToEndOfTasks();
+        logLooper.runToEndOfTasks();
+        httpLooper.runToEndOfTasks();
+
+        assertEquals(amplitude.lastError, error);
+
+        // restore old client
+        amplitude.httpClient = oldClient;
     }
 }
