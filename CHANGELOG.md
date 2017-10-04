@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Updating to latest version of OkHttp3 ([3.9.0](https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-390))
+
 ## 2.14.1 (July 27, 2017)
 
 * Switch to an internal implementation of `isEmptyString` instead of Android TextUtils.
