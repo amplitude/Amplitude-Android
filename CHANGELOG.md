@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Expose a public `getUserPropertyOperations` method on the `Identify` class.
+
 ## 2.15.0 (October 04, 2017)
 
 * Updating to latest version of OkHttp3 ([3.9.0](https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-390))
