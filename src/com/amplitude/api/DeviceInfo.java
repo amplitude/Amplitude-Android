@@ -156,6 +156,9 @@ public class DeviceInfo {
                     // failed to fetch geocoder
                 } catch (IllegalArgumentException e) {
                     // Bad lat / lon values can cause Geocoder to throw IllegalArgumentExceptions
+                } catch (IllegalStateException e) {
+                    // sometimes the location manager service can be unbound
+                    System.out.println("blah");
                 }
             }
             return null;
