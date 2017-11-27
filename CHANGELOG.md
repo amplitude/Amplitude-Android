@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.16.0 (November 27, 2017)
+
 * Expose a public `getUserPropertiesOperations` method on the `Identify` class.
 * Handle exceptions when the LocationManager is not available for fetching location.
 
