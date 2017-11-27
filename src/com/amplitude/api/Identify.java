@@ -1101,7 +1101,7 @@ public class Identify {
     }
 
     /**
-     * Public method that exposes the
+     * Public method that exposes the user property operations JSON blob.
       * @return a copy of the User Property Operations JSONObject. If copying fails, returns
      *      an empty JSONObject
      */
