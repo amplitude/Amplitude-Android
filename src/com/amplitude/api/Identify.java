@@ -1099,4 +1099,18 @@ public class Identify {
         );
         return this;
     }
+
+    /**
+     * Public method that exposes the user property operations JSON blob.
+      * @return a copy of the User Property Operations JSONObject. If copying fails, returns
+     *      an empty JSONObject
+     */
+    public JSONObject getUserPropertiesOperations() {
+        try {
+            return new JSONObject(userPropertiesOperations.toString());
+        } catch (JSONException e) {
+            AmplitudeLog.getLogger().e(TAG, e.toString());
+        }
+        return new JSONObject();
+    }
 }
