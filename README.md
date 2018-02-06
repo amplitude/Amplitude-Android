@@ -7,7 +7,7 @@ An Android SDK for tracking events and revenue to [Amplitude](https://www.amplit
 Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/articles/115002935588-Android-SDK-Installation) for instructions on installing and using our Android SDK.
 
 # Latest Version #
-[2.17.0 - Released on November 27, 2017](https://github.com/amplitude/Amplitude-Android/releases/latest)
+[2.18.0 - Released on February 5, 2018](https://github.com/amplitude/Amplitude-Android/releases/latest)
 [![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
 
 # Android SDK Reference #
