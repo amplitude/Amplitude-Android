@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 2.17.0 (February 05, 2018)
+
+* Add ability to specify a custom `platform` value during initialization as an input argument. If the value is `null` or an empty string then `platform` will default to `Android`.
+
 ## 2.16.0 (November 27, 2017)
 
 * Expose a public `getUserPropertiesOperations` method on the `Identify` class.
