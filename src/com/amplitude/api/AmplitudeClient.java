@@ -120,6 +120,10 @@ public class AmplitudeClient {
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
+    /**
+     * The device's Platform value.
+     */
+    protected String platform;
 
     /**
      * Event metadata
@@ -212,7 +216,22 @@ public class AmplitudeClient {
      * @param userId  the user id to set
      * @return the AmplitudeClient
      */
-    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId) {
+    public AmplitudeClient initialize(Context context, String apiKey, String userId) {
+        return initialize(context, apiKey, userId, null);
+    }
+
+    /**
+     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
+     * key, a user ID for the current user, and a custom platform value.
+     * <b>Note:</b> initialization is required before you log events and modify user properties.
+     *
+     * @param context the Android application context
+     * @param apiKey  your Amplitude App API key
+     * @param userId  the user id to set
+     * @param
+     * @return the AmplitudeClient
+     */
+    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
@@ -226,6 +245,7 @@ public class AmplitudeClient {
         this.context = context.getApplicationContext();
         this.apiKey = apiKey;
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
+        this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -897,7 +917,7 @@ public class AmplitudeClient {
             event.put("carrier", replaceWithJSONNull(deviceInfo.getCarrier()));
             event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
-            event.put("platform", Constants.PLATFORM);
+            event.put("platform", platform);
             event.put("uuid", UUID.randomUUID().toString());
             event.put("sequence_number", getNextSequenceNumber());
 

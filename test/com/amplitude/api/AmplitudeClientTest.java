@@ -1555,4 +1555,63 @@ public class AmplitudeClientTest extends BaseTest {
         // restore old client
         amplitude.httpClient = oldClient;
     }
+
+    @Test
+    public void testDefaultPlatform() throws InterruptedException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        assertEquals(amplitude.platform, Constants.PLATFORM);
+
+        amplitude.logEvent("test_event1");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        JSONArray events = getUnsentEvents(1);
+        for (int i = 0; i < 1; i++) {
+            assertEquals(events.optJSONObject(i).optString("event_type"), "test_event" + (i+1));
+            assertEquals(events.optJSONObject(i).optLong("timestamp"), timestamps[i]);
+            assertEquals(events.optJSONObject(i).optString("platform"), Constants.PLATFORM);
+        }
+        runRequest(amplitude);
+    }
+
+    @Test
+    public void testOverridePlatform() throws InterruptedException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        String customPlatform = "test_custom_platform";
+
+        // force re-initialize to override platform
+        amplitude.initialized = false;
+        amplitude.initialize(context, apiKey, null, customPlatform);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        assertEquals(amplitude.platform, customPlatform);
+
+        amplitude.logEvent("test_event1");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
+        JSONArray events = getUnsentEvents(1);
+        for (int i = 0; i < 1; i++) {
+            assertEquals(events.optJSONObject(i).optString("event_type"), "test_event" + (i+1));
+            assertEquals(events.optJSONObject(i).optLong("timestamp"), timestamps[i]);
+            assertEquals(events.optJSONObject(i).optString("platform"), customPlatform);
+        }
+        runRequest(amplitude);
+    }
 }
