@@ -1535,25 +1535,25 @@ public class AmplitudeClient {
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
-            if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
-                return;
-            }
+                if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
+                    return;
+                }
 
-            // end previous session
-            if (trackingSessionEvents) {
-                sendSessionEvent(END_SESSION_EVENT);
-            }
+                // end previous session
+                if (trackingSessionEvents) {
+                    sendSessionEvent(END_SESSION_EVENT);
+                }
 
-            client.userId = userId;
-            dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+                client.userId = userId;
+                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
 
-            // start new session
-            long timestamp = getCurrentTimeMillis();
-            setSessionId(timestamp);
-            refreshSessionTime(timestamp);
-            if (trackingSessionEvents) {
-                sendSessionEvent(START_SESSION_EVENT);
-            }
+                // start new session
+                long timestamp = getCurrentTimeMillis();
+                setSessionId(timestamp);
+                refreshSessionTime(timestamp);
+                if (trackingSessionEvents) {
+                    sendSessionEvent(START_SESSION_EVENT);
+                }
             }
         });
         return this;
