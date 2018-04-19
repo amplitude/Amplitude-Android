@@ -1501,32 +1501,18 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient setUserId(final String userId) {
-        if (!contextAndApiKeySet("setUserId()")) {
-            return this;
-        }
-
-        final AmplitudeClient client = this;
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
-                    return;
-                }
-                client.userId = userId;
-                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
-            }
-        });
-        return this;
+        return setUserId(userId, false);
     }
 
     /**
-     * Sets the user id (can be null). Ends the session for the previous user and starts a new
+     * Sets the user id (can be null).
+     * If startNewSession is true, ends the session for the previous user and starts a new
      * session for the new user id.
      *
      * @param userId the user id
      * @return the AmplitudeClient
      */
-    public AmplitudeClient setUserIdAndStartNewSession(final String userId) {
+    public AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
         }
@@ -1540,7 +1526,7 @@ public class AmplitudeClient {
                 }
 
                 // end previous session
-                if (trackingSessionEvents) {
+                if (startNewSession && trackingSessionEvents) {
                     sendSessionEvent(END_SESSION_EVENT);
                 }
 
@@ -1548,11 +1534,13 @@ public class AmplitudeClient {
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
 
                 // start new session
-                long timestamp = getCurrentTimeMillis();
-                setSessionId(timestamp);
-                refreshSessionTime(timestamp);
-                if (trackingSessionEvents) {
-                    sendSessionEvent(START_SESSION_EVENT);
+                if (startNewSession) {
+                    long timestamp = getCurrentTimeMillis();
+                    setSessionId(timestamp);
+                    refreshSessionTime(timestamp);
+                    if (trackingSessionEvents) {
+                        sendSessionEvent(START_SESSION_EVENT);
+                    }
                 }
             }
         });

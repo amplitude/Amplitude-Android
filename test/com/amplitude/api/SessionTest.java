@@ -1005,7 +1005,7 @@ public class SessionTest extends BaseTest {
         assertEquals(getUnsentEventCount(), 2);
 
         // set user id and validate session ended and new session started
-        amplitude.setUserIdAndStartNewSession("test_new_user");
+        amplitude.setUserId("test_new_user", true);
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         // total of 4 events, start session, test event, end session, start session
