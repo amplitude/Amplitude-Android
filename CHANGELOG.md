@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 2.18.0 (April 19, 2018)
+
+* Added a `setUserId` method with optional boolean argument `startNewSession`, which when `true` starts a new session after changing the userId.
+
 ## 2.17.0 (February 05, 2018)
 
 * Add ability to specify a custom `platform` value during initialization as an input argument. If the value is `null` or an empty string then `platform` will default to `Android`.
