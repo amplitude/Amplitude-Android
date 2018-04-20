@@ -1501,6 +1501,18 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient setUserId(final String userId) {
+        return setUserId(userId, false);
+    }
+
+    /**
+     * Sets the user id (can be null).
+     * If startNewSession is true, ends the session for the previous user and starts a new
+     * session for the new user id.
+     *
+     * @param userId the user id
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
         }
@@ -1512,8 +1524,24 @@ public class AmplitudeClient {
                 if (Utils.isEmptyString(client.apiKey)) {  // in case initialization failed
                     return;
                 }
+
+                // end previous session
+                if (startNewSession && trackingSessionEvents) {
+                    sendSessionEvent(END_SESSION_EVENT);
+                }
+
                 client.userId = userId;
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+
+                // start new session
+                if (startNewSession) {
+                    long timestamp = getCurrentTimeMillis();
+                    setSessionId(timestamp);
+                    refreshSessionTime(timestamp);
+                    if (trackingSessionEvents) {
+                        sendSessionEvent(START_SESSION_EVENT);
+                    }
+                }
             }
         });
         return this;

@@ -992,4 +992,139 @@ public class SessionTest extends BaseTest {
             identifies.getJSONObject(0).getJSONObject("user_properties"), expected
         ));
     }
+
+    @Test
+    public void testSetUserIdAndStartNewSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+
+        long timestamp = System.currentTimeMillis();
+        amplitude.logEventAsync("test", null, null, null, null, timestamp, false);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        // set user id and validate session ended and new session started
+        amplitude.setUserId("test_new_user", true);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // total of 4 events, start session, test event, end session, start session
+        assertEquals(getUnsentEventCount(), 4);
+        JSONArray events = getUnsentEvents(4);
+
+        // verify pre setUserId events
+        JSONObject session_event = events.optJSONObject(0);
+        JSONObject test_event = events.optJSONObject(1);
+        assertEquals(session_event.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(session_event.optString("user_id"), "null");
+        assertEquals(
+            session_event.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(session_event.optString("session_id"), String.valueOf(timestamp));
+
+        assertEquals(test_event.optString("event_type"), "test");
+        assertEquals(test_event.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(test_event.optString("user_id"), "null");
+
+        // verify post setUserId events
+        session_event = events.optJSONObject(2);
+        assertEquals(session_event.optString("event_type"), AmplitudeClient.END_SESSION_EVENT);
+        assertEquals(session_event.optString("user_id"), "null");
+        assertEquals(
+            session_event.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.END_SESSION_EVENT
+        );
+        assertEquals(session_event.optString("session_id"), String.valueOf(timestamp));
+
+        session_event = events.optJSONObject(3);
+        assertEquals(session_event.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(session_event.optString("user_id"), "test_new_user");
+        assertEquals(
+            session_event.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+
+        // the new event should have a newer session id
+        assertTrue(session_event.optLong("session_id") > timestamp);
+    }
+
+    @Test
+    public void testSetUserIdAndDoNotStartNewSessionWithTracking() {
+        amplitude.trackSessionEvents(true);
+
+        long timestamp = System.currentTimeMillis();
+        amplitude.logEventAsync("test", null, null, null, null, timestamp, false);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // trackSessions is true, start_session event is added
+        assertEquals(getUnsentEventCount(), 2);
+
+        // set user id and validate session ended and new session started
+        amplitude.setUserId("test_new_user", false);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // still only 2 events, start session, test event
+        assertEquals(getUnsentEventCount(), 2);
+        JSONArray events = getUnsentEvents(2);
+
+        // verify pre setUserId events
+        JSONObject session_event = events.optJSONObject(0);
+        JSONObject test_event = events.optJSONObject(1);
+        assertEquals(session_event.optString("event_type"), AmplitudeClient.START_SESSION_EVENT);
+        assertEquals(session_event.optString("user_id"), "null");
+        assertEquals(
+            session_event.optJSONObject("api_properties").optString("special"),
+            AmplitudeClient.START_SESSION_EVENT
+        );
+        assertEquals(session_event.optString("session_id"), String.valueOf(timestamp));
+
+        assertEquals(test_event.optString("event_type"), "test");
+        assertEquals(test_event.optString("session_id"), String.valueOf(timestamp));
+        assertEquals(test_event.optString("user_id"), "null");
+
+        // verify same session id
+        assertEquals(amplitude.sessionId, timestamp);
+    }
+
+    @Test
+    public void testSetUserIdAndStartNewSessionWithoutTracking() {
+        amplitude.trackSessionEvents(false);
+
+        long timestamp = System.currentTimeMillis();
+        amplitude.logEventAsync("test", null, null, null, null, timestamp, false);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // trackSessions is false, there should only be 1 event
+        assertEquals(getUnsentEventCount(), 1);
+
+        // set user id and validate session ended and new session started
+        amplitude.setUserId("test_new_user", true);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // still only 1 event1, test event
+        assertEquals(getUnsentEventCount(), 1);
+        JSONArray events = getUnsentEvents(1);
+
+        // verify pre setUserId events
+        JSONObject session_event = events.optJSONObject(0);
+        assertEquals(session_event.optString("event_type"), "test");
+        assertEquals(session_event.optString("user_id"), "null");
+        assertEquals(session_event.optString("session_id"), String.valueOf(timestamp));
+
+        // log an event with new user id and session
+        amplitude.logEventAsync("test", null, null, null, null, timestamp, false);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+        // verify post set user id
+        assertEquals(getUnsentEventCount(), 2);
+        JSONObject test_event = getLastEvent();
+        assertEquals(test_event.optString("event_type"), "test");
+        assertEquals(test_event.optString("user_id"), "test_new_user");
+        assertEquals(test_event.optLong("session_id"), amplitude.sessionId);
+
+        // there should be a new session id at least
+        assertTrue(amplitude.sessionId > timestamp);
+        assertTrue(test_event.optLong("session_id") > timestamp);
+    }
 }
