@@ -18,7 +18,7 @@ public class Constants {
     public static final String DEFAULT_INSTANCE = "$default_instance";
 
     public static final int EVENT_UPLOAD_THRESHOLD = 30;
-    public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 100;
+    public static final int EVENT_UPLOAD_MAX_BATCH_SIZE = 50;
     public static final int EVENT_MAX_COUNT = 1000;
     public static final int EVENT_REMOVE_BATCH_SIZE = 20;
     public static final long EVENT_UPLOAD_PERIOD_MILLIS = 30 * 1000; // 30s
