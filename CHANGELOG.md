@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Updating to [OkHttp 3.10.0](https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3100)
 * Lowering event upload max batch size from 100 to 50. This should help to avoid out of memory issues on Android devices with low memory.
 
 ## 2.18.0 (April 19, 2018)
