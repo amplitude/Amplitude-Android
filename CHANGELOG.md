@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Lowering event upload max batch size from 100 to 50. This should help to avoid out of memory issues on Android devices with low memory.
+
 ## 2.18.0 (April 19, 2018)
 
 * Added a `setUserId` method with optional boolean argument `startNewSession`, which when `true` starts a new session after changing the userId.
