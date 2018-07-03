@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Catch SecurityExceptions thrown during fetching of Google Advertising ID. This is caused by older versions of Google Play Services using `MODE_WORLD_READABLE` when reading from SharedPreferences. If you see this warning you should update your version of Google Play Services.
+
 ## 2.18.1 (May 07, 2018)
 
 * Updating to [OkHttp 3.10.0](https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3100)
