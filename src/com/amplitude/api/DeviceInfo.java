@@ -224,6 +224,8 @@ public class DeviceInfo {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
             } catch (InvocationTargetException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+            } catch (SecurityException e) {
+                AmplitudeLog.getLogger().w(TAG, "Please update Google Play Services version");
             } catch (Exception e) {
                 AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services", e);
             }
