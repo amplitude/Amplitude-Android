@@ -104,6 +104,8 @@ public class AmplitudePlugin {
         Amplitude.getInstance().trackSessionEvents(enabled);
     }
 
+    public static long getSessionId() { return Amplitude.getInstance().getSessionId(); }
+
     // User Property Operations
 
     // clear user properties
