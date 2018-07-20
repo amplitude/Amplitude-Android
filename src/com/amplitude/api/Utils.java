@@ -24,6 +24,10 @@ public class Utils {
             return null;
         }
 
+        if (obj.length() == 0) {
+            return new JSONObject();
+        }
+
         // obj.names returns null if the json obj is empty.
         JSONArray nameArray = null;
         try {

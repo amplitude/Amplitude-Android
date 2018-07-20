@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,5 +51,17 @@ public class TrackingOptionsTest extends BaseTest {
         assertTrue(options.shouldTrackPlatform());
         assertTrue(options.shouldTrackRegion());
         assertTrue(options.shouldTrackVersionName());
+    }
+
+    @Test
+    public void testGetApiPropertiesTrackingOptions() throws JSONException {
+        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage();
+
+        JSONObject expectedOptions = new JSONObject();
+        expectedOptions.put("city", false);
+        expectedOptions.put("country", false);
+        expectedOptions.put("ip_address", false);
+
+        assertTrue(Utils.compareJSONObjects(options.getApiPropertiesTrackingOptions(), expectedOptions));
     }
 }
