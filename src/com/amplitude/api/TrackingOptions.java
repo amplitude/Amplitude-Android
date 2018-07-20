@@ -13,12 +13,22 @@ public class TrackingOptions {
         Constants.AMP_TRACKING_OPTION_COUNTRY,
         Constants.AMP_TRACKING_OPTION_DMA,
         Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
+        Constants.AMP_TRACKING_OPTION_LAT_LON,
         Constants.AMP_TRACKING_OPTION_REGION,
     };
 
     public static final String TAG = "com.amplitude.api.TrackingOptions";
 
     Set<String> disabledProperties = new HashSet<String>();
+
+    public TrackingOptions disableAdid() {
+        disableTrackingField(Constants.AMP_TRACKING_OPTION_ADID);
+        return this;
+    }
+
+    boolean shouldTrackAdid() {
+        return shouldTrackField(Constants.AMP_TRACKING_OPTION_ADID);
+    }
 
     public TrackingOptions disableCarrier() {
         disableTrackingField(Constants.AMP_TRACKING_OPTION_CARRIER);
@@ -99,6 +109,15 @@ public class TrackingOptions {
 
     boolean shouldTrackLanguage() {
         return shouldTrackField(Constants.AMP_TRACKING_OPTION_LANGUAGE);
+    }
+
+    public TrackingOptions disableLatLon() {
+        disableTrackingField(Constants.AMP_TRACKING_OPTION_LAT_LON);
+        return this;
+    }
+
+    boolean shouldTrackLatLon() {
+        return shouldTrackField(Constants.AMP_TRACKING_OPTION_LAT_LON);
     }
 
     public TrackingOptions disableOsName() {

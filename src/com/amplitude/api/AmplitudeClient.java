@@ -965,14 +965,17 @@ public class AmplitudeClient {
             if (apiPropertiesTrackingOptionsCopy.length() > 0) {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptionsCopy);
             }
-            Location location = deviceInfo.getMostRecentLocation();
-            if (location != null) {
-                JSONObject locationJSON = new JSONObject();
-                locationJSON.put("lat", location.getLatitude());
-                locationJSON.put("lng", location.getLongitude());
-                apiProperties.put("location", locationJSON);
+
+            if (trackingOptions.shouldTrackLatLon()) {
+                Location location = deviceInfo.getMostRecentLocation();
+                if (location != null) {
+                    JSONObject locationJSON = new JSONObject();
+                    locationJSON.put("lat", location.getLatitude());
+                    locationJSON.put("lng", location.getLongitude());
+                    apiProperties.put("location", locationJSON);
+                }
             }
-            if (deviceInfo.getAdvertisingId() != null) {
+            if (trackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
