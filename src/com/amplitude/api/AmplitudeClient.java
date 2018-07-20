@@ -961,9 +961,8 @@ public class AmplitudeClient {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            JSONObject apiPropertiesTrackingOptionsCopy = Utils.cloneJSONObject(apiPropertiesTrackingOptions);
-            if (apiPropertiesTrackingOptionsCopy.length() > 0) {
-                apiProperties.put("tracking_options", apiPropertiesTrackingOptionsCopy);
+            if (apiPropertiesTrackingOptions.length() > 0) {
+                apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
             }
 
             if (trackingOptions.shouldTrackLatLon()) {
