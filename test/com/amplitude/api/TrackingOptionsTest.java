@@ -36,7 +36,7 @@ public class TrackingOptionsTest extends BaseTest {
         expectedDisabledFields.add("ip_address");
         expectedDisabledFields.add("language");
 
-        assertEquals(options.disabledProperties, expectedDisabledFields);
+        assertEquals(options.disabledFields, expectedDisabledFields);
         assertTrue(options.shouldTrackCarrier());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackCountry());

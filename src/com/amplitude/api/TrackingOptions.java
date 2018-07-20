@@ -19,7 +19,7 @@ public class TrackingOptions {
 
     public static final String TAG = "com.amplitude.api.TrackingOptions";
 
-    Set<String> disabledProperties = new HashSet<String>();
+    Set<String> disabledFields = new HashSet<String>();
 
     public TrackingOptions disableAdid() {
         disableTrackingField(Constants.AMP_TRACKING_OPTION_ADID);
@@ -165,18 +165,18 @@ public class TrackingOptions {
         return shouldTrackField(Constants.AMP_TRACKING_OPTION_VERSION_NAME);
     }
 
-    private void disableTrackingField(String key) {
-        disabledProperties.add(key);
+    private void disableTrackingField(String field) {
+        disabledFields.add(field);
     }
 
     protected JSONObject getApiPropertiesTrackingOptions() {
         JSONObject apiPropertiesTrackingOptions = new JSONObject();
-        if (disabledProperties.size() == 0) {
+        if (disabledFields.size() == 0) {
             return apiPropertiesTrackingOptions;
         }
 
         for (String key : SERVER_SIDE_PROPERTIES) {
-            if (disabledProperties.contains(key)) {
+            if (disabledFields.contains(key)) {
                 try {
                     apiPropertiesTrackingOptions.put(key, false);
                 } catch (JSONException e) {
@@ -188,6 +188,6 @@ public class TrackingOptions {
     }
 
     private boolean shouldTrackField(String field) {
-        return !disabledProperties.contains(field);
+        return !disabledFields.contains(field);
     }
 }
