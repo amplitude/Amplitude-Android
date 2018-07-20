@@ -120,8 +120,8 @@ public class AmplitudeClient {
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
-    private TrackingOptions trackingOptions = new TrackingOptions();
-    private JSONObject apiPropertiesTrackingOptions = new JSONObject();
+    TrackingOptions trackingOptions = new TrackingOptions();
+    JSONObject apiPropertiesTrackingOptions = new JSONObject();
     /**
      * The device's Platform value.
      */
