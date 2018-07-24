@@ -171,7 +171,7 @@ public class TrackingOptions {
 
     protected JSONObject getApiPropertiesTrackingOptions() {
         JSONObject apiPropertiesTrackingOptions = new JSONObject();
-        if (disabledFields.size() == 0) {
+        if (disabledFields.isEmpty()) {
             return apiPropertiesTrackingOptions;
         }
 
