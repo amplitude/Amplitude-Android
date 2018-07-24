@@ -28,13 +28,14 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testDisableFields() {
-        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage();
+        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage().disableLatLng();
 
         Set<String> expectedDisabledFields = new HashSet<String>();
         expectedDisabledFields.add("city");
         expectedDisabledFields.add("country");
         expectedDisabledFields.add("ip_address");
         expectedDisabledFields.add("language");
+        expectedDisabledFields.add("lat_lng");
 
         assertEquals(options.disabledFields, expectedDisabledFields);
         assertTrue(options.shouldTrackCarrier());
@@ -46,6 +47,7 @@ public class TrackingOptionsTest extends BaseTest {
         assertTrue(options.shouldTrackDma());
         assertFalse(options.shouldTrackIpAddress());
         assertFalse(options.shouldTrackLanguage());
+        assertFalse(options.shouldTrackLatLng());
         assertTrue(options.shouldTrackOsName());
         assertTrue(options.shouldTrackOsVersion());
         assertTrue(options.shouldTrackPlatform());
@@ -55,12 +57,13 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testGetApiPropertiesTrackingOptions() throws JSONException {
-        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage();
+        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage().disableLatLng();
 
         JSONObject expectedOptions = new JSONObject();
         expectedOptions.put("city", false);
         expectedOptions.put("country", false);
         expectedOptions.put("ip_address", false);
+        expectedOptions.put("lat_lng", false);
 
         assertTrue(Utils.compareJSONObjects(options.getApiPropertiesTrackingOptions(), expectedOptions));
     }

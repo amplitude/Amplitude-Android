@@ -1624,12 +1624,16 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
-        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage();
+        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage().disableLatLng();
         amplitude.setTrackingOptions(options);
 
         assertEquals(amplitude.trackingOptions, options);
         assertTrue(Utils.compareJSONObjects(amplitude.apiPropertiesTrackingOptions, options.getApiPropertiesTrackingOptions()));
         assertFalse(amplitude.trackingOptions.shouldTrackCity());
+        assertFalse(amplitude.trackingOptions.shouldTrackCountry());
+        assertFalse(amplitude.trackingOptions.shouldTrackIpAddress());
+        assertFalse(amplitude.trackingOptions.shouldTrackLanguage());
+        assertFalse(amplitude.trackingOptions.shouldTrackLatLng());
 
         amplitude.logEvent("test event");
         looper.runToEndOfTasks();
@@ -1655,9 +1659,10 @@ public class AmplitudeClientTest extends BaseTest {
         assertTrue(apiProperties.has("tracking_options"));
 
         JSONObject trackingOptions = apiProperties.getJSONObject("tracking_options");
-        assertEquals(trackingOptions.length(), 3);
+        assertEquals(trackingOptions.length(), 4);
         assertFalse(trackingOptions.getBoolean("city"));
         assertFalse(trackingOptions.getBoolean("country"));
         assertFalse(trackingOptions.getBoolean("ip_address"));
+        assertFalse(trackingOptions.getBoolean("lat_lng"));
     }
 }

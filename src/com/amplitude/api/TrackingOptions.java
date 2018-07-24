@@ -13,7 +13,7 @@ public class TrackingOptions {
         Constants.AMP_TRACKING_OPTION_COUNTRY,
         Constants.AMP_TRACKING_OPTION_DMA,
         Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
-        Constants.AMP_TRACKING_OPTION_LAT_LON,
+        Constants.AMP_TRACKING_OPTION_LAT_LNG,
         Constants.AMP_TRACKING_OPTION_REGION,
     };
 
@@ -111,13 +111,13 @@ public class TrackingOptions {
         return shouldTrackField(Constants.AMP_TRACKING_OPTION_LANGUAGE);
     }
 
-    public TrackingOptions disableLatLon() {
-        disableTrackingField(Constants.AMP_TRACKING_OPTION_LAT_LON);
+    public TrackingOptions disableLatLng() {
+        disableTrackingField(Constants.AMP_TRACKING_OPTION_LAT_LNG);
         return this;
     }
 
-    boolean shouldTrackLatLon() {
-        return shouldTrackField(Constants.AMP_TRACKING_OPTION_LAT_LON);
+    boolean shouldTrackLatLng() {
+        return shouldTrackField(Constants.AMP_TRACKING_OPTION_LAT_LNG);
     }
 
     public TrackingOptions disableOsName() {

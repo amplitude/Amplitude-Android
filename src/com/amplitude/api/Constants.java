@@ -63,7 +63,7 @@ public class Constants {
     public static final String AMP_TRACKING_OPTION_DMA = "dma";
     public static final String AMP_TRACKING_OPTION_IP_ADDRESS = "ip_address";
     public static final String AMP_TRACKING_OPTION_LANGUAGE = "language";
-    public static final String AMP_TRACKING_OPTION_LAT_LON = "lat_lon";
+    public static final String AMP_TRACKING_OPTION_LAT_LNG = "lat_lng";
     public static final String AMP_TRACKING_OPTION_OS_NAME = "os_name";
     public static final String AMP_TRACKING_OPTION_OS_VERSION = "os_version";
     public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";

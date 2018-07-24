@@ -965,7 +965,7 @@ public class AmplitudeClient {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
             }
 
-            if (trackingOptions.shouldTrackLatLon()) {
+            if (trackingOptions.shouldTrackLatLng()) {
                 Location location = deviceInfo.getMostRecentLocation();
                 if (location != null) {
                     JSONObject locationJSON = new JSONObject();
