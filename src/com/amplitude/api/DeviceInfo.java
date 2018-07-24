@@ -218,8 +218,10 @@ public class DeviceInfo {
                         .invoke(advertisingInfo);
                 this.limitAdTrackingEnabled =
                         limitAdTrackingEnabled != null && limitAdTrackingEnabled;
-                Method getId = advertisingInfo.getClass().getMethod("getId");
-                advertisingId = (String) getId.invoke(advertisingInfo);
+                if (!this.limitAdTrackingEnabled) {
+                    Method getId = advertisingInfo.getClass().getMethod("getId");
+                    advertisingId = (String) getId.invoke(advertisingInfo);
+                }
             } catch (ClassNotFoundException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
             } catch (InvocationTargetException e) {

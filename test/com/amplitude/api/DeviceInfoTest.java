@@ -180,9 +180,27 @@ public class DeviceInfoTest {
         }
         DeviceInfo deviceInfo = new DeviceInfo(context);
 
-        // still get advertisingId even if limit ad tracking disabled
+        // still get advertisingId if limit ad tracking disabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
         assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+    }
+
+    @Test
+    public void testDontGetAdvertisingIdWIthLimitAdTrackingEnabled() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "advertisingId";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(advertisingId, true);
+
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+        DeviceInfo deviceInfo = new DeviceInfo(context);
+
+        // don't get advertisingId if limit ad tracking enabled
+        assertNull(deviceInfo.getAdvertisingId());
+        assertTrue(deviceInfo.isLimitAdTrackingEnabled());
     }
 
     @Test
