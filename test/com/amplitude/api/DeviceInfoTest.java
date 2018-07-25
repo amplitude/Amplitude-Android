@@ -24,6 +24,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
@@ -31,16 +32,22 @@ import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowGeocoder;
 import org.robolectric.shadows.ShadowLocationManager;
+import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowTelephonyManager;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.util.Locale;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 @RunWith(RobolectricTestRunner.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*" })
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "javax.net.ssl.*" })
 @PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest {
@@ -248,5 +255,58 @@ public class DeviceInfoTest {
         DeviceInfo deviceInfo = new DeviceInfo(context);
         Location recent = deviceInfo.getMostRecentLocation();
         assertNull(recent);
+    }
+
+    @Test
+    public void testUseAdvertisingIdAsDeviceId() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "advertisingId";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+            advertisingId,
+            false
+        );
+
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        AmplitudeClient client = Amplitude.getInstance("ADID");
+        client.useAdvertisingIdForDeviceId();
+        client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        assertEquals(advertisingId, client.getDeviceId());
+    }
+
+    @Test
+    public void testDontUseAdvertisingIdAsDeviceId() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "advertisingId";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+            advertisingId,
+            true
+        );
+
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        AmplitudeClient client = Amplitude.getInstance("NoADID");
+        client.useAdvertisingIdForDeviceId();
+        client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        assertNotEquals(advertisingId, client.getDeviceId());
+        assertTrue(client.getDeviceId().endsWith("R"));
     }
 }
