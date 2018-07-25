@@ -1614,4 +1614,55 @@ public class AmplitudeClientTest extends BaseTest {
         }
         runRequest(amplitude);
     }
+
+    @Test
+    public void testSetTrackingConfig() throws JSONException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        TrackingOptions options = new TrackingOptions().disableCity().disableCountry().disableIpAddress().disableLanguage().disableLatLng();
+        amplitude.setTrackingOptions(options);
+
+        assertEquals(amplitude.trackingOptions, options);
+        assertTrue(Utils.compareJSONObjects(amplitude.apiPropertiesTrackingOptions, options.getApiPropertiesTrackingOptions()));
+        assertFalse(amplitude.trackingOptions.shouldTrackCity());
+        assertFalse(amplitude.trackingOptions.shouldTrackCountry());
+        assertFalse(amplitude.trackingOptions.shouldTrackIpAddress());
+        assertFalse(amplitude.trackingOptions.shouldTrackLanguage());
+        assertFalse(amplitude.trackingOptions.shouldTrackLatLng());
+
+        amplitude.logEvent("test event");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        JSONArray events = getUnsentEvents(1);
+        assertEquals(events.length(), 1);
+        JSONObject event = events.getJSONObject(0);
+
+        // verify we do have platform and carrier since those were not filtered out
+        assertTrue(event.has("carrier"));
+        assertTrue(event.has("platform"));
+
+        // verify we do not have any of the filtered out fields
+        assertFalse(event.has("city"));
+        assertFalse(event.has("country"));
+        assertFalse(event.has("language"));
+
+        // verify api properties contains tracking options for location filtering
+        JSONObject apiProperties = event.getJSONObject("api_properties");
+        assertFalse(apiProperties.getBoolean("limit_ad_tracking"));
+        assertFalse(apiProperties.getBoolean("gps_enabled"));
+        assertTrue(apiProperties.has("tracking_options"));
+
+        JSONObject trackingOptions = apiProperties.getJSONObject("tracking_options");
+        assertEquals(trackingOptions.length(), 4);
+        assertFalse(trackingOptions.getBoolean("city"));
+        assertFalse(trackingOptions.getBoolean("country"));
+        assertFalse(trackingOptions.getBoolean("ip_address"));
+        assertFalse(trackingOptions.getBoolean("lat_lng"));
+    }
 }

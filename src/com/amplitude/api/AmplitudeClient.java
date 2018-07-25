@@ -120,6 +120,8 @@ public class AmplitudeClient {
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
+    TrackingOptions trackingOptions = new TrackingOptions();
+    JSONObject apiPropertiesTrackingOptions = new JSONObject();
     /**
      * The device's Platform value.
      */
@@ -462,6 +464,12 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setSessionTimeoutMillis(long sessionTimeoutMillis) {
         this.sessionTimeoutMillis = sessionTimeoutMillis;
+        return this;
+    }
+
+    public AmplitudeClient setTrackingOptions(TrackingOptions trackingOptions) {
+        this.trackingOptions = trackingOptions;
+        this.apiPropertiesTrackingOptions = trackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
@@ -830,7 +838,7 @@ public class AmplitudeClient {
      * @param outOfSession    the out of session
      */
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            final JSONObject apiProperties, JSONObject userProperties,
+            JSONObject apiProperties, JSONObject userProperties,
             JSONObject groups, final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
@@ -839,6 +847,10 @@ public class AmplitudeClient {
         // to hit concurrent access if the caller mutates deep in the object.
         if (eventProperties != null) {
             eventProperties = Utils.cloneJSONObject(eventProperties);
+        }
+
+        if (apiProperties != null) {
+            apiProperties = Utils.cloneJSONObject(apiProperties);
         }
 
         if (userProperties != null) {
@@ -850,6 +862,7 @@ public class AmplitudeClient {
         }
 
         final JSONObject copyEventProperties = eventProperties;
+        final JSONObject copyApiProperties = apiProperties;
         final JSONObject copyUserProperties = userProperties;
         final JSONObject copyGroups = groups;
         runOnLogThread(new Runnable() {
@@ -859,7 +872,7 @@ public class AmplitudeClient {
                     return;
                 }
                 logEvent(
-                    eventType, copyEventProperties, apiProperties,
+                    eventType, copyEventProperties, copyApiProperties,
                     copyUserProperties, copyGroups, timestamp, outOfSession
                 );
             }
@@ -908,18 +921,39 @@ public class AmplitudeClient {
             event.put("user_id", replaceWithJSONNull(userId));
             event.put("device_id", replaceWithJSONNull(deviceId));
             event.put("session_id", outOfSession ? -1 : sessionId);
-            event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
-            event.put("os_name", replaceWithJSONNull(deviceInfo.getOsName()));
-            event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
-            event.put("device_brand", replaceWithJSONNull(deviceInfo.getBrand()));
-            event.put("device_manufacturer", replaceWithJSONNull(deviceInfo.getManufacturer()));
-            event.put("device_model", replaceWithJSONNull(deviceInfo.getModel()));
-            event.put("carrier", replaceWithJSONNull(deviceInfo.getCarrier()));
-            event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
-            event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
-            event.put("platform", platform);
             event.put("uuid", UUID.randomUUID().toString());
             event.put("sequence_number", getNextSequenceNumber());
+
+            if (trackingOptions.shouldTrackVersionName()) {
+                event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
+            }
+            if (trackingOptions.shouldTrackOsName()) {
+                event.put("os_name", replaceWithJSONNull(deviceInfo.getOsName()));
+            }
+            if (trackingOptions.shouldTrackOsVersion()) {
+                event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
+            }
+            if (trackingOptions.shouldTrackDeviceBrand()) {
+                event.put("device_brand", replaceWithJSONNull(deviceInfo.getBrand()));
+            }
+            if (trackingOptions.shouldTrackDeviceManufacturer()) {
+                event.put("device_manufacturer", replaceWithJSONNull(deviceInfo.getManufacturer()));
+            }
+            if (trackingOptions.shouldTrackDeviceModel()) {
+                event.put("device_model", replaceWithJSONNull(deviceInfo.getModel()));
+            }
+            if (trackingOptions.shouldTrackCarrier()) {
+                event.put("carrier", replaceWithJSONNull(deviceInfo.getCarrier()));
+            }
+            if (trackingOptions.shouldTrackCountry()) {
+                event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
+            }
+            if (trackingOptions.shouldTrackLanguage()) {
+                event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
+            }
+            if (trackingOptions.shouldTrackPlatform()) {
+                event.put("platform", platform);
+            }
 
             JSONObject library = new JSONObject();
             library.put("name", Constants.LIBRARY);
@@ -927,14 +961,20 @@ public class AmplitudeClient {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            Location location = deviceInfo.getMostRecentLocation();
-            if (location != null) {
-                JSONObject locationJSON = new JSONObject();
-                locationJSON.put("lat", location.getLatitude());
-                locationJSON.put("lng", location.getLongitude());
-                apiProperties.put("location", locationJSON);
+            if (apiPropertiesTrackingOptions.length() > 0) {
+                apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
             }
-            if (deviceInfo.getAdvertisingId() != null) {
+
+            if (trackingOptions.shouldTrackLatLng()) {
+                Location location = deviceInfo.getMostRecentLocation();
+                if (location != null) {
+                    JSONObject locationJSON = new JSONObject();
+                    locationJSON.put("lat", location.getLatitude());
+                    locationJSON.put("lng", location.getLongitude());
+                    apiProperties.put("location", locationJSON);
+                }
+            }
+            if (trackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());

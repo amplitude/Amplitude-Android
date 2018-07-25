@@ -52,4 +52,21 @@ public class Constants {
     public static final String AMP_REVENUE_REVENUE_TYPE = "$revenueType";
     public static final String AMP_REVENUE_RECEIPT = "$receipt";
     public static final String AMP_REVENUE_RECEIPT_SIG = "$receiptSig";
+
+    public static final String AMP_TRACKING_OPTION_ADID = "adid";
+    public static final String AMP_TRACKING_OPTION_CARRIER = "carrier";
+    public static final String AMP_TRACKING_OPTION_CITY = "city";
+    public static final String AMP_TRACKING_OPTION_COUNTRY = "country";
+    public static final String AMP_TRACKING_OPTION_DEVICE_BRAND = "device_brand";
+    public static final String AMP_TRACKING_OPTION_DEVICE_MANUFACTURER = "device_manufacturer";
+    public static final String AMP_TRACKING_OPTION_DEVICE_MODEL = "device_model";
+    public static final String AMP_TRACKING_OPTION_DMA = "dma";
+    public static final String AMP_TRACKING_OPTION_IP_ADDRESS = "ip_address";
+    public static final String AMP_TRACKING_OPTION_LANGUAGE = "language";
+    public static final String AMP_TRACKING_OPTION_LAT_LNG = "lat_lng";
+    public static final String AMP_TRACKING_OPTION_OS_NAME = "os_name";
+    public static final String AMP_TRACKING_OPTION_OS_VERSION = "os_version";
+    public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";
+    public static final String AMP_TRACKING_OPTION_REGION = "region";
+    public static final String AMP_TRACKING_OPTION_VERSION_NAME = "version_name";
 }
