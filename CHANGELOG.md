@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 2.18.2 (July 24, 2018)
+
+* Use randomly generated device id if user has limitAdTracking enabled.
+
 ## 2.18.1 (May 07, 2018)
 
 * Updating to [OkHttp 3.10.0](https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3100)
