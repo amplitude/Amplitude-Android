@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add `TrackingOptions` interface to customize the automatic tracking of user properties in the SDK (such as language, ip_address, platform, etc). See [Help Center Documentation](https://amplitude.zendesk.com/hc/en-us/articles/115002935588#disable-automatic-tracking-of-properties) for instructions on setting up this configuration.
+
 ## 2.18.2 (July 24, 2018)
 
 * Use randomly generated device id if user has limitAdTracking enabled.
