@@ -131,17 +131,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    synchronized long insertOrReplaceKeyValue(String key, String value) {
+    synchronized long insertOrReplaceKeyValue(String key, String value) throws DatabaseResetException {
         return value == null ? deleteKeyFromTable(STORE_TABLE_NAME, key) :
             insertOrReplaceKeyValueToTable(STORE_TABLE_NAME, key, value);
     }
 
-    synchronized long insertOrReplaceKeyLongValue(String key, Long value) {
+    synchronized long insertOrReplaceKeyLongValue(String key, Long value) throws DatabaseResetException {
         return value == null ? deleteKeyFromTable(LONG_STORE_TABLE_NAME, key) :
             insertOrReplaceKeyValueToTable(LONG_STORE_TABLE_NAME, key, value);
     }
 
-    synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) {
+    synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) throws DatabaseResetException {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
@@ -162,79 +162,91 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 logger.w(TAG, "Insert failed");
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
+            String error = String.format("insertOrReplaceKeyValue in %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
+            String error = String.format("insertOrReplaceKeyValue in %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             close();
         }
         return result;
     }
 
-    synchronized long deleteKeyFromTable(String table, String key) {
+    synchronized long deleteKeyFromTable(String table, String key) throws DatabaseResetException {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
             result = db.delete(table, KEY_FIELD + "=?", new String[]{key});
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("deleteKey from %s failed", table), e);
+            String error = String.format("deleteKey from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("deleteKey from %s failed", table), e);
+            String error = String.format("deleteKey from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             close();
         }
         return result;
     }
 
-    synchronized long addEvent(String event) {
+    synchronized long addEvent(String event) throws DatabaseResetException {
         return addEventToTable(EVENT_TABLE_NAME, event);
     }
 
-    synchronized long addIdentify(String identifyEvent) {
+    synchronized long addIdentify(String identifyEvent) throws DatabaseResetException {
         return addEventToTable(IDENTIFY_TABLE_NAME, identifyEvent);
     }
 
-    private synchronized long addEventToTable(String table, String event) {
+    private synchronized long addEventToTable(String table, String event) throws DatabaseResetException {
         long result = -1;
         try {
             SQLiteDatabase db = getWritableDatabase();
-            ContentValues contentValues = new ContentValues();
+            ContentValues contentValues = new Co`ntentValues();
             contentValues.put(EVENT_FIELD, event);
             result = db.insert(table, null, contentValues);
             if (result == -1) {
                 logger.w(TAG, String.format("Insert into %s failed", table));
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("addEvent to %s failed", table), e);
+            String error = String.format("addEvent to %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("addEvent to %s failed", table), e);
+            String error = String.format("addEvent to %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             close();
         }
         return result;
     }
 
-    synchronized String getValue(String key) {
+    synchronized String getValue(String key) throws DatabaseResetException {
         return (String) getValueFromTable(STORE_TABLE_NAME, key);
     }
 
-    synchronized Long getLongValue(String key) {
+    synchronized Long getLongValue(String key) throws DatabaseResetException {
         return (Long) getValueFromTable(LONG_STORE_TABLE_NAME, key);
     }
 
-    protected synchronized Object getValueFromTable(String table, String key) {
+    protected synchronized Object getValueFromTable(String table, String key) throws DatabaseResetException {
         Object value = null;
         Cursor cursor = null;
         try {
@@ -247,13 +259,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 value = table.equals(STORE_TABLE_NAME) ? cursor.getString(1) : cursor.getLong(1);
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("getValue from %s failed", table), e);
+            String error =  String.format("getValue from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("getValue from %s failed", table), e);
+            String error =  String.format("getValue from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } catch (RuntimeException e) {
             convertIfCursorWindowException(e);
         } finally {
@@ -266,17 +282,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     synchronized List<JSONObject> getEvents(
-                                        long upToId, long limit) throws JSONException {
+                                        long upToId, long limit) throws JSONException, DatabaseResetException {
         return getEventsFromTable(EVENT_TABLE_NAME, upToId, limit);
     }
 
     synchronized List<JSONObject> getIdentifys(
-                                        long upToId, long limit) throws JSONException {
+                                        long upToId, long limit) throws JSONException, DatabaseResetException {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
 
     protected synchronized List<JSONObject> getEventsFromTable(
-                                    String table, long upToId, long limit) throws JSONException {
+                                    String table, long upToId, long limit) throws JSONException, DatabaseResetException {
         List<JSONObject> events = new LinkedList<JSONObject>();
         Cursor cursor = null;
         try {
@@ -299,13 +315,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 events.add(obj);
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("getEvents from %s failed", table), e);
+            String error = String.format("getEvents from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            String error = String.format("getEvents from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } catch (RuntimeException e) {
             convertIfCursorWindowException(e);
         } finally {
@@ -317,19 +337,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return events;
     }
 
-    synchronized long getEventCount() {
+    synchronized long getEventCount() throws DatabaseResetException {
         return getEventCountFromTable(EVENT_TABLE_NAME);
     }
 
-    synchronized long getIdentifyCount() {
+    synchronized long getIdentifyCount() throws DatabaseResetException {
         return getEventCountFromTable(IDENTIFY_TABLE_NAME);
     }
 
-    synchronized long getTotalEventCount() {
+    synchronized long getTotalEventCount() throws DatabaseResetException {
         return getEventCount() + getIdentifyCount();
     }
 
-    private synchronized long getEventCountFromTable(String table) {
+    private synchronized long getEventCountFromTable(String table) throws DatabaseResetException {
         long numberRows = 0;
         SQLiteStatement statement = null;
         try {
@@ -338,13 +358,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
             statement = db.compileStatement(query);
             numberRows = statement.simpleQueryForLong();
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
+            String error = String.format("getNumberRows for %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
+            String error = String.format("getNumberRows for %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -354,15 +378,15 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return numberRows;
     }
 
-    synchronized long getNthEventId(long n) {
+    synchronized long getNthEventId(long n) throws DatabaseResetException {
         return getNthEventIdFromTable(EVENT_TABLE_NAME, n);
     }
 
-    synchronized long getNthIdentifyId(long n) {
+    synchronized long getNthIdentifyId(long n) throws DatabaseResetException {
         return getNthEventIdFromTable(IDENTIFY_TABLE_NAME, n);
     }
 
-    private synchronized long getNthEventIdFromTable(String table, long n) {
+    private synchronized long getNthEventIdFromTable(String table, long n) throws DatabaseResetException {
         long nthEventId = -1;
         SQLiteStatement statement = null;
         try {
@@ -377,13 +401,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 logger.w(TAG, e);
             }
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("getNthEventId from %s failed", table), e);
+            String error = String.format("getNthEventId from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("getNthEventId from %s failed", table), e);
+            String error = String.format("getNthEventId from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -393,51 +421,59 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return nthEventId;
     }
 
-    synchronized void removeEvents(long maxId) {
+    synchronized void removeEvents(long maxId) throws DatabaseResetException {
         removeEventsFromTable(EVENT_TABLE_NAME, maxId);
     }
 
-    synchronized void removeIdentifys(long maxId) {
+    synchronized void removeIdentifys(long maxId) throws DatabaseResetException {
         removeEventsFromTable(IDENTIFY_TABLE_NAME, maxId);
     }
 
-    private synchronized void removeEventsFromTable(String table, long maxId) {
+    private synchronized void removeEventsFromTable(String table, long maxId) throws DatabaseResetException {
         try {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " <= " + maxId, null);
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("removeEvents from %s failed", table), e);
+            String error = String.format("removeEvents from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("removeEvents from %s failed", table), e);
+            String error = String.format("removeEvents from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             close();
         }
     }
 
-    synchronized void removeEvent(long id) {
+    synchronized void removeEvent(long id) throws DatabaseResetException {
         removeEventFromTable(EVENT_TABLE_NAME, id);
     }
 
-    synchronized void removeIdentify(long id) {
+    synchronized void removeIdentify(long id) throws DatabaseResetException {
         removeEventFromTable(IDENTIFY_TABLE_NAME, id);
     }
 
-    private synchronized void removeEventFromTable(String table, long id) {
+    private synchronized void removeEventFromTable(String table, long id) throws DatabaseResetException {
         try {
             SQLiteDatabase db = getWritableDatabase();
             db.delete(table, ID_FIELD + " = " + id, null);
         } catch (SQLiteException e) {
-            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            String error = String.format("removeEvent from %s failed", table);
+            logger.e(TAG, error, e);
             // Hard to recover from SQLiteExceptions, just start fresh
             delete();
+            throw new DatabaseResetException(error);
         } catch (StackOverflowError e) {
-            logger.e(TAG, String.format("removeEvent from %s failed", table), e);
+            String error = String.format("removeEvent from %s failed", table);
+            logger.e(TAG, error, e);
             // potential stack overflow error when getting database on custom Android versions
             delete();
+            throw new DatabaseResetException(error);
         } finally {
             close();
         }
