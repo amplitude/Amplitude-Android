@@ -269,7 +269,7 @@ public class AmplitudeClient {
                         } else {
                             client.userId = dbHelper.getValue(USER_ID_KEY);
                         }
-                        Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
+                        final Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
                         optOut = optOutLong != null && optOutLong == 1;
 
                         // try to restore previous session id
@@ -283,6 +283,18 @@ public class AmplitudeClient {
                         lastEventId = getLongvalue(LAST_EVENT_ID_KEY, -1);
                         lastIdentifyId = getLongvalue(LAST_IDENTIFY_ID_KEY, -1);
                         lastEventTime = getLongvalue(LAST_EVENT_TIME_KEY, -1);
+
+                        // install database reset listener to re-insert metadata in memory
+                        dbHelper.setDatabaseResetListener(new DatabaseResetListener() {
+                            @Override
+                            public void onDatabaseReset() {
+                                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+                                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, client.userId);
+                                dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
+                                dbHelper.insertOrReplaceKeyLongValue(PREVIOUS_SESSION_ID_KEY, sessionId);
+                                dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, lastEventTime);
+                            }
+                        });
 
                         initialized = true;
 

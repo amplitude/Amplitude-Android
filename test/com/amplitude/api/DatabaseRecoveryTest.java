@@ -18,6 +18,7 @@ import org.robolectric.shadows.ShadowLooper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 
@@ -80,18 +81,32 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertTrue(lastEventTime >= startTime);
         assertEquals(lastIdentifyId, -1);
 
-        // mock database to throw exception on insert to trigger recovery code
-        SQLiteDatabase actualDb = dbInstance.getWritableDatabase();
-        SQLiteDatabase mockDb = PowerMockito.spy(actualDb);
-        PowerMockito.doThrow(new SQLiteException("test")).when(mockDb).insert(anyString(), anyString(), Matchers.any(ContentValues.class));
+        // difficult to mock out the SQLiteDatabase object inside DatabaseHelper since it's private
+        // add helper method specifically for mocking / testing
         DatabaseHelper mockDbHelper = PowerMockito.spy(dbInstance);
-        PowerMockito.when(mockDbHelper.getWritableDatabase()).thenReturn(mockDb);
-        PowerMockito.doNothing().when(mockDbHelper).close();
+        PowerMockito.doThrow(new SQLiteException("test")).when(mockDbHelper).insertEventContentValuesIntoTable(Matchers.any(SQLiteDatabase.class), anyString(), Matchers.any(ContentValues.class));
         amplitude.dbHelper = mockDbHelper;
-
 
         // log an event to trigger SQLException that we set up with mocks
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
+
+        // verify that the metadata has been persisted back into database
+        String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long newPreviousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long newLastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+
+        // these do not get persisted and should be reset
+        Long newSequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        Long newLastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        Long newLastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertEquals(newDeviceId, deviceId);
+        assertEquals(newPreviousSessionId, previousSessionId);
+        assertTrue(newLastEventTime >= lastEventTime);
+
+        assertNull(newSequenceNumber);
+        assertEquals(newLastEventId, Long.valueOf(-1));  // insert event fails, and returns -1
+        assertNull(newLastIdentifyId);
     }
 }
