@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.reset;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
@@ -47,11 +48,8 @@ public class DatabaseRecoveryTest extends BaseTest {
     public void tearDown() throws Exception {
         super.tearDown();
 
-        if (dbInstance != null) {
-            if (dbInstance.getWritableDatabase().isOpen()) {
-                dbInstance.close();
-            }
-        }
+        DatabaseHelper.instances.put(Constants.DEFAULT_INSTANCE, null);
+        dbInstance = null;
     }
 
     @Test
@@ -108,5 +106,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertNull(newSequenceNumber);
         assertEquals(newLastEventId, Long.valueOf(-1));  // insert event fails, and returns -1
         assertNull(newLastIdentifyId);
+
+        reset(mockDbHelper);
     }
 }

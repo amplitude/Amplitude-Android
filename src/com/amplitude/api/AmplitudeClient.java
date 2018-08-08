@@ -1240,6 +1240,7 @@ public class AmplitudeClient {
                 dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
                 dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
+                dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, lastEventTime);
             }
         });
     }

@@ -141,7 +141,7 @@ public class DatabaseHelperTest extends BaseTest {
 
         // events and store inserts will work
         String value = "test_value";
-        assertEquals(1, insertOrReplaceKeyValue(key, value));
+        assertEquals(2, insertOrReplaceKeyValue(key, value));  // the db reset handler will insert device id so this will return 2 instead of 1
         assertEquals(1, addEvent("test_upgrade"));
 
         // after v3 upgrade, can insert into identify table and long store
@@ -149,9 +149,9 @@ public class DatabaseHelperTest extends BaseTest {
                 "DROP TABLE IF EXISTS " + DatabaseHelper.IDENTIFY_TABLE_NAME);
         dbInstance.onUpgrade(dbInstance.getWritableDatabase(), 2, 3);
         assertEquals(2, addEvent("test_upgrade"));
-        assertEquals(2, insertOrReplaceKeyValue(key, value));
+        assertEquals(3, insertOrReplaceKeyValue(key, value));
         assertEquals(1, addIdentify("test_upgrade"));
-        assertEquals(1, insertOrReplaceKeyLongValue(key, longValue));
+        assertEquals(4, insertOrReplaceKeyLongValue(key, longValue));
     }
 
     @Test
