@@ -1235,6 +1235,11 @@ public class AmplitudeClient {
                 if (flushEventsOnClose) {
                     updateServer();
                 }
+
+                // re-persist metadata into database for good measure
+                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+                dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
             }
         });
     }
