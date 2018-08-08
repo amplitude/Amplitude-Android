@@ -121,7 +121,7 @@ public class AmplitudeClient {
     private boolean optOut = false;
     private boolean offline = false;
     TrackingOptions trackingOptions = new TrackingOptions();
-    JSONObject apiPropertiesTrackingOptions = new JSONObject();
+    JSONObject apiPropertiesTrackingOptions;
     /**
      * The device's Platform value.
      */
@@ -973,7 +973,7 @@ public class AmplitudeClient {
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
-            if (apiPropertiesTrackingOptions.length() > 0) {
+            if (apiPropertiesTrackingOptions != null && apiPropertiesTrackingOptions.length() > 0) {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
             }
 
@@ -1240,6 +1240,7 @@ public class AmplitudeClient {
                 dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
                 dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
                 dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
+                dbHelper.insertOrReplaceKeyLongValue(PREVIOUS_SESSION_ID_KEY, sessionId);
                 dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, lastEventTime);
             }
         });

@@ -49,6 +49,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private File file;
     private String instanceName;
+    private boolean callResetListenerOnDatabaseReset = true;
     private DatabaseResetListener databaseResetListener;
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
@@ -157,12 +158,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             } else {
                 contentValues.put(VALUE_FIELD, (String) value);
             }
-            result = db.insertWithOnConflict(
-                    table,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-            );
+            result = insertKeyValueContentValuesIntoTable(db, table, contentValues);
             if (result == -1) {
                 logger.w(TAG, "Insert failed");
             }
@@ -178,6 +174,15 @@ class DatabaseHelper extends SQLiteOpenHelper {
             close();
         }
         return result;
+    }
+
+    synchronized long insertKeyValueContentValuesIntoTable(SQLiteDatabase db, String table, ContentValues contentValues) throws SQLiteException, StackOverflowError {
+        return db.insertWithOnConflict(
+            table,
+            null,
+            contentValues,
+            SQLiteDatabase.CONFLICT_REPLACE
+        );
     }
 
     synchronized long deleteKeyFromTable(String table, String key) {
@@ -459,8 +464,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (SecurityException e) {
             logger.e(TAG, "delete failed", e);
         } finally {
-            if (databaseResetListener != null) {
+            if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
+                callResetListenerOnDatabaseReset = false;  // guards against stack overflow
                 databaseResetListener.onDatabaseReset();
+                callResetListenerOnDatabaseReset = true;
             }
         }
     }

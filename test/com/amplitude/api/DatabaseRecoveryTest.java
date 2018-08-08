@@ -109,4 +109,60 @@ public class DatabaseRecoveryTest extends BaseTest {
 
         reset(mockDbHelper);
     }
+
+    @Test
+    public void testDatabaseResetAvoidStackOverflow() {
+
+        // log an event normally, verify metadata updated in table
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // metadata: deviceId, sessionId, sequence number, last_event_id, last_event_time, previous_session_id
+        assertEquals(dbInstance.getEventCount(), 1);
+        assertEquals(dbInstance.getTotalEventCount(), 1);
+        assertEquals(dbInstance.getNthEventId(1), 1);
+
+        String deviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long previousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertNotNull(deviceId);
+        assertTrue(deviceId.endsWith("R"));
+        assertTrue(previousSessionId > 0);
+        assertEquals(sequenceNumber, 1);
+        assertEquals(lastEventId, 1);
+        assertTrue(lastEventTime >= startTime);
+        assertEquals(lastIdentifyId, -1);
+
+        // difficult to mock out the SQLiteDatabase object inside DatabaseHelper since it's private
+        // add helper method specifically for mocking / testing
+        DatabaseHelper mockDbHelper = PowerMockito.spy(dbInstance);
+        PowerMockito.doThrow(new SQLiteException("test")).when(mockDbHelper).insertKeyValueContentValuesIntoTable(Matchers.any(SQLiteDatabase.class), anyString(), Matchers.any(ContentValues.class));
+        amplitude.dbHelper = mockDbHelper;
+
+        // log an event to trigger SQLException that we set up with mocks
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // the reset callback handler will keep retriggering the exception, so make sure we guard against stack overflows
+        // verify that the metadata has not been persisted back to database
+        String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        Long newPreviousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        Long newLastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        Long newSequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        Long newLastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        Long newLastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertNull(newDeviceId);
+        assertNull(newPreviousSessionId);
+        assertNull(newLastEventTime);
+        assertNull(newSequenceNumber);
+        assertNull(newLastEventId);  // insert event fails, and returns -1
+        assertNull(newLastIdentifyId);
+
+        reset(mockDbHelper);
+    }
 }
