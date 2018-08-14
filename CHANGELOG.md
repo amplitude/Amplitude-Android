@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.19.1 (August 14, 2018)
+
 * Update SDK to better handle SQLite Exceptions.
 
 ## 2.19.0 (July 24, 2018)
