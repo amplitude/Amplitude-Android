@@ -710,7 +710,8 @@ public class AmplitudeClient {
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
-                eventType, eventProperties, null, null, groups, timestamp, outOfSession
+                eventType, eventProperties, null, null, groups, null,
+                timestamp, outOfSession
             );
         }
     }
@@ -818,7 +819,7 @@ public class AmplitudeClient {
      */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, null, groups, timestamp, outOfSession);
+            logEvent(eventType, eventProperties, null, null, groups, null, timestamp, outOfSession);
         }
     }
 
@@ -850,8 +851,8 @@ public class AmplitudeClient {
      * @param outOfSession    the out of session
      */
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
-            JSONObject apiProperties, JSONObject userProperties,
-            JSONObject groups, final long timestamp, final boolean outOfSession) {
+            JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
+            JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -873,10 +874,15 @@ public class AmplitudeClient {
             groups = Utils.cloneJSONObject(groups);
         }
 
+        if (groupProperties != null) {
+            groupProperties = Utils.cloneJSONObject(groupProperties);
+        }
+
         final JSONObject copyEventProperties = eventProperties;
         final JSONObject copyApiProperties = apiProperties;
         final JSONObject copyUserProperties = userProperties;
         final JSONObject copyGroups = groups;
+        final JSONObject copyGroupProperties = groupProperties;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
@@ -885,7 +891,7 @@ public class AmplitudeClient {
                 }
                 logEvent(
                     eventType, copyEventProperties, copyApiProperties,
-                    copyUserProperties, copyGroups, timestamp, outOfSession
+                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession
                 );
             }
         });
@@ -905,7 +911,8 @@ public class AmplitudeClient {
      * @return the event ID if succeeded, else -1.
      */
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
-            JSONObject userProperties, JSONObject groups, long timestamp, boolean outOfSession) {
+            JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
+            long timestamp, boolean outOfSession) {
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -998,6 +1005,8 @@ public class AmplitudeClient {
             event.put("user_properties", (userProperties == null) ? new JSONObject()
                 : truncate(userProperties));
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
+            event.put("group_properties", (groupProperties == null) ? new JSONObject()
+                : truncate(groupProperties));
 
             result = saveEvent(eventType, event);
         } catch (JSONException e) {
@@ -1025,7 +1034,7 @@ public class AmplitudeClient {
             return -1;
         }
 
-        if (eventType.equals(Constants.IDENTIFY_EVENT)) {
+        if (eventType.equals(Constants.IDENTIFY_EVENT) || eventType.equals(Constants.GROUP_IDENTIFY_EVENT)) {
             lastIdentifyId = dbHelper.addIdentify(eventString);
             setLastIdentifyId(lastIdentifyId);
         } else {
@@ -1052,7 +1061,10 @@ public class AmplitudeClient {
             updateServerLater(eventUploadPeriodMillis);
         }
 
-        return eventType.equals(Constants.IDENTIFY_EVENT) ? lastIdentifyId : lastEventId;
+        return (
+            eventType.equals(Constants.IDENTIFY_EVENT) ||
+            eventType.equals(Constants.GROUP_IDENTIFY_EVENT)
+        ) ? lastIdentifyId : lastEventId;
     }
 
     // fetches key from dbHelper longValueStore
@@ -1215,7 +1227,7 @@ public class AmplitudeClient {
             return;
         }
 
-        logEvent(sessionEvent, null, apiProperties, null, null, lastEventTime, false);
+        logEvent(sessionEvent, null, apiProperties, null, null, null, lastEventTime, false);
     }
 
     /**
@@ -1323,7 +1335,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, null, getCurrentTimeMillis(), false
         );
     }
 
@@ -1435,7 +1447,7 @@ public class AmplitudeClient {
         ) return;
         logEventAsync(
             Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-            null, getCurrentTimeMillis(), outOfSession
+            null, null, getCurrentTimeMillis(), outOfSession
         );
     }
 
@@ -1460,7 +1472,29 @@ public class AmplitudeClient {
         }
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-                group, getCurrentTimeMillis(), false);
+                group, null, getCurrentTimeMillis(), false);
+    }
+
+    public void groupIdentify(String groupType, Object groupName, Identify groupIdentify) {
+        groupIdentify(groupType, groupName, groupIdentify, false);
+    }
+
+    public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession) {
+        if (
+            groupIdentify == null || groupIdentify.userPropertiesOperations.length() == 0 ||
+            !contextAndApiKeySet("groupIdentify()") || Utils.isEmptyString(groupType)
+        ) return;
+        JSONObject group = null;
+        try {
+            group = new JSONObject().put(groupType, groupName);
+        }
+        catch (JSONException e) {
+            logger.e(TAG, e.toString());
+        }
+        logEventAsync(
+            Constants.GROUP_IDENTIFY_EVENT, null, null, null, group,
+            groupIdentify.userPropertiesOperations, getCurrentTimeMillis(), outOfSession
+        );
     }
 
     /**
