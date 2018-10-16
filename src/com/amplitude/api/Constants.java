@@ -4,7 +4,7 @@ public class Constants {
 
     public static final String LIBRARY = "amplitude-android";
     public static final String PLATFORM = "Android";
-    public static final String VERSION = "2.19.1";
+    public static final String VERSION = "2.20.0";
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
 
@@ -37,6 +37,7 @@ public class Constants {
     public static final String PREFKEY_OPT_OUT = PACKAGE_NAME + ".optOut";
 
     public static final String IDENTIFY_EVENT = "$identify";
+    public static final String GROUP_IDENTIFY_EVENT = "$groupidentify";
     public static final String AMP_OP_ADD = "$add";
     public static final String AMP_OP_APPEND = "$append";
     public static final String AMP_OP_CLEAR_ALL = "$clearAll";

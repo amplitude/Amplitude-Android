@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 2.20.0 (October 15, 2018)
+
+* Add ability to set group properties via a new `groupIdentify` method that takes in an `Identify` object as well as a group type and group name.
+
 ## 2.19.1 (August 14, 2018)
 
 * Update SDK to better handle SQLite Exceptions.
