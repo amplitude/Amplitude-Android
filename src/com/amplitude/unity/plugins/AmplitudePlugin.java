@@ -36,7 +36,7 @@ public class AmplitudePlugin {
         JSONObject trackingOptionsDict = ToJSONObject(trackingOptionsJson);
         TrackingOptions trackingOptions = new TrackingOptions();
 
-        if (trackingOptionsDict.optBoolean("disableAdid", false)) {
+        if (trackingOptionsDict.optBoolean("disableADID", false)) {
             trackingOptions.disableAdid();
         }
         if (trackingOptionsDict.optBoolean("disableCarrier", false)) {
@@ -57,10 +57,10 @@ public class AmplitudePlugin {
         if (trackingOptionsDict.optBoolean("disableDeviceModel", false)) {
             trackingOptions.disableDeviceModel();
         }
-        if (trackingOptionsDict.optBoolean("disableDma", false)) {
+        if (trackingOptionsDict.optBoolean("disableDMA", false)) {
             trackingOptions.disableDma();
         }
-        if (trackingOptionsDict.optBoolean("disableIpAddress", false)) {
+        if (trackingOptionsDict.optBoolean("disableIPAddress", false)) {
             trackingOptions.disableIpAddress();
         }
         if (trackingOptionsDict.optBoolean("disableLanguage", false)) {
@@ -69,10 +69,10 @@ public class AmplitudePlugin {
         if (trackingOptionsDict.optBoolean("disableLatLng", false)) {
             trackingOptions.disableLatLng();
         }
-        if (trackingOptionsDict.optBoolean("disableOsName", false)) {
+        if (trackingOptionsDict.optBoolean("disableOSName", false)) {
             trackingOptions.disableOsName();
         }
-        if (trackingOptionsDict.optBoolean("disableOsVersion", false)) {
+        if (trackingOptionsDict.optBoolean("disableOSVersion", false)) {
             trackingOptions.disableOsVersion();
         }
         if (trackingOptionsDict.optBoolean("disablePlatform", false)) {
