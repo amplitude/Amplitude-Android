@@ -6,6 +6,7 @@ import android.content.Context;
 import com.amplitude.api.Amplitude;
 import com.amplitude.api.Identify;
 import com.amplitude.api.Revenue;
+import com.amplitude.api.TrackingOptions;
 import com.amplitude.api.Utils;
 
 import org.json.JSONException;
@@ -29,6 +30,61 @@ public class AmplitudePlugin {
 
     public static void init(String instanceName, Context context, String apiKey, String userId) {
         Amplitude.getInstance(instanceName).initialize(context, apiKey, userId);
+    }
+
+    public static void setTrackingOptions(String instanceName, String trackingOptionsJson) {
+        JSONObject trackingOptionsDict = ToJSONObject(trackingOptionsJson);
+        TrackingOptions trackingOptions = new TrackingOptions();
+
+        if (trackingOptionsDict.optBoolean("disableAdid", false)) {
+            trackingOptions.disableAdid();
+        }
+        if (trackingOptionsDict.optBoolean("disableCarrier", false)) {
+            trackingOptions.disableCarrier();
+        }
+        if (trackingOptionsDict.optBoolean("disableCity", false)) {
+            trackingOptions.disableCity();
+        }
+        if (trackingOptionsDict.optBoolean("disableCountry", false)) {
+            trackingOptions.disableCountry();
+        }
+        if (trackingOptionsDict.optBoolean("disableDeviceBrand", false)) {
+            trackingOptions.disableDeviceBrand();
+        }
+        if (trackingOptionsDict.optBoolean("disableDeviceManufacturer", false)) {
+            trackingOptions.disableDeviceManufacturer();
+        }
+        if (trackingOptionsDict.optBoolean("disableDeviceModel", false)) {
+            trackingOptions.disableDeviceModel();
+        }
+        if (trackingOptionsDict.optBoolean("disableDma", false)) {
+            trackingOptions.disableDma();
+        }
+        if (trackingOptionsDict.optBoolean("disableIpAddress", false)) {
+            trackingOptions.disableIpAddress();
+        }
+        if (trackingOptionsDict.optBoolean("disableLanguage", false)) {
+            trackingOptions.disableLanguage();
+        }
+        if (trackingOptionsDict.optBoolean("disableLatLng", false)) {
+            trackingOptions.disableLatLng();
+        }
+        if (trackingOptionsDict.optBoolean("disableOsName", false)) {
+            trackingOptions.disableOsName();
+        }
+        if (trackingOptionsDict.optBoolean("disableOsVersion", false)) {
+            trackingOptions.disableOsVersion();
+        }
+        if (trackingOptionsDict.optBoolean("disablePlatform", false)) {
+            trackingOptions.disablePlatform();
+        }
+        if (trackingOptionsDict.optBoolean("disableRegion", false)) {
+            trackingOptions.disableRegion();
+        }
+        if (trackingOptionsDict.optBoolean("disableVersionName", false)) {
+            trackingOptions.disableVersionName();
+        }
+        Amplitude.getInstance(instanceName).setTrackingOptions(trackingOptions);
     }
 
     public static void enableForegroundTracking(String instanceName, Application app) {
