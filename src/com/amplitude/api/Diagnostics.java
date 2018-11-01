@@ -28,13 +28,13 @@ public class Diagnostics {
     public static final int DIAGNOSTIC_EVENT_MAX_COUNT = 50; // limit memory footprint
     public static final int DIAGNOSTIC_EVENT_MIN_COUNT = 5;
 
-    private volatile boolean enabled;
+    volatile boolean enabled;
     private volatile String apiKey;
     private volatile OkHttpClient httpClient;
-    private int diagnosticEventMaxCount;
+    int diagnosticEventMaxCount;
     String url;
     WorkerThread diagnosticThread = new WorkerThread("diagnosticThread");
-    private List<JSONObject> unsentEvents;
+    List<JSONObject> unsentEvents;
 
     protected static Diagnostics instance;
 
@@ -71,14 +71,24 @@ public class Diagnostics {
         this.diagnosticEventMaxCount = Math.min(this.diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MAX_COUNT);
 
         // resize unsent list and transfer any unsent events over
+        if (this.diagnosticEventMaxCount < unsentEvents.size()) {
+            for (int i = 0; i < unsentEvents.size() - this.diagnosticEventMaxCount; i++) {
+                unsentEvents.remove(0);
+            }
+        }
+
         List<JSONObject> newUnsentEvents = new ArrayList<JSONObject>(this.diagnosticEventMaxCount);
         int toTransfer = Math.min(unsentEvents.size(), this.diagnosticEventMaxCount);
         for (int i = 0; i < toTransfer; i++) {
-            newUnsentEvents.add(unsentEvents.get(i));
+            newUnsentEvents.add(i, unsentEvents.get(i));
         }
 
         this.unsentEvents = newUnsentEvents;
         return this;
+    }
+
+    Diagnostics logError(final String error) {
+        return logError(error, null);
     }
 
     Diagnostics logError(final String error, final String stackTrace) {
@@ -93,9 +103,11 @@ public class Diagnostics {
                 try {
                     event.put("error", error);
                     event.put("timestamp", System.currentTimeMillis());
-                    JSONObject eventProperties = new JSONObject();
-                    eventProperties.put("stackTrace", stackTrace);
-                    event.put("event_properties", eventProperties);
+                    if (!Utils.isEmptyString(stackTrace)) {
+                        JSONObject eventProperties = new JSONObject();
+                        eventProperties.put("stackTrace", AmplitudeClient.truncate(stackTrace));
+                        event.put("event_properties", eventProperties);
+                    }
 
                     if (unsentEvents.size() >= diagnosticEventMaxCount) {
                         for (int i = 0; i < DIAGNOSTIC_EVENT_MIN_COUNT; i++) {
@@ -122,8 +134,7 @@ public class Diagnostics {
                 if (unsentEvents.isEmpty()) {
                     return;
                 }
-                String eventJson = null;
-                eventJson = new JSONArray(unsentEvents).toString();
+                String eventJson = new JSONArray(unsentEvents).toString();
 
                 if (!TextUtils.isEmpty(eventJson)) {
                     makeEventUploadPostRequest(eventJson);

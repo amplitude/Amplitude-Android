@@ -1572,7 +1572,7 @@ public class AmplitudeClient {
      * @param value the value
      * @return the truncated string
      */
-    public String truncate(String value) {
+    public static String truncate(String value) {
         return value.length() <= Constants.MAX_STRING_LENGTH ? value :
                 value.substring(0, Constants.MAX_STRING_LENGTH);
     }
