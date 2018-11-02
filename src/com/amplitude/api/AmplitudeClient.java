@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.Pair;
 
 import com.amplitude.security.MD5;

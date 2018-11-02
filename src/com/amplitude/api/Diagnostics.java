@@ -89,11 +89,11 @@ public class Diagnostics {
     }
 
     Diagnostics logError(final String error) {
-        return logException(new Exception(error));
+        return logError(error, null);
     }
 
-    Diagnostics logException(final Exception exception) {
-        if (!enabled || exception == null) {
+    Diagnostics logError(final String error, final Exception exception) {
+        if (!enabled || Utils.isEmptyString(error)) {
             return this;
         }
 
@@ -102,14 +102,14 @@ public class Diagnostics {
             public void run() {
                 JSONObject event = new JSONObject();
                 try {
-                    event.put("error", AmplitudeClient.truncate(exception.toString()));
+                    event.put("error", AmplitudeClient.truncate(error));
                     event.put("timestamp", System.currentTimeMillis());
 
-                    String stackTrace = Log.getStackTraceString(exception);
-                    if (!Utils.isEmptyString(stackTrace)) {
-                        JSONObject eventProperties = new JSONObject();
-                        eventProperties.put("stack_trace", AmplitudeClient.truncate(stackTrace));
-                        event.put("event_properties", eventProperties);
+                    if (exception != null) {
+                        String stackTrace = Log.getStackTraceString(exception);
+                        if (!Utils.isEmptyString(stackTrace)) {
+                            event.put("stack_trace", AmplitudeClient.truncate(stackTrace));
+                        }
                     }
 
                     if (unsentEvents.size() >= diagnosticEventMaxCount) {
