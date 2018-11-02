@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -88,11 +89,11 @@ public class Diagnostics {
     }
 
     Diagnostics logError(final String error) {
-        return logError(error, null);
+        return logException(new Exception(error));
     }
 
-    Diagnostics logError(final String error, final String stackTrace) {
-        if (!enabled || TextUtils.isEmpty(error)) {
+    Diagnostics logException(final Exception exception) {
+        if (!enabled || exception == null) {
             return this;
         }
 
@@ -101,8 +102,10 @@ public class Diagnostics {
             public void run() {
                 JSONObject event = new JSONObject();
                 try {
-                    event.put("error", error);
+                    event.put("error", AmplitudeClient.truncate(exception.toString()));
                     event.put("timestamp", System.currentTimeMillis());
+
+                    String stackTrace = Log.getStackTraceString(exception);
                     if (!Utils.isEmptyString(stackTrace)) {
                         JSONObject eventProperties = new JSONObject();
                         eventProperties.put("stackTrace", AmplitudeClient.truncate(stackTrace));

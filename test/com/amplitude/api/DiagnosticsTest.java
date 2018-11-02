@@ -2,7 +2,6 @@ package com.amplitude.api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +12,7 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
-import java.util.List;
+import java.sql.SQLException;
 
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -22,7 +21,6 @@ import okhttp3.mockwebserver.RecordedRequest;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -42,6 +40,10 @@ public class DiagnosticsTest extends BaseTest {
         } catch (InterruptedException e) {
             return null;
         }
+    }
+
+    public void testStackTraceMethod() throws Exception {
+        throw new SQLException("this is an exception inside test stack trace");
     }
 
     @Before
@@ -87,19 +89,19 @@ public class DiagnosticsTest extends BaseTest {
         assertEquals(logger.unsentEvents.size(), Diagnostics.DIAGNOSTIC_EVENT_MIN_COUNT);
 
         // verify we truncated from start of list
-        assertEquals(logger.unsentEvents.get(0).optString("error"), "test 1");
+        assertEquals(logger.unsentEvents.get(0).optString("error"), "java.lang.Exception: test 1");
 
         // verify that on next log error, we truncate
         logger.logError("test");
         looper.runToEndOfTasks();
         assertEquals(logger.unsentEvents.size(), 1);
-        assertEquals(logger.unsentEvents.get(0).optString("error"), "test");
+        assertEquals(logger.unsentEvents.get(0).optString("error"), "java.lang.Exception: test");
 
         // verify safe to resize to greater
         logger.setDiagnosticEventMaxCount(Diagnostics.DIAGNOSTIC_EVENT_MAX_COUNT + 1);
         assertEquals(logger.diagnosticEventMaxCount, Diagnostics.DIAGNOSTIC_EVENT_MAX_COUNT);
         assertEquals(logger.unsentEvents.size(), 1);
-        assertEquals(logger.unsentEvents.get(0).optString("error"), "test");
+        assertEquals(logger.unsentEvents.get(0).optString("error"), "java.lang.Exception: test");
     }
 
     @Test
@@ -113,11 +115,11 @@ public class DiagnosticsTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(logger.unsentEvents.size(), 3);
 
-        assertEquals(logger.unsentEvents.get(0).optString("error"), "test_error");
+        assertEquals(logger.unsentEvents.get(0).optString("error"), "java.lang.Exception: test_error");
         assertTrue(logger.unsentEvents.get(0).optLong("timestamp") >= timestamp);
-        assertEquals(logger.unsentEvents.get(1).optString("error"), "test_error1");
+        assertEquals(logger.unsentEvents.get(1).optString("error"), "java.lang.Exception: test_error1");
         assertTrue(logger.unsentEvents.get(1).optLong("timestamp") >= timestamp);
-        assertEquals(logger.unsentEvents.get(2).optString("error"), "test_error2");
+        assertEquals(logger.unsentEvents.get(2).optString("error"), "java.lang.Exception: test_error2");
         assertTrue(logger.unsentEvents.get(2).optLong("timestamp") >= timestamp);
 
         // test truncation
@@ -131,9 +133,9 @@ public class DiagnosticsTest extends BaseTest {
 
         // logged 8 events, but removed 5, so 3 left
         assertEquals(logger.unsentEvents.size(), 3);
-        assertEquals(logger.unsentEvents.get(0).optString("error"), "test_error5");
-        assertEquals(logger.unsentEvents.get(1).optString("error"), "test_error6");
-        assertEquals(logger.unsentEvents.get(2).optString("error"), "test_error7");
+        assertEquals(logger.unsentEvents.get(0).optString("error"), "java.lang.Exception: test_error5");
+        assertEquals(logger.unsentEvents.get(1).optString("error"), "java.lang.Exception: test_error6");
+        assertEquals(logger.unsentEvents.get(2).optString("error"), "java.lang.Exception: test_error7");
     }
 
     @Test
@@ -160,14 +162,26 @@ public class DiagnosticsTest extends BaseTest {
         logger.flushEvents();
         RecordedRequest request = runRequest();
         JSONArray events = getEventsFromRequest(request);
-        assertEquals(events.optJSONObject(0).optString("error"), "test_error");
+        assertEquals(events.optJSONObject(0).optString("error"), "java.lang.Exception: test_error");
         assertTrue(events.optJSONObject(0).optLong("timestamp") >= timestamp);
-        assertEquals(events.optJSONObject(1).optString("error"), "test_error1");
+        assertEquals(events.optJSONObject(1).optString("error"), "java.lang.Exception: test_error1");
         assertTrue(events.optJSONObject(1).optLong("timestamp") >= timestamp);
-        assertEquals(events.optJSONObject(2).optString("error"), "test_error2");
+        assertEquals(events.optJSONObject(2).optString("error"), "java.lang.Exception: test_error2");
         assertTrue(events.optJSONObject(2).optLong("timestamp") >= timestamp);
 
         // verify flushing
         assertEquals(logger.unsentEvents.size(), 0);
+    }
+
+    @Test
+    public void testLoggingException() {
+        logger.enableLogging(httpClient, apiKey);
+
+        try {
+            testStackTraceMethod();
+        } catch (Exception e) {
+            logger.logException(e);
+        }
+        looper.runToEndOfTasks();
     }
 }
