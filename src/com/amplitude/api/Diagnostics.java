@@ -108,7 +108,7 @@ public class Diagnostics {
                     String stackTrace = Log.getStackTraceString(exception);
                     if (!Utils.isEmptyString(stackTrace)) {
                         JSONObject eventProperties = new JSONObject();
-                        eventProperties.put("stackTrace", AmplitudeClient.truncate(stackTrace));
+                        eventProperties.put("stack_trace", AmplitudeClient.truncate(stackTrace));
                         event.put("event_properties", eventProperties);
                     }
 

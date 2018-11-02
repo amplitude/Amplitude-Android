@@ -2,6 +2,7 @@ package com.amplitude.api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -183,5 +184,12 @@ public class DiagnosticsTest extends BaseTest {
             logger.logException(e);
         }
         looper.runToEndOfTasks();
+
+        assertEquals(logger.unsentEvents.size(), 1);
+        JSONObject event = logger.unsentEvents.get(0);
+        assertEquals(event.optString("error"), "java.sql.SQLException: this is an exception inside test stack trace");
+        assertTrue(event.has("event_properties"));
+        JSONObject eventProperties = event.optJSONObject("event_properties");
+        assertTrue(eventProperties.optString("stack_trace").startsWith("java.sql.SQLException: this is an exception inside test stack trace"));
     }
 }
