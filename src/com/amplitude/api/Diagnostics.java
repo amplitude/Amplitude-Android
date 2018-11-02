@@ -92,7 +92,7 @@ public class Diagnostics {
         return logError(error, null);
     }
 
-    Diagnostics logError(final String error, final Exception exception) {
+    Diagnostics logError(final String error, final Throwable exception) {
         if (!enabled || Utils.isEmptyString(error)) {
             return this;
         }

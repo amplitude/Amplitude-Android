@@ -263,6 +263,7 @@ public class AmplitudeClient {
                             AmplitudeClient.upgradeSharedPrefsToDB(context);
                         }
                         httpClient = new OkHttpClient();
+                        Diagnostics.getLogger().enableLogging(httpClient, apiKey);
                         initializeDeviceInfo();
 
                         if (userId != null) {
@@ -304,6 +305,7 @@ public class AmplitudeClient {
                         logger.e(TAG, String.format(
                            "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
                         ));
+                        Diagnostics.getLogger().logError("Failed to initialize Amplitude SDK", e);
                         client.apiKey = null;
                     }
                 }
@@ -334,16 +336,8 @@ public class AmplitudeClient {
         return this;
     }
 
-    public AmplitudeClient enableDiagnosticLogging(boolean enableDiagnosticLogging) {
-        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
-            return this;
-        }
-
-        if (enableDiagnosticLogging) {
-            Diagnostics.getLogger().enableLogging(httpClient, apiKey);
-        } else {
-            Diagnostics.getLogger().disableLogging();
-        }
+    public AmplitudeClient disableDiagnosticLogging() {
+        Diagnostics.getLogger().disableLogging();
         return this;
     }
 
@@ -1033,6 +1027,9 @@ public class AmplitudeClient {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
             ));
+            Diagnostics.getLogger().logError(
+                String.format("Failed to JSON serialize event type %s", eventType), e
+            );
         }
 
         return result;
@@ -1244,6 +1241,9 @@ public class AmplitudeClient {
         try {
             apiProperties.put("special", sessionEvent);
         } catch (JSONException e) {
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate API Properties JSON for session event %s", sessionEvent), e
+            );
             return;
         }
 
@@ -1352,6 +1352,7 @@ public class AmplitudeClient {
             apiProperties.put("receipt", receipt);
             apiProperties.put("receiptSig", receiptSignature);
         } catch (JSONException e) {
+            Diagnostics.getLogger().logError("Failed to generate API Properties JSON for revenue event", e);
         }
 
         logEventAsync(
@@ -1420,6 +1421,9 @@ public class AmplitudeClient {
                 identify.setUserProperty(key, sanitized.get(key));
             } catch (JSONException e) {
                 logger.e(TAG, e.toString());
+                Diagnostics.getLogger().logError(
+                    String.format("Failed to set user property %s", key), e
+                );
             }
         }
         identify(identify);
@@ -1489,6 +1493,9 @@ public class AmplitudeClient {
         }
         catch (JSONException e) {
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate Group JSON for groupType: %s", groupType), e
+            );
         }
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
@@ -1510,6 +1517,9 @@ public class AmplitudeClient {
         }
         catch (JSONException e) {
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate Group Identify JSON Object for groupType %s", groupType), e
+            );
         }
         logEventAsync(
             Constants.GROUP_IDENTIFY_EVENT, null, null, null, group,
@@ -1805,6 +1815,7 @@ public class AmplitudeClient {
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
+                Diagnostics.getLogger().logError("Failed to update server", e);
 
             // handle CursorWindowAllocationException when fetching events, defer upload
             } catch (CursorWindowAllocationException e) {
@@ -1813,6 +1824,7 @@ public class AmplitudeClient {
                     "Caught Cursor window exception during event upload, deferring upload: %s",
                     e.getMessage()
                 ));
+                Diagnostics.getLogger().logError("Failed to update server", e);
             }
         }
     }
@@ -1905,6 +1917,7 @@ public class AmplitudeClient {
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
             // this will never be thrown
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError("Failed to compute checksum for upload request", e);
         }
 
         FormBody body = new FormBody.Builder()
@@ -1924,6 +1937,7 @@ public class AmplitudeClient {
         } catch (IllegalArgumentException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
+            Diagnostics.getLogger().logError("Failed to build upload request", e);
             return;
         }
 
@@ -1991,21 +2005,26 @@ public class AmplitudeClient {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (java.net.UnknownHostException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (IOException e) {
             logger.e(TAG, e.toString());
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (AssertionError e) {
             // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (Exception e) {
             // Just log any other exception so things don't crash on upload
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         }
 
         if (!uploadSuccess) {
@@ -2212,6 +2231,7 @@ public class AmplitudeClient {
 
         } catch (Exception e) {
             logger.e(TAG, "Error upgrading shared preferences", e);
+            Diagnostics.getLogger().logError("Failed to upgrade shared prefs", e);
             return false;
         }
     }
