@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.Pair;
 
 import com.amplitude.security.MD5;
@@ -122,6 +123,8 @@ public class AmplitudeClient {
     private boolean offline = false;
     TrackingOptions trackingOptions = new TrackingOptions();
     JSONObject apiPropertiesTrackingOptions;
+    private boolean logDiagnosticEvents = false;
+
     /**
      * The device's Platform value.
      */
@@ -329,6 +332,24 @@ public class AmplitudeClient {
             app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(this));
         }
 
+        return this;
+    }
+
+    public AmplitudeClient enableDiagnosticLogging(boolean enableDiagnosticLogging) {
+        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
+            return this;
+        }
+
+        if (enableDiagnosticLogging) {
+            Diagnostics.getLogger().enableLogging(httpClient, apiKey);
+        } else {
+            Diagnostics.getLogger().disableLogging();
+        }
+        return this;
+    }
+
+    public AmplitudeClient setDiagnosticEventMaxCount(int eventMaxCount) {
+        Diagnostics.getLogger().setDiagnosticEventMaxCount(eventMaxCount);
         return this;
     }
 
