@@ -22,8 +22,7 @@ import okhttp3.Response;
 
 public class Diagnostics {
 
-//    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://api.amplitude.com/diagnostic";
-    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "http://localhost:3000/diagnostic";
+    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://api.amplitude.com/diagnostic";
 
     public static final int DIAGNOSTIC_EVENT_API_VERSION = 1;
 

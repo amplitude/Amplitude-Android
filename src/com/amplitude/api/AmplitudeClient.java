@@ -342,7 +342,17 @@ public class AmplitudeClient {
         return this;
     }
 
+    public AmplitudeClient enableDiagnosticLogging() {
+        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
+            return this;
+        }
+        logDiagnosticEvents = true;
+        Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
+        return this;
+    }
+
     public AmplitudeClient disableDiagnosticLogging() {
+        logDiagnosticEvents = false;
         Diagnostics.getLogger().disableLogging();
         return this;
     }
@@ -357,14 +367,6 @@ public class AmplitudeClient {
         deviceInfo = new DeviceInfo(context);
         deviceId = initializeDeviceId();
         deviceInfo.prefetch();
-    }
-
-    public void triggerException() {
-        try {
-            throw new SQLException("test exception");
-        } catch (Exception e) {
-            Diagnostics.getLogger().logError("triggered exception", e);
-        }
     }
 
     /**
