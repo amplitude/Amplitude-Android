@@ -22,7 +22,8 @@ import okhttp3.Response;
 
 public class Diagnostics {
 
-    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://api.amplitude.com/diagnostic";
+//    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "https://api.amplitude.com/diagnostic";
+    public static final String DIAGNOSTIC_EVENT_ENDPOINT = "http://localhost:3000/diagnostic";
 
     public static final int DIAGNOSTIC_EVENT_API_VERSION = 1;
 
@@ -32,6 +33,7 @@ public class Diagnostics {
     volatile boolean enabled;
     private volatile String apiKey;
     private volatile OkHttpClient httpClient;
+    private volatile String deviceId;
     int diagnosticEventMaxCount;
     String url;
     WorkerThread diagnosticThread = new WorkerThread("diagnosticThread");
@@ -54,10 +56,11 @@ public class Diagnostics {
         diagnosticThread.start();
     }
 
-    Diagnostics enableLogging(OkHttpClient httpClient, String apiKey) {
+    Diagnostics enableLogging(OkHttpClient httpClient, String apiKey, String deviceId) {
         this.enabled = true;
         this.apiKey = apiKey;
         this.httpClient = httpClient;
+        this.deviceId = deviceId;
         return this;
     }
 
@@ -93,7 +96,7 @@ public class Diagnostics {
     }
 
     Diagnostics logError(final String error, final Throwable exception) {
-        if (!enabled || Utils.isEmptyString(error)) {
+        if (!enabled || Utils.isEmptyString(error) || Utils.isEmptyString(deviceId)) {
             return this;
         }
 
@@ -104,6 +107,7 @@ public class Diagnostics {
                 try {
                     event.put("error", AmplitudeClient.truncate(error));
                     event.put("timestamp", System.currentTimeMillis());
+                    event.put("device_id", deviceId);
 
                     if (exception != null) {
                         String stackTrace = Log.getStackTraceString(exception);
@@ -127,7 +131,7 @@ public class Diagnostics {
 
     // call this manually to upload unsent events
     Diagnostics flushEvents() {
-        if (!enabled || TextUtils.isEmpty(apiKey) || httpClient == null) {
+        if (!enabled || Utils.isEmptyString(apiKey) || httpClient == null || Utils.isEmptyString(deviceId)) {
             return this;
         }
 

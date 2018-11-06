@@ -31,6 +31,7 @@ public class DiagnosticsTest extends BaseTest {
     private Diagnostics logger;
     private ShadowLooper looper;
     private OkHttpClient httpClient;
+    private String deviceId;
 
     public RecordedRequest runRequest() {
         server.enqueue(new MockResponse().setBody("success"));
@@ -51,6 +52,7 @@ public class DiagnosticsTest extends BaseTest {
     public void setUp() throws Exception {
         super.setUp(true);
         httpClient = new OkHttpClient();
+        deviceId = "test device id";
         logger = Diagnostics.getLogger();
         looper = Shadows.shadowOf(logger.diagnosticThread.getLooper());
         logger.url = server.url("/").toString();
@@ -71,13 +73,13 @@ public class DiagnosticsTest extends BaseTest {
 
     @Test
     public void testEnableLogging() {
-        logger.enableLogging(httpClient, apiKey);
+        logger.enableLogging(httpClient, apiKey, deviceId);
         assertTrue(logger.enabled);
     }
 
     @Test
     public void testResize() {
-        logger.enableLogging(httpClient, apiKey);
+        logger.enableLogging(httpClient, apiKey, deviceId);
         for (int i = 0; i < Diagnostics.DIAGNOSTIC_EVENT_MIN_COUNT + 1; i++) {
             logger.logError("test " + String.valueOf(i));
         }
@@ -107,7 +109,7 @@ public class DiagnosticsTest extends BaseTest {
 
     @Test
     public void testLogError() {
-        logger.enableLogging(httpClient, apiKey);
+        logger.enableLogging(httpClient, apiKey, deviceId);
 
         long timestamp = System.currentTimeMillis();
         logger.logError("test_error");
@@ -141,7 +143,7 @@ public class DiagnosticsTest extends BaseTest {
 
     @Test
     public void testDisabled() {
-        logger.enableLogging(httpClient, apiKey).disableLogging();
+        logger.enableLogging(httpClient, apiKey, deviceId).disableLogging();
         logger.logError("test_error");
         logger.logError("test_error1");
         logger.logError("test_error2");
@@ -152,7 +154,7 @@ public class DiagnosticsTest extends BaseTest {
 
     @Test
     public void testUploadEvents() throws JSONException {
-        logger.enableLogging(httpClient, apiKey);
+        logger.enableLogging(httpClient, apiKey, deviceId);
 
         long timestamp = System.currentTimeMillis();
         logger.logError("test_error");
@@ -176,7 +178,7 @@ public class DiagnosticsTest extends BaseTest {
 
     @Test
     public void testLoggingException() {
-        logger.enableLogging(httpClient, apiKey);
+        logger.enableLogging(httpClient, apiKey, deviceId);
 
         try {
             testStackTraceMethod();

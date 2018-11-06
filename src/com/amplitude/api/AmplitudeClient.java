@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -264,10 +265,12 @@ public class AmplitudeClient {
                             AmplitudeClient.upgradeSharedPrefsToDB(context);
                         }
                         httpClient = new OkHttpClient();
+                        deviceInfo = new DeviceInfo(context);
+                        deviceId = initializeDeviceId();
                         if (enableDiagnosticLogging) {
-                            Diagnostics.getLogger().enableLogging(httpClient, apiKey);
+                            Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
                         }
-                        initializeDeviceInfo();
+                        deviceInfo.prefetch();
 
                         if (userId != null) {
                             client.userId = userId;
@@ -354,6 +357,14 @@ public class AmplitudeClient {
         deviceInfo = new DeviceInfo(context);
         deviceId = initializeDeviceId();
         deviceInfo.prefetch();
+    }
+
+    public void triggerException() {
+        try {
+            throw new SQLException("test exception");
+        } catch (Exception e) {
+            Diagnostics.getLogger().logError("triggered exception", e);
+        }
     }
 
     /**
