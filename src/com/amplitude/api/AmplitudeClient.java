@@ -221,7 +221,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient initialize(Context context, String apiKey, String userId) {
-        return initialize(context, apiKey, userId, null);
+        return initialize(context, apiKey, userId, null, false);
     }
 
     /**
@@ -235,7 +235,7 @@ public class AmplitudeClient {
      * @param
      * @return the AmplitudeClient
      */
-    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform) {
+    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform, final boolean enableDiagnosticLogging) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
@@ -250,6 +250,7 @@ public class AmplitudeClient {
         this.apiKey = apiKey;
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
+        this.logDiagnosticEvents = enableDiagnosticLogging;
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -263,7 +264,9 @@ public class AmplitudeClient {
                             AmplitudeClient.upgradeSharedPrefsToDB(context);
                         }
                         httpClient = new OkHttpClient();
-                        Diagnostics.getLogger().enableLogging(httpClient, apiKey);
+                        if (enableDiagnosticLogging) {
+                            Diagnostics.getLogger().enableLogging(httpClient, apiKey);
+                        }
                         initializeDeviceInfo();
 
                         if (userId != null) {
@@ -1765,6 +1768,9 @@ public class AmplitudeClient {
      */
     protected void updateServer() {
         updateServer(false);
+        if (logDiagnosticEvents) {
+            Diagnostics.getLogger().flushEvents();
+        }
     }
 
     /**
