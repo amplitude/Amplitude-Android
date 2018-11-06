@@ -39,7 +39,6 @@ public class DatabaseRecoveryTest extends BaseTest {
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
         startTime = System.currentTimeMillis();
 
-//        amplitude.initialize(context, apiKey);
         amplitude.initialize(context, apiKey, null, null, true);
 
         looper = Shadows.shadowOf(amplitude.logThread.getLooper());
