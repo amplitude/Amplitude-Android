@@ -88,6 +88,7 @@ public class DiagnosticsTest extends BaseTest {
 
         // resize and verify that we enforce minimum value
         logger.setDiagnosticEventMaxCount(Diagnostics.DIAGNOSTIC_EVENT_MIN_COUNT - 1);
+        looper.runToEndOfTasks();
         assertEquals(logger.diagnosticEventMaxCount, Diagnostics.DIAGNOSTIC_EVENT_MIN_COUNT);
         assertEquals(logger.unsentErrors.size(), Diagnostics.DIAGNOSTIC_EVENT_MIN_COUNT);
 
@@ -105,6 +106,7 @@ public class DiagnosticsTest extends BaseTest {
 
         // verify safe to resize to greater
         logger.setDiagnosticEventMaxCount(Diagnostics.DIAGNOSTIC_EVENT_MAX_COUNT + 1);
+        looper.runToEndOfTasks();
         assertEquals(logger.diagnosticEventMaxCount, Diagnostics.DIAGNOSTIC_EVENT_MAX_COUNT);
         assertEquals(logger.unsentErrors.size(), 1);
         assertEquals(logger.unsentErrorStrings.get(0), "test");
@@ -138,6 +140,7 @@ public class DiagnosticsTest extends BaseTest {
 
         // test truncation
         logger.setDiagnosticEventMaxCount(7);
+        looper.runToEndOfTasks();
         logger.logError("test_error3");
         logger.logError("test_error4");
         logger.logError("test_error5");

@@ -71,18 +71,25 @@ public class Diagnostics {
         return this;
     }
 
-    Diagnostics setDiagnosticEventMaxCount(int diagnosticEventMaxCount) {
-        // only allow overrides between 5 and 50
-        this.diagnosticEventMaxCount = Math.max(diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MIN_COUNT);
-        this.diagnosticEventMaxCount = Math.min(this.diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MAX_COUNT);
+    Diagnostics setDiagnosticEventMaxCount(final int diagnosticEventMaxCount) {
+        final Diagnostics client = this;
 
-        // check if need to downsize
-        if (this.diagnosticEventMaxCount < unsentErrorStrings.size()) {
-            for (int i = 0; i < unsentErrorStrings.size() - this.diagnosticEventMaxCount; i++) {
-                String errorString = unsentErrorStrings.remove(0);
-                unsentErrors.remove(errorString);
+        runOnBgThread(new Runnable() {
+            @Override
+            public void run() {
+                // only allow overrides between 5 and 50
+                client.diagnosticEventMaxCount = Math.max(diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MIN_COUNT);
+                client.diagnosticEventMaxCount = Math.min(client.diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MAX_COUNT);
+
+                // check if need to downsize
+                if (client.diagnosticEventMaxCount < client.unsentErrorStrings.size()) {
+                    for (int i = 0; i < unsentErrorStrings.size() - client.diagnosticEventMaxCount; i++) {
+                        String errorString = unsentErrorStrings.remove(0);
+                        unsentErrors.remove(errorString);
+                    }
+                }
             }
-        }
+        });
 
         return this;
     }
