@@ -1,6 +1,5 @@
 package com.amplitude.api;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -9,7 +8,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -36,7 +37,8 @@ public class Diagnostics {
     int diagnosticEventMaxCount;
     String url;
     WorkerThread diagnosticThread = new WorkerThread("diagnosticThread");
-    List<JSONObject> unsentEvents;
+    List<String> unsentErrorStrings;
+    Map<String, JSONObject> unsentErrors;
 
     protected static Diagnostics instance;
 
@@ -51,7 +53,8 @@ public class Diagnostics {
         enabled = false;
         diagnosticEventMaxCount = DIAGNOSTIC_EVENT_MAX_COUNT;
         url = DIAGNOSTIC_EVENT_ENDPOINT;
-        unsentEvents = new ArrayList<JSONObject>(diagnosticEventMaxCount);
+        unsentErrorStrings = new ArrayList<String>(diagnosticEventMaxCount);
+        unsentErrors = new HashMap<String, JSONObject>(diagnosticEventMaxCount);
         diagnosticThread.start();
     }
 
@@ -73,20 +76,14 @@ public class Diagnostics {
         this.diagnosticEventMaxCount = Math.max(diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MIN_COUNT);
         this.diagnosticEventMaxCount = Math.min(this.diagnosticEventMaxCount, DIAGNOSTIC_EVENT_MAX_COUNT);
 
-        // resize unsent list and transfer any unsent events over
-        if (this.diagnosticEventMaxCount < unsentEvents.size()) {
-            for (int i = 0; i < unsentEvents.size() - this.diagnosticEventMaxCount; i++) {
-                unsentEvents.remove(0);
+        // check if need to downsize
+        if (this.diagnosticEventMaxCount < unsentErrorStrings.size()) {
+            for (int i = 0; i < unsentErrorStrings.size() - this.diagnosticEventMaxCount; i++) {
+                String errorString = unsentErrorStrings.remove(0);
+                unsentErrors.remove(errorString);
             }
         }
 
-        List<JSONObject> newUnsentEvents = new ArrayList<JSONObject>(this.diagnosticEventMaxCount);
-        int toTransfer = Math.min(unsentEvents.size(), this.diagnosticEventMaxCount);
-        for (int i = 0; i < toTransfer; i++) {
-            newUnsentEvents.add(i, unsentEvents.get(i));
-        }
-
-        this.unsentEvents = newUnsentEvents;
         return this;
     }
 
@@ -102,26 +99,41 @@ public class Diagnostics {
         runOnBgThread(new Runnable() {
             @Override
             public void run() {
-                JSONObject event = new JSONObject();
-                try {
-                    event.put("error", AmplitudeClient.truncate(error));
-                    event.put("timestamp", System.currentTimeMillis());
-                    event.put("device_id", deviceId);
+                // only add error if unique, otherwise increment count
+                JSONObject event = unsentErrors.get(error);
+                if (event == null) {
+                    event = new JSONObject();
+                    try {
+                        event.put("error", AmplitudeClient.truncate(error));
+                        event.put("timestamp", System.currentTimeMillis());
+                        event.put("device_id", deviceId);
+                        event.put("count", 1);
 
-                    if (exception != null) {
-                        String stackTrace = Log.getStackTraceString(exception);
-                        if (!Utils.isEmptyString(stackTrace)) {
-                            event.put("stack_trace", AmplitudeClient.truncate(stackTrace));
+                        if (exception != null) {
+                            String stackTrace = Log.getStackTraceString(exception);
+                            if (!Utils.isEmptyString(stackTrace)) {
+                                event.put("stack_trace", AmplitudeClient.truncate(stackTrace));
+                            }
                         }
-                    }
 
-                    if (unsentEvents.size() >= diagnosticEventMaxCount) {
-                        for (int i = 0; i < DIAGNOSTIC_EVENT_MIN_COUNT; i++) {
-                            unsentEvents.remove(0);
+                        // unsent queues are full, make room by removing
+                        if (unsentErrorStrings.size() >= diagnosticEventMaxCount) {
+                            for (int i = 0; i < DIAGNOSTIC_EVENT_MIN_COUNT; i++) {
+                                String errorString = unsentErrorStrings.remove(0);
+                                unsentErrors.remove(errorString);
+                            }
                         }
-                    }
-                    unsentEvents.add(event);
-                } catch (JSONException e) {}
+                        unsentErrors.put(error, event);
+                        unsentErrorStrings.add(error);
+
+                    } catch (JSONException e) {}
+
+                } else {
+                    int count = event.optInt("count", 0);
+                    try {
+                        event.put("count", count + 1);
+                    } catch (JSONException e) {}
+                }
             }
         });
 
@@ -137,12 +149,16 @@ public class Diagnostics {
         runOnBgThread(new Runnable() {
             @Override
             public void run() {
-                if (unsentEvents.isEmpty()) {
+                if (unsentErrorStrings.isEmpty()) {
                     return;
                 }
-                String eventJson = new JSONArray(unsentEvents).toString();
+                List<JSONObject> orderedEvents = new ArrayList<JSONObject>(unsentErrorStrings.size());
+                for (String error : unsentErrorStrings) {
+                    orderedEvents.add(unsentErrors.get(error));
+                }
+                String eventJson = new JSONArray(orderedEvents).toString();
 
-                if (!TextUtils.isEmpty(eventJson)) {
+                if (!Utils.isEmptyString(eventJson)) {
                     makeEventUploadPostRequest(eventJson);
                 }
             }
@@ -168,7 +184,8 @@ public class Diagnostics {
             Response response = httpClient.newCall(request).execute();
             String stringResponse = response.body().string();
             if (stringResponse.equals("success")) {
-                unsentEvents.clear();
+                unsentErrors.clear();
+                unsentErrorStrings.clear();
             }
         } catch (IOException e) {
         } catch (AssertionError e) {

@@ -228,10 +228,10 @@ public class DatabaseRecoveryTest extends BaseTest {
         Diagnostics logger = Diagnostics.getLogger();
         ShadowLooper diagnosticLooper = Shadows.shadowOf(logger.diagnosticThread.getLooper());
         diagnosticLooper.runToEndOfTasks();
-        assertEquals(logger.unsentEvents.size(), 4);  // 3 from device info
+        assertEquals(logger.unsentErrors.size(), 4);  // 3 from device info
 
         int numSqlExceptions = 0;
-        for (JSONObject error : logger.unsentEvents) {
+        for (JSONObject error : logger.unsentErrors.values()) {
             if (error.optString("stack_trace").contains("SQLiteException")) {
                 numSqlExceptions++;
             }

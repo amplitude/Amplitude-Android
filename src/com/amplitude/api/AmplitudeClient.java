@@ -123,7 +123,6 @@ public class AmplitudeClient {
     private boolean offline = false;
     TrackingOptions trackingOptions = new TrackingOptions();
     JSONObject apiPropertiesTrackingOptions;
-    private boolean logDiagnosticEvents = false;
 
     /**
      * The device's Platform value.
@@ -251,7 +250,6 @@ public class AmplitudeClient {
         this.apiKey = apiKey;
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
-        this.logDiagnosticEvents = enableDiagnosticLogging;
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -346,13 +344,11 @@ public class AmplitudeClient {
         if (!contextAndApiKeySet("enableDiagnosticLogging")) {
             return this;
         }
-        logDiagnosticEvents = true;
         Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
         return this;
     }
 
     public AmplitudeClient disableDiagnosticLogging() {
-        logDiagnosticEvents = false;
         Diagnostics.getLogger().disableLogging();
         return this;
     }
@@ -1781,9 +1777,7 @@ public class AmplitudeClient {
      */
     protected void updateServer() {
         updateServer(false);
-        if (logDiagnosticEvents) {
-            Diagnostics.getLogger().flushEvents();
-        }
+        Diagnostics.getLogger().flushEvents();
     }
 
     /**
