@@ -47,7 +47,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + IDENTIFY_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
-    private File file;
+    File file;
     private String instanceName;
     private boolean callResetListenerOnDatabaseReset = true;
     private DatabaseResetListener databaseResetListener;
