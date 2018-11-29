@@ -204,12 +204,66 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertEquals(lastIdentifyId, -1);
 
         // try to corrupt database file and then log another event
-        RandomAccessFile writer = new RandomAccessFile(amplitude.dbHelper.file.getAbsolutePath(), "rw");
+        File file = dbInstance.file;
+        RandomAccessFile writer = new RandomAccessFile(file.getAbsolutePath(), "rw");
         writer.seek(2);
         writer.writeChars("corrupt database file with random string");
         writer.close();
 
-        // the database file should have been recreated
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // since events table recreated, the event id should have been reset back to 1
+        List<JSONObject> events = dbInstance.getEvents(5, 5);
+        assertEquals(events.size(), 1);
+        assertEquals(events.get(0).optInt("event_id"), 1);
+
+        // verify metadata is re-inserted into database
+        String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long newPreviousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long newLastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long newSequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long newLastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        Long newLastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertEquals(newDeviceId, deviceId);
+        assertEquals(newPreviousSessionId, previousSessionId);
+        assertTrue(newLastEventTime >= lastEventTime);
+        assertEquals(newSequenceNumber, 2);
+        assertEquals(newLastEventId, 1);
+        assertNull(newLastIdentifyId);
+    }
+
+    @Test
+    public void testDeletedDatabaseFile() throws IOException, JSONException {
+
+        // log an event normally, verify metadata updated in table
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // metadata: deviceId, sessionId, sequence number, last_event_id, last_event_time, previous_session_id
+        assertEquals(dbInstance.getEventCount(), 1);
+        assertEquals(dbInstance.getTotalEventCount(), 1);
+        assertEquals(dbInstance.getNthEventId(1), 1);
+
+        String deviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long previousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertNotNull(deviceId);
+        assertTrue(deviceId.endsWith("R"));
+        assertTrue(previousSessionId > 0);
+        assertEquals(sequenceNumber, 1);
+        assertEquals(lastEventId, 1);
+        assertTrue(lastEventTime >= startTime);
+        assertEquals(lastIdentifyId, -1);
+
+        // try to delete database file and test logging event
+        File file = dbInstance.file;
+        context.deleteDatabase(file.getName());
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
 

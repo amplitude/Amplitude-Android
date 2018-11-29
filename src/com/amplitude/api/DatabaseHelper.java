@@ -96,6 +96,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
         // lifetime of the table, even if rows get removed
         db.execSQL(CREATE_EVENTS_TABLE);
         db.execSQL(CREATE_IDENTIFYS_TABLE);
+
+        if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
+            callResetListenerOnDatabaseReset = false;  // guards against stack overflow
+            databaseResetListener.onDatabaseReset(db);
+            callResetListenerOnDatabaseReset = true;
+        }
     }
 
     @Override
@@ -149,19 +155,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) {
         long result = -1;
+        SQLiteDatabase db = null;
         try {
-            SQLiteDatabase db = getWritableDatabase();
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(KEY_FIELD, key);
-            if (value instanceof Long) {
-                contentValues.put(VALUE_FIELD, (Long) value);
-            } else {
-                contentValues.put(VALUE_FIELD, (String) value);
-            }
-            result = insertKeyValueContentValuesIntoTable(db, table, contentValues);
-            if (result == -1) {
-                logger.w(TAG, "Insert failed");
-            }
+            db = getWritableDatabase();
+            result = insertOrReplaceKeyValueToTable(db, table, key, value);
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
             // Hard to recover from SQLiteExceptions, just start fresh
@@ -171,7 +168,25 @@ class DatabaseHelper extends SQLiteOpenHelper {
             // potential stack overflow error when getting database on custom Android versions
             delete();
         } finally {
-            close();
+            if (db != null && db.isOpen()) {
+                close();
+            }
+        }
+        return result;
+    }
+
+    synchronized long insertOrReplaceKeyValueToTable(SQLiteDatabase db, String table, String key, Object value) throws SQLiteException, StackOverflowError {
+        long result = -1;
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(KEY_FIELD, key);
+        if (value instanceof Long) {
+            contentValues.put(VALUE_FIELD, (Long) value);
+        } else {
+            contentValues.put(VALUE_FIELD, (String) value);
+        }
+        result = insertKeyValueContentValuesIntoTable(db, table, contentValues);
+        if (result == -1) {
+            logger.w(TAG, "Insert failed");
         }
         return result;
     }
@@ -466,7 +481,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } finally {
             if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
                 callResetListenerOnDatabaseReset = false;  // guards against stack overflow
-                databaseResetListener.onDatabaseReset();
+                SQLiteDatabase db = null;
+                try {
+                     db = getWritableDatabase();
+                    databaseResetListener.onDatabaseReset(db);
+                } catch (Exception e) {}
+                finally {
+                    if (db != null && db.isOpen()) {
+                        close();
+                    }
+                }
                 callResetListenerOnDatabaseReset = true;
             }
         }
