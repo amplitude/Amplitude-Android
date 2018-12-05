@@ -98,6 +98,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_EVENTS_TABLE);
         db.execSQL(CREATE_IDENTIFYS_TABLE);
 
+        // NOTE: the database file can become corrupted between interactions
+        // getWriteableDatabase and getReadableDatabase will test for corruption
+        // and actually delete the database file and call onCreate again if it's corrupted
+        // Our normal catch exception and delete database does not get triggered in this scenario
+        // Therefore we are also calling the reset callback inside onCreate
         if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
             try {
                 callResetListenerOnDatabaseReset = false;  // guards against stack overflow
@@ -479,6 +484,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void delete() {
+        // This only gets called if the database somehow gets corrupted AFTER being fetched
+        // ie after the call to getWriteableDatabase / getReadableDatabase
+        // or if a SQL exception occurs during the interaction
         try {
             close();
             file.delete();
