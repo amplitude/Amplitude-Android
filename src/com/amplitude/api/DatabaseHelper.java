@@ -3,6 +3,7 @@ package com.amplitude.api;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
@@ -98,9 +99,14 @@ class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_IDENTIFYS_TABLE);
 
         if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
-            callResetListenerOnDatabaseReset = false;  // guards against stack overflow
-            databaseResetListener.onDatabaseReset(db);
-            callResetListenerOnDatabaseReset = true;
+            try {
+                callResetListenerOnDatabaseReset = false;  // guards against stack overflow
+                databaseResetListener.onDatabaseReset(db);
+            } catch (SQLiteException e) {
+                logger.e(TAG, String.format("databaseReset callback failed during onCreate"), e);
+            } finally {
+                callResetListenerOnDatabaseReset = true;
+            }
         }
     }
 
@@ -483,15 +489,15 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 callResetListenerOnDatabaseReset = false;  // guards against stack overflow
                 SQLiteDatabase db = null;
                 try {
-                     db = getWritableDatabase();
+                    db = getWritableDatabase();
                     databaseResetListener.onDatabaseReset(db);
                 } catch (Exception e) {}
                 finally {
+                    callResetListenerOnDatabaseReset = true;
                     if (db != null && db.isOpen()) {
                         close();
                     }
                 }
-                callResetListenerOnDatabaseReset = true;
             }
         }
     }
