@@ -1595,7 +1595,7 @@ public class AmplitudeClientTest extends BaseTest {
 
         // force re-initialize to override platform
         amplitude.initialized = false;
-        amplitude.initialize(context, apiKey, null, customPlatform);
+        amplitude.initialize(context, apiKey, null, customPlatform, false);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(amplitude.platform, customPlatform);
