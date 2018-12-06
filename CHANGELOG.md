@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Add optional diagnostic logging that tracks exceptions thrown in the SDK and sends to Amplitude.
+
 ## 2.20.0 (October 15, 2018)
 
 * Add ability to set group properties via a new `groupIdentify` method that takes in an `Identify` object as well as a group type and group name.
