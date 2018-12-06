@@ -109,6 +109,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 databaseResetListener.onDatabaseReset(db);
             } catch (SQLiteException e) {
                 logger.e(TAG, String.format("databaseReset callback failed during onCreate"), e);
+                Diagnostics.getLogger().logError(
+                    String.format("DB: Failed to run databaseReset callback during onCreate"), e
+                );
             } finally {
                 callResetListenerOnDatabaseReset = true;
             }
@@ -560,7 +563,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 try {
                     db = getWritableDatabase();
                     databaseResetListener.onDatabaseReset(db);
-                } catch (Exception e) {}
+                } catch (SQLiteException e) {
+                    logger.e(TAG, String.format("databaseReset callback failed during delete"), e);
+                    Diagnostics.getLogger().logError(
+                        String.format("DB: Failed to run databaseReset callback in delete"), e
+                    );
+                }
                 finally {
                     callResetListenerOnDatabaseReset = true;
                     if (db != null && db.isOpen()) {
