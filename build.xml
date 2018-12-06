@@ -100,7 +100,7 @@
     </target>
 
     <target name="jar" depends="build">
-        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" excludes="com/amplitude/api/*Test.class, com/amplitude/api/*test.class, com/amplitude/security/*Test.class, com/amplitude/security/*test.class" />
+        <jar destfile="${jar}" basedir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" />
         <jar destfile="${uberjar}">
             <fileset dir="${build}" includes="com/amplitude/api/*.class, com/amplitude/security/*.class" />
             <zipgroupfileset id="dependency.fileset" dir="/" includes="${dependency.list}"/>
