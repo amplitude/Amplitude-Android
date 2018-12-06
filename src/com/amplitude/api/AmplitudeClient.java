@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -123,6 +124,7 @@ public class AmplitudeClient {
     private boolean offline = false;
     TrackingOptions trackingOptions = new TrackingOptions();
     JSONObject apiPropertiesTrackingOptions;
+
     /**
      * The device's Platform value.
      */
@@ -220,7 +222,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient initialize(Context context, String apiKey, String userId) {
-        return initialize(context, apiKey, userId, null);
+        return initialize(context, apiKey, userId, null, false);
     }
 
     /**
@@ -234,7 +236,7 @@ public class AmplitudeClient {
      * @param
      * @return the AmplitudeClient
      */
-    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform) {
+    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform, final boolean enableDiagnosticLogging) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
@@ -262,7 +264,12 @@ public class AmplitudeClient {
                             AmplitudeClient.upgradeSharedPrefsToDB(context);
                         }
                         httpClient = new OkHttpClient();
-                        initializeDeviceInfo();
+                        deviceInfo = new DeviceInfo(context);
+                        deviceId = initializeDeviceId();
+                        if (enableDiagnosticLogging) {
+                            Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
+                        }
+                        deviceInfo.prefetch();
 
                         if (userId != null) {
                             client.userId = userId;
@@ -303,6 +310,7 @@ public class AmplitudeClient {
                         logger.e(TAG, String.format(
                            "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
                         ));
+                        Diagnostics.getLogger().logError("Failed to initialize Amplitude SDK", e);
                         client.apiKey = null;
                     }
                 }
@@ -330,6 +338,24 @@ public class AmplitudeClient {
             app.registerActivityLifecycleCallbacks(new AmplitudeCallbacks(this));
         }
 
+        return this;
+    }
+
+    public AmplitudeClient enableDiagnosticLogging() {
+        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
+            return this;
+        }
+        Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
+        return this;
+    }
+
+    public AmplitudeClient disableDiagnosticLogging() {
+        Diagnostics.getLogger().disableLogging();
+        return this;
+    }
+
+    public AmplitudeClient setDiagnosticEventMaxCount(int eventMaxCount) {
+        Diagnostics.getLogger().setDiagnosticEventMaxCount(eventMaxCount);
         return this;
     }
 
@@ -1014,6 +1040,9 @@ public class AmplitudeClient {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
             ));
+            Diagnostics.getLogger().logError(
+                String.format("Failed to JSON serialize event type %s", eventType), e
+            );
         }
 
         return result;
@@ -1225,6 +1254,9 @@ public class AmplitudeClient {
         try {
             apiProperties.put("special", sessionEvent);
         } catch (JSONException e) {
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate API Properties JSON for session event %s", sessionEvent), e
+            );
             return;
         }
 
@@ -1333,6 +1365,7 @@ public class AmplitudeClient {
             apiProperties.put("receipt", receipt);
             apiProperties.put("receiptSig", receiptSignature);
         } catch (JSONException e) {
+            Diagnostics.getLogger().logError("Failed to generate API Properties JSON for revenue event", e);
         }
 
         logEventAsync(
@@ -1401,6 +1434,9 @@ public class AmplitudeClient {
                 identify.setUserProperty(key, sanitized.get(key));
             } catch (JSONException e) {
                 logger.e(TAG, e.toString());
+                Diagnostics.getLogger().logError(
+                    String.format("Failed to set user property %s", key), e
+                );
             }
         }
         identify(identify);
@@ -1470,6 +1506,9 @@ public class AmplitudeClient {
         }
         catch (JSONException e) {
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate Group JSON for groupType: %s", groupType), e
+            );
         }
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
@@ -1491,6 +1530,9 @@ public class AmplitudeClient {
         }
         catch (JSONException e) {
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError(
+                String.format("Failed to generate Group Identify JSON Object for groupType %s", groupType), e
+            );
         }
         logEventAsync(
             Constants.GROUP_IDENTIFY_EVENT, null, null, null, group,
@@ -1573,7 +1615,7 @@ public class AmplitudeClient {
      * @param value the value
      * @return the truncated string
      */
-    public String truncate(String value) {
+    public static String truncate(String value) {
         return value.length() <= Constants.MAX_STRING_LENGTH ? value :
                 value.substring(0, Constants.MAX_STRING_LENGTH);
     }
@@ -1736,6 +1778,7 @@ public class AmplitudeClient {
      */
     protected void updateServer() {
         updateServer(false);
+        Diagnostics.getLogger().flushEvents();
     }
 
     /**
@@ -1786,6 +1829,7 @@ public class AmplitudeClient {
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
+                Diagnostics.getLogger().logError("Failed to update server", e);
 
             // handle CursorWindowAllocationException when fetching events, defer upload
             } catch (CursorWindowAllocationException e) {
@@ -1794,6 +1838,7 @@ public class AmplitudeClient {
                     "Caught Cursor window exception during event upload, deferring upload: %s",
                     e.getMessage()
                 ));
+                Diagnostics.getLogger().logError("Failed to update server", e);
             }
         }
     }
@@ -1886,6 +1931,7 @@ public class AmplitudeClient {
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
             // this will never be thrown
             logger.e(TAG, e.toString());
+            Diagnostics.getLogger().logError("Failed to compute checksum for upload request", e);
         }
 
         FormBody body = new FormBody.Builder()
@@ -1905,6 +1951,7 @@ public class AmplitudeClient {
         } catch (IllegalArgumentException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
+            Diagnostics.getLogger().logError("Failed to build upload request", e);
             return;
         }
 
@@ -1972,21 +2019,26 @@ public class AmplitudeClient {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (java.net.UnknownHostException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (IOException e) {
             logger.e(TAG, e.toString());
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (AssertionError e) {
             // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (Exception e) {
             // Just log any other exception so things don't crash on upload
             logger.e(TAG, "Exception:", e);
             lastError = e;
+            Diagnostics.getLogger().logError("Failed to post upload request", e);
         }
 
         if (!uploadSuccess) {
@@ -2193,6 +2245,7 @@ public class AmplitudeClient {
 
         } catch (Exception e) {
             logger.e(TAG, "Error upgrading shared preferences", e);
+            Diagnostics.getLogger().logError("Failed to upgrade shared prefs", e);
             return false;
         }
     }

@@ -128,6 +128,11 @@ public class BaseTest {
 
         Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
+
+        if (Diagnostics.instance != null) {
+            Diagnostics.instance = null;
+        }
+
     }
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
