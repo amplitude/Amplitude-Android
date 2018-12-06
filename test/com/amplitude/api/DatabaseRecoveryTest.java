@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -16,6 +17,11 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,6 +45,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
         startTime = System.currentTimeMillis();
 
+        amplitude.setEventUploadPeriodMillis(10*60*1000);
         amplitude.initialize(context, apiKey, null, null, true);
 
         looper = Shadows.shadowOf(amplitude.logThread.getLooper());
@@ -203,7 +210,7 @@ public class DatabaseRecoveryTest extends BaseTest {
 
         // log an event to trigger SQLException that we set up with mocks
         amplitude.logEvent("test");
-        looper.runToEndOfTasks();
+        looper.runOneTask();
 
         // verify that the metadata has been persisted back into database
         String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
@@ -237,5 +244,117 @@ public class DatabaseRecoveryTest extends BaseTest {
             }
         }
         assertEquals(numSqlExceptions, 1);
+    }
+
+    @Test
+    public void testCorruptingDatabaseFile() throws IOException, JSONException {
+
+        // log an event normally, verify metadata updated in table
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // metadata: deviceId, sessionId, sequence number, last_event_id, last_event_time, previous_session_id
+        assertEquals(dbInstance.getEventCount(), 1);
+        assertEquals(dbInstance.getTotalEventCount(), 1);
+        assertEquals(dbInstance.getNthEventId(1), 1);
+
+        String deviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long previousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertNotNull(deviceId);
+        assertTrue(deviceId.endsWith("R"));
+        assertTrue(previousSessionId > 0);
+        assertEquals(sequenceNumber, 1);
+        assertEquals(lastEventId, 1);
+        assertTrue(lastEventTime >= startTime);
+        assertEquals(lastIdentifyId, -1);
+
+        // try to corrupt database file and then log another event
+        File file = dbInstance.file;
+        RandomAccessFile writer = new RandomAccessFile(file.getAbsolutePath(), "rw");
+        writer.seek(2);
+        writer.writeChars("corrupt database file with random string");
+        writer.close();
+
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // since events table recreated, the event id should have been reset back to 1
+        List<JSONObject> events = dbInstance.getEvents(5, 5);
+        assertEquals(events.size(), 1);
+        assertEquals(events.get(0).optInt("event_id"), 1);
+
+        // verify metadata is re-inserted into database
+        String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long newPreviousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long newLastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long newSequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long newLastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        Long newLastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertEquals(newDeviceId, deviceId);
+        assertEquals(newPreviousSessionId, previousSessionId);
+        assertTrue(newLastEventTime >= lastEventTime);
+        assertEquals(newSequenceNumber, 2);
+        assertEquals(newLastEventId, 1);
+        assertNull(newLastIdentifyId);
+    }
+
+    @Test
+    public void testDeletedDatabaseFile() throws IOException, JSONException {
+
+        // log an event normally, verify metadata updated in table
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // metadata: deviceId, sessionId, sequence number, last_event_id, last_event_time, previous_session_id
+        assertEquals(dbInstance.getEventCount(), 1);
+        assertEquals(dbInstance.getTotalEventCount(), 1);
+        assertEquals(dbInstance.getNthEventId(1), 1);
+
+        String deviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long previousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertNotNull(deviceId);
+        assertTrue(deviceId.endsWith("R"));
+        assertTrue(previousSessionId > 0);
+        assertEquals(sequenceNumber, 1);
+        assertEquals(lastEventId, 1);
+        assertTrue(lastEventTime >= startTime);
+        assertEquals(lastIdentifyId, -1);
+
+        // try to delete database file and test logging event
+        File file = dbInstance.file;
+        context.deleteDatabase(file.getName());
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        // since events table recreated, the event id should have been reset back to 1
+        List<JSONObject> events = dbInstance.getEvents(5, 5);
+        assertEquals(events.size(), 1);
+        assertEquals(events.get(0).optInt("event_id"), 1);
+
+        // verify metadata is re-inserted into database
+        String newDeviceId = dbInstance.getValue(AmplitudeClient.DEVICE_ID_KEY);
+        long newPreviousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
+        long newLastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
+        long newSequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
+        long newLastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
+        Long newLastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+
+        assertEquals(newDeviceId, deviceId);
+        assertEquals(newPreviousSessionId, previousSessionId);
+        assertTrue(newLastEventTime >= lastEventTime);
+        assertEquals(newSequenceNumber, 2);
+        assertEquals(newLastEventId, 1);
+        assertNull(newLastIdentifyId);
     }
 }

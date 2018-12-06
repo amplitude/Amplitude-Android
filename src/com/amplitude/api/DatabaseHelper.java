@@ -3,6 +3,7 @@ package com.amplitude.api;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
@@ -47,7 +48,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + IDENTIFY_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
-    private File file;
+    File file;
     private String instanceName;
     private boolean callResetListenerOnDatabaseReset = true;
     private DatabaseResetListener databaseResetListener;
@@ -96,6 +97,25 @@ class DatabaseHelper extends SQLiteOpenHelper {
         // lifetime of the table, even if rows get removed
         db.execSQL(CREATE_EVENTS_TABLE);
         db.execSQL(CREATE_IDENTIFYS_TABLE);
+
+        // NOTE: the database file can become corrupted between interactions
+        // getWriteableDatabase and getReadableDatabase will test for corruption
+        // and actually delete the database file and call onCreate again if it's corrupted
+        // Our normal catch exception and delete database does not get triggered in this scenario
+        // Therefore we are also calling the reset callback inside onCreate
+        if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
+            try {
+                callResetListenerOnDatabaseReset = false;  // guards against stack overflow
+                databaseResetListener.onDatabaseReset(db);
+            } catch (SQLiteException e) {
+                logger.e(TAG, String.format("databaseReset callback failed during onCreate"), e);
+                Diagnostics.getLogger().logError(
+                    String.format("DB: Failed to run databaseReset callback during onCreate"), e
+                );
+            } finally {
+                callResetListenerOnDatabaseReset = true;
+            }
+        }
     }
 
     @Override
@@ -149,19 +169,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long insertOrReplaceKeyValueToTable(String table, String key, Object value) {
         long result = -1;
+        SQLiteDatabase db = null;
         try {
-            SQLiteDatabase db = getWritableDatabase();
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(KEY_FIELD, key);
-            if (value instanceof Long) {
-                contentValues.put(VALUE_FIELD, (Long) value);
-            } else {
-                contentValues.put(VALUE_FIELD, (String) value);
-            }
-            result = insertKeyValueContentValuesIntoTable(db, table, contentValues);
-            if (result == -1) {
-                logger.w(TAG, "Insert failed");
-            }
+            db = getWritableDatabase();
+            result = insertOrReplaceKeyValueToTable(db, table, key, value);
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("insertOrReplaceKeyValue in %s failed", table), e);
             // Hard to recover from SQLiteExceptions, just start fresh
@@ -177,7 +188,25 @@ class DatabaseHelper extends SQLiteOpenHelper {
             );
             delete();
         } finally {
-            close();
+            if (db != null && db.isOpen()) {
+                close();
+            }
+        }
+        return result;
+    }
+
+    synchronized long insertOrReplaceKeyValueToTable(SQLiteDatabase db, String table, String key, Object value) throws SQLiteException, StackOverflowError {
+        long result = -1;
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(KEY_FIELD, key);
+        if (value instanceof Long) {
+            contentValues.put(VALUE_FIELD, (Long) value);
+        } else {
+            contentValues.put(VALUE_FIELD, (String) value);
+        }
+        result = insertKeyValueContentValuesIntoTable(db, table, contentValues);
+        if (result == -1) {
+            logger.w(TAG, "Insert failed");
         }
         return result;
     }
@@ -518,6 +547,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void delete() {
+        // This only gets called if the database somehow gets corrupted AFTER being fetched
+        // ie after the call to getWriteableDatabase / getReadableDatabase
+        // or if a SQL exception occurs during the interaction
         try {
             close();
             file.delete();
@@ -527,8 +559,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } finally {
             if (databaseResetListener != null && callResetListenerOnDatabaseReset) {
                 callResetListenerOnDatabaseReset = false;  // guards against stack overflow
-                databaseResetListener.onDatabaseReset();
-                callResetListenerOnDatabaseReset = true;
+                SQLiteDatabase db = null;
+                try {
+                    db = getWritableDatabase();
+                    databaseResetListener.onDatabaseReset(db);
+                } catch (SQLiteException e) {
+                    logger.e(TAG, String.format("databaseReset callback failed during delete"), e);
+                    Diagnostics.getLogger().logError(
+                        String.format("DB: Failed to run databaseReset callback in delete"), e
+                    );
+                }
+                finally {
+                    callResetListenerOnDatabaseReset = true;
+                    if (db != null && db.isOpen()) {
+                        close();
+                    }
+                }
             }
         }
     }

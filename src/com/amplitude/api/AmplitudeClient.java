@@ -3,6 +3,7 @@ package com.amplitude.api;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
@@ -294,12 +295,12 @@ public class AmplitudeClient {
                         // install database reset listener to re-insert metadata in memory
                         dbHelper.setDatabaseResetListener(new DatabaseResetListener() {
                             @Override
-                            public void onDatabaseReset() {
-                                dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-                                dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, client.userId);
-                                dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
-                                dbHelper.insertOrReplaceKeyLongValue(PREVIOUS_SESSION_ID_KEY, sessionId);
-                                dbHelper.insertOrReplaceKeyLongValue(LAST_EVENT_TIME_KEY, lastEventTime);
+                            public void onDatabaseReset(SQLiteDatabase db) {
+                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, DEVICE_ID_KEY, client.deviceId);
+                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, USER_ID_KEY, client.userId);
+                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, OPT_OUT_KEY, client.optOut ? 1L : 0L);
+                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, PREVIOUS_SESSION_ID_KEY, client.sessionId);
+                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
                             }
                         });
 
