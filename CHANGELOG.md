@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.21.0 (December 05, 2018)
+
 * Update SDK to better handle when the SQLite database file gets corrupted between interactions.
 * Add optional diagnostic logging that tracks exceptions thrown in the SDK and sends to Amplitude.
 
