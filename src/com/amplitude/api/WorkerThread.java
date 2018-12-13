@@ -2,11 +2,12 @@ package com.amplitude.api;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Process;
 
 public class WorkerThread extends HandlerThread {
-	
+
 	public WorkerThread(String name) {
-		super(name);
+		super(name, Process.THREAD_PRIORITY_BACKGROUND);
 	}
 
 	private Handler handler;
@@ -14,7 +15,7 @@ public class WorkerThread extends HandlerThread {
 	Handler getHandler() {
 		return handler;
 	}
-	
+
 	void post(Runnable r) {
 		waitForInitialization();
 		handler.post(r);
