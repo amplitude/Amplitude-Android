@@ -171,7 +171,7 @@ public class AmplitudeClient {
     /**
      * The url for Amplitude API endpoint
      */
-    String url = Constants.EVENT_LOG_URL;
+    String url;
     /**
      * The background event logging worker thread instance.
      */
@@ -251,6 +251,7 @@ public class AmplitudeClient {
         this.apiKey = apiKey;
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
+        this.url = Constants.EVENT_LOG_URL;
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -490,6 +491,18 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
+        return this;
+    }
+
+    /**
+     * Sets a custom server url for event upload.
+     * @param serverUrl - a string url for event upload.
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setServerUrl(String serverUrl) {
+        if (!Utils.isEmptyString(serverUrl)) {
+            url = serverUrl;
+        }
         return this;
     }
 
