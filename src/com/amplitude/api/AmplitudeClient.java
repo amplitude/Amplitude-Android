@@ -194,6 +194,7 @@ public class AmplitudeClient {
      */
     public AmplitudeClient(String instance) {
         this.instanceName = Utils.normalizeInstanceName(instance);
+        this.url = Constants.EVENT_LOG_URL;
         logThread.start();
         httpThread.start();
     }
@@ -251,7 +252,6 @@ public class AmplitudeClient {
         this.apiKey = apiKey;
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
-        this.url = Constants.EVENT_LOG_URL;
 
         final AmplitudeClient client = this;
         runOnLogThread(new Runnable() {
