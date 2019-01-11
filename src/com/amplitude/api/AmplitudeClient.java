@@ -17,7 +17,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -157,6 +156,8 @@ public class AmplitudeClient {
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
     private boolean flushEventsOnClose = true;
+
+    private NetworkClient networkClient;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -1440,6 +1441,11 @@ public class AmplitudeClient {
             }
         }
         identify(identify);
+    }
+
+
+    public void setAmpNetworkClient(NetworkClient networkClient) {
+        this.networkClient = networkClient;
     }
 
     /**
