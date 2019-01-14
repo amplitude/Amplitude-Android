@@ -10,7 +10,7 @@ import java.io.IOException;
 public class DefaultNetworkClient implements NetworkClient {
 
     @Override
-    public Response uploadEvents(EventUploadRequest eventUploadRequest, OkHttpClient client) throws IOException {
+    public Response uploadEvents(EventUploadRequest eventUploadRequest, OkHttpClient client) throws IOException, IllegalArgumentException {
 
         String apiVersionString = "" + eventUploadRequest.getApiVersion();
         String timestampString = "" + eventUploadRequest.getUploadTime();
