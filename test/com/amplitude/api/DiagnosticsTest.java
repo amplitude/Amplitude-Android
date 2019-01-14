@@ -129,14 +129,17 @@ public class DiagnosticsTest extends BaseTest {
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(0)).optString("error"), "test_error");
         assertTrue(logger.unsentErrors.get(logger.unsentErrorStrings.get(0)).optLong("timestamp") >= timestamp);
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(0)).optInt("count"), 1);
+        assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(0)).optString("library"), "amplitude-android/2.21.0");
         assertEquals(logger.unsentErrorStrings.get(1), "test_error1");
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(1)).optString("error"), "test_error1");
         assertTrue(logger.unsentErrors.get(logger.unsentErrorStrings.get(1)).optLong("timestamp") >= timestamp);
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(1)).optInt("count"), 1);
+        assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(1)).optString("library"), "amplitude-android/2.21.0");
         assertEquals(logger.unsentErrorStrings.get(2), "test_error2");
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(2)).optString("error"), "test_error2");
         assertTrue(logger.unsentErrors.get(logger.unsentErrorStrings.get(2)).optLong("timestamp") >= timestamp);
         assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(2)).optInt("count"), 1);
+        assertEquals(logger.unsentErrors.get(logger.unsentErrorStrings.get(2)).optString("library"), "amplitude-android/2.21.0");
 
         // test truncation
         logger.setDiagnosticEventMaxCount(7);

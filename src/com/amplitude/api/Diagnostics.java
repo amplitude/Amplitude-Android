@@ -115,6 +115,7 @@ public class Diagnostics {
                         event.put("timestamp", System.currentTimeMillis());
                         event.put("device_id", deviceId);
                         event.put("count", 1);
+                        event.put("library", String.format("amplitude-android/%s", Constants.VERSION));
 
                         if (exception != null) {
                             String stackTrace = Log.getStackTraceString(exception);
