@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import android.os.Environment;
+import android.os.StatFs;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -111,11 +113,35 @@ public class Diagnostics {
                 if (event == null) {
                     event = new JSONObject();
                     try {
+
+                        // add attributes to diagnostic event
+
                         event.put("error", AmplitudeClient.truncate(error));
                         event.put("timestamp", System.currentTimeMillis());
                         event.put("device_id", deviceId);
                         event.put("count", 1);
                         event.put("library", String.format("amplitude-android/%s", Constants.VERSION));
+
+                        // get memory stats
+                        Runtime runtime = Runtime.getRuntime();
+                        long usedMemInMB = (runtime.totalMemory() - runtime.freeMemory()) / 1048576L;
+                        long maxHeapSizeInMB = runtime.maxMemory() / 1048576L;
+                        long availHeapSizeInMB = maxHeapSizeInMB - usedMemInMB;
+                        event.put("used_mem_mb", usedMemInMB);
+                        event.put("max_heap_mb", maxHeapSizeInMB);
+                        event.put("heap_avail_mb", availHeapSizeInMB);
+
+                        // get disk stats
+                        StatFs stat = new StatFs(Environment.getExternalStorageDirectory().getPath());
+                        long bytesAvailable;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                            bytesAvailable = stat.getBlockSizeLong() * stat.getAvailableBlocksLong();
+                        }
+                        else {
+                            bytesAvailable = (long)stat.getBlockSize() * (long)stat.getAvailableBlocks();
+                        }
+                        long megAvailable = bytesAvailable / (1024 * 1024);
+                        event.put("disk_avail_mb", megAvailable);
 
                         if (exception != null) {
                             String stackTrace = Log.getStackTraceString(exception);
@@ -124,7 +150,7 @@ public class Diagnostics {
                             }
                         }
 
-                        // unsent queues are full, make room by removing
+                        // add unsent errors to queue. if full, make room by removing
                         if (unsentErrorStrings.size() >= diagnosticEventMaxCount) {
                             for (int i = 0; i < DIAGNOSTIC_EVENT_MIN_COUNT; i++) {
                                 String errorString = unsentErrorStrings.remove(0);
