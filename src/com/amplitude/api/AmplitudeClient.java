@@ -171,7 +171,7 @@ public class AmplitudeClient {
     /**
      * The url for Amplitude API endpoint
      */
-    String url;
+    String url = Constants.EVENT_LOG_URL;
     /**
      * The background event logging worker thread instance.
      */
@@ -194,7 +194,6 @@ public class AmplitudeClient {
      */
     public AmplitudeClient(String instance) {
         this.instanceName = Utils.normalizeInstanceName(instance);
-        this.url = Constants.EVENT_LOG_URL;
         logThread.start();
         httpThread.start();
     }
