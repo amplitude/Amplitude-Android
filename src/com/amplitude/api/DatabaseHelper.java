@@ -4,12 +4,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseErrorHandler;
+import android.database.DefaultDatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.util.Pair;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,67 +24,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     private static class DatabaseCorruptionHandler implements DatabaseErrorHandler {
 
+        DatabaseErrorHandler defaultHandler = new DefaultDatabaseErrorHandler();
+
         @Override
         public void onCorruption(SQLiteDatabase dbObj) {
 
             Diagnostics.getLogger().logError(
-                    "DB: corruption detected, deleting database files", new Throwable()
+                "DB: corruption detected, deleting database files", new Throwable()
             );
 
-            // Android's DefaultDatabaseErrorHandler
-            logger.e(TAG, "Corruption reported by sqlite on database: " + dbObj.getPath());
-            // is the corruption detected even before database could be 'opened'?
-            if (!dbObj.isOpen()) {
-                // database files are not even openable. delete this database file.
-                // NOTE if the database has attached databases, then any of them could be corrupt.
-                // and not deleting all of them could cause corrupted database file to remain and
-                // make the application crash on database open operation. To avoid this problem,
-                // the application should provide its own {@link DatabaseErrorHandler} impl class
-                // to delete ALL files of the database (including the attached databases).
-                deleteDatabaseFile(dbObj.getPath());
-                return;
-            }
-            else {
-                List<Pair<String, String>> attachedDbs = null;
-                try {
-                    // Close the database, which will cause subsequent operations to fail.
-                    // before that, get the attached database list first.
-                    try {
-                        attachedDbs = dbObj.getAttachedDbs();
-                    } catch (SQLiteException e) {
-                        /* ignore */
-                    }
-                    try {
-                        dbObj.close();
-                    } catch (SQLiteException e) {
-                        /* ignore */
-                    }
-                } finally {
-                    // Delete all files of this corrupt database and/or attached databases
-                    if (attachedDbs != null) {
-                        for (Pair<String, String> p : attachedDbs) {
-                            deleteDatabaseFile(p.second);
-                        }
-                    } else {
-                        // attachedDbs = null is possible when the database is so corrupt that even
-                        // "PRAGMA database_list;" also fails. delete the main database file
-                        deleteDatabaseFile(dbObj.getPath());
-                    }
-                }
-            }
-        }
-
-        private void deleteDatabaseFile(String fileName) {
-            if (fileName.equalsIgnoreCase(":memory:") || fileName.trim().length() == 0) {
-                return;
-            }
-            logger.e(TAG, "deleting the database file: " + fileName);
-            try {
-                SQLiteDatabase.deleteDatabase(new File(fileName));
-            } catch (Exception e) {
-                /* print warning and ignore exception */
-                logger.w(TAG, "delete failed: " + e.getMessage());
-            }
+            defaultHandler.onCorruption(dbObj);
         }
     }
 
