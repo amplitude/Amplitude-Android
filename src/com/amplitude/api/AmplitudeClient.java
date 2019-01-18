@@ -494,6 +494,18 @@ public class AmplitudeClient {
     }
 
     /**
+     * Sets a custom server url for event upload.
+     * @param serverUrl - a string url for event upload.
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setServerUrl(String serverUrl) {
+        if (!Utils.isEmptyString(serverUrl)) {
+            url = serverUrl;
+        }
+        return this;
+    }
+
+    /**
      * Sets session timeout millis. If foreground tracking has not been enabled with
      * @{code enableForegroundTracking()}, then new sessions will be started after
      * sessionTimeoutMillis milliseconds have passed since the last event logged.
