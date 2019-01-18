@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.22.0 (January 18, 2019)
+
 ## 2.21.0 (December 05, 2018)
 
 * Update SDK to better handle when the SQLite database file gets corrupted between interactions.
