@@ -5,11 +5,11 @@ public class EventUploadRequest {
     final private int apiVersion;
     final private String apiKey;
     final private String events;
-    final private long uploadTime;
+    final private String uploadTime;
     final private String checksum;
     final private String url;
 
-    public EventUploadRequest(int apiVersion, String apiKey, String events, long uploadTime, String checksum, String url) {
+    public EventUploadRequest(int apiVersion, String apiKey, String events, String uploadTime, String checksum, String url) {
         this.apiVersion = apiVersion;
         this.apiKey = apiKey;
         this.events = events;
@@ -30,7 +30,7 @@ public class EventUploadRequest {
         return events;
     }
 
-    public long getUploadTime() {
+    public String getUploadTime() {
         return uploadTime;
     }
 

@@ -1434,8 +1434,7 @@ public class AmplitudeClient {
         identify(identify);
     }
 
-
-    public void NetworkClient(NetworkClient networkClient) {
+    public void setNetworkClient(NetworkClient networkClient) {
         this.networkClient = networkClient;
     }
 
@@ -1936,7 +1935,7 @@ public class AmplitudeClient {
                 Constants.API_VERSION,
                 apiKey,
                 events,
-                getCurrentTimeMillis(),
+                timestampString,
                 checksumString,
                 url);
 
