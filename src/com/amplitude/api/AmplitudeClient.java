@@ -9,7 +9,6 @@ import android.os.Build;
 import android.util.Pair;
 import com.amplitude.security.MD5;
 import okhttp3.OkHttpClient;
-import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1943,7 +1942,7 @@ public class AmplitudeClient {
 
         try {
             Response response = this.networkClient.uploadEvents(eventUploadRequest, client);
-            String stringResponse = response.body().string();
+            String stringResponse = response.getBody();
             if (stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
@@ -1973,7 +1972,7 @@ public class AmplitudeClient {
             } else if (stringResponse.equals("request_db_write_failed")) {
                 logger.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
-            } else if (response.code() == 413) {
+            } else if (response.getCode() == 413) {
 
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {

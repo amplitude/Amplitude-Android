@@ -3,7 +3,6 @@ package com.amplitude.api;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 
 import java.io.IOException;
 
@@ -28,6 +27,7 @@ public class DefaultNetworkClient implements NetworkClient {
                 .post(body)
                 .build();
 
-        return client.newCall(request).execute();
+        okhttp3.Response response = client.newCall(request).execute();
+        return new Response(response.code(), response.body() == null ? "" : response.body().string());
     }
 }
