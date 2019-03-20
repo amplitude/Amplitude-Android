@@ -1,6 +1,7 @@
 package com.amplitude.api;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -74,6 +75,7 @@ public class BaseTest {
     protected MockWebServer server;
     protected MockClock clock;
     protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
+    protected String[] instanceNames = {Constants.DEFAULT_INSTANCE, "app1", "app2", "newApp1", "newApp2", "new_app"};
 
     public void setUp() throws Exception {
         setUp(true);
@@ -93,6 +95,13 @@ public class BaseTest {
         // and https://github.com/robolectric/robolectric/issues/1622
         Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
+
+        // Clear shared prefs for each test
+        for (String instanceName: instanceNames) {
+            SharedPreferences.Editor editor = Utils.getAmplitudeSharedPreferences(context, instanceName).edit();
+            editor.clear();
+            editor.apply();
+        }
 
         if (withServer) {
             server = new MockWebServer();

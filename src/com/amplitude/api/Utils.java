@@ -1,5 +1,8 @@
 package com.amplitude.api;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,5 +105,21 @@ public class Utils {
             instance = Constants.DEFAULT_INSTANCE;
         }
         return instance.toLowerCase();
+    }
+
+    static SharedPreferences getAmplitudeSharedPreferences(Context context, String instanceName) {
+        assert !isEmptyString(instanceName);
+        String prefName = Constants.PACKAGE_NAME + "." + instanceName + "." + context.getPackageName();
+        return context.getSharedPreferences(prefName, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
+    }
+
+    static void writeStringToSharedPreferences(Context context, String instanceName, String key, String value) {
+        SharedPreferences.Editor editor = getAmplitudeSharedPreferences(context, instanceName).edit();
+        editor.putString(key, value);
+        editor.apply();
+    }
+
+    static String getStringFromSharedPreferences(Context context, String instanceName, String key) {
+        return getAmplitudeSharedPreferences(context, instanceName).getString(key, null);
     }
 }
