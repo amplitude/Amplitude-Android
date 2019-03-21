@@ -2084,7 +2084,7 @@ public class AmplitudeClient {
         if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
             // compare against device id stored in backup storage and update if necessary
             if (!deviceId.equals(sharedPrefDeviceId)) {
-                Utils.writeStringToSharedPreferences(context, instanceName, DEVICE_ID_KEY, deviceId);
+                saveDeviceId(deviceId);
             }
 
             return deviceId;
@@ -2092,7 +2092,7 @@ public class AmplitudeClient {
 
         // backup #1: check if device id is stored in shared preferences
         if (!(Utils.isEmptyString(sharedPrefDeviceId) || invalidIds.contains(sharedPrefDeviceId))) {
-            dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, sharedPrefDeviceId);
+            saveDeviceId(sharedPrefDeviceId);
             return sharedPrefDeviceId;
         }
 
