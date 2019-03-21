@@ -119,6 +119,7 @@ public class AmplitudeClientTest extends BaseTest {
     @Test
     public void testSetDeviceId() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        SharedPreferences prefs = Utils.getAmplitudeSharedPreferences(context, amplitude.instanceName);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
@@ -134,40 +135,48 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("9774d56d682e549c");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("unknown");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("000000000000000");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("Android");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("DEFACE");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("00000000-0000-0000-0000-000000000000");
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         // set valid device id
         String newDeviceId = UUID.randomUUID().toString();
@@ -175,12 +184,14 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), newDeviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), newDeviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), newDeviceId);
 
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test");
         assertEquals(event.optString("device_id"), newDeviceId);
+        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), newDeviceId);
     }
 
     @Test
@@ -249,56 +260,6 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put(Constants.AMP_OP_SET, new JSONObject().put(property3, value3));
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         assertTrue(Utils.compareJSONObjects(userProperties, expected));
-    }
-
-    @Test
-    public void testReloadDeviceIdFromDatabase() {
-        String deviceId = "test_device_id";
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
-                AmplitudeClient.DEVICE_ID_KEY,
-                deviceId
-        );
-
-        // force re-initialize to re-load deviceId from DB
-        amplitude.initialized = false;
-        amplitude.initialize(context, apiKey);
-        looper.runToEndOfTasks();
-        assertEquals(deviceId, amplitude.getDeviceId());
-    }
-
-    @Test
-    public void testDoesNotUpgradeDeviceIdFromSharedPrefsToDatabase() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-
-        // initializeDeviceId no longer fetches from SharedPrefs, will get advertising ID instead
-        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
-        SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, "test_device_id").commit();
-
-        looper.getScheduler().advanceToLastPostedRunnable();
-        String deviceId = amplitude.getDeviceId();
-        assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertEquals(
-                deviceId,
-                dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
-        );
-    }
-
-    @Test
-    public void testGetDeviceIdWithoutAdvertisingId() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.getScheduler().advanceToLastPostedRunnable();
-        assertNotNull(amplitude.getDeviceId());
-        assertEquals(37, amplitude.getDeviceId().length());
-        String deviceId = amplitude.getDeviceId();
-        assertTrue(deviceId.endsWith("R"));
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertEquals(
-                deviceId,
-                dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY)
-        );
     }
 
     @Test

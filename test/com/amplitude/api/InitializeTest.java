@@ -308,4 +308,90 @@ public class InitializeTest extends BaseTest {
         assertEquals(amplitude.previousSessionId, 14000L);
         assertEquals(amplitude.lastEventTime, 14000L);
     }
+
+    @Test
+    public void testReloadDeviceIdFromDatabase() {
+        String deviceId = "test_device_id_from_database";
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        DatabaseHelper.getDatabaseHelper(context).insertOrReplaceKeyValue(
+            AmplitudeClient.DEVICE_ID_KEY, deviceId
+        );
+        assertNull(Utils.getStringFromSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
+        ));
+
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        assertEquals(deviceId, amplitude.getDeviceId());
+
+        String newSharedPrefsDeviceId = Utils.getStringFromSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
+        );
+        assertEquals(deviceId, newSharedPrefsDeviceId);
+    }
+
+    @Test
+    public void testReloadDeviceIdFromSharedPrefs() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context, amplitude.instanceName);
+        assertNull(dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
+
+        String deviceId = "test_device_id_from_shared_prefs";
+        Utils.writeStringToSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY, deviceId
+        );
+
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        assertEquals(deviceId, amplitude.getDeviceId());
+        assertEquals(deviceId, dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
+        assertEquals(deviceId, Utils.getStringFromSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
+        ));
+    }
+
+    @Test
+    public void testUpgradeDeviceIdFromLegacySharedPrefsToDatabase() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+
+        // default instance migrates from legacy shared preferences into database
+        String testDeviceId = "test_device_id_from_legacy_shared_prefs";
+        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
+        SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
+        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, testDeviceId).commit();
+
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        String deviceId = amplitude.getDeviceId();
+        assertEquals(deviceId, testDeviceId);
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertEquals(testDeviceId, dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
+
+        String newSharedPrefsDeviceId = Utils.getStringFromSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
+        );
+        assertEquals(testDeviceId, newSharedPrefsDeviceId);
+
+        // verify deviceId deleted from legacy shared prefs
+        assertNull(prefs.getString(Constants.PREFKEY_DEVICE_ID, null));
+    }
+
+    @Test
+    public void testInitializeDeviceIdWithRandomUUID() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+
+        String deviceId = amplitude.getDeviceId();
+        assertEquals(37, deviceId.length());
+        assertTrue(deviceId.endsWith("R"));
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertEquals(deviceId, dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
+
+        // verify deviceID persisted to SharedPrefs
+        String sharedPrefsDeviceId = Utils.getStringFromSharedPreferences(
+            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
+        );
+        assertEquals(deviceId, sharedPrefsDeviceId);
+    }
 }
