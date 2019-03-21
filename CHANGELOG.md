@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Store deviceId in SharedPreferences as backup in case SQLite database fails or becomes corrupted.
+
 ## 2.22.0 (January 18, 2019)
 
 * Add ability to set a custom server URL for uploading events using `setServerUrl`.
