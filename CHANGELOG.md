@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.22.1 (March 21, 2019)
+
 * Store deviceId in SharedPreferences as backup in case SQLite database fails or becomes corrupted.
 
 ## 2.22.0 (January 18, 2019)
