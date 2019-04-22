@@ -1170,12 +1170,12 @@ public class AmplitudeClient {
     }
 
     /**
-     * Internal method to start a new session if needed.
+     * Public method to start a new session if needed.
      *
      * @param timestamp the timestamp
      * @return whether or not a new session was started
      */
-    boolean startNewSessionIfNeeded(long timestamp) {
+    public boolean startNewSessionIfNeeded(long timestamp) {
         if (inSession()) {
 
             if (isWithinMinTimeBetweenSessions(timestamp)) {
