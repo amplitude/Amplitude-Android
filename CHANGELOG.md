@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Make `startNewSessionIfNeeded` a public method. Only call this if you know what you are doing. This may trigger a new session to start.
+
 ## 2.22.1 (March 21, 2019)
 
 * Store deviceId in SharedPreferences as backup in case SQLite database fails or becomes corrupted.
