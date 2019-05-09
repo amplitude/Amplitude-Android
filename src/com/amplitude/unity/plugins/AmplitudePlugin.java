@@ -162,6 +162,8 @@ public class AmplitudePlugin {
 
     public static long getSessionId(String instanceName) { return Amplitude.getInstance(instanceName).getSessionId(); }
 
+    public static void uploadEvents(String instanceName) { Amplitude.getInstance(instanceName).uploadEvents(); }
+
     // User Property Operations
 
     // clear user properties
