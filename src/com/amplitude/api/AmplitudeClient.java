@@ -1068,6 +1068,12 @@ public class AmplitudeClient {
             ));
             return -1;
         }
+        if (eventString.getBytes().length >= Constants.MAX_EVENT_SIZE_BYTES) {
+            logger.e(TAG, String.format(
+                "Event %s with properties exceeds 1MB in sizes, skipping", eventType
+            ));
+            return -1;
+        }
 
         if (eventType.equals(Constants.IDENTIFY_EVENT) || eventType.equals(Constants.GROUP_IDENTIFY_EVENT)) {
             lastIdentifyId = dbHelper.addIdentify(eventString);
@@ -1078,8 +1084,8 @@ public class AmplitudeClient {
         }
 
         int numEventsToRemove = Math.min(
-                Math.max(1, eventMaxCount/10),
-                Constants.EVENT_REMOVE_BATCH_SIZE
+            Math.max(1, eventMaxCount/10),
+            Constants.EVENT_REMOVE_BATCH_SIZE
         );
         if (dbHelper.getEventCount() > eventMaxCount) {
             dbHelper.removeEvents(dbHelper.getNthEventId(numEventsToRemove));

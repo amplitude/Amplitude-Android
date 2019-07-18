@@ -26,6 +26,7 @@ public class Constants {
     public static final long SESSION_TIMEOUT_MILLIS = 30 * 60 * 1000; // 30m
     public static final int MAX_STRING_LENGTH = 1024;
     public static final int MAX_PROPERTY_KEYS = 1000;
+    public static final int MAX_EVENT_SIZE_BYTES = 1000000; // 1MB
 
     public static final String SHARED_PREFERENCES_NAME_PREFIX = PACKAGE_NAME;
     public static final String PREFKEY_LAST_EVENT_ID = PACKAGE_NAME + ".lastEventId";

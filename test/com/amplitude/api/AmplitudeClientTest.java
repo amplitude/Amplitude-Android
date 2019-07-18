@@ -1672,4 +1672,37 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         assertTrue(Utils.compareJSONObjects(groupProperties, expected));
     }
+
+    @Test
+    public void testLogReallyBigEvent() throws JSONException {
+        int length = 2500000;  // 2.5 million chars is >= 2MB
+        char[] testChar = new char[length];
+        Arrays.fill(testChar, 'a');
+        String testStr = new String(testChar);
+        assertTrue(testStr.getBytes().length >= length);
+
+        // replicate cursorWindow 0, 0 crash with really big event
+        // use testStr for event type, event property keys
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        JSONObject eventProps = new JSONObject();
+        for (int i = 0; i < 5; i++) {
+            eventProps.put(testStr + String.valueOf(i), testStr);
+        }
+
+        amplitude.logEvent(testStr, eventProps);
+        amplitude.logEvent(testStr, eventProps);
+        amplitude.logEvent(testStr, eventProps);
+        amplitude.logEvent(testStr, eventProps);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 0);
+        RecordedRequest request = runRequest(amplitude);
+    }
 }
