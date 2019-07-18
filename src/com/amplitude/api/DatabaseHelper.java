@@ -321,6 +321,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to getValue: %s", key), e
             );
             delete();
+        } catch (IllegalStateException e) {  // put before Runtime since IllegalState extends
+            // cursor window row too big exception
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to getValue: %s", key), e
+            );
+            delete();
         } catch (RuntimeException e) {
             Diagnostics.getLogger().logError(
                 String.format("DB: Failed to getValue: %s", key), e
@@ -382,7 +388,14 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to getEventsFromTable %s", table), e
             );
             delete();
+        } catch (IllegalStateException e) {  // put before Runtime since IllegalState extends
+            // cursor window row too big exception
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to getEventsFromTable %s", table), e
+            );
+            delete();
         } catch (RuntimeException e) {
+            // cursor window allocation exception
             Diagnostics.getLogger().logError(
                 String.format("DB: Failed to getEventsFromTable %s", table), e
             );
@@ -426,6 +439,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (StackOverflowError e) {
             logger.e(TAG, String.format("getNumberRows for %s failed", table), e);
             // potential stack overflow error when getting database on custom Android versions
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to getNumberRows for table %s", table), e
+            );
+            delete();
+        } catch (IllegalStateException e) {
+            // cursor window row too big exception
             Diagnostics.getLogger().logError(
                 String.format("DB: Failed to getNumberRows for table %s", table), e
             );
@@ -475,6 +494,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to getNthEventId from table %s", table), e
             );
             delete();
+        } catch (IllegalStateException e) {
+            // cursor window row too big exception
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to getNthEventId from table %s", table), e
+            );
+            delete();
         } finally {
             if (statement != null) {
                 statement.close();
@@ -510,6 +535,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to removeEvents from table %s", table), e
             );
             delete();
+        } catch (IllegalStateException e) {
+            // cursor window row too big exception
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to removeEvents from table %s", table), e
+            );
+            delete();
         } finally {
             close();
         }
@@ -537,6 +568,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
         } catch (StackOverflowError e) {
             logger.e(TAG, String.format("removeEvent from %s failed", table), e);
             // potential stack overflow error when getting database on custom Android versions
+            Diagnostics.getLogger().logError(
+                String.format("DB: Failed to removeEvent from table %s", table), e
+            );
+            delete();
+        } catch (IllegalStateException e) {
+            // cursor window row too big exception
             Diagnostics.getLogger().logError(
                 String.format("DB: Failed to removeEvent from table %s", table), e
             );
