@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Handle SQLite database crashes caused by fetching events that exceed 2MB (max size of cursor window).
+
 ## 2.23.0 (April 22, 2019)
 
 * Make `startNewSessionIfNeeded` a public method. Only call this if you know what you are doing. This may trigger a new session to start.
