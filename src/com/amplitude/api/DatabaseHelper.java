@@ -328,6 +328,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             );
             handleIfCursorRowTooLargeException(e);
         } catch (RuntimeException e) {
+            // cursor window allocation exception
             Diagnostics.getLogger().logError(
                 String.format("DB: Failed to getValue: %s", key), e
             );
@@ -443,12 +444,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to getNumberRows for table %s", table), e
             );
             delete();
-        } catch (IllegalStateException e) {
-            // cursor window row too big exception
-            Diagnostics.getLogger().logError(
-                String.format("DB: Failed to getNumberRows for table %s", table), e
-            );
-            handleIfCursorRowTooLargeException(e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -494,12 +489,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to getNthEventId from table %s", table), e
             );
             delete();
-        } catch (IllegalStateException e) {
-            // cursor window row too big exception
-            Diagnostics.getLogger().logError(
-                String.format("DB: Failed to getNthEventId from table %s", table), e
-            );
-            handleIfCursorRowTooLargeException(e);
         } finally {
             if (statement != null) {
                 statement.close();
@@ -535,12 +524,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to removeEvents from table %s", table), e
             );
             delete();
-        } catch (IllegalStateException e) {
-            // cursor window row too big exception
-            Diagnostics.getLogger().logError(
-                String.format("DB: Failed to removeEvents from table %s", table), e
-            );
-            handleIfCursorRowTooLargeException(e);
         } finally {
             close();
         }
@@ -572,12 +555,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 String.format("DB: Failed to removeEvent from table %s", table), e
             );
             delete();
-        } catch (IllegalStateException e) {
-            // cursor window row too big exception
-            Diagnostics.getLogger().logError(
-                String.format("DB: Failed to removeEvent from table %s", table), e
-            );
-            handleIfCursorRowTooLargeException(e);
         } finally {
             close();
         }
@@ -634,7 +611,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
      */
     private void handleIfCursorRowTooLargeException(IllegalStateException e) {
         String message = e.getMessage();
-        if (!Utils.isEmptyString(message) && message.startsWith("Couldn't read row 0, col 0 from CursorWindow.")) {
+        if (!Utils.isEmptyString(message) && message.contains("Couldn't read") && message.contains("CursorWindow")) {
             delete();
         } else {
             throw e;
