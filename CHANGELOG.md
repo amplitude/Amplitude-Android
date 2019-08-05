@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Catch exceptions when fetching most recent location.
+
 ## 2.23.1 (July 19, 2019)
 
 * Handle SQLite database crashes caused by fetching events that exceed 2MB (max size of cursor window).
