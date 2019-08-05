@@ -372,17 +372,6 @@ public class DeviceInfo {
             Location location = null;
             try {
                 location = locationManager.getLastKnownLocation(provider);
-            } catch (IllegalArgumentException e) {
-                // failed to get last known location from provider
-                AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
-                Diagnostics.getLogger().logError("Failed to get most recent location", e);
-            } catch (SecurityException e) {
-                // failed to get last known location from provider
-                AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
-                Diagnostics.getLogger().logError("Failed to get most recent location", e);
-            } catch (NullPointerException e) {
-                AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
-                Diagnostics.getLogger().logError("Failed to get most recent location", e);
             } catch (Exception e) {
                 AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
                 Diagnostics.getLogger().logError("Failed to get most recent location", e);
