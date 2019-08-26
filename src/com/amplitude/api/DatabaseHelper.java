@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseErrorHandler;
+import android.database.DefaultDatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
@@ -20,6 +21,21 @@ import java.util.List;
 import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static class DatabaseCorruptionHandler implements DatabaseErrorHandler {
+
+        DatabaseErrorHandler defaultHandler = new DefaultDatabaseErrorHandler();
+
+        @Override
+        public void onCorruption(SQLiteDatabase dbObj) {
+
+            Diagnostics.getLogger().logError(
+                "DB: corruption detected, deleting database files", new Throwable()
+            );
+
+            defaultHandler.onCorruption(dbObj);
+        }
+    }
 
     static final Map<String, DatabaseHelper> instances = new HashMap<String, DatabaseHelper>();
 
@@ -79,7 +95,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     protected DatabaseHelper(Context context, String instance) {
-        super(context, getDatabaseName(instance), null, Constants.DATABASE_VERSION);
+        super(context, getDatabaseName(instance), null, Constants.DATABASE_VERSION, new DatabaseCorruptionHandler());
         file = context.getDatabasePath(getDatabaseName(instance));
         instanceName = Utils.normalizeInstanceName(instance);
     }
