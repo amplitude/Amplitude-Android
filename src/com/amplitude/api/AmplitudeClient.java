@@ -7,9 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
-
 import com.amplitude.security.MD5;
-
+import okhttp3.OkHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,18 +16,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * <h1>AmplitudeClient</h1>
@@ -157,6 +146,8 @@ public class AmplitudeClient {
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
     private boolean flushEventsOnClose = true;
+
+    private NetworkClient networkClient = new DefaultNetworkClient();
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -1447,6 +1438,10 @@ public class AmplitudeClient {
         identify(identify);
     }
 
+    public void setNetworkClient(NetworkClient networkClient) {
+        this.networkClient = networkClient;
+    }
+
     /**
      * Clear user properties. This will clear all user properties at once. <b>Note: the
      * result is irreversible!</b>
@@ -1911,15 +1906,16 @@ public class AmplitudeClient {
 
     /**
      * Internal method to generate the event upload post request.
-     *
      * @param client        the client
      * @param events        the events
      * @param maxEventId    the max event id
      * @param maxIdentifyId the max identify id
      */
     protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
-        String apiVersionString = "" + Constants.API_VERSION;
+
         String timestampString = "" + getCurrentTimeMillis();
+
+        String apiVersionString = "" + Constants.API_VERSION;
 
         String checksumString = "";
         try {
@@ -1939,32 +1935,19 @@ public class AmplitudeClient {
             Diagnostics.getLogger().logError("Failed to compute checksum for upload request", e);
         }
 
-        FormBody body = new FormBody.Builder()
-            .add("v", apiVersionString)
-            .add("client", apiKey)
-            .add("e", events)
-            .add("upload_time", timestampString)
-            .add("checksum", checksumString)
-            .build();
-
-        Request request;
-        try {
-             request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-        } catch (IllegalArgumentException e) {
-            logger.e(TAG, e.toString());
-            uploadingCurrently.set(false);
-            Diagnostics.getLogger().logError("Failed to build upload request", e);
-            return;
-        }
+        EventUploadRequest eventUploadRequest = new EventUploadRequest(
+                Constants.API_VERSION,
+                apiKey,
+                events,
+                timestampString,
+                checksumString,
+                url);
 
         boolean uploadSuccess = false;
 
         try {
-            Response response = client.newCall(request).execute();
-            String stringResponse = response.body().string();
+            Response response = this.networkClient.uploadEvents(eventUploadRequest, client);
+            String stringResponse = response.getBody();
             if (stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
@@ -1980,8 +1963,7 @@ public class AmplitudeClient {
                                     updateServer(backoffUpload);
                                 }
                             });
-                        }
-                        else {
+                        } else {
                             backoffUpload = false;
                             backoffUploadBatchSize = eventUploadMaxBatchSize;
                         }
@@ -1995,7 +1977,7 @@ public class AmplitudeClient {
             } else if (stringResponse.equals("request_db_write_failed")) {
                 logger.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
-            } else if (response.code() == 413) {
+            } else if (response.getCode() == 413) {
 
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {
@@ -2006,20 +1988,24 @@ public class AmplitudeClient {
 
                 // Server complained about length of request, backoff and try again
                 backoffUpload = true;
-                int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
-                backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
+                int numEvents = Math.min((int) dbHelper.getEventCount(), backoffUploadBatchSize);
+                backoffUploadBatchSize = (int) Math.ceil(numEvents / 2.0);
                 logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
                 logThread.post(new Runnable() {
-                   @Override
+                    @Override
                     public void run() {
-                       uploadingCurrently.set(false);
-                       updateServer(true);
-                   }
+                        uploadingCurrently.set(false);
+                        updateServer(true);
+                    }
                 });
             } else {
                 logger.w(TAG, "Upload failed, " + stringResponse
                         + ", will attempt to reupload later");
             }
+        } catch (IllegalArgumentException e) {
+            logger.e(TAG, e.toString());
+            uploadingCurrently.set(false);
+            Diagnostics.getLogger().logError("Failed to build upload request", e);
         } catch (java.net.ConnectException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
