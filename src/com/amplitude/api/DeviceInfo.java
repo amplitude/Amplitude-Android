@@ -77,6 +77,8 @@ public class DeviceInfo {
                 return packageInfo.versionName;
             } catch (NameNotFoundException e) {
                 Diagnostics.getLogger().logError("Failed to get version name", e);
+            } catch (Exception e) {
+                Diagnostics.getLogger().logError("Failed to get version name", e);
             }
             return null;
         }
