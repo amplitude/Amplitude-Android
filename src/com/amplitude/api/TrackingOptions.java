@@ -17,6 +17,14 @@ public class TrackingOptions {
         Constants.AMP_TRACKING_OPTION_REGION,
     };
 
+    private static String[] PRIVACY_GUARD_PROPERTIES = {
+        Constants.AMP_TRACKING_OPTION_ADID,
+        Constants.AMP_TRACKING_OPTION_CITY,
+        Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
+        Constants.AMP_TRACKING_OPTION_LAT_LNG,
+    };
+
+
     public static final String TAG = "com.amplitude.api.TrackingOptions";
 
     Set<String> disabledFields = new HashSet<String>();
@@ -189,5 +197,31 @@ public class TrackingOptions {
 
     private boolean shouldTrackField(String field) {
         return !disabledFields.contains(field);
+    }
+
+    TrackingOptions mergeIn(TrackingOptions other) {
+        for (String key : other.disabledFields) {
+            disableTrackingField(key);
+        }
+
+        return this;
+    }
+
+    static TrackingOptions copyOf(TrackingOptions other) {
+        TrackingOptions trackingOptions = new TrackingOptions();
+        for (String key : other.disabledFields) {
+            trackingOptions.disableTrackingField(key);
+        }
+
+        return trackingOptions;
+    }
+
+    static TrackingOptions withPrivacyGuard() {
+        TrackingOptions trackingOptions = new TrackingOptions();
+        for (String key : PRIVACY_GUARD_PROPERTIES) {
+            trackingOptions.disableTrackingField(key);
+        }
+
+        return trackingOptions;
     }
 }
