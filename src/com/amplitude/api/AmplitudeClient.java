@@ -526,12 +526,14 @@ public class AmplitudeClient {
     public AmplitudeClient enablePrivacyGuard() {
         privacyGuardEnabled = true;
         appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
     public AmplitudeClient disablePrivacyGuard() {
         privacyGuardEnabled = false;
         appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
