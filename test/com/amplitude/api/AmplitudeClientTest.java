@@ -1628,6 +1628,121 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testEnablePrivacyGuard() throws JSONException {
+        long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
+        clock.setTimestamps(timestamps);
+        Robolectric.getForegroundThreadScheduler().advanceTo(1);
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        amplitude.disablePrivacyGuard();  // this shouldn't do anything
+
+        TrackingOptions options = new TrackingOptions();
+        assertEquals(amplitude.inputTrackingOptions, options);
+        assertEquals(amplitude.appliedTrackingOptions, options);
+        assertTrue(Utils.compareJSONObjects(amplitude.apiPropertiesTrackingOptions, options.getApiPropertiesTrackingOptions()));
+
+        // haven't merged in the privacy guard settings yet
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackLanguage());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackCarrier());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackIpAddress());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackAdid());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackCity());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackLatLng());
+
+        amplitude.logEvent("test event");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        JSONArray events = getUnsentEvents(1);
+        assertEquals(events.length(), 1);
+        JSONObject event = events.getJSONObject(0);
+
+        // verify we do have platform and carrier since those were not filtered out
+        assertTrue(event.has("country"));
+        assertTrue(event.has("platform"));
+        assertTrue(event.has("carrier"));
+        assertTrue(event.has("language"));
+
+        // verify api properties contains tracking options for location filtering
+        JSONObject apiProperties = event.getJSONObject("api_properties");
+        assertFalse(apiProperties.getBoolean("limit_ad_tracking"));
+        assertFalse(apiProperties.getBoolean("gps_enabled"));
+        assertFalse(apiProperties.has("tracking_options"));
+
+        // test enabling privacy guard
+        amplitude.enablePrivacyGuard();
+        assertEquals(amplitude.inputTrackingOptions, options);
+        assertNotEquals(amplitude.appliedTrackingOptions, options);
+
+        // make sure we merge in the privacy guard options
+        assertFalse(amplitude.appliedTrackingOptions.shouldTrackIpAddress());
+        assertFalse(amplitude.appliedTrackingOptions.shouldTrackAdid());
+        assertFalse(amplitude.appliedTrackingOptions.shouldTrackCity());
+        assertFalse(amplitude.appliedTrackingOptions.shouldTrackLatLng());
+
+        amplitude.logEvent("test event 1");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        events = getUnsentEvents(2);
+        assertEquals(events.length(), 2);
+        event = events.getJSONObject(1);
+
+        // verify we do have platform and carrier since those were not filtered out
+        assertTrue(event.has("country"));
+        assertTrue(event.has("platform"));
+        assertTrue(event.has("carrier"));
+        assertTrue(event.has("language"));
+
+        // verify api properties contains tracking options for location filtering
+        apiProperties = event.getJSONObject("api_properties");
+        assertFalse(apiProperties.getBoolean("limit_ad_tracking"));
+        assertFalse(apiProperties.getBoolean("gps_enabled"));
+        assertTrue(apiProperties.has("tracking_options"));
+
+        JSONObject trackingOptions = apiProperties.getJSONObject("tracking_options");
+        assertEquals(trackingOptions.length(), 3);
+        assertFalse(trackingOptions.getBoolean("ip_address"));
+        assertFalse(trackingOptions.getBoolean("city"));
+        assertFalse(trackingOptions.getBoolean("lat_lng"));
+
+        // test disabling privacy guard
+        amplitude.disablePrivacyGuard();
+
+        assertEquals(amplitude.inputTrackingOptions, options);
+        assertEquals(amplitude.appliedTrackingOptions, options);
+        assertTrue(Utils.compareJSONObjects(amplitude.apiPropertiesTrackingOptions, options.getApiPropertiesTrackingOptions()));
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackLanguage());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackCarrier());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackIpAddress());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackAdid());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackCity());
+        assertTrue(amplitude.appliedTrackingOptions.shouldTrackLatLng());
+
+        amplitude.logEvent("test event 2");
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        events = getUnsentEvents(3);
+        assertEquals(events.length(), 3);
+        event = events.getJSONObject(2);
+
+        // verify we do have platform and carrier since those were not filtered out
+        assertTrue(event.has("country"));
+        assertTrue(event.has("platform"));
+        assertTrue(event.has("carrier"));
+        assertTrue(event.has("language"));
+
+        // verify api properties contains tracking options for location filtering
+        apiProperties = event.getJSONObject("api_properties");
+        assertFalse(apiProperties.getBoolean("limit_ad_tracking"));
+        assertFalse(apiProperties.getBoolean("gps_enabled"));
+        assertFalse(apiProperties.has("tracking_options"));
+    }
+
+    @Test
     public void testEnablePrivacyGuardWithOptions() throws JSONException {
         long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
         clock.setTimestamps(timestamps);
@@ -1690,7 +1805,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertFalse(amplitude.appliedTrackingOptions.shouldTrackCity());
         assertFalse(amplitude.appliedTrackingOptions.shouldTrackLatLng());
 
-        amplitude.logEvent("test event 2");
+        amplitude.logEvent("test event 1");
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 
@@ -1733,7 +1848,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertTrue(amplitude.appliedTrackingOptions.shouldTrackCity());
         assertTrue(amplitude.appliedTrackingOptions.shouldTrackLatLng());
 
-        amplitude.logEvent("test event");
+        amplitude.logEvent("test event 2");
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 

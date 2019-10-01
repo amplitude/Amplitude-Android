@@ -124,7 +124,7 @@ public class AmplitudeClient {
     private boolean offline = false;
     TrackingOptions inputTrackingOptions = new TrackingOptions();
     TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
-    JSONObject apiPropertiesTrackingOptions;
+    JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
     private boolean privacyGuardEnabled = false;
 
     /**
