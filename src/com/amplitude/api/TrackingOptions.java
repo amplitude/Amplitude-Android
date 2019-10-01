@@ -216,7 +216,7 @@ public class TrackingOptions {
         return trackingOptions;
     }
 
-    static TrackingOptions withPrivacyGuard() {
+    static TrackingOptions forPrivacyGuard() {
         TrackingOptions trackingOptions = new TrackingOptions();
         for (String key : PRIVACY_GUARD_PROPERTIES) {
             trackingOptions.disableTrackingField(key);

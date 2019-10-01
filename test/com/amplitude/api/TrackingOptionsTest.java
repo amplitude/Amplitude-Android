@@ -70,7 +70,7 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testGetPrivacyGuardTrackingOptions() {
-        TrackingOptions options = TrackingOptions.withPrivacyGuard();
+        TrackingOptions options = TrackingOptions.forPrivacyGuard();
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
@@ -78,7 +78,7 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testMerging() {
-        TrackingOptions options1 = TrackingOptions.withPrivacyGuard();
+        TrackingOptions options1 = TrackingOptions.forPrivacyGuard();
         TrackingOptions options2 = new TrackingOptions().disableCountry().disableLanguage();
         options1.mergeIn(options2);
         assertFalse(options1.shouldTrackAdid());
@@ -90,7 +90,7 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testCopyOf() {
-        TrackingOptions options = TrackingOptions.copyOf(TrackingOptions.withPrivacyGuard());
+        TrackingOptions options = TrackingOptions.copyOf(TrackingOptions.forPrivacyGuard());
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());

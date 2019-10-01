@@ -122,8 +122,10 @@ public class AmplitudeClient {
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
-    TrackingOptions trackingOptions = new TrackingOptions();
+    TrackingOptions inputTrackingOptions = new TrackingOptions();
+    TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
     JSONObject apiPropertiesTrackingOptions;
+    private boolean privacyGuardEnabled = false;
 
     /**
      * The device's Platform value.
@@ -512,8 +514,24 @@ public class AmplitudeClient {
     }
 
     public AmplitudeClient setTrackingOptions(TrackingOptions trackingOptions) {
-        this.trackingOptions = trackingOptions;
-        this.apiPropertiesTrackingOptions = trackingOptions.getApiPropertiesTrackingOptions();
+        inputTrackingOptions = trackingOptions;
+        appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
+        if (privacyGuardEnabled) {
+            appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        }
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
+        return this;
+    }
+
+    public AmplitudeClient enablePrivacyGuard() {
+        privacyGuardEnabled = true;
+        appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        return this;
+    }
+
+    public AmplitudeClient disablePrivacyGuard() {
+        privacyGuardEnabled = false;
+        appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
         return this;
     }
 
