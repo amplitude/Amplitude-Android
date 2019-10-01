@@ -224,4 +224,19 @@ public class TrackingOptions {
 
         return trackingOptions;
     }
+
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;  // self check
+        }
+        if (other == null) {
+            return false;  // null check
+        }
+        if (getClass() != other.getClass()) {
+            return false;  // type check and cast
+        }
+
+        TrackingOptions options = (TrackingOptions) other;
+        return options.disabledFields.equals(this.disabledFields);
+    }
 }

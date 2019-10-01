@@ -95,4 +95,13 @@ public class TrackingOptionsTest extends BaseTest {
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
     }
+
+    @Test
+    public void testEquals() {
+        TrackingOptions options1 = new TrackingOptions();
+        options1.disableAdid().disableCarrier();
+        TrackingOptions options2 = new TrackingOptions();
+        options2.disableAdid().disableCarrier();
+        assertEquals(options1, options2);
+    }
 }
