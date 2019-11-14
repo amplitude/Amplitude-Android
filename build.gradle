@@ -1,0 +1,51 @@
+group = 'com.amplitude'
+version = '2.23.2'
+description = 'Amplitude Android SDK'
+
+buildscript {
+    repositories {
+        jcenter()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+repositories {
+    mavenLocal()
+    maven {
+        url = 'http://repo.maven.apache.org/maven2'
+    }
+}
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 29
+    }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:3.10.0'
+    testImplementation 'org.robolectric:robolectric:3.0-rc2'
+    testImplementation 'org.robolectric:shadows-maps:3.0-rc2'
+    testImplementation 'org.powermock:powermock-module-junit4:1.6.2'
+    testImplementation 'org.powermock:powermock-module-junit4-rule:1.6.2'
+    testImplementation 'org.powermock:powermock-api-mockito:1.6.2'
+    testImplementation 'org.powermock:powermock-classloading-xstream:1.6.2'
+    testImplementation 'com.google.android:support-v4:r6'
+}
