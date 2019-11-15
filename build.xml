@@ -7,11 +7,11 @@
     <description />
     <!-- set global properties for this build -->
 
-    <property name="src" location="src/main" />
+    <property name="src" location="src/main/java" />
     <property name="build" location="build" />
     <property name="dist" location="dist" />
 
-    <property name="test.src" location="src/test" />
+    <property name="test.src" location="src/test/java" />
     <property name="test.reports" location="${dist}/reports"/>
 
     <property environment="env" />
@@ -39,7 +39,7 @@
 
     <path id="project.classpath">
         <path refid="dependency.classpath"/>
-        <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
+        <pathelement path="../../../Library/Android/sdk/platforms/android-22/android.jar" />
     </path>
 
     <!-- Prepare dependency path jar list for inclusion in uberjar -->
@@ -54,7 +54,7 @@
 
     <path id="project.testclasspath">
         <path refid="dependency.testclasspath"/>
-        <pathelement path="${android-sdk-path}/platforms/android-${android-target}/android.jar" />
+        <pathelement path="../../../Library/Android/sdk/platforms/android-22/android.jar" />
     </path>
 
     <target name="init">
