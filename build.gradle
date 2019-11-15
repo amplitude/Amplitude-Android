@@ -4,11 +4,12 @@ description = 'Amplitude Android SDK'
 
 buildscript {
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
+
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:3.5.2'
     }
 }
 
@@ -17,13 +18,14 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 repositories {
-    mavenLocal()
-    maven {
-        url = 'http://repo.maven.apache.org/maven2'
-    }
+    // The order in which you list these repositories matter.
+    google()
+    jcenter()
 }
 
 android {
+    useLibrary 'org.apache.http.legacy'
+
     compileSdkVersion 29
     buildToolsVersion '29.0.2'
 
@@ -35,6 +37,12 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 29
+    }
+
+    lintOptions {
+        abortOnError true
+        textReport true
+        warningsAsErrors false
     }
 }
 
@@ -48,4 +56,6 @@ dependencies {
     testImplementation 'org.powermock:powermock-api-mockito:1.6.2'
     testImplementation 'org.powermock:powermock-classloading-xstream:1.6.2'
     testImplementation 'com.google.android:support-v4:r6'
+    testImplementation 'com.google.android.gms:play-services-ads:18.3.0'
+    testImplementation 'com.google.android.gms:play-services-base:17.1.0'
 }

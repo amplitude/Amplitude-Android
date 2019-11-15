@@ -372,6 +372,9 @@ public class DeviceInfo {
             Location location = null;
             try {
                 location = locationManager.getLastKnownLocation(provider);
+            } catch (SecurityException e) {
+                AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
+                Diagnostics.getLogger().logError("Failed to get most recent location", e);
             } catch (Exception e) {
                 AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
                 Diagnostics.getLogger().logError("Failed to get most recent location", e);
