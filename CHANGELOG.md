@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.23.2-SNAPSHOT (November 15, 2019)
+
 ## 2.23.2 (November 15, 2019)
 
 ## 2.23.2 (August 05, 2019)
