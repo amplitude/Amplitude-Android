@@ -8,7 +8,6 @@ Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/artic
 
 # Latest Version #
 [2.23.2 - Released on April 22, 2019](https://github.com/amplitude/Amplitude-Android/releases/latest)
-[![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
 
 # Android SDK Reference #
 See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/115004749807) for a list and description of all available SDK methods.
