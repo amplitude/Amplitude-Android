@@ -1,13 +1,13 @@
 package com.amplitude.api;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class DatabaseHelperTest extends BaseTest {
 

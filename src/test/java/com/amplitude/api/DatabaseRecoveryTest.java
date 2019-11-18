@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -13,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.powermock.api.mockito.PowerMockito;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
@@ -30,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.reset;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class DatabaseRecoveryTest extends BaseTest {
 
@@ -175,6 +176,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         reset(mockDbHelper);
     }
 
+    // Hao!
     @Test
     public void testDatabaseExceptionsLoggedToDiagnosticLogger() {
 

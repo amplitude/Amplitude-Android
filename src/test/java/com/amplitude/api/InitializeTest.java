@@ -3,13 +3,14 @@ package com.amplitude.api;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class InitializeTest extends BaseTest {
 
@@ -38,7 +39,6 @@ public class InitializeTest extends BaseTest {
 
     @Test
     public void testInitializeUserId() {
-
         // the userId passed to initialize should override any existing values
         String sourceName = Constants.PACKAGE_NAME + "." + context.getPackageName();
         SharedPreferences prefs = context.getSharedPreferences(sourceName, Context.MODE_PRIVATE);

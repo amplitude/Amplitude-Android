@@ -1,5 +1,7 @@
 package com.amplitude.api;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,13 +9,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE)
+@RunWith(AndroidJUnit4.class)
+@Config(manifest = Config.NONE)
 public class IdentifyTest extends BaseTest {
 
     @Before

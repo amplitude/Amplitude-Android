@@ -10,6 +10,8 @@ import android.os.Build;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -25,15 +27,13 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.internal.ShadowExtractor;
-import org.robolectric.shadows.ShadowApplication;
-import org.robolectric.shadows.ShadowGeocoder;
+import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowTelephonyManager;
+import org.robolectric.shadows.maps.ShadowGeocoder;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.util.Locale;
@@ -46,15 +46,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 
-@RunWith(RobolectricTestRunner.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "javax.net.ssl.*" })
+@RunWith(AndroidJUnit4.class)
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*" })
 @PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
-public class DeviceInfoTest {
-
-    private Context context;
+public class DeviceInfoTest extends BaseTest {
     private DeviceInfo deviceInfo;
-    private static final String TEST_VERSION_NAME = "com.amplitude.test";
+    private static final String TEST_VERSION_NAME = "test_version";
     private static final String TEST_BRAND = "brand";
     private static final String TEST_MANUFACTURER = "manufacturer";
     private static final String TEST_MODEL = "model";
@@ -80,15 +78,14 @@ public class DeviceInfoTest {
 
     @Before
     public void setUp() throws Exception {
-        context = ShadowApplication.getInstance().getApplicationContext();
-        ShadowApplication.getInstance().getPackageManager()
-                .getPackageInfo(context.getPackageName(), 0).versionName = TEST_VERSION_NAME;
+        super.setUp(false);
+
         ReflectionHelpers.setStaticField(Build.class, "BRAND", TEST_BRAND);
         ReflectionHelpers.setStaticField(Build.class, "MANUFACTURER", TEST_MANUFACTURER);
         ReflectionHelpers.setStaticField(Build.class, "MODEL", TEST_MODEL);
 
         Configuration c = context.getResources().getConfiguration();
-        Shadows.shadowOf(c).setLocale(TEST_LOCALE);
+//        Shadows.shadowOf(c).setLocale(TEST_LOCALE);
         Locale.setDefault(TEST_LOCALE);
 
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
@@ -98,7 +95,9 @@ public class DeviceInfoTest {
     }
 
     @After
-    public void tearDown() throws Exception {}
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
 
     @Test
     public void testGetVersionName() {
@@ -141,7 +140,7 @@ public class DeviceInfoTest {
     }
 
     @Test
-    @Config(shadows={MockGeocoder.class})
+    @Config(shadows = {MockGeocoder.class})
     public void testGetCountryFromLocation() {
         ShadowTelephonyManager telephonyManager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
@@ -156,7 +155,7 @@ public class DeviceInfoTest {
             @Override
             protected Geocoder getGeocoder() {
                 Geocoder geocoder = new Geocoder(context, Locale.ENGLISH);
-                ShadowGeocoder shadowGeocoder = (ShadowGeocoder) ShadowExtractor.extract(geocoder);
+                ShadowGeocoder shadowGeocoder = Shadow.extract(geocoder);
                 shadowGeocoder.setSimulatedResponse("1 Dr Carlton B Goodlett Pl", "San Francisco",
                         "CA", "94506", TEST_GEO_COUNTRY);
                 return geocoder;
