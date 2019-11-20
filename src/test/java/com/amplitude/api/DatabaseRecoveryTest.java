@@ -175,7 +175,7 @@ public class DatabaseRecoveryTest extends BaseTest {
 
         reset(mockDbHelper);
     }
-    
+
     @Test
     public void testDatabaseExceptionsLoggedToDiagnosticLogger() {
 
