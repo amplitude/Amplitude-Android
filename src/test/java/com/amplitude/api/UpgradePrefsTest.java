@@ -3,27 +3,25 @@ package com.amplitude.api;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowApplication;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class UpgradePrefsTest extends BaseTest {
-
     @Before
     public void setUp() throws Exception {
-        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
-        context = ShadowApplication.getInstance().getApplicationContext();
+        super.setUp(false);
     }
 
     @After

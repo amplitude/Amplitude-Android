@@ -2,15 +2,20 @@ package com.amplitude.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.robolectric.Shadows;
-import org.robolectric.shadows.ShadowApplication;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
+import org.robolectric.shadows.ShadowPackageManager;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -24,6 +29,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
+import static org.robolectric.Shadows.shadowOf;
 
 public class BaseTest {
 
@@ -70,12 +76,18 @@ public class BaseTest {
         }
     }
 
+    private static final String TEST_PACKAGE_NAME = "com.amplitude.test";
+    private static final String TEST_VERSION_NAME = "test_version";
+
     protected AmplitudeClient amplitude;
     protected Context context;
     protected MockWebServer server;
     protected MockClock clock;
     protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
     protected String[] instanceNames = {Constants.DEFAULT_INSTANCE, "app1", "app2", "newApp1", "newApp2", "new_app"};
+
+    protected PackageManager packageManager;
+    protected ShadowPackageManager shadowPackageManager;
 
     public void setUp() throws Exception {
         setUp(true);
@@ -87,8 +99,18 @@ public class BaseTest {
      * calling this method or passing false for withServer.
      */
     public void setUp(boolean withServer) throws Exception {
-        ShadowApplication.getInstance().setPackageName("com.amplitude.test");
-        context = ShadowApplication.getInstance().getApplicationContext();
+        context = ApplicationProvider.getApplicationContext();
+        packageManager = RuntimeEnvironment.application.getPackageManager();
+        shadowPackageManager = shadowOf(packageManager);
+
+        ApplicationInfo applicationInfo = new ApplicationInfo();
+        applicationInfo.packageName = TEST_PACKAGE_NAME;
+
+        PackageInfo packageInfo = new PackageInfo();
+        packageInfo.packageName = TEST_PACKAGE_NAME;
+        packageInfo.versionName = TEST_VERSION_NAME;
+        packageInfo.applicationInfo = applicationInfo;
+        shadowPackageManager.addPackage(packageInfo);
 
         // Clear the database helper for each test. Better to have isolation.
         // See https://github.com/robolectric/robolectric/issues/569
@@ -146,7 +168,7 @@ public class BaseTest {
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
         server.enqueue(new MockResponse().setBody("success"));
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        ShadowLooper httplooper = shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
 
         try {
@@ -157,19 +179,19 @@ public class BaseTest {
     }
 
     public RecordedRequest sendEvent(AmplitudeClient amplitude, String name, JSONObject props) {
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         amplitude.logEvent(name, props);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         return runRequest(amplitude);
     }
 
     public RecordedRequest sendIdentify(AmplitudeClient amplitude, Identify identify) {
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
         amplitude.identify(identify);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         return runRequest(amplitude);
     }

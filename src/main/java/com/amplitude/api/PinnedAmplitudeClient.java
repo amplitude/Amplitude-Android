@@ -8,13 +8,16 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 import okio.Buffer;
@@ -33,16 +36,10 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.PinnedAmplitudeClient";}
      */
     public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
-    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-
-    /**
-     * Pinned certificate chain for api.amplitude.com.
-     */
-    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM = new SSLContextBuilder()
-        // CN=COMODO RSA Domain Validation Secure Server CA, O=COMODO CA Limited,
-        // L=Salford, ST=Greater Manchester, C=GB
-        .addCertificate(""
+    // CN=COMODO RSA Domain Validation Secure Server CA, O=COMODO CA Limited,
+    // L=Salford, ST=Greater Manchester, C=GB
+    private static final String CERTIFICATE_1 = ""
             + "MIIGCDCCA/CgAwIBAgIQKy5u6tl1NmwUim7bo3yMBzANBgkqhkiG9w0BAQwFADCBhT"
             + "ELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE"
             + "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIk"
@@ -74,10 +71,11 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             + "JD2AFsQXj4rBYKEMrltDR5FL1ZoXX/nUh8HCjLfn4g8wGTeGrODcQgPmlKidrv0PJF"
             + "GUzpII0fxQ8ANAe4hZ7Q7drNJ3gjTcBpUC2JD5Leo31Rpg0Gcg19hCC0Wvgmje3WYk"
             + "N5AplBlGGSW4gNfL1IYoakRwJiNiqZ+Gb7+6kHDSVneFeO/qJakXzlByjAA6quPbYz"
-            + "Sf+AZxAeKCINT+b72x")
-        // CN=COMODO RSA Certification Authority, O=COMODO CA Limited, L=Salford,
-        // ST=Greater Manchester, C=GB
-        .addCertificate(""
+            + "Sf+AZxAeKCINT+b72x";
+
+    // CN=COMODO RSA Certification Authority, O=COMODO CA Limited, L=Salford,
+    // ST=Greater Manchester, C=GB
+    private static final String CERTIFICATE_2 = ""
             + "MIIFdDCCBFygAwIBAgIQJ2buVutJ846r13Ci/ITeIjANBgkqhkiG9w0BAQwFADBvMQ"
             + "swCQYDVQQGEwJTRTEUMBIGA1UEChMLQWRkVHJ1c3QgQUIxJjAkBgNVBAsTHUFkZFRy"
             + "dXN0IEV4dGVybmFsIFRUUCBOZXR3b3JrMSIwIAYDVQQDExlBZGRUcnVzdCBFeHRlcm"
@@ -106,7 +104,15 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             + "CViLvfhVdpfZLYUspzgb8c8+a4bmYRBbMelC1/kZWSWfFMzqORcUx8Rww7Cxn2obFs"
             + "hj5cqsQugsv5B5a6SE2Q8pTIqXOi6wZ7I53eovNNVZ96YUWYGGjHXkBrI/V5eu+MtW"
             + "uLt29G9HvxPUsE2JOAWVrgQSQdso8VYFhH2+9uRv0V9dlfmrPb2LjkQLPNlzmuhbsd"
-            + "jrzch5vRpu/xO28QOG8=");
+            + "jrzch5vRpu/xO28QOG8=";
+
+    private static final AmplitudeLog logger = AmplitudeLog.getLogger();
+
+    /**
+     * Pinned certificate chain for api.amplitude.com.
+     */
+    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM =
+            new SSLContextBuilder().addCertificate(CERTIFICATE_1).addCertificate(CERTIFICATE_2);
 
     /**
      * SSl context builder, used to generate the SSL context.
@@ -207,7 +213,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     protected boolean initializedSSLSocketFactory = false;
 
     @Override
-    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId){
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         super.initialize(context, apiKey, userId);
         final PinnedAmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -216,7 +222,41 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                 if (!client.initializedSSLSocketFactory) {
                     SSLSocketFactory factory = getPinnedCertSslSocketFactory();
                     if (factory != null) {
-                        client.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory).build();
+                        try {
+                            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                                    TrustManagerFactory.getDefaultAlgorithm());
+                            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                            keyStore.load(null, null); // Use a null input stream + password to create an empty key store.
+
+                            List<String> certificateBase64s = new ArrayList<String>();
+                            certificateBase64s.add(CERTIFICATE_1);
+                            certificateBase64s.add(CERTIFICATE_2);
+                            // Decode the certificates and add 'em to the key store.
+                            int nextName = 1;
+                            for (String certificateBase64 : certificateBase64s) {
+                                Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
+                                X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
+                                        certificateBuffer.inputStream());
+                                keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
+                            }
+
+                            // Create an SSL context that uses these certificates as its trust store.
+                            trustManagerFactory.init(keyStore);
+
+                            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                                throw new IllegalStateException("Unexpected default trust managers:"
+                                        + Arrays.toString(trustManagers));
+                            }
+                            X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+
+                            client.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory, trustManager).build();
+                        } catch (GeneralSecurityException e) {
+                            logger.e(TAG, e.getMessage(), e);
+                        } catch (IOException e) {
+                            logger.e(TAG, e.getMessage(), e);
+                        }
                     } else {
                         client.logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
                     }

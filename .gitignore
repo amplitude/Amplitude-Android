@@ -1,12 +1,7 @@
-*.class
-.DS_Store
-*~
-dist/
-*.asc
-
 # Gradle files
 .gradle/
 build/
+distribution/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -20,6 +15,10 @@ captures/
 *.iml
 .idea/
 
+# Java binary files
+*.class
+
 # Misc
 .DS_Store
 *.log
+*.asc

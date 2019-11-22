@@ -2,11 +2,12 @@ package com.amplitude.api;
 
 import android.os.SystemClock;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
@@ -14,7 +15,7 @@ import org.robolectric.shadows.ShadowLooper;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class PinningTest extends BaseTest {
 
@@ -48,6 +49,24 @@ public class PinningTest extends BaseTest {
         httplooper.runToEndOfTasks();
 
         assertNull(amplitude.lastError);
+    }
+
+    @Test
+    public void testSslPinningInvalid() {
+        amplitude = new InvalidPinnedAmplitudeClient();
+        amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        amplitude.logEvent("pinned_test_event_invalid", null);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httplooper.runToEndOfTasks();
+
+        assertNotNull(amplitude.lastError);
     }
 
     private static class InvalidPinnedAmplitudeClient extends PinnedAmplitudeClient {
@@ -86,23 +105,5 @@ public class PinningTest extends BaseTest {
             super(Constants.DEFAULT_INSTANCE);
             super.getPinnedCertSslSocketFactory(INVALID_SSL_CONTEXT);
         }
-    }
-
-    @Test
-    public void testSslPinningInvalid() {
-        amplitude = new InvalidPinnedAmplitudeClient();
-        amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
-
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.runToEndOfTasks();
-
-        amplitude.logEvent("pinned_test_event_invalid", null);
-        looper.runToEndOfTasks();
-        looper.runToEndOfTasks();
-
-        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
-        httplooper.runToEndOfTasks();
-
-        assertNotNull(amplitude.lastError);
     }
 }
