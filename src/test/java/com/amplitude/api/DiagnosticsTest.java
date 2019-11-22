@@ -28,12 +28,10 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class DiagnosticsTest extends BaseTest {
-
     private Diagnostics logger;
     private ShadowLooper looper;
     private OkHttpClient httpClient;
     private String deviceId;
-    private DeviceInfo deviceInfo;
 
     public RecordedRequest runRequest() {
         server.enqueue(new MockResponse().setBody("success"));

@@ -85,7 +85,6 @@ public class DeviceInfoTest extends BaseTest {
         ReflectionHelpers.setStaticField(Build.class, "MODEL", TEST_MODEL);
 
         Configuration c = context.getResources().getConfiguration();
-//        Shadows.shadowOf(c).setLocale(TEST_LOCALE);
         Locale.setDefault(TEST_LOCALE);
 
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
