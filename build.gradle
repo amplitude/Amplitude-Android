@@ -119,10 +119,12 @@ dependencies {
 }
 
 task deleteBaseJar(type: Delete) {
+    println "Deleting base jar"
     delete "distribution/base/amplitude-android-sdk-${project.version}.jar"
 }
 
 task deleteUnityJar(type: Delete) {
+    println "Deleting unity jar"
     delete "distribution/unity/amplitude-android-sdk-${project.version}.jar"
 }
 
