@@ -31,6 +31,8 @@ android {
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
 
+    flavorDimensions 'platform'
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -42,6 +44,9 @@ android {
         // require Java 9 above. However, Android Studio will error out when setting up Java to 9
         // above.
         targetSdkVersion 28
+
+        buildConfigField "String", "AMPLITUDE_VERSION", "\"${version}\""
+
         testInstrumentationRunner 'androidx.test.ext.junit.runners.AndroidJUnit4'
 
         // The following argument makes the Android Test Orchestrator run its
@@ -50,10 +55,36 @@ android {
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
 
+    buildTypes {
+        release {
+        }
+    }
+
     lintOptions {
         abortOnError true
         textReport true
         warningsAsErrors false
+    }
+
+    productFlavors {
+        base {
+            dimension 'platform'
+        }
+
+        unity {
+            dimension 'platform'
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs = ['src/main/java']
+        }
+
+        unity {
+            java.srcDirs = ['src/main/java', 'src/unity/java']
+        }
     }
 
     testOptions {
@@ -87,14 +118,31 @@ dependencies {
     testImplementation 'androidx.test.ext:junit:1.1.1'
 }
 
-task deleteJar(type: Delete) {
-    delete "distribution/jar/amplitude-android-sdk-${project.version}.jar"
+task deleteBaseJar(type: Delete) {
+    delete "distribution/base/amplitude-android-sdk-${project.version}.jar"
 }
 
-task createJar(type: Copy) {
-    from('build/intermediates/packaged-classes/release/')
-    into('distribution/jar')
+task deleteUnityJar(type: Delete) {
+    delete "distribution/unity/amplitude-android-sdk-${project.version}.jar"
+}
+
+task createBaseJar(type: Copy) {
+    println "Creating base jar"
+    from('build/intermediates/packaged-classes/base/release/')
+    into('distribution/base')
     include('classes.jar')
     rename("classes.jar", "amplitude-android-sdk-${project.version}.jar")
+    println "Base jar is created"
 }
-createJar.dependsOn(deleteJar, build)
+
+task createUnityJar(type: Copy) {
+    println "Creating unity jar"
+    from('build/intermediates/packaged-classes/unity/release/')
+    into('distribution/unity')
+    include('classes.jar')
+    rename("classes.jar", "amplitude-android-sdk-${project.version}.jar")
+    println "Unity jar is created"
+}
+
+task deleteJars(dependsOn: ['deleteBaseJar', 'deleteUnityJar'])
+task createJars(dependsOn: ['build', 'createBaseJar', 'createUnityJar'])
