@@ -1,5 +1,11 @@
-Amplitude Android SDK
-====================
+<p align="center">
+  <img src="https://static.amplitude.com/lightning/46c85bfd91905de8047f1ee65c7c93d6fa9ee6ea/static/media/amplitude-logo-with-text.4fb9e463.svg" alt="Amplitude Android SDK" height="150"/>
+</p>
+
+# Latest Version
+
+##### _August 5, 2019_ - [v2.23.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.23.2)
+
 
 An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
 
@@ -48,4 +54,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-```
+```https://static.amplitude.com/lightning/46c85bfd91905de8047f1ee65c7c93d6fa9ee6ea/static/media/amplitude-logo-with-text.4fb9e463.svg

@@ -22,3 +22,5 @@ captures/
 .DS_Store
 *.log
 *.asc
+*.bak
+changes.txt
