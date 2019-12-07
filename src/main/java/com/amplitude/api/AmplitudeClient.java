@@ -1603,7 +1603,7 @@ public class AmplitudeClient {
      * @param userId the user id
      * @return the AmplitudeClient
      */
-    protected AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
+    public AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
         }
@@ -2064,7 +2064,7 @@ public class AmplitudeClient {
         Utils.writeStringToSharedPreferences(context, instanceName, DEVICE_ID_KEY, deviceId);
     }
 
-    private void runOnLogThread(Runnable r) {
+    protected void runOnLogThread(Runnable r) {
         if (Thread.currentThread() != logThread) {
             logThread.post(r);
         } else {
