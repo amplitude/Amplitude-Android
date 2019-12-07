@@ -2,11 +2,7 @@ package com.amplitude.api;
 
 import android.util.Log;
 
-/**
- * Created by danieljih on 10/16/15.
- */
 public class AmplitudeLog {
-
     private volatile boolean enableLogging = true;
     private volatile int logLevel = Log.INFO; // default log level
 

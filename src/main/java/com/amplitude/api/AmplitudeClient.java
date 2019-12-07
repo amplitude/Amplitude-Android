@@ -17,7 +17,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -609,8 +608,6 @@ public class AmplitudeClient {
      *
      * @param trackingSessionEvents whether to enable tracking of session events
      * @return the AmplitudeClient
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
-     *     Tracking Sessions</a>
      */
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
@@ -654,8 +651,6 @@ public class AmplitudeClient {
      *
      * @param eventType       the event type
      * @param eventProperties the event properties
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties) {
         logEvent(eventType, eventProperties, false);
@@ -671,10 +666,6 @@ public class AmplitudeClient {
      * @param eventType       the event type
      * @param eventProperties the event properties
      * @param outOfSession    the out of session
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
-     *     Tracking Sessions</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEvent(eventType, eventProperties, null, outOfSession);
@@ -689,10 +680,6 @@ public class AmplitudeClient {
      * @param eventType       the event type
      * @param eventProperties the event properties
      * @param groups          the groups
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
-     *     Setting Groups</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups) {
         logEvent(eventType, eventProperties, groups, false);
@@ -709,12 +696,6 @@ public class AmplitudeClient {
      * @param eventProperties the event properties
      * @param groups          the groups
      * @param outOfSession    the out of session
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
-     *     Setting Groups</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
-     *     Tracking Sessions</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, boolean outOfSession) {
         logEvent(eventType, eventProperties, groups, getCurrentTimeMillis(), outOfSession);
@@ -781,10 +762,6 @@ public class AmplitudeClient {
      * @param eventType       the event type
      * @param eventProperties the event properties
      * @param outOfSession    the out of session
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
-     *     Tracking Sessions</a>
      */
     public void logEventSync(String eventType, JSONObject eventProperties, boolean outOfSession) {
         logEventSync(eventType, eventProperties, null, outOfSession);
@@ -799,10 +776,6 @@ public class AmplitudeClient {
      * @param eventType       the event type
      * @param eventProperties the event properties
      * @param groups          the groups
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
-     *     Setting Groups</a>
      */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups) {
         logEventSync(eventType, eventProperties, groups, false);
@@ -842,12 +815,6 @@ public class AmplitudeClient {
      * @param groups          the groups
      * @param timestamp       the timestamp in milliseconds since epoch
      * @param outOfSession    the out of session
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-event-properties">
-     *     Setting Event Properties</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
-     *     Setting Groups</a>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-sessions">
-     *     Tracking Sessions</a>
      */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
@@ -1379,13 +1346,10 @@ public class AmplitudeClient {
     }
 
     /**
-     * Log revenue v2. Create a {@link com.amplitude.api.Revenue} object to hold your revenue data and
-     * properties, and log it as a revenue event using {@code logRevenueV2}.
+     * Log revenue v2. Create a {@link Revenue} object to hold your revenue data and properties,
+     * and log it as a revenue event using this method.
      *
-     * @param revenue a {@link com.amplitude.api.Revenue} object
-     * @see com.amplitude.api.Revenue
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
-     *     Tracking Revenue</a>
+     * @param revenue a {@link Revenue} object
      */
     public void logRevenueV2(Revenue revenue) {
         if (!contextAndApiKeySet("logRevenueV2()") || revenue == null || !revenue.isValidRevenue()) {
@@ -1397,14 +1361,12 @@ public class AmplitudeClient {
 
     /**
      * Sets user properties. This is a convenience wrapper around the
-     * {@link com.amplitude.api.Identify} API to set multiple user properties with a single
+     * {@link Identify} API to set multiple user properties with a single
      * command. <b>Note:</b> the replace parameter is deprecated and has no effect.
      *
      * @param userProperties the user properties
      * @param replace        the replace - has no effect
      * @deprecated
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
-     *     User Properties</a>
      */
     public void setUserProperties(final JSONObject userProperties, final boolean replace) {
         setUserProperties(userProperties);
@@ -1412,12 +1374,10 @@ public class AmplitudeClient {
 
     /**
      * Sets user properties. This is a convenience wrapper around the
-     * {@link com.amplitude.api.Identify} API to set multiple user properties with a single
+     * {@link Identify} API to set multiple user properties with a single
      * command.
      *
      * @param userProperties the user properties
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
-     *     User Properties</a>
      */
     public void setUserProperties(final JSONObject userProperties) {
         if (userProperties == null || userProperties.length() == 0 ||
@@ -1450,8 +1410,6 @@ public class AmplitudeClient {
     /**
      * Clear user properties. This will clear all user properties at once. <b>Note: the
      * result is irreversible!</b>
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
-     *     User Properties</a>
      */
     public void clearUserProperties() {
         Identify identify = new Identify().clearAll();
@@ -1459,13 +1417,10 @@ public class AmplitudeClient {
     }
 
     /**
-     * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
+     * Identify. Use this to send an {@link Identify} object containing
      * user property operations to Amplitude server.
      *
-     * @param identify an {@link com.amplitude.api.Identify} object
-     * @see com.amplitude.api.Identify
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
-     *     User Properties</a>
+     * @param identify an {@link Identify} object
      */
     public void identify(Identify identify) {
         identify(identify, false);
@@ -1476,11 +1431,8 @@ public class AmplitudeClient {
      * user property operations to Amplitude server. If outOfSession is true, then the identify
      * event is sent with a session id of -1, and does not trigger any session-handling logic.
      *
-     * @param identify an {@link com.amplitude.api.Identify} object
+     * @param identify an {@link Identify} object
      * @param outOfSession whther to log the identify event out of session
-     * @see com.amplitude.api.Identify
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#user-properties-and-user-property-operations">
-     *     User Properties</a>
      */
     public void identify(Identify identify, boolean outOfSession) {
         if (
@@ -1498,8 +1450,6 @@ public class AmplitudeClient {
      *
      * @param groupType the group type (ex: orgId)
      * @param groupName the group name (ex: 15)
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#setting-groups">
-     *     Setting Groups</a>
      */
     public void setGroup(String groupType, Object groupName) {
         if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
@@ -1693,8 +1643,6 @@ public class AmplitudeClient {
      *
      * @param deviceId the device id
      * @return the AmplitudeClient
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#custom-device-ids">
-     *     Custom Device Ids</a>
      */
     public AmplitudeClient setDeviceId(final String deviceId) {
         Set<String> invalidDeviceIds = getInvalidDeviceIds();
@@ -1722,9 +1670,6 @@ public class AmplitudeClient {
      * know what you are doing. This can be used in conjunction with setUserId(null) to anonymize
      * users after they log out. With a null userId and a completely new deviceId, the current user
      * would appear as a brand new user in dashboard.
-     *
-     * @see <a href="https://github.com/amplitude/Amplitude-Android#logging-out-and-anonymous-users">
-     *     Logging Out Users</a>
      */
     public AmplitudeClient regenerateDeviceId() {
         if (!contextAndApiKeySet("regenerateDeviceId()")) {
@@ -2180,7 +2125,7 @@ public class AmplitudeClient {
     /**
      * Move all preference data from the legacy name to the new, static name if needed.
      * <p/>
-     * Constants.PACKAGE_NAME used to be set using "Constants.class.getPackage().getName()"
+     * Constants.PACKAGE_NAME used to be set using {@code Constants.class.getPackage().getName()}
      * Some aggressive proguard optimizations broke the reflection and caused apps
      * to crash on startup.
      * <p/>
@@ -2278,11 +2223,9 @@ public class AmplitudeClient {
      * @param context the context
      * @return the boolean
      */
-/*
-     * Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
-     * sharedPrefs is known to not be process-safe.
-     */
     static boolean upgradeSharedPrefsToDB(Context context) {
+        // Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
+        // sharedPrefs is known to not be process-safe.
         return upgradeSharedPrefsToDB(context, null);
     }
 
@@ -2345,7 +2288,7 @@ public class AmplitudeClient {
 
     private static void migrateLongValue(SharedPreferences prefs, String prefKey, long defValue, DatabaseHelper dbHelper, String dbKey) {
         Long value = dbHelper.getLongValue(dbKey);
-        if (value != null) { // if value already exists don't need to migrate
+        if (value != null) { // If value already exists, it doesn't need to migrate.
             return;
         }
         long oldValue = prefs.getLong(prefKey, defValue);

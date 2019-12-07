@@ -4,7 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- *  <h1>Revenue</h1>
+ * <h1>Revenue</h1>
  * Revenue objects are a wrapper for revenue events and revenue properties. This should be used
  * in conjunction with {@code AmplitudeClient.logRevenueV2()} to record in-app transactions.
  * Each set method returns the same Revenue object, allowing
@@ -25,7 +25,6 @@ import org.json.JSONObject;
  *     Android SDK README</a> for more information on logging revenue.
  */
 public class Revenue {
-
     /**
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.Revenue"}
      */
