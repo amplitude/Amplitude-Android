@@ -1603,7 +1603,7 @@ public class AmplitudeClient {
      * @param userId the user id
      * @return the AmplitudeClient
      */
-    public AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
+    protected AmplitudeClient setUserId(final String userId, final boolean startNewSession) {
         if (!contextAndApiKeySet("setUserId()")) {
             return this;
         }
@@ -2078,7 +2078,7 @@ public class AmplitudeClient {
      * @param obj the obj
      * @return the object
      */
-    private Object replaceWithJSONNull(Object obj) {
+    protected Object replaceWithJSONNull(Object obj) {
         return obj == null ? JSONObject.NULL : obj;
     }
 
@@ -2088,7 +2088,7 @@ public class AmplitudeClient {
      * @param methodName the parent method name to print in error message
      * @return whether application context and api key are set
      */
-    private synchronized boolean contextAndApiKeySet(String methodName) {
+    protected synchronized boolean contextAndApiKeySet(String methodName) {
         if (context == null) {
             logger.e(TAG, "context cannot be null, set context with initialize() before calling "
                     + methodName);
@@ -2109,7 +2109,7 @@ public class AmplitudeClient {
      * @param bytes the bytes
      * @return the string
      */
-    private String bytesToHexString(byte[] bytes) {
+    protected String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
         char[] hexChars = new char[bytes.length * 2];
