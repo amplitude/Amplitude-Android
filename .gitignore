@@ -12,4 +12,4 @@ build/
 .gradle/
 
 # Used internally for release
-release.sh
+#release.sh
