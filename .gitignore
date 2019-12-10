@@ -6,10 +6,12 @@
 .idea
 local.properties
 
-# Generated
-bin
+# Build
 build/
-.gradle/
 
-# Used internally for release
-release.sh
+# Gradle files
+.gradle/
+gradle
+build.gradle
+gradlew
+gradlew.bat
