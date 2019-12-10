@@ -1,9 +1,15 @@
+# Mac
 .DS_Store
-local.properties
-bin
-gen
-docs
+
+# Android studio
 *.iml
 .idea
+local.properties
+
+# Generated
+bin
 build/
 .gradle/
+
+# Used internally for release
+release.sh
