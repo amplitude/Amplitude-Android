@@ -28,7 +28,7 @@ public class Revenue {
     /**
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.Revenue"}
      */
-    public static final String TAG = "com.amplitude.api.Revenue";
+    private static final String TAG = Revenue.class.getName();
     private static AmplitudeLog logger =  AmplitudeLog.getLogger();
 
     /**

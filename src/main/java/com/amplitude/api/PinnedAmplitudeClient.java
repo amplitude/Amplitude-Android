@@ -35,7 +35,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     /**
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.PinnedAmplitudeClient";}
      */
-    public static final String TAG = "com.amplitude.api.PinnedAmplitudeClient";
+    private static final String TAG = PinnedAmplitudeClient.class.getName();
 
     // CN=COMODO RSA Domain Validation Secure Server CA, O=COMODO CA Limited,
     // L=Salford, ST=Greater Manchester, C=GB

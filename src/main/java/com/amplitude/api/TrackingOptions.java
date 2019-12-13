@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TrackingOptions {
+    private static final String TAG = TrackingOptions.class.getName();
 
     private static String[] SERVER_SIDE_PROPERTIES = {
         Constants.AMP_TRACKING_OPTION_CITY,
@@ -16,8 +17,6 @@ public class TrackingOptions {
         Constants.AMP_TRACKING_OPTION_LAT_LNG,
         Constants.AMP_TRACKING_OPTION_REGION,
     };
-
-    public static final String TAG = "com.amplitude.api.TrackingOptions";
 
     Set<String> disabledFields = new HashSet<String>();
 
