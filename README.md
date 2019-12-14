@@ -1,5 +1,11 @@
-Amplitude Android SDK
-====================
+<p align="center">
+  <img src="https://static.amplitude.com/lightning/46c85bfd91905de8047f1ee65c7c93d6fa9ee6ea/static/media/amplitude-logo-with-text.4fb9e463.svg" alt="Amplitude Android SDK" height="150"/>
+</p>
+
+# Latest Version
+
+##### _August 5, 2019_ - [v2.23.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.23.2)
+
 
 An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
 
@@ -8,7 +14,6 @@ Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/artic
 
 # Latest Version #
 [2.23.2 - Released on April 22, 2019](https://github.com/amplitude/Amplitude-Android/releases/latest)
-[![Circle CI](https://circleci.com/gh/amplitude/Amplitude-Android.svg?style=badge&circle-token=e01cc9eb8ea55f82890973569bf55412848b9e49)](https://circleci.com/gh/amplitude/Amplitude-Android)
 
 # Android SDK Reference #
 See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/115004749807) for a list and description of all available SDK methods.
