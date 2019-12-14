@@ -9,14 +9,10 @@ import org.json.JSONObject;
 
 import java.util.Iterator;
 
-/**
- * Created by danieljih on 4/18/16.
- */
 public class Utils {
+    private static final String TAG = Utils.class.getName();
 
-    public static final String TAG = "com.amplitude.api.Utils";
     private static AmplitudeLog logger = AmplitudeLog.getLogger();
-
 
     /**
      * Do a shallow copy of a JSONObject. Takes a bit of code to avoid

@@ -29,7 +29,7 @@ public class Identify {
     /**
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.Identify";}
      */
-    public static final String TAG = "com.amplitude.api.Identify";
+    private static final String TAG = Identify.class.getName();
 
     /**
      * Internal {@code JSONObject} to hold all of the user property operations.

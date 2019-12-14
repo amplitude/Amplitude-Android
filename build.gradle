@@ -86,15 +86,3 @@ dependencies {
     // Assertions
     testImplementation 'androidx.test.ext:junit:1.1.1'
 }
-
-task deleteJar(type: Delete) {
-    delete "distribution/jar/amplitude-android-sdk-${project.version}.jar"
-}
-
-task createJar(type: Copy) {
-    from('build/intermediates/packaged-classes/release/')
-    into('distribution/jar')
-    include('classes.jar')
-    rename("classes.jar", "amplitude-android-sdk-${project.version}.jar")
-}
-createJar.dependsOn(deleteJar, build)

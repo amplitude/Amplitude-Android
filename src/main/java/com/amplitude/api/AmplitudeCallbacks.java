@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 class AmplitudeCallbacks implements Application.ActivityLifecycleCallbacks {
 
-    public static final String TAG = "com.amplitude.api.AmplitudeCallbacks";
+    private static final String TAG = AmplitudeCallbacks.class.getName();
     private static final String NULLMSG = "Need to initialize AmplitudeCallbacks with AmplitudeClient instance";
 
     private AmplitudeClient clientInstance = null;

@@ -22,7 +22,7 @@ import java.util.UUID;
 
 public class DeviceInfo {
 
-    public static final String TAG = "com.amplitude.api.DeviceInfo";
+    private static final String TAG = DeviceInfo.class.getName();
 
     public static final String OS_NAME = "android";
 

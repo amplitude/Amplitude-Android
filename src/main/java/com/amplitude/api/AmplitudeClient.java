@@ -42,7 +42,7 @@ public class AmplitudeClient {
     /**
      * The class identifier tag used in logging. TAG = {@code "com.amplitude.api.AmplitudeClient";}
      */
-    public static final String TAG = "com.amplitude.api.AmplitudeClient";
+    private static final String TAG = AmplitudeClient.class.getName();
 
     /**
      * The event type for start session events.

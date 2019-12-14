@@ -20,10 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String TAG = DatabaseHelper.class.getName();
 
     static final Map<String, DatabaseHelper> instances = new HashMap<String, DatabaseHelper>();
-
-    private static final String TAG = "com.amplitude.api.DatabaseHelper";
 
     protected static final String STORE_TABLE_NAME = "store";
     protected static final String LONG_STORE_TABLE_NAME = "long_store";
