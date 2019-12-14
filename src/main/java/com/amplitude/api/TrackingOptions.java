@@ -10,12 +10,19 @@ public class TrackingOptions {
     private static final String TAG = TrackingOptions.class.getName();
 
     private static String[] SERVER_SIDE_PROPERTIES = {
-        Constants.AMP_TRACKING_OPTION_CITY,
-        Constants.AMP_TRACKING_OPTION_COUNTRY,
-        Constants.AMP_TRACKING_OPTION_DMA,
-        Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
-        Constants.AMP_TRACKING_OPTION_LAT_LNG,
-        Constants.AMP_TRACKING_OPTION_REGION,
+            Constants.AMP_TRACKING_OPTION_CITY,
+            Constants.AMP_TRACKING_OPTION_COUNTRY,
+            Constants.AMP_TRACKING_OPTION_DMA,
+            Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
+            Constants.AMP_TRACKING_OPTION_LAT_LNG,
+            Constants.AMP_TRACKING_OPTION_REGION,
+    };
+
+    private static String[] PRIVACY_GUARD_PROPERTIES = {
+            Constants.AMP_TRACKING_OPTION_ADID,
+            Constants.AMP_TRACKING_OPTION_CITY,
+            Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
+            Constants.AMP_TRACKING_OPTION_LAT_LNG,
     };
 
     Set<String> disabledFields = new HashSet<String>();
@@ -188,5 +195,46 @@ public class TrackingOptions {
 
     private boolean shouldTrackField(String field) {
         return !disabledFields.contains(field);
+    }
+
+    TrackingOptions mergeIn(TrackingOptions other) {
+        for (String key : other.disabledFields) {
+            disableTrackingField(key);
+        }
+
+        return this;
+    }
+
+    static TrackingOptions copyOf(TrackingOptions other) {
+        TrackingOptions trackingOptions = new TrackingOptions();
+        for (String key : other.disabledFields) {
+            trackingOptions.disableTrackingField(key);
+        }
+
+        return trackingOptions;
+    }
+
+    static TrackingOptions forPrivacyGuard() {
+        TrackingOptions trackingOptions = new TrackingOptions();
+        for (String key : PRIVACY_GUARD_PROPERTIES) {
+            trackingOptions.disableTrackingField(key);
+        }
+
+        return trackingOptions;
+    }
+
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;  // self check
+        }
+        if (other == null) {
+            return false;  // null check
+        }
+        if (getClass() != other.getClass()) {
+            return false;  // type check and cast
+        }
+
+        TrackingOptions options = (TrackingOptions) other;
+        return options.disabledFields.equals(this.disabledFields);
     }
 }

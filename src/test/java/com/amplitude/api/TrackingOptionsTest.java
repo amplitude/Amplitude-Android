@@ -68,4 +68,41 @@ public class TrackingOptionsTest extends BaseTest {
 
         assertTrue(Utils.compareJSONObjects(options.getApiPropertiesTrackingOptions(), expectedOptions));
     }
+
+    @Test
+    public void testGetPrivacyGuardTrackingOptions() {
+        TrackingOptions options = TrackingOptions.forPrivacyGuard();
+        assertFalse(options.shouldTrackAdid());
+        assertFalse(options.shouldTrackCity());
+        assertFalse(options.shouldTrackIpAddress());
+    }
+
+    @Test
+    public void testMerging() {
+        TrackingOptions options1 = TrackingOptions.forPrivacyGuard();
+        TrackingOptions options2 = new TrackingOptions().disableCountry().disableLanguage();
+        options1.mergeIn(options2);
+        assertFalse(options1.shouldTrackAdid());
+        assertFalse(options1.shouldTrackCity());
+        assertFalse(options1.shouldTrackIpAddress());
+        assertFalse(options1.shouldTrackCountry());
+        assertFalse(options1.shouldTrackLanguage());
+    }
+
+    @Test
+    public void testCopyOf() {
+        TrackingOptions options = TrackingOptions.copyOf(TrackingOptions.forPrivacyGuard());
+        assertFalse(options.shouldTrackAdid());
+        assertFalse(options.shouldTrackCity());
+        assertFalse(options.shouldTrackIpAddress());
+    }
+
+    @Test
+    public void testEquals() {
+        TrackingOptions options1 = new TrackingOptions();
+        options1.disableAdid().disableCarrier();
+        TrackingOptions options2 = new TrackingOptions();
+        options2.disableAdid().disableCarrier();
+        assertEquals(options1, options2);
+    }
 }

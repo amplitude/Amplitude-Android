@@ -121,8 +121,10 @@ public class AmplitudeClient {
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
-    TrackingOptions trackingOptions = new TrackingOptions();
-    JSONObject apiPropertiesTrackingOptions;
+    TrackingOptions inputTrackingOptions = new TrackingOptions();
+    TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
+    JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
+    private boolean privacyGuardEnabled = false;
 
     /**
      * The device's Platform value.
@@ -511,8 +513,26 @@ public class AmplitudeClient {
     }
 
     public AmplitudeClient setTrackingOptions(TrackingOptions trackingOptions) {
-        this.trackingOptions = trackingOptions;
-        this.apiPropertiesTrackingOptions = trackingOptions.getApiPropertiesTrackingOptions();
+        inputTrackingOptions = trackingOptions;
+        appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
+        if (privacyGuardEnabled) {
+            appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        }
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
+        return this;
+    }
+
+    public AmplitudeClient enablePrivacyGuard() {
+        privacyGuardEnabled = true;
+        appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
+        return this;
+    }
+
+    public AmplitudeClient disablePrivacyGuard() {
+        privacyGuardEnabled = false;
+        appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
+        apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
@@ -942,34 +962,34 @@ public class AmplitudeClient {
             event.put("uuid", UUID.randomUUID().toString());
             event.put("sequence_number", getNextSequenceNumber());
 
-            if (trackingOptions.shouldTrackVersionName()) {
+            if (appliedTrackingOptions.shouldTrackVersionName()) {
                 event.put("version_name", replaceWithJSONNull(deviceInfo.getVersionName()));
             }
-            if (trackingOptions.shouldTrackOsName()) {
+            if (appliedTrackingOptions.shouldTrackOsName()) {
                 event.put("os_name", replaceWithJSONNull(deviceInfo.getOsName()));
             }
-            if (trackingOptions.shouldTrackOsVersion()) {
+            if (appliedTrackingOptions.shouldTrackOsVersion()) {
                 event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
             }
-            if (trackingOptions.shouldTrackDeviceBrand()) {
+            if (appliedTrackingOptions.shouldTrackDeviceBrand()) {
                 event.put("device_brand", replaceWithJSONNull(deviceInfo.getBrand()));
             }
-            if (trackingOptions.shouldTrackDeviceManufacturer()) {
+            if (appliedTrackingOptions.shouldTrackDeviceManufacturer()) {
                 event.put("device_manufacturer", replaceWithJSONNull(deviceInfo.getManufacturer()));
             }
-            if (trackingOptions.shouldTrackDeviceModel()) {
+            if (appliedTrackingOptions.shouldTrackDeviceModel()) {
                 event.put("device_model", replaceWithJSONNull(deviceInfo.getModel()));
             }
-            if (trackingOptions.shouldTrackCarrier()) {
+            if (appliedTrackingOptions.shouldTrackCarrier()) {
                 event.put("carrier", replaceWithJSONNull(deviceInfo.getCarrier()));
             }
-            if (trackingOptions.shouldTrackCountry()) {
+            if (appliedTrackingOptions.shouldTrackCountry()) {
                 event.put("country", replaceWithJSONNull(deviceInfo.getCountry()));
             }
-            if (trackingOptions.shouldTrackLanguage()) {
+            if (appliedTrackingOptions.shouldTrackLanguage()) {
                 event.put("language", replaceWithJSONNull(deviceInfo.getLanguage()));
             }
-            if (trackingOptions.shouldTrackPlatform()) {
+            if (appliedTrackingOptions.shouldTrackPlatform()) {
                 event.put("platform", platform);
             }
 
@@ -983,7 +1003,7 @@ public class AmplitudeClient {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
             }
 
-            if (trackingOptions.shouldTrackLatLng()) {
+            if (appliedTrackingOptions.shouldTrackLatLng()) {
                 Location location = deviceInfo.getMostRecentLocation();
                 if (location != null) {
                     JSONObject locationJSON = new JSONObject();
@@ -992,7 +1012,7 @@ public class AmplitudeClient {
                     apiProperties.put("location", locationJSON);
                 }
             }
-            if (trackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
+            if (appliedTrackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
