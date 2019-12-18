@@ -227,9 +227,9 @@ def isReleaseBuild() {
 }
 
 def getRepositoryUsername() {
-    return hasProperty('sonatypeUsername') ? sonatypeUsername : "paladin8"
+    return hasProperty('sonatypeUsername') ? sonatypeUsername : ""
 }
 
 def getRepositoryPassword() {
-    return hasProperty('sonatypePassword') ? sonatypePassword : "nRS4NSyFUM2fRj5WVDnk7Ynd"
+    return hasProperty('sonatypePassword') ? sonatypePassword : ""
 }
