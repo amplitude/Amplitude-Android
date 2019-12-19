@@ -181,8 +181,10 @@ task install(type: Upload, dependsOn: assemble) {
 }
 
 task androidJavadocs(type: Javadoc, dependsOn: ':generateReleaseBuildConfig') {
+    source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
     classpath += project.files('build/generated/source/buildConfig/release')
+
     exclude(
             '**/R.*',
             '**/security/**',
@@ -199,6 +201,7 @@ task androidJavadocs(type: Javadoc, dependsOn: ':generateReleaseBuildConfig') {
         docEncoding = 'UTF-8'
         charSet = 'UTF-8'
     }
+    failOnError false
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
