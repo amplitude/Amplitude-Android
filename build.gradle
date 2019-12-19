@@ -1,6 +1,5 @@
-group = 'com.amplitude'
-version = '2.23.2'
-description = 'Amplitude Android SDK'
+group = ARTIFACT_GROUP
+version = ARTIFACT_VERSION
 
 buildscript {
     repositories {
@@ -85,4 +84,151 @@ dependencies {
 
     // Assertions
     testImplementation 'androidx.test.ext:junit:1.1.1'
+}
+
+// ======== For SDK Releases ========
+uploadArchives {
+    repositories.mavenDeployer {
+        beforeDeployment {
+            MavenDeployment deployment -> signing.signPom(deployment)
+        }
+
+        pom.groupId = ARTIFACT_GROUP
+        pom.version = ARTIFACT_VERSION
+
+        pom.project {
+            name project.name
+            version ARTIFACT_VERSION
+            packaging POM_PACKAGING
+            description POM_DESCRIPTION
+            url POM_URL
+
+            scm {
+                url POM_SCM_URL
+                connection POM_SCM_CONNECTION
+                developerConnection POM_SCM_DEV_CONNECTION
+            }
+
+            licenses {
+                license {
+                    name POM_LICENCE_NAME
+                    url POM_LICENCE_URL
+                    distribution POM_LICENCE_DIST
+                }
+            }
+            developers {
+                developer {
+                    id POM_DEVELOPER_ID
+                    name POM_DEVELOPER_NAME
+                    email POM_DEVELOPER_EMAIL
+                    organization POM_DEVELOPER_ORG
+                    organizationUrl POM_DEVELOPER_ORG_URL
+                }
+            }
+        }
+
+        pom.whenConfigured { pom ->
+            pom.dependencies*.optional = true
+        }
+
+        repository(url: RELEASE_REPOSITORY_URL) {
+            authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+        }
+        snapshotRepository(url: SNAPSHOT_REPOSITORY_URL) {
+            authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+        }
+    }
+}
+
+task install(type: Upload, dependsOn: assemble) {
+    repositories.mavenInstaller {
+        configuration = configurations.archives
+
+        pom.groupId = ARTIFACT_GROUP
+        pom.version = ARTIFACT_VERSION
+
+        pom.project {
+            name project.name
+            version ARTIFACT_VERSION
+            packaging POM_PACKAGING
+            description POM_DESCRIPTION
+            url POM_URL
+
+            scm {
+                url POM_SCM_URL
+                connection POM_SCM_CONNECTION
+                developerConnection POM_SCM_DEV_CONNECTION
+            }
+
+            licenses {
+                license {
+                    name POM_LICENCE_NAME
+                    url POM_LICENCE_URL
+                    distribution POM_LICENCE_DIST
+                }
+            }
+            developers {
+                developer {
+                    id POM_DEVELOPER_ID
+                    name POM_DEVELOPER_NAME
+                    email POM_DEVELOPER_EMAIL
+                    organization POM_DEVELOPER_ORG
+                    organizationUrl POM_DEVELOPER_ORG_URL
+                }
+            }
+        }
+    }
+}
+
+task androidJavadocs(type: Javadoc, dependsOn: ':generateReleaseBuildConfig') {
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += project.files('build/generated/source/buildConfig/release')
+    exclude(
+            '**/R.*',
+            '**/security/**',
+            '**/unity/**',
+            '**/api/AmplitudeLog.java',
+            '**/api/Constants.java',
+            '**/api/DeviceInfo.java',
+            '**/api/Utils.java',
+            '**/api/WorkerThread.java',
+            '**/api/CursorWindowAllocationException.java'
+    )
+    options {
+        encoding = 'UTF-8'
+        docEncoding = 'UTF-8'
+        charSet = 'UTF-8'
+    }
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+signing {
+    required { isReleaseBuild() && gradle.taskGraph.hasTask(":uploadArchives") }
+    sign configurations.archives
+}
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+def getRepositoryUsername() {
+    return hasProperty('sonatypeUsername') ? sonatypeUsername : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('sonatypePassword') ? sonatypePassword : ""
 }
