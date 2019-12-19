@@ -212,8 +212,7 @@ task androidSourcesJar(type: Jar) {
 }
 
 signing {
-    required {
-        isReleaseBuild() && gradle.taskGraph.hasTask(":uploadArchives") }
+    required { isReleaseBuild() && gradle.taskGraph.hasTask(":uploadArchives") }
     sign configurations.archives
 }
 
