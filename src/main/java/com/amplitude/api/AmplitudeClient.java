@@ -124,7 +124,7 @@ public class AmplitudeClient {
     TrackingOptions inputTrackingOptions = new TrackingOptions();
     TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
-    private boolean privacyGuardEnabled = false;
+    private boolean minorGuardEnabled = false;
 
     /**
      * The device's Platform value.
@@ -515,22 +515,22 @@ public class AmplitudeClient {
     public AmplitudeClient setTrackingOptions(TrackingOptions trackingOptions) {
         inputTrackingOptions = trackingOptions;
         appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
-        if (privacyGuardEnabled) {
-            appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+        if (minorGuardEnabled) {
+            appliedTrackingOptions.mergeIn(TrackingOptions.forMinorGuard());
         }
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
-    public AmplitudeClient enablePrivacyGuard() {
-        privacyGuardEnabled = true;
-        appliedTrackingOptions.mergeIn(TrackingOptions.forPrivacyGuard());
+    public AmplitudeClient enableMinorGuard() {
+        minorGuardEnabled = true;
+        appliedTrackingOptions.mergeIn(TrackingOptions.forMinorGuard());
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
-    public AmplitudeClient disablePrivacyGuard() {
-        privacyGuardEnabled = false;
+    public AmplitudeClient disableMinorGuard() {
+        minorGuardEnabled = false;
         appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;

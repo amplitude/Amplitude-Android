@@ -18,7 +18,7 @@ public class TrackingOptions {
             Constants.AMP_TRACKING_OPTION_REGION,
     };
 
-    private static String[] PRIVACY_GUARD_PROPERTIES = {
+    private static String[] MINOR_GUARD_PROPERTIES = {
             Constants.AMP_TRACKING_OPTION_ADID,
             Constants.AMP_TRACKING_OPTION_CITY,
             Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
@@ -214,9 +214,9 @@ public class TrackingOptions {
         return trackingOptions;
     }
 
-    static TrackingOptions forPrivacyGuard() {
+    static TrackingOptions forMinorGuard() {
         TrackingOptions trackingOptions = new TrackingOptions();
-        for (String key : PRIVACY_GUARD_PROPERTIES) {
+        for (String key : MINOR_GUARD_PROPERTIES) {
             trackingOptions.disableTrackingField(key);
         }
 
