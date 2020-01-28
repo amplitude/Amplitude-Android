@@ -18,7 +18,7 @@ public class TrackingOptions {
             Constants.AMP_TRACKING_OPTION_REGION,
     };
 
-    private static String[] MINOR_GUARD_PROPERTIES = {
+    private static String[] COPPA_CONTROL_PROPERTIES = {
             Constants.AMP_TRACKING_OPTION_ADID,
             Constants.AMP_TRACKING_OPTION_CITY,
             Constants.AMP_TRACKING_OPTION_IP_ADDRESS,
@@ -214,9 +214,9 @@ public class TrackingOptions {
         return trackingOptions;
     }
 
-    static TrackingOptions forMinorGuard() {
+    static TrackingOptions forCoppaControl() {
         TrackingOptions trackingOptions = new TrackingOptions();
-        for (String key : MINOR_GUARD_PROPERTIES) {
+        for (String key : COPPA_CONTROL_PROPERTIES) {
             trackingOptions.disableTrackingField(key);
         }
 

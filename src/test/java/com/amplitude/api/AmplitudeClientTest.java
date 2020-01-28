@@ -1628,7 +1628,7 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
-    public void testEnableMinorGuard() throws JSONException {
+    public void testEnableCoppaControl() throws JSONException {
         long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
         clock.setTimestamps(timestamps);
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
@@ -1636,7 +1636,7 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
-        amplitude.disableMinorGuard();  // this shouldn't do anything
+        amplitude.disableCoppaControl();  // this shouldn't do anything
 
         TrackingOptions options = new TrackingOptions();
         assertEquals(amplitude.inputTrackingOptions, options);
@@ -1672,7 +1672,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertFalse(apiProperties.has("tracking_options"));
 
         // test enabling privacy guard
-        amplitude.enableMinorGuard();
+        amplitude.enableCoppaControl();
         assertEquals(amplitude.inputTrackingOptions, options);
         assertNotEquals(amplitude.appliedTrackingOptions, options);
 
@@ -1709,7 +1709,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertFalse(trackingOptions.getBoolean("lat_lng"));
 
         // test disabling privacy guard
-        amplitude.disableMinorGuard();
+        amplitude.disableCoppaControl();
 
         assertEquals(amplitude.inputTrackingOptions, options);
         assertEquals(amplitude.appliedTrackingOptions, options);
@@ -1743,7 +1743,7 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
-    public void testEnableMinorGuardWithOptions() throws JSONException {
+    public void testEnableCoppaControlWithOptions() throws JSONException {
         long [] timestamps = {1, 2, 3, 4, 5, 6, 7};
         clock.setTimestamps(timestamps);
         Robolectric.getForegroundThreadScheduler().advanceTo(1);
@@ -1793,7 +1793,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertFalse(trackingOptions.getBoolean("ip_address"));
 
         // when we enable privacy guard, make sure we maintain original tracking options
-        amplitude.enableMinorGuard();
+        amplitude.enableCoppaControl();
         assertEquals(amplitude.inputTrackingOptions, options);
         assertNotEquals(amplitude.appliedTrackingOptions, options);
 
@@ -1834,7 +1834,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertFalse(trackingOptions.getBoolean("lat_lng"));
 
         // disable privacy guard and make sure original user input is maintained
-        amplitude.disableMinorGuard();
+        amplitude.disableCoppaControl();
 
         assertEquals(amplitude.inputTrackingOptions, options);
         assertEquals(amplitude.appliedTrackingOptions, options);

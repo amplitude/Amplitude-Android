@@ -124,7 +124,7 @@ public class AmplitudeClient {
     TrackingOptions inputTrackingOptions = new TrackingOptions();
     TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
-    private boolean minorGuardEnabled = false;
+    private boolean coppaControlEnabled = false;
 
     /**
      * The device's Platform value.
@@ -515,22 +515,29 @@ public class AmplitudeClient {
     public AmplitudeClient setTrackingOptions(TrackingOptions trackingOptions) {
         inputTrackingOptions = trackingOptions;
         appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
-        if (minorGuardEnabled) {
-            appliedTrackingOptions.mergeIn(TrackingOptions.forMinorGuard());
+        if (coppaControlEnabled) {
+            appliedTrackingOptions.mergeIn(TrackingOptions.forCoppaControl());
         }
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
-
-    public AmplitudeClient enableMinorGuard() {
-        minorGuardEnabled = true;
-        appliedTrackingOptions.mergeIn(TrackingOptions.forMinorGuard());
+    
+    /**
+     * Enable COPPA (Children's Online Privacy Protection Act) restrictions on ADID, city, IP address and location tracking.
+     * This can be used by any customer that does not want to collect ADID, city, IP address and location tracking.
+     */
+    public AmplitudeClient enableCoppaControl() {
+        coppaControlEnabled = true;
+        appliedTrackingOptions.mergeIn(TrackingOptions.forCoppaControl());
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
 
-    public AmplitudeClient disableMinorGuard() {
-        minorGuardEnabled = false;
+    /**
+     * Disable COPPA (Children's Online Privacy Protection Act) restrictions on ADID, city, IP address and location tracking.
+     */
+    public AmplitudeClient disableCoppaControl() {
+        coppaControlEnabled = false;
         appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;

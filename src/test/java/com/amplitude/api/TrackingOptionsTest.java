@@ -70,8 +70,8 @@ public class TrackingOptionsTest extends BaseTest {
     }
 
     @Test
-    public void testGetMinorGuardTrackingOptions() {
-        TrackingOptions options = TrackingOptions.forMinorGuard();
+    public void testGetCoppaControlTrackingOptions() {
+        TrackingOptions options = TrackingOptions.forCoppaControl();
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
@@ -79,7 +79,7 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testMerging() {
-        TrackingOptions options1 = TrackingOptions.forMinorGuard();
+        TrackingOptions options1 = TrackingOptions.forCoppaControl();
         TrackingOptions options2 = new TrackingOptions().disableCountry().disableLanguage();
         options1.mergeIn(options2);
         assertFalse(options1.shouldTrackAdid());
@@ -91,7 +91,7 @@ public class TrackingOptionsTest extends BaseTest {
 
     @Test
     public void testCopyOf() {
-        TrackingOptions options = TrackingOptions.copyOf(TrackingOptions.forMinorGuard());
+        TrackingOptions options = TrackingOptions.copyOf(TrackingOptions.forCoppaControl());
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
