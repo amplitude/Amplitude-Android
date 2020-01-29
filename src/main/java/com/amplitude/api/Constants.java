@@ -1,10 +1,12 @@
 package com.amplitude.api;
 
+import com.amplitude.BuildConfig;
+
 public class Constants {
 
     public static final String LIBRARY = "amplitude-android";
     public static final String PLATFORM = "Android";
-    public static final String VERSION = "2.23.2";
+    public static final String VERSION = BuildConfig.AMPLITUDE_VERSION;
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
 

@@ -41,6 +41,9 @@ android {
         // require Java 9 above. However, Android Studio will error out when setting up Java to 9
         // above.
         targetSdkVersion 28
+
+        buildConfigField "String", "AMPLITUDE_VERSION", "\"${version}\""
+
         testInstrumentationRunner 'androidx.test.ext.junit.runners.AndroidJUnit4'
 
         // The following argument makes the Android Test Orchestrator run its
