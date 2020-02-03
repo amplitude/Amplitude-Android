@@ -28,7 +28,6 @@ import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 
 /**
  * <h1>AmplitudeClient</h1>
