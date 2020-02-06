@@ -174,6 +174,10 @@ public class AmplitudeClient {
      */
     String url = Constants.EVENT_LOG_URL;
     /**
+     * The Bearer Token for authentication
+     */
+    String bearerToken = null;
+    /**
      * The background event logging worker thread instance.
      */
     WorkerThread logThread = new WorkerThread("logThread");
@@ -496,6 +500,16 @@ public class AmplitudeClient {
         if (!Utils.isEmptyString(serverUrl)) {
             url = serverUrl;
         }
+        return this;
+    }
+
+    /**
+     * Set Bearer Token to be included in request header.
+     * @param token
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setBearerToken(String token) {
+        this.bearerToken = token;
         return this;
     }
 
@@ -1921,10 +1935,15 @@ public class AmplitudeClient {
 
         Request request;
         try {
-             request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
+             Request.Builder builder = new Request.Builder()
+                     .url(url)
+                     .post(body);
+
+             if (!Utils.isEmptyString(bearerToken)) {
+                builder.addHeader("Authorization", "Bearer " + bearerToken);
+             }
+
+             request = builder.build();
         } catch (IllegalArgumentException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
