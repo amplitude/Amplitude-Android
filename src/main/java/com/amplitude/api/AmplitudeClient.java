@@ -509,7 +509,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient setBearerToken(String token) {
-        if (Utils.isEmptyString(token)) {
+        if (!Utils.isEmptyString(token)) {
             this.bearerToken = token;
         }
         return this;
@@ -1937,9 +1937,9 @@ public class AmplitudeClient {
 
         Request request;
         try {
-             Request.Builder builder = new Request.Builder().url(url).post(body)
-                     .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                     .addHeader("Content-Length", String.valueOf(body.contentLength()));
+             Request.Builder builder = new Request.Builder()
+                     .url(url)
+                     .post(body);
 
              if (!Utils.isEmptyString(bearerToken)) {
                 builder.addHeader("Authorization", "Bearer " + bearerToken);
