@@ -509,9 +509,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient setBearerToken(String token) {
-        if (!Utils.isEmptyString(token)) {
-            this.bearerToken = token;
-        }
+        this.bearerToken = token;
         return this;
     }
 
