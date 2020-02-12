@@ -21,7 +21,7 @@ See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/
 * A [demo application](https://github.com/amplitude/GTM-Android-Demo) demonstrating a potential integration with Google Tag Manager.
 
 # Changelog #
-Click [here](https://github.com/amplitude/Amplitude-Android/blob/master/CHANGELOG.md) to view the Android SDK Changelog.
+Click [here](https://github.com/amplitude/Amplitude-Android/wiki/Changelog) to view the Android SDK Changelog.
 
 # Questions? #
 If you have questions about using or installing our Android SDK, you can send an email to [Amplitude Support](mailto:platform@amplitude.com).
