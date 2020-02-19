@@ -77,6 +77,8 @@ public class DeviceInfo {
                 return packageInfo.versionName;
             } catch (NameNotFoundException e) {
 
+            } catch (Exception e) {
+                
             }
             return null;
         }
