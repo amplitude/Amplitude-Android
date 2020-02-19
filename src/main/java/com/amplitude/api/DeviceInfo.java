@@ -76,7 +76,9 @@ public class DeviceInfo {
                 packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
                 return packageInfo.versionName;
             } catch (NameNotFoundException e) {
-                Diagnostics.getLogger().logError("Failed to get version name", e);
+
+            } catch (Exception e) {
+                
             }
             return null;
         }
