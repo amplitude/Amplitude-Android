@@ -110,7 +110,6 @@ public class DeviceInfo {
                 return manager.getNetworkOperatorName();
             } catch (Exception e) {
                 // Failed to get network operator name from network
-                Diagnostics.getLogger().logError("Failed to get carrier", e);
             }
             return null;
         }
@@ -154,19 +153,14 @@ public class DeviceInfo {
                     }
                 } catch (IOException e) {
                     // Failed to reverse geocode location
-                    Diagnostics.getLogger().logError("Failed to get country from location", e);
                 } catch (NullPointerException e) {
                     // Failed to reverse geocode location
-                    Diagnostics.getLogger().logError("Failed to get country from location", e);
                 } catch (NoSuchMethodError e) {
                     // failed to fetch geocoder
-                    Diagnostics.getLogger().logError("Failed to get country from location", e);
                 } catch (IllegalArgumentException e) {
                     // Bad lat / lon values can cause Geocoder to throw IllegalArgumentExceptions
-                    Diagnostics.getLogger().logError("Failed to get country from location", e);
                 } catch (IllegalStateException e) {
                     // sometimes the location manager is unavailable
-                    Diagnostics.getLogger().logError("Failed to get country from location", e);
                 }
             }
             return null;
@@ -184,7 +178,6 @@ public class DeviceInfo {
                 }
             } catch (Exception e) {
                 // Failed to get country from network
-                Diagnostics.getLogger().logError("Failed to get country from network", e);
             }
             return null;
         }
@@ -232,13 +225,10 @@ public class DeviceInfo {
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
-                Diagnostics.getLogger().logError("Failed to get ADID", e);
             } catch (InvocationTargetException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
-                Diagnostics.getLogger().logError("Failed to get ADID", e);
             } catch (Exception e) {
                 AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services", e);
-                Diagnostics.getLogger().logError("Failed to get ADID", e);
             }
 
             return advertisingId;
@@ -256,23 +246,17 @@ public class DeviceInfo {
                 return status != null && status.intValue() == 0;
             } catch (NoClassDefFoundError e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services Util not found!");
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             } catch (ClassNotFoundException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services Util not found!");
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             } catch (NoSuchMethodException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             } catch (InvocationTargetException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             } catch (IllegalAccessException e) {
                 AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             } catch (Exception e) {
                 AmplitudeLog.getLogger().w(TAG,
                         "Error when checking for Google Play Services: " + e);
-                Diagnostics.getLogger().logError("Failed to check GPS enabled", e);
             }
             return false;
         }
@@ -363,7 +347,6 @@ public class DeviceInfo {
             providers = locationManager.getProviders(true);
         } catch (SecurityException e) {
             // failed to get providers list
-            Diagnostics.getLogger().logError("Failed to get most recent location", e);
         }
         if (providers == null) {
             return null;
@@ -376,10 +359,8 @@ public class DeviceInfo {
                 location = locationManager.getLastKnownLocation(provider);
             } catch (SecurityException e) {
                 AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
-                Diagnostics.getLogger().logError("Failed to get most recent location", e);
             } catch (Exception e) {
                 AmplitudeLog.getLogger().w(TAG, "Failed to get most recent location");
-                Diagnostics.getLogger().logError("Failed to get most recent location", e);
             }
             if (location != null) {
                 locations.add(location);

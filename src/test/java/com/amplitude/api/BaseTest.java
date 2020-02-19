@@ -159,17 +159,12 @@ public class BaseTest {
 
         Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
-
-        if (Diagnostics.instance != null) {
-            Diagnostics.instance = null;
-        }
-
     }
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
         server.enqueue(new MockResponse().setBody("success"));
-        ShadowLooper httplooper = shadowOf(amplitude.httpThread.getLooper());
-        httplooper.runToEndOfTasks();
+        ShadowLooper httpLooper = shadowOf(amplitude.httpThread.getLooper());
+        httpLooper.runToEndOfTasks();
 
         try {
             return server.takeRequest(1, SECONDS);

@@ -258,66 +258,59 @@ public class AmplitudeClient {
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
 
         final AmplitudeClient client = this;
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!initialized) {
-                    // this try block is idempotent, so it's safe to retry initialize if failed
-                    try {
-                        if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
-                            AmplitudeClient.upgradePrefs(context);
-                            AmplitudeClient.upgradeSharedPrefsToDB(context);
-                        }
-                        httpClient = new OkHttpClient();
-                        deviceInfo = new DeviceInfo(context);
-                        deviceId = initializeDeviceId();
-                        if (enableDiagnosticLogging) {
-                            Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
-                        }
-                        deviceInfo.prefetch();
-
-                        if (userId != null) {
-                            client.userId = userId;
-                            dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
-                        } else {
-                            client.userId = dbHelper.getValue(USER_ID_KEY);
-                        }
-                        final Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
-                        optOut = optOutLong != null && optOutLong == 1;
-
-                        // try to restore previous session id
-                        previousSessionId = getLongvalue(PREVIOUS_SESSION_ID_KEY, -1);
-                        if (previousSessionId >= 0) {
-                            sessionId = previousSessionId;
-                        }
-
-                        // reload event meta data
-                        sequenceNumber = getLongvalue(SEQUENCE_NUMBER_KEY, 0);
-                        lastEventId = getLongvalue(LAST_EVENT_ID_KEY, -1);
-                        lastIdentifyId = getLongvalue(LAST_IDENTIFY_ID_KEY, -1);
-                        lastEventTime = getLongvalue(LAST_EVENT_TIME_KEY, -1);
-
-                        // install database reset listener to re-insert metadata in memory
-                        dbHelper.setDatabaseResetListener(new DatabaseResetListener() {
-                            @Override
-                            public void onDatabaseReset(SQLiteDatabase db) {
-                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, DEVICE_ID_KEY, client.deviceId);
-                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, USER_ID_KEY, client.userId);
-                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, OPT_OUT_KEY, client.optOut ? 1L : 0L);
-                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, PREVIOUS_SESSION_ID_KEY, client.sessionId);
-                                dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
-                            }
-                        });
-
-                        initialized = true;
-
-                    } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
-                        logger.e(TAG, String.format(
-                           "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
-                        ));
-                        Diagnostics.getLogger().logError("Failed to initialize Amplitude SDK", e);
-                        client.apiKey = null;
+        runOnLogThread(() -> {
+            if (!initialized) {
+                // this try block is idempotent, so it's safe to retry initialize if failed
+                try {
+                    if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
+                        AmplitudeClient.upgradePrefs(context);
+                        AmplitudeClient.upgradeSharedPrefsToDB(context);
                     }
+                    httpClient = new OkHttpClient();
+                    deviceInfo = new DeviceInfo(context);
+                    deviceId = initializeDeviceId();
+                    deviceInfo.prefetch();
+
+                    if (userId != null) {
+                        client.userId = userId;
+                        dbHelper.insertOrReplaceKeyValue(USER_ID_KEY, userId);
+                    } else {
+                        client.userId = dbHelper.getValue(USER_ID_KEY);
+                    }
+                    final Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
+                    optOut = optOutLong != null && optOutLong == 1;
+
+                    // try to restore previous session id
+                    previousSessionId = getLongvalue(PREVIOUS_SESSION_ID_KEY, -1);
+                    if (previousSessionId >= 0) {
+                        sessionId = previousSessionId;
+                    }
+
+                    // reload event meta data
+                    sequenceNumber = getLongvalue(SEQUENCE_NUMBER_KEY, 0);
+                    lastEventId = getLongvalue(LAST_EVENT_ID_KEY, -1);
+                    lastIdentifyId = getLongvalue(LAST_IDENTIFY_ID_KEY, -1);
+                    lastEventTime = getLongvalue(LAST_EVENT_TIME_KEY, -1);
+
+                    // install database reset listener to re-insert metadata in memory
+                    dbHelper.setDatabaseResetListener(new DatabaseResetListener() {
+                        @Override
+                        public void onDatabaseReset(SQLiteDatabase db) {
+                            dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, DEVICE_ID_KEY, client.deviceId);
+                            dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.STORE_TABLE_NAME, USER_ID_KEY, client.userId);
+                            dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, OPT_OUT_KEY, client.optOut ? 1L : 0L);
+                            dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, PREVIOUS_SESSION_ID_KEY, client.sessionId);
+                            dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
+                        }
+                    });
+
+                    initialized = true;
+
+                } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
+                    logger.e(TAG, String.format(
+                       "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
+                    ));
+                    client.apiKey = null;
                 }
             }
         });
@@ -346,21 +339,27 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * @deprecated - We removed Diagnostics class and this function has no-op.
+     * Will completely remove it in the near future.
+     */
     public AmplitudeClient enableDiagnosticLogging() {
-        if (!contextAndApiKeySet("enableDiagnosticLogging")) {
-            return this;
-        }
-        Diagnostics.getLogger().enableLogging(httpClient, apiKey, deviceId);
         return this;
     }
 
+    /**
+     * @deprecated - We removed Diagnostics class and this function has no-op.
+     * Will completely remove it in the near future.
+     */
     public AmplitudeClient disableDiagnosticLogging() {
-        Diagnostics.getLogger().disableLogging();
         return this;
     }
 
+    /**
+     * @deprecated - We removed Diagnostics class and this function has no-op.
+     * Will completely remove it in the near future.
+     */
     public AmplitudeClient setDiagnosticEventMaxCount(int eventMaxCount) {
-        Diagnostics.getLogger().setDiagnosticEventMaxCount(eventMaxCount);
         return this;
     }
 
@@ -1053,9 +1052,6 @@ public class AmplitudeClient {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
             ));
-            Diagnostics.getLogger().logError(
-                String.format("Failed to JSON serialize event type %s", eventType), e
-            );
         }
 
         return result;
@@ -1267,9 +1263,6 @@ public class AmplitudeClient {
         try {
             apiProperties.put("special", sessionEvent);
         } catch (JSONException e) {
-            Diagnostics.getLogger().logError(
-                String.format("Failed to generate API Properties JSON for session event %s", sessionEvent), e
-            );
             return;
         }
 
@@ -1378,7 +1371,7 @@ public class AmplitudeClient {
             apiProperties.put("receipt", receipt);
             apiProperties.put("receiptSig", receiptSignature);
         } catch (JSONException e) {
-            Diagnostics.getLogger().logError("Failed to generate API Properties JSON for revenue event", e);
+
         }
 
         logEventAsync(
@@ -1440,9 +1433,6 @@ public class AmplitudeClient {
                 identify.setUserProperty(key, sanitized.get(key));
             } catch (JSONException e) {
                 logger.e(TAG, e.toString());
-                Diagnostics.getLogger().logError(
-                    String.format("Failed to set user property %s", key), e
-                );
             }
         }
         identify(identify);
@@ -1496,16 +1486,14 @@ public class AmplitudeClient {
         if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
             return;
         }
+
         JSONObject group = null;
         try {
             group = new JSONObject().put(groupType, groupName);
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             logger.e(TAG, e.toString());
-            Diagnostics.getLogger().logError(
-                String.format("Failed to generate Group JSON for groupType: %s", groupType), e
-            );
         }
+
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
                 group, null, getCurrentTimeMillis(), false);
@@ -1516,20 +1504,19 @@ public class AmplitudeClient {
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession) {
-        if (
-            groupIdentify == null || groupIdentify.userPropertiesOperations.length() == 0 ||
-            !contextAndApiKeySet("groupIdentify()") || Utils.isEmptyString(groupType)
-        ) return;
+        if (groupIdentify == null || groupIdentify.userPropertiesOperations.length() == 0 ||
+            !contextAndApiKeySet("groupIdentify()") || Utils.isEmptyString(groupType)) {
+
+            return;
+        }
+
         JSONObject group = null;
         try {
             group = new JSONObject().put(groupType, groupName);
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             logger.e(TAG, e.toString());
-            Diagnostics.getLogger().logError(
-                String.format("Failed to generate Group Identify JSON Object for groupType %s", groupType), e
-            );
         }
+
         logEventAsync(
             Constants.GROUP_IDENTIFY_EVENT, null, null, null, group,
             groupIdentify.userPropertiesOperations, getCurrentTimeMillis(), outOfSession
@@ -1769,7 +1756,6 @@ public class AmplitudeClient {
      */
     protected void updateServer() {
         updateServer(false);
-        Diagnostics.getLogger().flushEvents();
     }
 
     /**
@@ -1820,16 +1806,13 @@ public class AmplitudeClient {
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
-                Diagnostics.getLogger().logError("Failed to update server", e);
-
-            // handle CursorWindowAllocationException when fetching events, defer upload
             } catch (CursorWindowAllocationException e) {
+                // handle CursorWindowAllocationException when fetching events, defer upload
                 uploadingCurrently.set(false);
                 logger.e(TAG, String.format(
                     "Caught Cursor window exception during event upload, deferring upload: %s",
                     e.getMessage()
                 ));
-                Diagnostics.getLogger().logError("Failed to update server", e);
             }
         }
     }
@@ -1922,7 +1905,6 @@ public class AmplitudeClient {
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
             // this will never be thrown
             logger.e(TAG, e.toString());
-            Diagnostics.getLogger().logError("Failed to compute checksum for upload request", e);
         }
 
         FormBody body = new FormBody.Builder()
@@ -1947,7 +1929,6 @@ public class AmplitudeClient {
         } catch (IllegalArgumentException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
-            Diagnostics.getLogger().logError("Failed to build upload request", e);
             return;
         }
 
@@ -2015,26 +1996,21 @@ public class AmplitudeClient {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
-            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (java.net.UnknownHostException e) {
             // logger.w(TAG,
             // "No internet connection found, unable to upload events");
             lastError = e;
-            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (IOException e) {
             logger.e(TAG, e.toString());
             lastError = e;
-            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (AssertionError e) {
             // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
             logger.e(TAG, "Exception:", e);
             lastError = e;
-            Diagnostics.getLogger().logError("Failed to post upload request", e);
         } catch (Exception e) {
             // Just log any other exception so things don't crash on upload
             logger.e(TAG, "Exception:", e);
             lastError = e;
-            Diagnostics.getLogger().logError("Failed to post upload request", e);
         }
 
         if (!uploadSuccess) {
@@ -2258,7 +2234,6 @@ public class AmplitudeClient {
 
         } catch (Exception e) {
             logger.e(TAG, "Error upgrading shared preferences", e);
-            Diagnostics.getLogger().logError("Failed to upgrade shared prefs", e);
             return false;
         }
     }
