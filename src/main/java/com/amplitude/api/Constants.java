@@ -69,6 +69,7 @@ public class Constants {
     public static final String AMP_TRACKING_OPTION_LAT_LNG = "lat_lng";
     public static final String AMP_TRACKING_OPTION_OS_NAME = "os_name";
     public static final String AMP_TRACKING_OPTION_OS_VERSION = "os_version";
+    public static final String AMP_TRACKING_OPTION_API_LEVEL = "api_level";
     public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";
     public static final String AMP_TRACKING_OPTION_REGION = "region";
     public static final String AMP_TRACKING_OPTION_VERSION_NAME = "version_name";

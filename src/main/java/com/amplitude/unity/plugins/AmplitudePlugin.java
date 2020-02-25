@@ -75,6 +75,9 @@ public class AmplitudePlugin {
         if (trackingOptionsDict.optBoolean("disableOSVersion", false)) {
             trackingOptions.disableOsVersion();
         }
+        if (trackingOptionsDict.optBoolean("disableApiLevel", false)) {
+            trackingOptions.disableApiLevel();
+        }
         if (trackingOptionsDict.optBoolean("disablePlatform", false)) {
             trackingOptions.disablePlatform();
         }

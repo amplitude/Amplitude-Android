@@ -144,6 +144,15 @@ public class TrackingOptions {
         return shouldTrackField(Constants.AMP_TRACKING_OPTION_OS_VERSION);
     }
 
+    public TrackingOptions disableApiLevel() {
+        disableTrackingField(Constants.AMP_TRACKING_OPTION_API_LEVEL);
+        return this;
+    }
+
+    boolean shouldTrackApiLevel() {
+        return shouldTrackField(Constants.AMP_TRACKING_OPTION_API_LEVEL);
+    }
+
     public TrackingOptions disablePlatform() {
         disableTrackingField(Constants.AMP_TRACKING_OPTION_PLATFORM);
         return this;
