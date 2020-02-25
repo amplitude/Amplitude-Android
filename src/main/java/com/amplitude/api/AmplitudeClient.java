@@ -991,6 +991,9 @@ public class AmplitudeClient {
             if (appliedTrackingOptions.shouldTrackOsVersion()) {
                 event.put("os_version", replaceWithJSONNull(deviceInfo.getOsVersion()));
             }
+            if (appliedTrackingOptions.shouldTrackApiLevel()) {
+                event.put("api_level", replaceWithJSONNull(Build.VERSION.SDK_INT));
+            }
             if (appliedTrackingOptions.shouldTrackDeviceBrand()) {
                 event.put("device_brand", replaceWithJSONNull(deviceInfo.getBrand()));
             }
