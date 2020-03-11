@@ -23,8 +23,8 @@ See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/
 # Changelog #
 Click [here](https://github.com/amplitude/Amplitude-Android/wiki/Changelog) to view the Android SDK Changelog.
 
-# Questions? #
-If you have questions about using or installing our Android SDK, you can send an email to [Amplitude Support](mailto:platform@amplitude.com).
+# Need Help? #
+If you have any problems or issues over our SDK, feel free to create a github issue or submit a request on [Amplitude Help](https://help.amplitude.com/hc/en-us/requests/new).
 
 # License #
 ```text
