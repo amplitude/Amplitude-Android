@@ -107,7 +107,7 @@ public class AmplitudePlugin {
     }
 
     public static void setLibraryVersion(String instanceName, String libraryVersion) {
-        Amplitude.getInstance(instanceName).setLibraryName(libraryVersion);
+        Amplitude.getInstance(instanceName).setLibraryVersion(libraryVersion);
     }
 
     @Deprecated
