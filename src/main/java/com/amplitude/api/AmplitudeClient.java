@@ -158,6 +158,8 @@ public class AmplitudeClient {
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
     private boolean flushEventsOnClose = true;
+    private String libraryName = Constants.LIBRARY;
+    private String libraryVersion = Constants.VERSION;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -578,6 +580,28 @@ public class AmplitudeClient {
                 dbHelper.insertOrReplaceKeyLongValue(OPT_OUT_KEY, optOut ? 1L : 0L);
             }
         });
+        return this;
+    }
+
+    /**
+     * Library name is default as `amplitude-android`.
+     * Notice: You will only want to set it when following conditions are met.
+     * 1. You develop your own library which bridges Amplitude Android native library.
+     * 2. You want to track your library as one of the data sources.
+     */
+    public AmplitudeClient setLibraryName(final String libraryName) {
+        this.libraryName = libraryName;
+        return this;
+    }
+
+    /**
+     * Library version is default as the latest Amplitude Android SDK version.
+     * Notice: You will only want to set it when following conditions are met.
+     * 1. You develop your own library which bridges Amplitude Android native library.
+     * 2. You want to track your library as one of the data sources.
+     */
+    public AmplitudeClient setLibraryVersion(final String libraryVersion) {
+        this.libraryVersion = libraryVersion;
         return this;
     }
 
@@ -1017,8 +1041,8 @@ public class AmplitudeClient {
             }
 
             JSONObject library = new JSONObject();
-            library.put("name", Constants.LIBRARY);
-            library.put("version", Constants.VERSION);
+            library.put("name", this.libraryName == null ? Constants.LIBRARY_UNKNOWN : this.libraryName);
+            library.put("version", this.libraryVersion == null ? Constants.VERSION_UNKNOWN : this.libraryVersion);
             event.put("library", library);
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;

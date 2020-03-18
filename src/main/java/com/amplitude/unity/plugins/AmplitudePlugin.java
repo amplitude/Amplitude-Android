@@ -94,6 +94,22 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).enableForegroundTracking(app);
     }
 
+    public static void enableCoppaControl(String instanceName) {
+        Amplitude.getInstance(instanceName).enableCoppaControl();
+    }
+
+    public static void disableCoppaControl(String instanceName) {
+        Amplitude.getInstance(instanceName).disableCoppaControl();
+    }
+
+    public static void setLibraryName(String instanceName, String libraryName) {
+        Amplitude.getInstance(instanceName).setLibraryName(libraryName);
+    }
+
+    public static void setLibraryVersion(String instanceName, String libraryVersion) {
+        Amplitude.getInstance(instanceName).setLibraryVersion(libraryVersion);
+    }
+
     @Deprecated
     public static void startSession() { return; }
 

@@ -5,8 +5,10 @@ import com.amplitude.BuildConfig;
 public class Constants {
 
     public static final String LIBRARY = "amplitude-android";
-    public static final String PLATFORM = "Android";
     public static final String VERSION = BuildConfig.AMPLITUDE_VERSION;
+    public static final String LIBRARY_UNKNOWN = "unknown-library";
+    public static final String VERSION_UNKNOWN = "unknown-version";
+    public static final String PLATFORM = "Android";
 
     public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
 

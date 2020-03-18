@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -225,6 +226,48 @@ public class AmplitudeClientTest extends BaseTest {
 
         JSONObject setOperations = userPropertiesOperations.optJSONObject(Constants.AMP_OP_SET);
         assertTrue(Utils.compareJSONObjects(userProperties, setOperations));
+    }
+
+    @Test
+    public void testSetCustomLibrary() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setLibraryName("amplitude-unity");
+        amplitude.setLibraryVersion("1.0.0");
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            JSONObject library = event.getJSONObject("library");
+            String libName = library.getString("name");
+            String libVersion = library.getString("version");
+            assertEquals(libName, "amplitude-unity");
+            assertEquals(libVersion, "1.0.0");
+        } catch (Exception e) {
+            Assert.fail();
+        }
+    }
+
+    @Test
+    public void testSetCustomLibraryWithNullValues() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        amplitude.setLibraryName(null);
+        amplitude.setLibraryVersion(null);
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            JSONObject library = event.getJSONObject("library");
+            String libName = library.getString("name");
+            String libVersion = library.getString("version");
+            assertEquals(libName, "unknown-library");
+            assertEquals(libVersion, "unknown-version");
+        } catch (Exception e) {
+            Assert.fail();
+        }
     }
 
     @Test
