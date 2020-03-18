@@ -4,7 +4,7 @@
 
 # Latest Version
 
-##### _February 06, 2020_ - [v2.24.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.24.2)
+##### _March 18, 2020_ - [v2.25.0](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.25.0)
 
 
 An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
