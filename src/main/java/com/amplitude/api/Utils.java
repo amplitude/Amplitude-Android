@@ -1,7 +1,10 @@
 package com.amplitude.api;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -117,5 +120,30 @@ public class Utils {
 
     static String getStringFromSharedPreferences(Context context, String instanceName, String key) {
         return getAmplitudeSharedPreferences(context, instanceName).getString(key, null);
+    }
+
+    static boolean checkLocationPermissionAllowed(Context context) {
+        return checkPermissionAllowed(context, Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                checkPermissionAllowed(context, Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
+    static boolean checkPermissionAllowed(Context context, String permission) {
+        // ANDROID 6.0 AND UP!
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            boolean hasPermission = false;
+            try {
+                // Invoke checkSelfPermission method from Android 6 (API 23 and UP)
+                java.lang.reflect.Method methodCheckPermission = Activity.class.getMethod("checkSelfPermission", java.lang.String.class);
+                Object resultObj = methodCheckPermission.invoke(context, permission);
+                int result = Integer.parseInt(resultObj.toString());
+                hasPermission = (result == PackageManager.PERMISSION_GRANTED);
+            } catch (Exception ex) {
+
+            }
+
+            return hasPermission;
+        } else {
+            return true;
+        }
     }
 }
