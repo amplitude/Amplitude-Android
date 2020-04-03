@@ -3,6 +3,7 @@ package com.amplitude.api;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Address;
 import android.location.Geocoder;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+@SuppressWarnings("MissingPermission")
 public class DeviceInfo {
 
     private static final String TAG = DeviceInfo.class.getName();
@@ -329,6 +331,10 @@ public class DeviceInfo {
 
     public Location getMostRecentLocation() {
         if (!isLocationListening()) {
+            return null;
+        }
+
+        if (!Utils.checkLocationPermissionAllowed(context)) {
             return null;
         }
 
