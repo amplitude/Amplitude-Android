@@ -128,6 +128,14 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).logEvent(event, ToJSONObject(jsonProperties), outOfSession);
     }
 
+    public static void uploadEvents(String instanceName) {
+        Amplitude.getInstance(instanceName).uploadEvents();
+    }
+
+    public static void useAdvertisingIdForDeviceId(String instanceName) {
+        Amplitude.getInstance(instanceName).useAdvertisingIdForDeviceId();
+    }
+
     public static void setUserId(String instanceName, String userId) {
         Amplitude.getInstance(instanceName).setUserId(userId);
     }
@@ -171,6 +179,10 @@ public class AmplitudePlugin {
 
     public static String getDeviceId(String instanceName) {
         return Amplitude.getInstance(instanceName).getDeviceId();
+    }
+
+    public static void setDeviceId(String instanceName, String deviceId) {
+        Amplitude.getInstance(instanceName).setDeviceId(deviceId);
     }
 
     public static void regenerateDeviceId(String instanceName) { Amplitude.getInstance(instanceName).regenerateDeviceId(); }
