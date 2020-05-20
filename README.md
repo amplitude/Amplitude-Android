@@ -13,10 +13,10 @@
 An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
 
 # Setup #
-Please see our [installation guide](https://amplitude.zendesk.com/hc/en-us/articles/115002935588-Android-SDK-Installation) for instructions on installing and using our Android SDK.
+Please see our [installation guide](https://developers.amplitude.com/docs/android-setup) for instructions on installing and using our Android SDK.
 
 # Android SDK Reference #
-See our [Android SDK Reference](https://amplitude.zendesk.com/hc/en-us/articles/115004749807) for a list and description of all available SDK methods.
+See our [Android SDK Reference](https://developers.amplitude.com/docs/android-sdk-reference) for a list and description of all available SDK methods.
 
 # Demo Applications #
 * A [demo application](https://github.com/amplitude/Android-Demo) showing the integration of our SDK using Gradle.
