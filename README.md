@@ -5,7 +5,8 @@
   <br />
 </p>
 
-![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)
+[![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)](https://mvnrepository.com/artifact/com.amplitude/android-sdk/latest)
+
 
 # Latest Version
 
