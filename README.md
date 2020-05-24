@@ -5,6 +5,8 @@
   <br />
 </p>
 
+![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)
+
 # Latest Version
 
 ##### _May 14, 2020_ - [v2.25.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.25.2)
