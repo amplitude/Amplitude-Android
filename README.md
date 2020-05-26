@@ -8,26 +8,23 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)](https://mvnrepository.com/artifact/com.amplitude/android-sdk/latest)
 
 
-# Latest Version
+# Official Amplitude Android SDK
 
 ##### _May 14, 2020_ - [v2.25.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.25.2)
 
+## Installation and Quick Start
+Please refer to [this](https://developers.amplitude.com/docs/android) for instructions on installing and using our the SDK.
 
-An Android SDK for tracking events and revenue to [Amplitude](https://www.amplitude.com).
+## Javadoc
+See our [Android SDK Reference](http://amplitude.github.io/Amplitude-Android/) for a list and description of all available SDK methods.
 
-# Setup #
-Please see our [installation guide](https://developers.amplitude.com/docs/android-setup) for instructions on installing and using our Android SDK.
-
-# Android SDK Reference #
-See our [Android SDK Reference](https://developers.amplitude.com/docs/android-sdk-reference) for a list and description of all available SDK methods.
-
-# Demo Applications #
+## Demo Applications
 * A [demo application](https://github.com/amplitude/Android-Demo) showing the integration of our SDK using Gradle.
 * A [demo application](https://github.com/amplitude/Segment-Android-Demo) showing the integration of our SDK using [Segment's](https://segment.com) Android SDK.
 * A [demo application](https://github.com/amplitude/GTM-Android-Demo) demonstrating a potential integration with Google Tag Manager.
 
-# Changelog #
+## Changelog
 Click [here](https://github.com/amplitude/Amplitude-Android/wiki/Changelog) to view the Android SDK Changelog.
 
-# Need Help? #
-If you have any problems or issues over our SDK, feel free to create a github issue or submit a request on [Amplitude Help](https://help.amplitude.com/hc/en-us/requests/new).
+## Need Help?
+If you have any problems or issues over our SDK, feel free to [create a github issue](https://github.com/amplitude/Amplitude-Android/issues/new) or submit a request on [Amplitude Help](https://help.amplitude.com/hc/en-us/requests/new).
