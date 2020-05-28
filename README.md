@@ -13,7 +13,7 @@
 ##### _May 14, 2020_ - [v2.25.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.25.2)
 
 ## Installation and Quick Start
-Please visit our [Developer Center](https://developers.amplitude.com/docs/android) for instructions on installing and using our the SDK.
+Please visit our :100:[Developer Center](https://developers.amplitude.com/docs/android) for instructions on installing and using our the SDK.
 
 ## Javadoc
 See our [Android SDK Reference](http://amplitude.github.io/Amplitude-Android/) for a list and description of all available SDK methods.
