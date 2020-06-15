@@ -3,9 +3,7 @@ package com.amplitude.api;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
@@ -29,11 +27,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadow.api.Shadow;
-import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowTelephonyManager;
-import org.robolectric.shadows.maps.ShadowGeocoder;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.util.Locale;
@@ -90,7 +85,7 @@ public class DeviceInfoTest extends BaseTest {
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
-        deviceInfo = new DeviceInfo(context);
+        deviceInfo = new DeviceInfo(context, true);
     }
 
     @After
@@ -134,7 +129,7 @@ public class DeviceInfoTest extends BaseTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
 
-        DeviceInfo deviceInfo = new DeviceInfo(context);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
         assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
     }
 
@@ -184,7 +179,7 @@ public class DeviceInfoTest extends BaseTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        DeviceInfo deviceInfo = new DeviceInfo(context);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
 
         // still get advertisingId even if limit ad tracking disabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
@@ -201,7 +196,7 @@ public class DeviceInfoTest extends BaseTest {
         Secure.putInt(cr, "limit_ad_tracking", 1);
         Secure.putString(cr, "advertising_id", advertisingId);
 
-        DeviceInfo deviceInfo = new DeviceInfo(context);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
 
         // still get advertisingID even if limit ad tracking enabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
@@ -211,7 +206,7 @@ public class DeviceInfoTest extends BaseTest {
     @Test
     public void testGPSDisabled() {
         // GPS not enabled
-        DeviceInfo deviceInfo = new DeviceInfo(context);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
         assertFalse(deviceInfo.isGooglePlayServicesEnabled());
 
         // GPS bundled but not enabled, GooglePlayUtils.isAvailable returns non-0 value
@@ -252,7 +247,7 @@ public class DeviceInfoTest extends BaseTest {
 
     @Test
     public void testNoLocation() {
-        DeviceInfo deviceInfo = new DeviceInfo(context);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
         Location recent = deviceInfo.getMostRecentLocation();
         assertNull(recent);
     }

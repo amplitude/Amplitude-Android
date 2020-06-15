@@ -270,8 +270,7 @@ public class AmplitudeClient {
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
                     }
                     httpClient = new OkHttpClient();
-                    deviceInfo = new DeviceInfo(context);
-                    deviceInfo.setLocationListening(this.locationListening);
+                    deviceInfo = new DeviceInfo(context, this.locationListening);
                     deviceId = initializeDeviceId();
                     deviceInfo.prefetch();
 
@@ -400,6 +399,9 @@ public class AmplitudeClient {
      */
     public AmplitudeClient enableLocationListening() {
         this.locationListening = true;
+        if (this.deviceInfo != null) {
+            this.deviceInfo.setLocationListening(true);
+        }
         return this;
     }
 
@@ -413,6 +415,9 @@ public class AmplitudeClient {
      */
     public AmplitudeClient disableLocationListening() {
         this.locationListening = false;
+        if (this.deviceInfo != null) {
+            this.deviceInfo.setLocationListening(false);
+        }
         return this;
     }
 
