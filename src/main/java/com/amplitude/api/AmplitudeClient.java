@@ -125,6 +125,7 @@ public class AmplitudeClient {
     TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
     private boolean coppaControlEnabled = false;
+    private boolean locationListening = true;
 
     /**
      * The device's Platform value.
@@ -269,7 +270,7 @@ public class AmplitudeClient {
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
                     }
                     httpClient = new OkHttpClient();
-                    deviceInfo = new DeviceInfo(context);
+                    deviceInfo = new DeviceInfo(context, this.locationListening);
                     deviceId = initializeDeviceId();
                     deviceInfo.prefetch();
 
@@ -392,19 +393,15 @@ public class AmplitudeClient {
      * Enable location listening in the SDK. This will add the user's current lat/lon coordinates
      * to every event logged.
      *
+     * This function should be called before SDK initialization, e.g. {@link #initialize(Context, String)}.
+     *
      * @return the AmplitudeClient
      */
     public AmplitudeClient enableLocationListening() {
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (deviceInfo == null) {
-		    throw new IllegalStateException(
-		            "Must initialize before acting on location listening.");
-                }
-                deviceInfo.setLocationListening(true);
-            }
-        });
+        this.locationListening = true;
+        if (this.deviceInfo != null) {
+            this.deviceInfo.setLocationListening(true);
+        }
         return this;
     }
 
@@ -412,19 +409,15 @@ public class AmplitudeClient {
      * Disable location listening in the SDK. This will stop the sending of the user's current
      * lat/lon coordinates.
      *
+     * This function should be called before SDK initialization, e.g. {@link #initialize(Context, String)}.
+     *
      * @return the AmplitudeClient
      */
     public AmplitudeClient disableLocationListening() {
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (deviceInfo == null) {
-		    throw new IllegalStateException(
-		            "Must initialize before acting on location listening.");
-                }
-                deviceInfo.setLocationListening(false);
-            }
-        });
+        this.locationListening = false;
+        if (this.deviceInfo != null) {
+            this.deviceInfo.setLocationListening(false);
+        }
         return this;
     }
 

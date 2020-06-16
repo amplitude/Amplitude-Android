@@ -3,7 +3,6 @@ package com.amplitude.api;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Address;
 import android.location.Geocoder;
@@ -264,8 +263,9 @@ public class DeviceInfo {
         }
     }
 
-    public DeviceInfo(Context context) {
+    public DeviceInfo(Context context, boolean locationListening) {
         this.context = context;
+        this.locationListening = locationListening;
     }
 
     private CachedInfo getCachedInfo() {
