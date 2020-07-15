@@ -110,6 +110,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).setLibraryVersion(libraryVersion);
     }
 
+    public static void setServerUrl(String instanceName, String serverUrl) {
+        Amplitude.getInstance(instanceName).setServerUrl(serverUrl);
+    }
+
     @Deprecated
     public static void startSession() { return; }
 
