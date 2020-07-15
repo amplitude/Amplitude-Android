@@ -353,6 +353,8 @@ public class DeviceInfo {
             providers = locationManager.getProviders(true);
         } catch (SecurityException e) {
             // failed to get providers list
+        } catch (Exception e) {
+            // other causes
         }
         if (providers == null) {
             return null;
