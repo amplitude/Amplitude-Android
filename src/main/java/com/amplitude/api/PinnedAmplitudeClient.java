@@ -218,7 +218,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                             }
                             X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
 
-                            client.httpClient = new OkHttpClient.Builder().sslSocketFactory(factory, trustManager).build();
+                            client.callFactory = new OkHttpClient.Builder().sslSocketFactory(factory, trustManager).build();
                         } catch (GeneralSecurityException e) {
                             logger.e(TAG, e.getMessage(), e);
                         } catch (IOException e) {

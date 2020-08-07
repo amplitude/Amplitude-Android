@@ -1539,7 +1539,7 @@ public class AmplitudeClientTest extends BaseTest {
         IOException error = new IOException("test IO Exception");
 
         // mock out client
-        OkHttpClient oldClient = amplitude.httpClient;
+        Call.Factory oldClient = amplitude.callFactory;
         OkHttpClient mockClient = PowerMockito.mock(OkHttpClient.class);
 
         // need to have mock client return mock call that throws exception
@@ -1548,7 +1548,7 @@ public class AmplitudeClientTest extends BaseTest {
         PowerMockito.when(mockClient.newCall(Matchers.any(Request.class))).thenReturn(mockCall);
 
         // attach mock client to amplitude
-        amplitude.httpClient = mockClient;
+        amplitude.callFactory = mockClient;
         amplitude.logEvent("test event");
         logLooper.runToEndOfTasks();
         logLooper.runToEndOfTasks();
@@ -1557,7 +1557,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(amplitude.lastError, error);
 
         // restore old client
-        amplitude.httpClient = oldClient;
+        amplitude.callFactory = oldClient;
     }
 
     @Test
