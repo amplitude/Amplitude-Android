@@ -2,6 +2,9 @@ package com.amplitude.api;
 
 import android.content.Context;
 
+import com.amplitude.util.DoubleCheck;
+import com.amplitude.util.Provider;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -179,8 +182,12 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
      */
     protected boolean initializedSSLSocketFactory = false;
 
-    @Override
-    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
+    public synchronized AmplitudeClient initializeInternal(
+            Context context,
+            String apiKey,
+            String userId,
+            Provider<OkHttpClient> clientProvider
+    ) {
         super.initialize(context, apiKey, userId);
         final PinnedAmplitudeClient client = this;
         runOnLogThread(new Runnable() {
@@ -217,21 +224,44 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                                         + Arrays.toString(trustManagers));
                             }
                             X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+                            final Provider<OkHttpClient> finalClientProvider = DoubleCheck.provider(() -> {
+                                final OkHttpClient.Builder builder;
+                                if (clientProvider != null) {
+                                    builder = clientProvider.get().newBuilder();
+                                } else {
+                                    builder = new OkHttpClient.Builder();
+                                }
+                                return builder.sslSocketFactory(factory, trustManager).build();
+                            });
 
-                            client.callFactory = new OkHttpClient.Builder().sslSocketFactory(factory, trustManager).build();
+                            client.callFactory = request -> finalClientProvider.get().newCall(request);
                         } catch (GeneralSecurityException e) {
                             logger.e(TAG, e.getMessage(), e);
                         } catch (IOException e) {
                             logger.e(TAG, e.getMessage(), e);
                         }
                     } else {
-                        client.logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
+                        logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
                     }
                     client.initializedSSLSocketFactory = true;
                 }
             }
         });
         return this;
+    }
+
+    // why not override base method?
+    @Override
+    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
+        return initializeInternal(context, apiKey, userId, null);
+    }
+
+    public synchronized AmplitudeClient initialize(
+            Context context,
+            String apiKey,
+            String userId,
+            Provider<OkHttpClient> clientProvider) {
+        return initializeInternal(context, apiKey, userId, clientProvider);
     }
 
     /**
