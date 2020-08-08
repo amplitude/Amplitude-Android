@@ -78,8 +78,8 @@ public class DatabaseRecoveryTest extends BaseTest {
         long previousSessionId = dbInstance.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY);
         long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
         long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
-        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
         long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+        long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
 
         assertNotNull(deviceId);
         assertTrue(deviceId.endsWith("R"));

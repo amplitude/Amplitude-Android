@@ -161,6 +161,7 @@ public class AmplitudeClient {
     private boolean flushEventsOnClose = true;
     private String libraryName = Constants.LIBRARY;
     private String libraryVersion = Constants.VERSION;
+    private boolean useDynamicConfig = false;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -268,6 +269,15 @@ public class AmplitudeClient {
                     if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
                         AmplitudeClient.upgradePrefs(context);
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
+                    }
+
+                    if (useDynamicConfig) {
+                        ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
+                            @Override
+                            public void onFinished() {
+                                url = ConfigManager.getInstance().getIngestionEndpoint();
+                            }
+                        });
                     }
                     httpClient = new OkHttpClient();
                     deviceInfo = new DeviceInfo(context, this.locationListening);
@@ -671,6 +681,19 @@ public class AmplitudeClient {
         return this;
     }
 
+    /**
+     * Turning this flag on will find the best server url automatically based on users' geo location.
+     * Note:
+     * 1. If you have your own proxy server and use `setServerUrl` API, please leave this off.
+     * 2. If you have users in China Mainland, we suggest you turn this on.
+     *
+     * @param useDynamicConfig whether to enable dynamic config
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setUseDynamicConfig(boolean useDynamicConfig) {
+        this.useDynamicConfig = useDynamicConfig;
+        return this;
+    }
     /**
      * Set foreground tracking to true.
      */
@@ -1328,6 +1351,14 @@ public class AmplitudeClient {
             public void run() {
                 if (Utils.isEmptyString(apiKey)) {
                     return;
+                }
+                if (useDynamicConfig) {
+                    ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
+                        @Override
+                        public void onFinished() {
+                            url = ConfigManager.getInstance().getIngestionEndpoint();
+                        }
+                    });
                 }
                 startNewSessionIfNeeded(timestamp);
                 inForeground = true;
