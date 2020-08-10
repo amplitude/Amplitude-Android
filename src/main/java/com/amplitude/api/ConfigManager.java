@@ -58,8 +58,9 @@ public class ConfigManager {
     }
 
     public static ConfigManager getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new ConfigManager();
+        }
 
         return instance;
     }
