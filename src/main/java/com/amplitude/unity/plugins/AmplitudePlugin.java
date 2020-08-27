@@ -140,6 +140,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).useAdvertisingIdForDeviceId();
     }
 
+    public static void setOffline(String instanceName, boolean offline) {
+        Amplitude.getInstance(instanceName).setOffline(offline);
+    }
+
     public static void setUserId(String instanceName, String userId) {
         Amplitude.getInstance(instanceName).setUserId(userId);
     }
