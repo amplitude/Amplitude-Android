@@ -152,6 +152,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).setOptOut(enabled);
     }
 
+    public static void setMinTimeBetweenSessionsMillis(String instanceName, long minTimeBetweenSessionsMillis) {
+        Amplitude.getInstance(instanceName).setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
+    }
+
     public static void setUserProperties(String instanceName, String jsonProperties) {
         Amplitude.getInstance(instanceName).setUserProperties(ToJSONObject(jsonProperties));
     }
