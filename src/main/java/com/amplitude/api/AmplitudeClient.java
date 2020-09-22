@@ -709,7 +709,7 @@ public class AmplitudeClient {
             if (this.eventExplorer == null) {
                 this.eventExplorer = new EventExplorer(this.instanceName);
             }
-            this.eventExplorer.showBubbleView(activity);
+            this.eventExplorer.show(activity);
         }
     }
 

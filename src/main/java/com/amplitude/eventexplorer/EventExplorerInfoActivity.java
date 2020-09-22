@@ -28,7 +28,7 @@ public class EventExplorerInfoActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.amp_activity_eventexplorer_info);
 
-        this.closeImageView = findViewById(R.id.amp_eeInfo_btn_close);
+        this.closeImageView = findViewById(R.id.amp_eeInfo_iv_close);
         this.closeImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,8 +64,7 @@ public class EventExplorerInfoActivity extends Activity {
             }
         });
     }
-
-
+    
     private void copyText(Context context, String text) {
         if (text != null) {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);

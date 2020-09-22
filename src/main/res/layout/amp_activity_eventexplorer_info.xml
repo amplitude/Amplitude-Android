@@ -17,7 +17,7 @@
             android:layout_gravity="center"/>
         
         <ImageView
-            android:id="@+id/amp_eeInfo_btn_close"
+            android:id="@+id/amp_eeInfo_iv_close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/cancel"
