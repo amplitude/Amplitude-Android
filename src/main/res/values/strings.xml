@@ -1,0 +1,8 @@
+<resources>
+    <string name="amp_label_copy">Copy</string>
+    <string name="amp_label_copied">Copied To Clipboard</string>
+    <string name="amp_label_user_info">User Information</string>
+    <string name="amp_label_device_id">DEVICE ID</string>
+    <string name="amp_label_user_id">USER ID</string>
+    <string name="amp_label_not_avail">N/A</string>
+</resources>

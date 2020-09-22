@@ -1,5 +1,6 @@
 package com.amplitude.api;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,6 +9,8 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
 
+import com.amplitude.BuildConfig;
+import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
 
 import org.json.JSONArray;
@@ -126,6 +129,7 @@ public class AmplitudeClient {
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
     private boolean coppaControlEnabled = false;
     private boolean locationListening = true;
+    private EventExplorer eventExplorer;
 
     /**
      * The device's Platform value.
@@ -279,6 +283,7 @@ public class AmplitudeClient {
                             }
                         });
                     }
+
                     httpClient = new OkHttpClient();
                     deviceInfo = new DeviceInfo(context, this.locationListening);
                     deviceId = initializeDeviceId();
@@ -318,7 +323,6 @@ public class AmplitudeClient {
                     });
 
                     initialized = true;
-
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
                     logger.e(TAG, String.format(
                        "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
@@ -694,6 +698,21 @@ public class AmplitudeClient {
         this.useDynamicConfig = useDynamicConfig;
         return this;
     }
+
+    /**
+     * Show Amplitude Event Explorer when you're running a debug build.
+     *
+     * @param activity root activity
+     */
+    public void showEventExplorer(Activity activity) {
+        if (BuildConfig.DEBUG) {
+            if (this.eventExplorer == null) {
+                this.eventExplorer = new EventExplorer(this.instanceName);
+            }
+            this.eventExplorer.show(activity);
+        }
+    }
+
     /**
      * Set foreground tracking to true.
      */
