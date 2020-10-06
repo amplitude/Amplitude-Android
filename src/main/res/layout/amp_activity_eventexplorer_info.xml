@@ -20,7 +20,7 @@
             android:id="@+id/amp_eeInfo_iv_close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/cancel"
+            android:src="@drawable/amp_cancel"
             android:layout_gravity="end|center_vertical"
             android:layout_marginRight="10dp" />
     </FrameLayout>
