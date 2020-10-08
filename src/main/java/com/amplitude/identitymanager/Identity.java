@@ -1,26 +1,20 @@
 package com.amplitude.identitymanager;
 
-import android.util.Log;
-
 public class Identity {
     private String _userId;
     private String _deviceId;
 
-    private void logIdentityWarning(String message) {
-        Log.w(Identity.class.getName(), message);
-    }
-
     public String initializeDeviceId(String deviceId) {
-        if (deviceId == null) {
+        if (_deviceId == null) {
             String deviceIdToUse = "";
             if (deviceId.length() > 0) {
                 deviceIdToUse = deviceId;
             } else {
-                deviceIdToUse = "generateBase36Id";
+                deviceIdToUse = IdentityUtils.generateBase36Id();
             }
             _deviceId = deviceIdToUse;
         } else {
-            logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
+            IdentityUtils.logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
         }
 
         return deviceId;
@@ -28,9 +22,9 @@ public class Identity {
 
     public String initializeDeviceId() {
         if (_deviceId == null) {
-            _deviceId = "generateBase36Id";
+            _deviceId = IdentityUtils.generateBase36Id();
         } else {
-            logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
+            IdentityUtils.logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
         }
 
         return _deviceId;
@@ -38,7 +32,7 @@ public class Identity {
 
     public String getDeviceId() {
         if (_deviceId == null) {
-            logIdentityWarning("Did not detect device ID; generating one for this instance.");
+            IdentityUtils.logIdentityWarning("Did not detect device ID; generating one for this instance.");
             return initializeDeviceId();
         } else {
             return _deviceId;
