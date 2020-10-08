@@ -56,4 +56,8 @@ public class Identity {
     public String getUserId() {
         return _userId;
     }
+
+    public void addIdentityChangedListener(){}
+
+    public void useAdvertisingIdForDeviceId() {}
 }
