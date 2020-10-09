@@ -1,57 +1,84 @@
 package com.amplitude.identitymanager;
 
+import com.amplitude.api.AmplitudeLog;
+
 public class Identity {
-    private String _userId;
-    private String _deviceId;
+    private String userId;
+    private String deviceId;
+    private boolean shouldUseAdvertisingIdForDeviceId = false;
+    private IdentityListener listener;
+
+    public interface IdentityListener {
+        void onUserIdChanged(String userId);
+        void onDeviceIdChanged(String deviceId);
+    }
+
+    public Identity() {
+        this(false, null);
+    }
+
+    public Identity(boolean useAdvertisingId) {
+        this(useAdvertisingId, null);
+    }
+
+    public Identity(boolean useAdvertisingId, String userId) {
+        this.userId = userId;
+        this.shouldUseAdvertisingIdForDeviceId = useAdvertisingId;
+
+        initializeDeviceId();
+    }
 
     public String initializeDeviceId(String deviceId) {
-        if (_deviceId == null) {
+        if (this.deviceId == null) {
             String deviceIdToUse = "";
-            if (deviceId.length() > 0) {
-                deviceIdToUse = deviceId;
+            if (shouldUseAdvertisingIdForDeviceId) {
+                deviceIdToUse = IdentityDeviceInfo.getAdvertisingId();
             } else {
-                deviceIdToUse = IdentityUtils.generateBase36Id();
+                if (deviceId.length() > 0) {
+                    deviceIdToUse = deviceId;
+                } else {
+                    deviceIdToUse = IdentityUtils.generateBase36Id();
+                }
             }
-            _deviceId = deviceIdToUse;
+            this.deviceId = deviceIdToUse;
         } else {
-            IdentityUtils.logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
+            AmplitudeLog.getLogger().w(Identity.class.getName(), "Cannot set device ID twice for same identity. Skipping operation.");
         }
-
-        return deviceId;
+        return this.deviceId;
     }
 
     public String initializeDeviceId() {
-        if (_deviceId == null) {
-            _deviceId = IdentityUtils.generateBase36Id();
-        } else {
-            IdentityUtils.logIdentityWarning("Cannot set device ID twice for same identity. Skipping operation.");
-        }
-
-        return _deviceId;
+        return initializeDeviceId(null);
     }
 
     public String getDeviceId() {
-        if (_deviceId == null) {
-            IdentityUtils.logIdentityWarning("Did not detect device ID; generating one for this instance.");
-            return initializeDeviceId();
-        } else {
-            return _deviceId;
+        return deviceId;
+    }
+
+    // Should this exist? Otherwise, when would we call the onDeviceIdChanged listener?
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+        if (listener != null) {
+            listener.onDeviceIdChanged(deviceId);
         }
     }
 
-    public void setUserId(String userId) {
-        _userId = userId;
-    }
-
-    public void setUserId(Integer userId) {
-        _userId = userId.toString();
-    }
-
     public String getUserId() {
-        return _userId;
+        return userId;
     }
 
-    public void addIdentityChangedListener(){}
+    public void setUserId(String userId) {
+        this.userId = userId;
+        if (listener != null) {
+            listener.onUserIdChanged(userId);
+        }
+    }
 
-    public void useAdvertisingIdForDeviceId() {}
+    public void addIdentityChangedListener(IdentityListener listener){
+        this.listener = listener;
+    }
+
+    public void useAdvertisingIdForDeviceId() {
+        shouldUseAdvertisingIdForDeviceId = true;
+    }
 }

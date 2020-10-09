@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class IdentityManager {
     static final Map<String, Identity> instanceMap = new ConcurrentHashMap<String, Identity>();
-    private final String default_instance = "$default_instance";
+    private final static String DEFAULT_INSTANCE = "$default_instance";
 
     public Identity getInstance(String instanceName) {
         if (instanceMap.containsKey(instanceName)) {
@@ -18,12 +18,6 @@ public class IdentityManager {
     }
 
     public Identity getInstance() {
-        if (instanceMap.containsKey(default_instance)) {
-            return instanceMap.get(default_instance);
-        } else {
-            Identity identityToSet = new Identity();
-            instanceMap.put(default_instance, identityToSet);
-            return identityToSet;
-        }
+        return getInstance(DEFAULT_INSTANCE);
     }
 }
