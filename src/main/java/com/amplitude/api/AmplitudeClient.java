@@ -1294,7 +1294,7 @@ public class AmplitudeClient {
         return (timestamp - lastEventTime) < sessionLimit;
     }
 
-    private void setSessionId(long timestamp) {
+    public void setSessionId(long timestamp) {
         sessionId = timestamp;
         setPreviousSessionId(timestamp);
     }
