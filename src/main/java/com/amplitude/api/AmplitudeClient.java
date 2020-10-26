@@ -1294,6 +1294,14 @@ public class AmplitudeClient {
         return (timestamp - lastEventTime) < sessionLimit;
     }
 
+    /**
+     * Sets the sessionId.
+     *
+     * NOTE: not recommended unless you know what you are doing
+     *
+     * @param timestamp Timestamp representing the sessionId
+     * @see [Tracking Sessions](https://help.amplitude.com/hc/en-us/articles/115002323627-Tracking-Session)
+     */
     public void setSessionId(long timestamp) {
         sessionId = timestamp;
         setPreviousSessionId(timestamp);
