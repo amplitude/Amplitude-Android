@@ -52,6 +52,8 @@ public class ConfigManager {
 
         } catch (JSONException e) {
 
+        } catch (Exception e) {
+            
         }
 
         listener.onFinished();
