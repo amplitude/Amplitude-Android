@@ -140,12 +140,20 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).useAdvertisingIdForDeviceId();
     }
 
+    public static void setOffline(String instanceName, boolean offline) {
+        Amplitude.getInstance(instanceName).setOffline(offline);
+    }
+
     public static void setUserId(String instanceName, String userId) {
         Amplitude.getInstance(instanceName).setUserId(userId);
     }
 
     public static void setOptOut(String instanceName, boolean enabled) {
         Amplitude.getInstance(instanceName).setOptOut(enabled);
+    }
+
+    public static void setMinTimeBetweenSessionsMillis(String instanceName, long minTimeBetweenSessionsMillis) {
+        Amplitude.getInstance(instanceName).setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
     }
 
     public static void setUserProperties(String instanceName, String jsonProperties) {

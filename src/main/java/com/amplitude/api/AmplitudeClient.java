@@ -1,5 +1,6 @@
 package com.amplitude.api;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,6 +9,8 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
 
+import com.amplitude.BuildConfig;
+import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
 import com.amplitude.util.DoubleCheck;
 import com.amplitude.util.Provider;
@@ -129,6 +132,7 @@ public class AmplitudeClient {
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
     private boolean coppaControlEnabled = false;
     private boolean locationListening = true;
+    private EventExplorer eventExplorer;
 
     /**
      * The device's Platform value.
@@ -164,6 +168,7 @@ public class AmplitudeClient {
     private boolean flushEventsOnClose = true;
     private String libraryName = Constants.LIBRARY;
     private String libraryVersion = Constants.VERSION;
+    private boolean useDynamicConfig = false;
 
     private AtomicBoolean updateScheduled = new AtomicBoolean(false);
     /**
@@ -336,6 +341,7 @@ public class AmplitudeClient {
                         AmplitudeClient.upgradePrefs(context);
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
                     }
+
                     if (callFactory == null) {
                         // defer OkHttp client to first call
                         final Provider<Call.Factory> callProvider
@@ -343,6 +349,15 @@ public class AmplitudeClient {
                         this.callFactory = request -> callProvider.get().newCall(request);
                     } else {
                         this.callFactory = callFactory;
+                    }
+
+                    if (useDynamicConfig) {
+                        ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
+                            @Override
+                            public void onFinished() {
+                                url = ConfigManager.getInstance().getIngestionEndpoint();
+                            }
+                        });
                     }
 
                     deviceInfo = new DeviceInfo(context, this.locationListening);
@@ -383,7 +398,6 @@ public class AmplitudeClient {
                     });
 
                     initialized = true;
-
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
                     logger.e(TAG, String.format(
                             "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
@@ -744,6 +758,34 @@ public class AmplitudeClient {
     public AmplitudeClient trackSessionEvents(boolean trackingSessionEvents) {
         this.trackingSessionEvents = trackingSessionEvents;
         return this;
+    }
+
+    /**
+     * Turning this flag on will find the best server url automatically based on users' geo location.
+     * Note:
+     * 1. If you have your own proxy server and use `setServerUrl` API, please leave this off.
+     * 2. If you have users in China Mainland, we suggest you turn this on.
+     *
+     * @param useDynamicConfig whether to enable dynamic config
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setUseDynamicConfig(boolean useDynamicConfig) {
+        this.useDynamicConfig = useDynamicConfig;
+        return this;
+    }
+
+    /**
+     * Show Amplitude Event Explorer when you're running a debug build.
+     *
+     * @param activity root activity
+     */
+    public void showEventExplorer(Activity activity) {
+        if (BuildConfig.DEBUG) {
+            if (this.eventExplorer == null) {
+                this.eventExplorer = new EventExplorer(this.instanceName);
+            }
+            this.eventExplorer.show(activity);
+        }
     }
 
     /**
@@ -1403,6 +1445,14 @@ public class AmplitudeClient {
             public void run() {
                 if (Utils.isEmptyString(apiKey)) {
                     return;
+                }
+                if (useDynamicConfig) {
+                    ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
+                        @Override
+                        public void onFinished() {
+                            url = ConfigManager.getInstance().getIngestionEndpoint();
+                        }
+                    });
                 }
                 startNewSessionIfNeeded(timestamp);
                 inForeground = true;

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    android:background="@color/amp_light_gray">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@android:color/white">
+        <ImageView
+            android:src="@drawable/amp_banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
+        
+        <ImageView
+            android:id="@+id/amp_eeInfo_iv_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/amp_cancel"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginRight="10dp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/white">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/amp_label_user_info"
+            android:textSize="18dp"
+            android:textColor="@color/amp_dark_blue"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="12dp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="5dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/amp_dark_blue"
+                android:textSize="15dp"
+                android:text="@string/amp_label_device_id"/>
+
+            <TextView
+                android:id="@+id/amp_eeInfo_tv_deviceId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/amp_gray"
+                android:singleLine="true"
+                android:textSize="15dp"
+                android:text="@string/amp_label_not_avail"
+                android:layout_alignParentBottom="true"
+                android:layout_toLeftOf="@id/amp_eeInfo_btn_copyDeviceId"
+                android:layout_marginRight="10dp" />
+
+            <Button
+                android:id="@+id/amp_eeInfo_btn_copyDeviceId"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:layout_marginRight="19dp"
+                android:background="@drawable/amp_button_bg"
+                android:textColor="@color/amp_blue"
+                android:text="@string/amp_label_copy"
+                android:layout_alignParentRight="true"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/amp_dark_blue"
+                android:textSize="15dp"
+                android:text="@string/amp_label_user_id"/>
+
+            <TextView
+                android:id="@+id/amp_eeInfo_tv_userId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/amp_gray"
+                android:singleLine="true"
+                android:textSize="15dp"
+                android:text="@string/amp_label_not_avail"
+                android:layout_alignParentBottom="true"
+                android:layout_toLeftOf="@id/amp_eeInfo_btn_copyUserId"
+                android:layout_marginRight="10dp"/>
+
+            <Button
+                android:id="@+id/amp_eeInfo_btn_copyUserId"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:layout_marginRight="19dp"
+                android:background="@drawable/amp_button_bg"
+                android:textColor="@color/amp_blue"
+                android:text="@string/amp_label_copy"
+                android:layout_alignParentRight="true"/>
+        </RelativeLayout>
+
+    </LinearLayout>
+</LinearLayout>

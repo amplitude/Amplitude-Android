@@ -10,7 +10,8 @@ public class Constants {
     public static final String VERSION_UNKNOWN = "unknown-version";
     public static final String PLATFORM = "Android";
 
-    public static final String EVENT_LOG_URL = "https://api.amplitude.com/";
+    public static final String EVENT_LOG_URL = "https://api2.amplitude.com/";
+    public static final String DYNAMIC_CONFIG_URL = "https://regionconfig.amplitude.com/";
 
     public static final String PACKAGE_NAME = "com.amplitude.api";
 
