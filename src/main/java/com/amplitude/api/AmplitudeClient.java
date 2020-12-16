@@ -12,6 +12,8 @@ import android.util.Pair;
 import com.amplitude.BuildConfig;
 import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
+import com.amplitude.util.DoubleCheck;
+import com.amplitude.util.Provider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -98,7 +101,7 @@ public class AmplitudeClient {
     /**
      * The shared OkHTTPClient instance.
      */
-    protected OkHttpClient httpClient;
+    protected Call.Factory callFactory;
     /**
      * The shared Amplitude database helper instance.
      */
@@ -249,7 +252,71 @@ public class AmplitudeClient {
      * @param
      * @return the AmplitudeClient
      */
-    public synchronized AmplitudeClient initialize(final Context context, final String apiKey, final String userId, final String platform, final boolean enableDiagnosticLogging) {
+    public synchronized AmplitudeClient initialize(
+            final Context context,
+            final String apiKey,
+            final String userId,
+            final String platform,
+            final boolean enableDiagnosticLogging
+    ) {
+        return initializeInternal(
+                context,
+                apiKey,
+                userId,
+                platform,
+                enableDiagnosticLogging,
+                null
+        );
+    }
+
+    /**
+     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
+     * key, a user ID for the current user, and a custom platform value.
+     * <b>Note:</b> initialization is required before you log events and modify user properties.
+     *
+     * @param context the Android application context
+     * @param apiKey  your Amplitude App API key
+     * @param userId  the user id to set
+     * @param callFactory the call factory that used by Amplitude to make http request
+     * @return the AmplitudeClient
+     */
+    public synchronized AmplitudeClient initialize(
+            final Context context,
+            final String apiKey,
+            final String userId,
+            final String platform,
+            final boolean enableDiagnosticLogging,
+            final Call.Factory callFactory
+    ) {
+        return initializeInternal(
+                context,
+                apiKey,
+                userId,
+                platform,
+                enableDiagnosticLogging,
+                callFactory
+        );
+    }
+
+    /**
+     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
+     * key, a user ID for the current user, and a custom platform value.
+     * <b>Note:</b> initialization is required before you log events and modify user properties.
+     *
+     * @param context the Android application context
+     * @param apiKey  your Amplitude App API key
+     * @param userId  the user id to set
+     * @param
+     * @return the AmplitudeClient
+     */
+    public synchronized AmplitudeClient initializeInternal(
+            final Context context,
+            final String apiKey,
+            final String userId,
+            final String platform,
+            final boolean enableDiagnosticLogging,
+            final Call.Factory callFactory
+    ) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
             return this;
@@ -275,6 +342,15 @@ public class AmplitudeClient {
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
                     }
 
+                    if (callFactory == null) {
+                        // defer OkHttp client to first call
+                        final Provider<Call.Factory> callProvider
+                                = DoubleCheck.provider(OkHttpClient::new);
+                        this.callFactory = request -> callProvider.get().newCall(request);
+                    } else {
+                        this.callFactory = callFactory;
+                    }
+
                     if (useDynamicConfig) {
                         ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
                             @Override
@@ -284,7 +360,6 @@ public class AmplitudeClient {
                         });
                     }
 
-                    httpClient = new OkHttpClient();
                     deviceInfo = new DeviceInfo(context, this.locationListening);
                     deviceId = initializeDeviceId();
                     deviceInfo.prefetch();
@@ -325,7 +400,7 @@ public class AmplitudeClient {
                     initialized = true;
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
                     logger.e(TAG, String.format(
-                       "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
+                            "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
                     ));
                     client.apiKey = null;
                 }
@@ -1870,7 +1945,7 @@ public class AmplitudeClient {
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(httpClient, mergedEventsString, maxEventId, maxIdentifyId);
+                        makeEventUploadPostRequest(callFactory, mergedEventsString, maxEventId, maxIdentifyId);
                     }
                 });
             } catch (JSONException e) {
@@ -1956,7 +2031,7 @@ public class AmplitudeClient {
      * @param maxEventId    the max event id
      * @param maxIdentifyId the max identify id
      */
-    protected void makeEventUploadPostRequest(OkHttpClient client, String events, final long maxEventId, final long maxIdentifyId) {
+    protected void makeEventUploadPostRequest(Call.Factory client, String events, final long maxEventId, final long maxIdentifyId) {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
 
