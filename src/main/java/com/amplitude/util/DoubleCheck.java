@@ -3,6 +3,8 @@ package com.amplitude.util;
 
 /**
  * Copy from https://github.com/google/dagger/blob/master/java/dagger/internal/DoubleCheck.java
+ *
+ * Apache v2.0
  */
 public class DoubleCheck<T> implements Provider<T> {
     private static final Object UNINITIALIZED = new Object();

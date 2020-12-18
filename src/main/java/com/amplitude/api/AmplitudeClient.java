@@ -259,14 +259,13 @@ public class AmplitudeClient {
             final String platform,
             final boolean enableDiagnosticLogging
     ) {
-        return initializeInternal(
+        return this.initializeInternal(
                 context,
                 apiKey,
                 userId,
                 platform,
                 enableDiagnosticLogging,
-                null
-        );
+                null);
     }
 
     /**
@@ -288,14 +287,13 @@ public class AmplitudeClient {
             final boolean enableDiagnosticLogging,
             final Call.Factory callFactory
     ) {
-        return initializeInternal(
+        return this.initializeInternal(
                 context,
                 apiKey,
                 userId,
                 platform,
                 enableDiagnosticLogging,
-                callFactory
-        );
+                callFactory);
     }
 
     /**
