@@ -156,6 +156,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).setMinTimeBetweenSessionsMillis(minTimeBetweenSessionsMillis);
     }
 
+    public static void setEventUploadPeriodMillis(String instanceName, int eventUploadPeriodMillis) {
+        Amplitude.getInstance(instanceName).setEventUploadPeriodMillis(eventUploadPeriodMillis);
+    }
+
     public static void setUserProperties(String instanceName, String jsonProperties) {
         Amplitude.getInstance(instanceName).setUserProperties(ToJSONObject(jsonProperties));
     }
