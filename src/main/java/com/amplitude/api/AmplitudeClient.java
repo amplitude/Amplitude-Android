@@ -9,7 +9,6 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
 
-import com.amplitude.BuildConfig;
 import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
 import com.amplitude.util.DoubleCheck;
