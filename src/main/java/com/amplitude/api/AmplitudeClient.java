@@ -773,17 +773,15 @@ public class AmplitudeClient {
     }
 
     /**
-     * Show Amplitude Event Explorer when you're running a debug build.
+     * Show Amplitude Event Explorer for the given activity.
      *
      * @param activity root activity
      */
     public void showEventExplorer(Activity activity) {
-        if (BuildConfig.DEBUG) {
-            if (this.eventExplorer == null) {
-                this.eventExplorer = new EventExplorer(this.instanceName);
-            }
-            this.eventExplorer.show(activity);
+        if (this.eventExplorer == null) {
+            this.eventExplorer = new EventExplorer(this.instanceName);
         }
+        this.eventExplorer.show(activity);
     }
 
     /**
