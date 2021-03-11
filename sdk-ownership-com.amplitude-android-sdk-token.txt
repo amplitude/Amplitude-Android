@@ -1,0 +1,4 @@
+This file is used to indicate ownership of the SDK by a specific entity.
+
+SDK Identifier: com.amplitude:android-sdk
+SDK Ownership Key: 674e3bcf-9d77-4bce-87a1-1939e30e7bb8
