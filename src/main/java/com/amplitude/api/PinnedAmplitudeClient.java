@@ -230,9 +230,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         try {
             URL urlObject = new URL(httpsConnectionUrl);
             HttpsURLConnection connection = (HttpsURLConnection) urlObject.openConnection();
-            if (initializedSSLSocketFactory) {
-                connection.setSSLSocketFactory(sslSocketFactory);
-            }
+            connection.setSSLSocketFactory(getPinnedCertSslSocketFactory());
             return connection;
         } catch (MalformedURLException e) {
             e.printStackTrace();
