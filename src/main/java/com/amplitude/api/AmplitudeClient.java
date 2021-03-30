@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Pair;
 
@@ -18,8 +19,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,11 +35,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <h1>AmplitudeClient</h1>
@@ -97,10 +100,6 @@ public class AmplitudeClient {
      * The Android App Context.
      */
     protected Context context;
-    /**
-     * The shared OkHTTPClient instance.
-     */
-    protected Call.Factory callFactory;
     /**
      * The shared Amplitude database helper instance.
      */
@@ -245,10 +244,10 @@ public class AmplitudeClient {
      * key, a user ID for the current user, and a custom platform value.
      * <b>Note:</b> initialization is required before you log events and modify user properties.
      *
-     * @param context the Android application context
-     * @param apiKey  your Amplitude App API key
-     * @param userId  the user id to set
-     * @param
+     * @param context     the Android application context
+     * @param apiKey      your Amplitude App API key
+     * @param userId      the user id to set
+     * @param platform    the custom platform name which defaults to "Android"
      * @return the AmplitudeClient
      */
     public synchronized AmplitudeClient initialize(
@@ -262,9 +261,7 @@ public class AmplitudeClient {
                 context,
                 apiKey,
                 userId,
-                platform,
-                enableDiagnosticLogging,
-                null);
+                platform);
     }
 
     /**
@@ -272,47 +269,17 @@ public class AmplitudeClient {
      * key, a user ID for the current user, and a custom platform value.
      * <b>Note:</b> initialization is required before you log events and modify user properties.
      *
-     * @param context the Android application context
-     * @param apiKey  your Amplitude App API key
-     * @param userId  the user id to set
-     * @param callFactory the call factory that used by Amplitude to make http request
-     * @return the AmplitudeClient
-     */
-    public synchronized AmplitudeClient initialize(
-            final Context context,
-            final String apiKey,
-            final String userId,
-            final String platform,
-            final boolean enableDiagnosticLogging,
-            final Call.Factory callFactory
-    ) {
-        return this.initializeInternal(
-                context,
-                apiKey,
-                userId,
-                platform,
-                enableDiagnosticLogging,
-                callFactory);
-    }
-
-    /**
-     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
-     * key, a user ID for the current user, and a custom platform value.
-     * <b>Note:</b> initialization is required before you log events and modify user properties.
-     *
-     * @param context the Android application context
-     * @param apiKey  your Amplitude App API key
-     * @param userId  the user id to set
-     * @param
+     * @param context     the Android application context
+     * @param apiKey      your Amplitude App API key
+     * @param userId      the user id to set
+     * @param platform    the custom platform name which defaults to "Android"
      * @return the AmplitudeClient
      */
     public synchronized AmplitudeClient initializeInternal(
             final Context context,
             final String apiKey,
             final String userId,
-            final String platform,
-            final boolean enableDiagnosticLogging,
-            final Call.Factory callFactory
+            final String platform
     ) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
@@ -337,15 +304,6 @@ public class AmplitudeClient {
                     if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
                         AmplitudeClient.upgradePrefs(context);
                         AmplitudeClient.upgradeSharedPrefsToDB(context);
-                    }
-
-                    if (callFactory == null) {
-                        // defer OkHttp client to first call
-                        final Provider<Call.Factory> callProvider
-                                = DoubleCheck.provider(OkHttpClient::new);
-                        this.callFactory = request -> callProvider.get().newCall(request);
-                    } else {
-                        this.callFactory = callFactory;
                     }
 
                     if (useDynamicConfig) {
@@ -1940,7 +1898,7 @@ public class AmplitudeClient {
                 httpThread.post(new Runnable() {
                     @Override
                     public void run() {
-                        makeEventUploadPostRequest(callFactory, mergedEventsString, maxEventId, maxIdentifyId);
+                        makeEventUploadPostRequest(mergedEventsString, maxEventId, maxIdentifyId);
                     }
                 });
             } catch (JSONException e) {
@@ -2018,15 +1976,26 @@ public class AmplitudeClient {
         return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
     }
 
+    protected HttpsURLConnection getNewConnection(String httpsConnectionUrl) {
+        try {
+            URL urlObject = new URL(httpsConnectionUrl);
+            return (HttpsURLConnection) urlObject.openConnection();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * Internal method to generate the event upload post request.
      *
-     * @param client        the client
      * @param events        the events
      * @param maxEventId    the max event id
      * @param maxIdentifyId the max identify id
      */
-    protected void makeEventUploadPostRequest(Call.Factory client, String events, final long maxEventId, final long maxIdentifyId) {
+    protected void makeEventUploadPostRequest(String events, final long maxEventId, final long maxIdentifyId) {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
 
@@ -2047,36 +2016,48 @@ public class AmplitudeClient {
             logger.e(TAG, e.toString());
         }
 
-        FormBody body = new FormBody.Builder()
-            .add("v", apiVersionString)
-            .add("client", apiKey)
-            .add("e", events)
-            .add("upload_time", timestampString)
-            .add("checksum", checksumString)
-            .build();
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
 
-        Request request;
+                return null;
+            }
+        };
+
+        HttpsURLConnection connection = null;
+
         try {
-             Request.Builder builder = new Request.Builder()
-                     .url(url)
-                     .post(body);
+            JSONObject bodyJson = new JSONObject();
+            bodyJson.put("v", apiVersionString);
+            bodyJson.put("client", apiKey);
+            bodyJson.put("e", events);
+            bodyJson.put("upload_time", timestampString);
+            bodyJson.put("checksum", checksumString);
 
-             if (!Utils.isEmptyString(bearerToken)) {
-                builder.addHeader("Authorization", "Bearer " + bearerToken);
-             }
+            connection = getNewConnection(url);
+            connection.setRequestMethod("POST");
 
-             request = builder.build();
-        } catch (IllegalArgumentException e) {
+            OutputStream os = connection.getOutputStream();
+            os.write(bodyJson.toString().getBytes("UTF-8"));
+            os.close();
+
+            if (!Utils.isEmptyString(bearerToken)) {
+                connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
+            }
+        } catch (IllegalArgumentException | MalformedURLException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
             return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
         boolean uploadSuccess = false;
 
         try {
-            Response response = client.newCall(request).execute();
-            String stringResponse = response.body().string();
+            String stringResponse = connection.getResponseMessage();
             if (stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
@@ -2107,7 +2088,7 @@ public class AmplitudeClient {
             } else if (stringResponse.equals("request_db_write_failed")) {
                 logger.w(TAG,
                         "Couldn't write to request database on server, will attempt to reupload later");
-            } else if (response.code() == 413) {
+            } else if (connection.getResponseCode() == 413) {
 
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {
