@@ -4,9 +4,11 @@ import android.content.Context;
 
 import com.amplitude.util.DoubleCheck;
 import com.amplitude.util.Provider;
+import android.util.Base64;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -14,7 +16,6 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +23,7 @@ import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-
-import okhttp3.OkHttpClient;
-import okio.Buffer;
-import okio.ByteString;
 
 /**
  * <h1>PinnedAmplitudeClient</h1>
@@ -121,9 +116,9 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                 // Decode the certificates and add 'em to the key store.
                 int nextName = 1;
                 for (String certificateBase64 : certificateBase64s) {
-                    Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
-                    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
-                            certificateBuffer.inputStream());
+                    byte[] decodedCert = Base64.decode(certificateBase64, Base64.DEFAULT);
+                    InputStream stream = new ByteArrayInputStream(decodedCert);
+                    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(stream);
                     keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
                 }
 
@@ -199,14 +194,6 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     @Override
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         return initializeInternal(context, apiKey, userId, null);
-    }
-
-    public synchronized AmplitudeClient initialize(
-            Context context,
-            String apiKey,
-            String userId,
-            Provider<OkHttpClient> clientProvider) {
-        return initializeInternal(context, apiKey, userId);
     }
 
     /**
