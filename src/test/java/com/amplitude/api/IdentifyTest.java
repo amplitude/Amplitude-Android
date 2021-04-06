@@ -249,6 +249,180 @@ public class IdentifyTest extends BaseTest {
     }
 
     @Test
+    public void testPreInsertProperty() throws JSONException {
+        String property1 = "int value";
+        int value1 = 5;
+
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "float value";
+        double value3 = 0.625; // floats are actually promoted to long in JSONObject
+
+        String property4 = "long value";
+        long value4 = 18l;
+
+        String property5 = "array value";
+        JSONArray value5 = new JSONArray();
+        value5.put(1);
+        value5.put(2);
+        value5.put(3);
+
+        String property6 = "float array";
+        float[] value6 = new float[]{(float)1.2, (float)2.3, (float)3.4, (float)4.5};
+        JSONArray value6Expected = new JSONArray();
+        for (float value : value6) value6Expected.put(value);
+
+        String property7 = "int array";
+        int[] value7 = new int[]{10, 12, 14, 17};
+        JSONArray value7Expected = new JSONArray();
+        for (int value : value7) value7Expected.put(value);
+
+        String property8 = "long array";
+        long[] value8 = new long[]{20, 22, 24, 27};
+        JSONArray value8Expected = new JSONArray();
+        for (long value : value8) value8Expected.put(value);
+
+        String property9 = "string array";
+        String[] value9 = new String[]{"test1", "test2", "test3"};
+        JSONArray value9Expected = new JSONArray();
+        for (String value : value9) value9Expected.put(value);
+
+        Identify identify = new Identify().preInsert(property1, value1).preInsert(property2, value2);
+        identify.preInsert(property3, value3).preInsert(property4, value4).preInsert(property5, value5);
+        identify.preInsert(property6, value6).preInsert(property7, value7).preInsert(property8, value8);
+        identify.preInsert(property9, value9);
+
+        // identify should ignore this since duplicate key
+        identify.add(property1, value3);
+
+        JSONObject expected = new JSONObject();
+        JSONObject expectedOperations = new JSONObject().put(property1, value1);
+        expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5).put(property6, value6Expected);
+        expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
+        expectedOperations.put(property9, value9Expected);
+        expected.put(Constants.AMP_OP_PREINSERT, expectedOperations);
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
+
+    @Test
+    public void testPostInsertProperty() throws JSONException {
+        String property1 = "int value";
+        int value1 = 5;
+
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "float value";
+        double value3 = 0.625; // floats are actually promoted to long in JSONObject
+
+        String property4 = "long value";
+        long value4 = 18l;
+
+        String property5 = "array value";
+        JSONArray value5 = new JSONArray();
+        value5.put(1);
+        value5.put(2);
+        value5.put(3);
+
+        String property6 = "float array";
+        float[] value6 = new float[]{(float)1.2, (float)2.3, (float)3.4, (float)4.5};
+        JSONArray value6Expected = new JSONArray();
+        for (float value : value6) value6Expected.put(value);
+
+        String property7 = "int array";
+        int[] value7 = new int[]{10, 12, 14, 17};
+        JSONArray value7Expected = new JSONArray();
+        for (int value : value7) value7Expected.put(value);
+
+        String property8 = "long array";
+        long[] value8 = new long[]{20, 22, 24, 27};
+        JSONArray value8Expected = new JSONArray();
+        for (long value : value8) value8Expected.put(value);
+
+        String property9 = "string array";
+        String[] value9 = new String[]{"test1", "test2", "test3"};
+        JSONArray value9Expected = new JSONArray();
+        for (String value : value9) value9Expected.put(value);
+
+        Identify identify = new Identify().postInsert(property1, value1).postInsert(property2, value2);
+        identify.postInsert(property3, value3).postInsert(property4, value4).postInsert(property5, value5);
+        identify.postInsert(property6, value6).postInsert(property7, value7).postInsert(property8, value8);
+        identify.postInsert(property9, value9);
+
+        // identify should ignore this since duplicate key
+        identify.add(property1, value3);
+
+        JSONObject expected = new JSONObject();
+        JSONObject expectedOperations = new JSONObject().put(property1, value1);
+        expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5).put(property6, value6Expected);
+        expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
+        expectedOperations.put(property9, value9Expected);
+        expected.put(Constants.AMP_OP_POSTINSERT, expectedOperations);
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
+
+    @Test
+    public void testRemoveProperty() throws JSONException {
+        String property1 = "int value";
+        int value1 = 5;
+
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "float value";
+        double value3 = 0.625; // floats are actually promoted to long in JSONObject
+
+        String property4 = "long value";
+        long value4 = 18l;
+
+        String property5 = "array value";
+        JSONArray value5 = new JSONArray();
+        value5.put(1);
+        value5.put(2);
+        value5.put(3);
+
+        String property6 = "float array";
+        float[] value6 = new float[]{(float)1.2, (float)2.3, (float)3.4, (float)4.5};
+        JSONArray value6Expected = new JSONArray();
+        for (float value : value6) value6Expected.put(value);
+
+        String property7 = "int array";
+        int[] value7 = new int[]{10, 12, 14, 17};
+        JSONArray value7Expected = new JSONArray();
+        for (int value : value7) value7Expected.put(value);
+
+        String property8 = "long array";
+        long[] value8 = new long[]{20, 22, 24, 27};
+        JSONArray value8Expected = new JSONArray();
+        for (long value : value8) value8Expected.put(value);
+
+        String property9 = "string array";
+        String[] value9 = new String[]{"test1", "test2", "test3"};
+        JSONArray value9Expected = new JSONArray();
+        for (String value : value9) value9Expected.put(value);
+
+        Identify identify = new Identify().remove(property1, value1).remove(property2, value2);
+        identify.remove(property3, value3).remove(property4, value4).remove(property5, value5);
+        identify.remove(property6, value6).remove(property7, value7).remove(property8, value8);
+        identify.remove(property9, value9);
+
+        // identify should ignore this since duplicate key
+        identify.add(property1, value3);
+
+        JSONObject expected = new JSONObject();
+        JSONObject expectedOperations = new JSONObject().put(property1, value1);
+        expectedOperations.put(property2, value2).put(property3, value3).put(property4, value4);
+        expectedOperations.put(property5, value5).put(property6, value6Expected);
+        expectedOperations.put(property7, value7Expected).put(property8, value8Expected);
+        expectedOperations.put(property9, value9Expected);
+        expected.put(Constants.AMP_OP_REMOVE, expectedOperations);
+        assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
+    }
+
+    @Test
     public void testMultipleOperations() throws JSONException {
         String property1 = "string value";
         String value1 = "testValue";
@@ -269,9 +443,19 @@ public class IdentifyTest extends BaseTest {
         String property6 = "int value";
         int value6 = 100;
 
+        String property7 = "string value2";
+        String value7 = "testValue2";
+
+        String property8 = "double value2";
+        double value8 = 0.123;
+
+        String property9 = "boolean value2";
+        boolean value9 = true; 
+
         Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
         identify.set(property3, value3).unset(property4).append(property5, value5);
-        identify.prepend(property6, value6);
+        identify.prepend(property6, value6).preInsert(property7, value7);
+        identify.postInsert(property8, value8).remove(property9, value9);
 
         // identify should ignore this since duplicate key
         identify.set(property4, value3);
@@ -283,6 +467,9 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         expected.put(Constants.AMP_OP_APPEND, new JSONObject().put(property5, value5));
         expected.put(Constants.AMP_OP_PREPEND, new JSONObject().put(property6, value6));
+        expected.put(Constants.AMP_OP_PREINSERT, new JSONObject().put(property7, value7));
+        expected.put(Constants.AMP_OP_POSTINSERT, new JSONObject().put(property8, value8));
+        expected.put(Constants.AMP_OP_REMOVE, new JSONObject().put(property9, value9));
         assertTrue(Utils.compareJSONObjects(expected, identify.userPropertiesOperations));
     }
 
@@ -352,9 +539,19 @@ public class IdentifyTest extends BaseTest {
         String property6 = "int value";
         int value6 = 100;
 
+        String property7 = "string value2";
+        String value7 = "testValue2";
+
+        String property8 = "double value2";
+        double value8 = 0.123;
+
+        String property9 = "boolean value2";
+        boolean value9 = true; 
+
         Identify identify = new Identify().setOnce(property1, value1).add(property2, value2);
         identify.set(property3, value3).unset(property4).append(property5, value5);
-        identify.prepend(property6, value6);
+        identify.prepend(property6, value6).preInsert(property7, value7);
+        identify.postInsert(property8, value8).remove(property9, value9);
 
         // identify should ignore this since duplicate key
         identify.set(property4, value3);
@@ -366,6 +563,9 @@ public class IdentifyTest extends BaseTest {
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         expected.put(Constants.AMP_OP_APPEND, new JSONObject().put(property5, value5));
         expected.put(Constants.AMP_OP_PREPEND, new JSONObject().put(property6, value6));
+        expected.put(Constants.AMP_OP_PREINSERT, new JSONObject().put(property7, value7));
+        expected.put(Constants.AMP_OP_POSTINSERT, new JSONObject().put(property8, value8));
+        expected.put(Constants.AMP_OP_REMOVE, new JSONObject().put(property9, value9));
         assertTrue(Utils.compareJSONObjects(expected, identify.getUserPropertiesOperations()));
     }
 }
