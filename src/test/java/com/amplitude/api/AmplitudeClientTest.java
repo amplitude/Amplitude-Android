@@ -1533,7 +1533,22 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testHandleUploadExceptions() throws Exception {
+        ShadowLooper logLooper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        IOException error = new IOException("test IO Exception");
+
+        // mock out client
+        OkHttpClient mockClient = PowerMockito.mock(OkHttpClient.class);
+        // need to have mock client return mock call that throws exception
+        Call mockCall = PowerMockito.mock(Call.class);
+        PowerMockito.when(mockCall.execute()).thenThrow(error);
+        PowerMockito.when(mockClient.newCall(Matchers.any(Request.class))).thenReturn(mockCall);
+
         //TODO
+        String events = "{}";
+        amplitude.makeEventUploadPostRequest(events, 1000, 1000);
+
+        //assertEquals(amplitude.lastError, error);
     }
 
     @Test

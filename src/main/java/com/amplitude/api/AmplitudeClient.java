@@ -20,8 +20,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -2016,14 +2018,6 @@ public class AmplitudeClient {
             logger.e(TAG, e.toString());
         }
 
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... voids) {
-
-                return null;
-            }
-        };
-
         HttpsURLConnection connection = null;
 
         try {
@@ -2036,14 +2030,17 @@ public class AmplitudeClient {
 
             connection = getNewConnection(url);
             connection.setRequestMethod("POST");
-
-            OutputStream os = connection.getOutputStream();
-            os.write(bodyJson.toString().getBytes("UTF-8"));
-            os.close();
+            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            connection.setRequestProperty("Accept", "application/json");
 
             if (!Utils.isEmptyString(bearerToken)) {
                 connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
             }
+
+            connection.setDoOutput(true);
+            OutputStream os = connection.getOutputStream();
+            byte[] input = bodyJson.toString().getBytes("UTF-8");
+            os.write(input, 0, input.length);
         } catch (IllegalArgumentException | MalformedURLException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
@@ -2057,7 +2054,21 @@ public class AmplitudeClient {
         boolean uploadSuccess = false;
 
         try {
-            String stringResponse = connection.getResponseMessage();
+            InputStream inputStream;
+            if (100 <= connection.getResponseCode() && connection.getResponseCode() <= 399) {
+                inputStream = connection.getInputStream();
+            } else {
+                inputStream = connection.getErrorStream();
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuilder sb = new StringBuilder();
+            String output;
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
+            String stringResponse = sb.toString();
+
             if (stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
