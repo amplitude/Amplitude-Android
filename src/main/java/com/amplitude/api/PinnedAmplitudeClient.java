@@ -4,27 +4,26 @@ import android.content.Context;
 
 import com.amplitude.util.DoubleCheck;
 import com.amplitude.util.Provider;
+import android.util.Base64;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-
-import okhttp3.OkHttpClient;
-import okio.Buffer;
-import okio.ByteString;
 
 /**
  * <h1>PinnedAmplitudeClient</h1>
@@ -117,9 +116,9 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                 // Decode the certificates and add 'em to the key store.
                 int nextName = 1;
                 for (String certificateBase64 : certificateBase64s) {
-                    Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
-                    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
-                            certificateBuffer.inputStream());
+                    byte[] decodedCert = Base64.decode(certificateBase64, Base64.DEFAULT);
+                    InputStream stream = new ByteArrayInputStream(decodedCert);
+                    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(stream);
                     keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
                 }
 
@@ -185,68 +184,9 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     public synchronized AmplitudeClient initializeInternal(
             Context context,
             String apiKey,
-            String userId,
-            Provider<OkHttpClient> clientProvider
+            String userId
     ) {
         super.initialize(context, apiKey, userId);
-        final PinnedAmplitudeClient client = this;
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!client.initializedSSLSocketFactory) {
-                    SSLSocketFactory factory = getPinnedCertSslSocketFactory();
-                    if (factory != null) {
-                        try {
-                            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                    TrustManagerFactory.getDefaultAlgorithm());
-                            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                            keyStore.load(null, null); // Use a null input stream + password to create an empty key store.
-
-                            List<String> certificateBase64s = new ArrayList<String>();
-                            certificateBase64s.add(CERTIFICATE_1);
-
-                            // Decode the certificates and add 'em to the key store.
-                            int nextName = 1;
-                            for (String certificateBase64 : certificateBase64s) {
-                                Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
-                                X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
-                                        certificateBuffer.inputStream());
-                                keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
-                            }
-
-                            // Create an SSL context that uses these certificates as its trust store.
-                            trustManagerFactory.init(keyStore);
-
-                            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-                                throw new IllegalStateException("Unexpected default trust managers:"
-                                        + Arrays.toString(trustManagers));
-                            }
-                            X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-                            final Provider<OkHttpClient> finalClientProvider = DoubleCheck.provider(() -> {
-                                final OkHttpClient.Builder builder;
-                                if (clientProvider != null) {
-                                    builder = clientProvider.get().newBuilder();
-                                } else {
-                                    builder = new OkHttpClient.Builder();
-                                }
-                                return builder.sslSocketFactory(factory, trustManager).build();
-                            });
-
-                            client.callFactory = request -> finalClientProvider.get().newCall(request);
-                        } catch (GeneralSecurityException e) {
-                            logger.e(TAG, e.getMessage(), e);
-                        } catch (IOException e) {
-                            logger.e(TAG, e.getMessage(), e);
-                        }
-                    } else {
-                        logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
-                    }
-                    client.initializedSSLSocketFactory = true;
-                }
-            }
-        });
         return this;
     }
 
@@ -254,14 +194,6 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     @Override
     public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
         return initializeInternal(context, apiKey, userId, null);
-    }
-
-    public synchronized AmplitudeClient initialize(
-            Context context,
-            String apiKey,
-            String userId,
-            Provider<OkHttpClient> clientProvider) {
-        return initializeInternal(context, apiKey, userId, clientProvider);
     }
 
     /**
@@ -293,4 +225,19 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
         return sslSocketFactory;
     }
+
+    protected HttpsURLConnection getNewConnection(String httpsConnectionUrl) {
+        try {
+            URL urlObject = new URL(httpsConnectionUrl);
+            HttpsURLConnection connection = (HttpsURLConnection) urlObject.openConnection();
+            connection.setSSLSocketFactory(getPinnedCertSslSocketFactory());
+            return connection;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
