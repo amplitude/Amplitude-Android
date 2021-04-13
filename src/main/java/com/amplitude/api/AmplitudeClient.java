@@ -6,20 +6,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Pair;
 
 import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
-import com.amplitude.util.DoubleCheck;
-import com.amplitude.util.Provider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
