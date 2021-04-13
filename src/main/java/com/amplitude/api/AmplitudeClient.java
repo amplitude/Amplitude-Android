@@ -145,7 +145,7 @@ public class AmplitudeClient {
     long lastEventTime = -1;
     long previousSessionId = -1;
 
-    private DeviceInfo deviceInfo;
+    protected DeviceInfo deviceInfo;
 
     /**
      * The current session ID value.
