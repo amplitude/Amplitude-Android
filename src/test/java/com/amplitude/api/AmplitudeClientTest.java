@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.content.SharedPreferences;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.json.JSONArray;
@@ -120,7 +118,6 @@ public class AmplitudeClientTest extends BaseTest {
     @Test
     public void testSetDeviceId() {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        SharedPreferences prefs = Utils.getAmplitudeSharedPreferences(context, amplitude.instanceName);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
@@ -136,48 +133,40 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("9774d56d682e549c");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("unknown");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("000000000000000");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("Android");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("DEFACE");
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         amplitude.setDeviceId("00000000-0000-0000-0000-000000000000");
         assertEquals(amplitude.getDeviceId(), deviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), deviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), deviceId);
 
         // set valid device id
         String newDeviceId = UUID.randomUUID().toString();
@@ -185,14 +174,12 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(amplitude.getDeviceId(), newDeviceId);
         assertEquals(dbHelper.getValue(amplitude.DEVICE_ID_KEY), newDeviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), newDeviceId);
 
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
         JSONObject event = getLastUnsentEvent();
         assertEquals(event.optString("event_type"), "test");
         assertEquals(event.optString("device_id"), newDeviceId);
-        assertEquals(prefs.getString(amplitude.DEVICE_ID_KEY, null), newDeviceId);
     }
 
     @Test

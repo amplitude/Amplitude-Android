@@ -150,45 +150,4 @@ public class AmplitudeTest extends BaseTest {
         assertEquals(oldDbHelper.getEventCount(), 1);
     }
 
-    @Test
-    public void testSeparateInstancesSeparateSharedPreferences() {
-        // set up existing preferences values for default instance
-        long timestamp = System.currentTimeMillis();
-        String prefName = Constants.SHARED_PREFERENCES_NAME_PREFIX + "." + context.getPackageName();
-        SharedPreferences preferences = context.getSharedPreferences(
-            prefName, Context.MODE_PRIVATE);
-        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_ID, 1000L).commit();
-        preferences.edit().putLong(Constants.PREFKEY_LAST_EVENT_TIME, timestamp).commit();
-        preferences.edit().putLong(Constants.PREFKEY_LAST_IDENTIFY_ID, 2000L).commit();
-        preferences.edit().putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID, timestamp).commit();
-
-        // init default instance, which should load preferences values
-        Amplitude.getInstance().initialize(context, apiKey);
-        Shadows.shadowOf(Amplitude.getInstance().logThread.getLooper()).runToEndOfTasks();
-        assertEquals(Amplitude.getInstance().lastEventId, 1000L);
-        assertEquals(Amplitude.getInstance().lastEventTime, timestamp);
-        assertEquals(Amplitude.getInstance().lastIdentifyId, 2000L);
-        assertEquals(Amplitude.getInstance().previousSessionId, timestamp);
-
-        // init new instance, should have blank slate
-        Amplitude.getInstance("new_app").initialize(context, "1234567890");
-        Shadows.shadowOf(Amplitude.getInstance("new_app").logThread.getLooper()).runToEndOfTasks();
-        assertEquals(Amplitude.getInstance("new_app").lastEventId, -1L);
-        assertEquals(Amplitude.getInstance("new_app").lastEventTime, -1L);
-        assertEquals(Amplitude.getInstance("new_app").lastIdentifyId, -1L);
-        assertEquals(Amplitude.getInstance("new_app").previousSessionId, -1L);
-
-        // shared preferences should update independently
-        Amplitude.getInstance("new_app").logEvent("testEvent");
-        Shadows.shadowOf(Amplitude.getInstance("new_app").logThread.getLooper()).runToEndOfTasks();
-        assertEquals(Amplitude.getInstance("new_app").lastEventId, 1L);
-        assertTrue(Amplitude.getInstance("new_app").lastEventTime > timestamp);
-        assertEquals(Amplitude.getInstance("new_app").lastIdentifyId, -1L);
-        assertTrue(Amplitude.getInstance("new_app").previousSessionId > timestamp);
-
-        assertEquals(Amplitude.getInstance().lastEventId, 1000L);
-        assertEquals(Amplitude.getInstance().lastEventTime, timestamp);
-        assertEquals(Amplitude.getInstance().lastIdentifyId, 2000L);
-        assertEquals(Amplitude.getInstance().previousSessionId, timestamp);
-    }
 }
