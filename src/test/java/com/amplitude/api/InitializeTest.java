@@ -351,32 +351,6 @@ public class InitializeTest extends BaseTest {
     }
 
     @Test
-    public void testUpgradeDeviceIdFromLegacySharedPrefsToDatabase() {
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-
-        // default instance migrates from legacy shared preferences into database
-        String testDeviceId = "test_device_id_from_legacy_shared_prefs";
-        String targetName = Constants.PACKAGE_NAME + "." + context.getPackageName();
-        SharedPreferences prefs = context.getSharedPreferences(targetName, Context.MODE_PRIVATE);
-        prefs.edit().putString(Constants.PREFKEY_DEVICE_ID, testDeviceId).commit();
-
-        amplitude.initialize(context, apiKey);
-        looper.runToEndOfTasks();
-        String deviceId = amplitude.getDeviceId();
-        assertEquals(deviceId, testDeviceId);
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertEquals(testDeviceId, dbHelper.getValue(AmplitudeClient.DEVICE_ID_KEY));
-
-        String newSharedPrefsDeviceId = Utils.getStringFromSharedPreferences(
-            context, amplitude.instanceName, AmplitudeClient.DEVICE_ID_KEY
-        );
-        assertEquals(testDeviceId, newSharedPrefsDeviceId);
-
-        // verify deviceId deleted from legacy shared prefs
-        assertNull(prefs.getString(Constants.PREFKEY_DEVICE_ID, null));
-    }
-
-    @Test
     public void testInitializeDeviceIdWithRandomUUID() {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         amplitude.initialize(context, apiKey);
