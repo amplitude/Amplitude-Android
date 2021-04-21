@@ -954,6 +954,650 @@ public class Identify {
         return this;
     }
 
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, values);
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, values);
+        return this;
+    }
+
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, boolean[] values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, booleanArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, double[] values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, doubleArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, float[] values){
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, floatArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, int[] values){
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, intArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, long[] values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, longArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Pre-insert a value or values to a user property. Pre-insert means inserting the value(s) at the
+     * front of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) pre-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to preInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify preInsert(String property, String[] values) {
+        addToUserProperties(Constants.AMP_OP_PREINSERT, property, stringArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert 
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param value    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, value);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, values);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, values);
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, boolean[] values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, booleanArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, double[] values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, doubleArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, float[] values){
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, floatArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, int[] values){
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, intArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, long[] values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, longArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Post-insert a value or values to a user property. Post-insert means inserting the value(s) at the
+     * end of a given list. if the user property does not have a value set, it will be
+     * initialized to an empty list before the new values are prepended. If the user property
+     * has an existing value and it is not a list, it will be converted into a list with the
+     * new value(s) post-insert. If the user property has an existing value, it will do no operation.
+     *
+     * @param property the user property to which to postInsert
+     * @param values    the values being preInsert
+     * @return the same Identify object
+     */
+    public Identify postInsert(String property, String[] values) {
+        addToUserProperties(Constants.AMP_OP_POSTINSERT, property, stringArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, boolean value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, double value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, float value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, int value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, long value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param value    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, String value) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, value);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, JSONArray values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, values);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, JSONObject values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, values);
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, boolean[] values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, booleanArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, double[] values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, doubleArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, float[] values){
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, floatArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, int[] values){
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, intArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, long[] values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, longArrayToJSONArray(values));
+        return this;
+    }
+
+    /**
+     * Remove a value or values to a user property. Remove means remove the value(s) from a given list.
+     * If the user property has the matching value, it will remove that value from the given list.
+     * If the user property does not have that value set, it will do no operation.
+     *
+     * @param property the user property to which to remove
+     * @param values    the values being remove
+     * @return the same Identify object
+     */
+    public Identify remove(String property, String[] values) {
+        addToUserProperties(Constants.AMP_OP_REMOVE, property, stringArrayToJSONArray(values));
+        return this;
+    }
 
     private void addToUserProperties(String operation, String property, Object value) {
         if (Utils.isEmptyString(property)) {

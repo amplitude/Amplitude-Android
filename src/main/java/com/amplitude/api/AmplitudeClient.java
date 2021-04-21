@@ -148,7 +148,7 @@ public class AmplitudeClient {
     long lastEventTime = -1;
     long previousSessionId = -1;
 
-    private DeviceInfo deviceInfo;
+    protected DeviceInfo deviceInfo;
 
     /**
      * The current session ID value.
@@ -334,11 +334,6 @@ public class AmplitudeClient {
             if (!initialized) {
                 // this try block is idempotent, so it's safe to retry initialize if failed
                 try {
-                    if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
-                        AmplitudeClient.upgradePrefs(context);
-                        AmplitudeClient.upgradeSharedPrefsToDB(context);
-                    }
-
                     if (callFactory == null) {
                         // defer OkHttp client to first call
                         final Provider<Call.Factory> callProvider
@@ -2187,20 +2182,8 @@ public class AmplitudeClient {
 
         // see if device id already stored in db
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        String sharedPrefDeviceId = Utils.getStringFromSharedPreferences(context, instanceName, DEVICE_ID_KEY);
         if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
-            // compare against device id stored in backup storage and update if necessary
-            if (!deviceId.equals(sharedPrefDeviceId)) {
-                saveDeviceId(deviceId);
-            }
-
             return deviceId;
-        }
-
-        // backup #1: check if device id is stored in shared preferences
-        if (!(Utils.isEmptyString(sharedPrefDeviceId) || invalidIds.contains(sharedPrefDeviceId))) {
-            saveDeviceId(sharedPrefDeviceId);
-            return sharedPrefDeviceId;
         }
 
         if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId && !deviceInfo.isLimitAdTrackingEnabled()) {
@@ -2223,7 +2206,6 @@ public class AmplitudeClient {
 
     private void saveDeviceId(String deviceId) {
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        Utils.writeStringToSharedPreferences(context, instanceName, DEVICE_ID_KEY, deviceId);
     }
 
     protected void runOnLogThread(Runnable r) {
