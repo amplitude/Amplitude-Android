@@ -57,23 +57,6 @@ public class InitializeTest extends BaseTest {
     }
 
     @Test
-    public void testInitializeUserIdFromSharedPrefs() {
-        String userId = "testUserId";
-
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
-
-        amplitude.initialize(context, apiKey);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
-
-        amplitude.setUserId(userId);
-
-        // Test that the user id is set.
-        assertEquals(amplitude.userId, userId);
-        assertEquals(userId, dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
-    }
-
-    @Test
     public void testInitializeUserIdFromDb() {
         // since user id already exists in database, ignore old value in shared prefs
         String userId = "testUserId";
@@ -126,6 +109,8 @@ public class InitializeTest extends BaseTest {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 
         amplitude.initialize(context, apiKey);
+        amplitude.setLastEventId(3L);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
         Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
 
         assertEquals(amplitude.lastEventId, 3L);
@@ -149,7 +134,8 @@ public class InitializeTest extends BaseTest {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
 
         amplitude.initialize(context, apiKey);
-        Shadows.shadowOf(amplitude.logThread.getLooper()).runOneTask();
+        amplitude.setPreviousSessionId(4000L);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.PREVIOUS_SESSION_ID_KEY), 4000L);
     }
@@ -213,8 +199,8 @@ public class InitializeTest extends BaseTest {
         clock.setTimestamps(timestamps);
 
         amplitude.initialize(context, apiKey);
+        amplitude.setPreviousSessionId(6000);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
-        looper.runOneTask();
         looper.runToEndOfTasks();
 
         assertNull(amplitude.userId);

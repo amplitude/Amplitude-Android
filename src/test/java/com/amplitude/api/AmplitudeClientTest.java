@@ -299,7 +299,7 @@ public class AmplitudeClientTest extends BaseTest {
 
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertFalse(amplitude.isOptedOut());
-        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY), 0L);
+        assertNull(dbHelper.getLongValue(AmplitudeClient.OPT_OUT_KEY));
 
         amplitude.setOptOut(true);
         looper.runToEndOfTasks();
@@ -376,7 +376,7 @@ public class AmplitudeClientTest extends BaseTest {
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
-        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), -1L);
+        assertNull(dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY));
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 1L);
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[0]);
     }
