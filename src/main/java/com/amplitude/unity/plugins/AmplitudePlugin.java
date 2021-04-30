@@ -434,4 +434,256 @@ public class AmplitudePlugin {
     public static void appendUserProperty(String instanceName, String property, String[] values) {
         Amplitude.getInstance(instanceName).identify(new Identify().append(property, values));
     }
+
+    //prepend user property
+    public static void prependUserProperty(String instanceName, String property, boolean value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, double value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, float value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, int value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, long value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, String value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, value));
+    }
+
+    public static void prependUserPropertyDict(String instanceName, String property, String values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, ToJSONObject(values)));
+    }
+
+    public static void prependUserPropertyList(String instanceName, String property, String values) {
+        JSONObject properties = ToJSONObject(values);
+        if (properties == null) {
+            return;
+        }
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(
+                property, properties.optJSONArray("list")
+        ));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, boolean[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, double[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, float[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, int[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, long[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    public static void prependUserProperty(String instanceName, String property, String[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().prepend(property, values));
+    }
+
+    //preInsert user property
+    public static void preInsertUserProperty(String instanceName, String property, boolean value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, double value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, float value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, int value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, long value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, String value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, value));
+    }
+
+    public static void preInsertUserPropertyDict(String instanceName, String property, String values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, ToJSONObject(values)));
+    }
+
+    public static void preInsertUserPropertyList(String instanceName, String property, String values) {
+        JSONObject properties = ToJSONObject(values);
+        if (properties == null) {
+            return;
+        }
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(
+                property, properties.optJSONArray("list")
+        ));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, boolean[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, double[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, float[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, int[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, long[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    public static void preInsertUserProperty(String instanceName, String property, String[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().preInsert(property, values));
+    }
+
+    //postInsert user property
+    public static void postInsertUserProperty(String instanceName, String property, boolean value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, double value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, float value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, int value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, long value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, String value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, value));
+    }
+
+    public static void postInsertUserPropertyDict(String instanceName, String property, String values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, ToJSONObject(values)));
+    }
+
+    public static void postInsertUserPropertyList(String instanceName, String property, String values) {
+        JSONObject properties = ToJSONObject(values);
+        if (properties == null) {
+            return;
+        }
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(
+                property, properties.optJSONArray("list")
+        ));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, boolean[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, double[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, float[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, int[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, long[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    public static void postInsertUserProperty(String instanceName, String property, String[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().postInsert(property, values));
+    }
+
+    //remove user property
+    public static void removeUserProperty(String instanceName, String property, boolean value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, double value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, float value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, int value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, long value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, String value) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, value));
+    }
+
+    public static void removeUserPropertyDict(String instanceName, String property, String values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, ToJSONObject(values)));
+    }
+
+    public static void removeUserPropertyList(String instanceName, String property, String values) {
+        JSONObject properties = ToJSONObject(values);
+        if (properties == null) {
+            return;
+        }
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(
+                property, properties.optJSONArray("list")
+        ));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, boolean[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, double[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, float[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, int[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, long[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
+
+    public static void removeUserProperty(String instanceName, String property, String[] values) {
+        Amplitude.getInstance(instanceName).identify(new Identify().remove(property, values));
+    }
 }
