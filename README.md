@@ -10,7 +10,7 @@
 
 # Official Amplitude Android SDK
 
-##### _April 21, 2021_ - [v2.31.1](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.31.1)
+##### _April 30, 2021_ - [v2.31.2](https://github.com/amplitude/Amplitude-Android/releases/tag/v2.31.2)
 
 ## Installation and Quick Start
 Please visit our :100:[Developer Center](https://developers.amplitude.com/docs/android) for instructions on installing and using our the SDK.
