@@ -106,22 +106,6 @@ public class Utils {
         return instance.toLowerCase();
     }
 
-    static SharedPreferences getAmplitudeSharedPreferences(Context context, String instanceName) {
-        assert !isEmptyString(instanceName);
-        String prefName = Constants.PACKAGE_NAME + "." + instanceName + "." + context.getPackageName();
-        return context.getSharedPreferences(prefName, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
-    }
-
-    static void writeStringToSharedPreferences(Context context, String instanceName, String key, String value) {
-        SharedPreferences.Editor editor = getAmplitudeSharedPreferences(context, instanceName).edit();
-        editor.putString(key, value);
-        editor.apply();
-    }
-
-    static String getStringFromSharedPreferences(Context context, String instanceName, String key) {
-        return getAmplitudeSharedPreferences(context, instanceName).getString(key, null);
-    }
-
     static boolean checkLocationPermissionAllowed(Context context) {
         return checkPermissionAllowed(context, Manifest.permission.ACCESS_COARSE_LOCATION) ||
                 checkPermissionAllowed(context, Manifest.permission.ACCESS_FINE_LOCATION);

@@ -118,13 +118,6 @@ public class BaseTest {
         Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
 
-        // Clear shared prefs for each test
-        for (String instanceName: instanceNames) {
-            SharedPreferences.Editor editor = Utils.getAmplitudeSharedPreferences(context, instanceName).edit();
-            editor.clear();
-            editor.apply();
-        }
-
         if (withServer) {
             server = new MockWebServer();
             server.start();

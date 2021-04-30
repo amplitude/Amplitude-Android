@@ -79,7 +79,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
         long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
         long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
-        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+        Long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
 
         assertNotNull(deviceId);
         assertTrue(deviceId.endsWith("R"));
@@ -87,7 +87,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertEquals(sequenceNumber, 1);
         assertEquals(lastEventId, 1);
         assertTrue(lastEventTime >= startTime);
-        assertEquals(lastIdentifyId, -1);
+        assertNull(lastIdentifyId);
 
         // difficult to mock out the SQLiteDatabase object inside DatabaseHelper since it's private
         // add helper method specifically for mocking / testing
@@ -137,7 +137,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
         long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
         long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
-        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+        Long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
 
         assertNotNull(deviceId);
         assertTrue(deviceId.endsWith("R"));
@@ -145,7 +145,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertEquals(sequenceNumber, 1);
         assertEquals(lastEventId, 1);
         assertTrue(lastEventTime >= startTime);
-        assertEquals(lastIdentifyId, -1);
+        assertNull(lastIdentifyId);
 
         // difficult to mock out the SQLiteDatabase object inside DatabaseHelper since it's private
         // add helper method specifically for mocking / testing
@@ -193,7 +193,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
         long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
         long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
-        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+        Long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
 
         assertNotNull(deviceId);
         assertTrue(deviceId.endsWith("R"));
@@ -201,7 +201,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertEquals(sequenceNumber, 1);
         assertEquals(lastEventId, 1);
         assertTrue(lastEventTime >= startTime);
-        assertEquals(lastIdentifyId, -1);
+        assertNull(lastIdentifyId);
 
         // try to corrupt database file and then log another event
         File file = dbInstance.file;
@@ -251,7 +251,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         long sequenceNumber = dbInstance.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY);
         long lastEventId = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY);
         long lastEventTime = dbInstance.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY);
-        long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
+        Long lastIdentifyId = dbInstance.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY);
 
         assertNotNull(deviceId);
         assertTrue(deviceId.endsWith("R"));
@@ -259,7 +259,7 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertEquals(sequenceNumber, 1);
         assertEquals(lastEventId, 1);
         assertTrue(lastEventTime >= startTime);
-        assertEquals(lastIdentifyId, -1);
+        assertNull(lastIdentifyId);
 
         // try to delete database file and test logging event
         File file = dbInstance.file;
