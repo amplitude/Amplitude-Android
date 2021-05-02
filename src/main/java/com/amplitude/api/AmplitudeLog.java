@@ -76,17 +76,17 @@ public class AmplitudeLog {
         return 0;
     }
 
-    int w(String tag, String msg) {
+    public int w(String tag, String msg) {
         if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, msg);
         return 0;
     }
 
-    int w(String tag, Throwable tr) {
+    public int w(String tag, Throwable tr) {
         if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, tr);
         return 0;
     }
 
-    int w(String tag, String msg, Throwable tr) {
+    public int w(String tag, String msg, Throwable tr) {
         if (enableLogging && logLevel <= Log.WARN) return Log.w(tag, msg, tr);
         return 0;
     }
