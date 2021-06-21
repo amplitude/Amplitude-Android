@@ -541,7 +541,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
      */
     private static void convertIfCursorWindowException(RuntimeException e) {
         String message = e.getMessage();
-        if (!Utils.isEmptyString(message) && message.startsWith("Cursor window allocation of")) {
+        if (!Utils.isEmptyString(message) && (message.startsWith("Cursor window allocation of") || message.startsWith("Could not allocate CursorWindow"))) {
             throw new CursorWindowAllocationException(message);
         } else {
             throw e;
