@@ -122,6 +122,7 @@ public class AmplitudeClient {
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
+    private boolean useAppSetIdForDeviceId = false;
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
@@ -466,6 +467,18 @@ public class AmplitudeClient {
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
         this.useAdvertisingIdForDeviceId = true;
+        this.useAppSetIdForDeviceId = false;
+        return this;
+    }
+
+    /**
+     * Use Android app set id as the user's device ID.
+     *
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient useAppSetIdForDeviceId() {
+        this.useAppSetIdForDeviceId = true;
+        this.useAdvertisingIdForDeviceId = false;
         return this;
     }
 
@@ -1161,6 +1174,9 @@ public class AmplitudeClient {
             if (appliedTrackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
+            if (appliedTrackingOptions.shouldTrackAppSetId() && deviceInfo.getAppSetId() != null) {
+                apiProperties.put("androidAppSetId", deviceInfo.getAppSetId());
+            }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
             apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
 
@@ -1172,7 +1188,6 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-
             result = saveEvent(eventType, event);
         } catch (JSONException e) {
             logger.e(TAG, String.format(
@@ -2181,7 +2196,7 @@ public class AmplitudeClient {
 
         // see if device id already stored in db
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
+        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId) || deviceId.endsWith("S"))) {
             return deviceId;
         }
 
@@ -2193,6 +2208,15 @@ public class AmplitudeClient {
             if (!(Utils.isEmptyString(advertisingId) || invalidIds.contains(advertisingId))) {
                 saveDeviceId(advertisingId);
                 return advertisingId;
+            }
+        }
+
+        if (useAppSetIdForDeviceId ) {
+            String appSetId = deviceInfo.getAppSetId();
+            if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
+                String appSetDeviceId = appSetId + "S";
+                saveDeviceId(appSetDeviceId);
+                return appSetDeviceId;
             }
         }
 

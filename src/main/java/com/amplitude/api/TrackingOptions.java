@@ -36,6 +36,15 @@ public class TrackingOptions {
         return shouldTrackField(Constants.AMP_TRACKING_OPTION_ADID);
     }
 
+    public TrackingOptions disableAppSetId() {
+        disableTrackingField(Constants.AMP_TRACKING_OPTION_APP_SET_ID);
+        return this;
+    }
+
+    boolean shouldTrackAppSetId() {
+        return shouldTrackField(Constants.AMP_TRACKING_OPTION_APP_SET_ID);
+    }
+
     public TrackingOptions disableCarrier() {
         disableTrackingField(Constants.AMP_TRACKING_OPTION_CARRIER);
         return this;
