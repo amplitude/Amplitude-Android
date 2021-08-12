@@ -75,7 +75,6 @@ dependencies {
     testImplementation 'com.google.android:support-v4:r6'
     testImplementation 'com.google.android.gms:play-services-ads:18.3.0'
     testImplementation 'com.google.android.gms:play-services-base:17.1.0'
-    testImplementation 'com.google.android.gms:play-services-appset:16.0.0-alpha1'
 
     testImplementation "junit:junit:4.12"
 
