@@ -1,5 +1,5 @@
 package com.amplitude.api;
 
 enum DeviceIdType {
-    ADID, APP_SET_ID;
+    ADVERTISING_ID, APP_SET_ID;
 }

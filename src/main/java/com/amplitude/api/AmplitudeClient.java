@@ -465,7 +465,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
-        deviceIdType = DeviceIdType.ADID;
+        deviceIdType = DeviceIdType.ADVERTISING_ID;
         return this;
     }
 
@@ -2197,7 +2197,7 @@ public class AmplitudeClient {
             return deviceId;
         }
 
-        if (!newDeviceIdPerInstall && deviceIdType == DeviceIdType.ADID && !deviceInfo.isLimitAdTrackingEnabled()) {
+        if (!newDeviceIdPerInstall && deviceIdType == DeviceIdType.ADVERTISING_ID && !deviceInfo.isLimitAdTrackingEnabled()) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
 
