@@ -216,9 +216,9 @@ public class DeviceInfo {
                 Method getId = appSetInfo.getClass().getMethod("getId");
                 appSetId = (String) getId.invoke(appSetInfo);
             } catch (ClassNotFoundException e) {
-                AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found for app set id!");
             } catch (InvocationTargetException e) {
-                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available for app set id");
             } catch (Exception e) {
                 AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services for app set id", e);
             }
@@ -251,11 +251,11 @@ public class DeviceInfo {
                 Method getId = advertisingInfo.getClass().getMethod("getId");
                 advertisingId = (String) getId.invoke(advertisingInfo);
             } catch (ClassNotFoundException e) {
-                AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found!");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services SDK not found for advertising id!");
             } catch (InvocationTargetException e) {
-                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available");
+                AmplitudeLog.getLogger().w(TAG, "Google Play Services not available for advertising id");
             } catch (Exception e) {
-                AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services", e);
+                AmplitudeLog.getLogger().e(TAG, "Encountered an error connecting to Google Play Services for advertising id", e);
             }
 
             return advertisingId;

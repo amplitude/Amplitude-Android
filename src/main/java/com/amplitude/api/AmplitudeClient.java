@@ -2211,7 +2211,7 @@ public class AmplitudeClient {
             }
         }
 
-        if (useAppSetIdForDeviceId ) {
+        if (useAppSetIdForDeviceId) {
             String appSetId = deviceInfo.getAppSetId();
             if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
                 String appSetDeviceId = appSetId + "S";
