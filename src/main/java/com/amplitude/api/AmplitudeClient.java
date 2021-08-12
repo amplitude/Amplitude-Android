@@ -121,8 +121,7 @@ public class AmplitudeClient {
      */
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
-    private boolean useAdvertisingIdForDeviceId = false;
-    private boolean useAppSetIdForDeviceId = false;
+    private DeviceIdType deviceIdType = null;
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
@@ -466,8 +465,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
-        this.useAdvertisingIdForDeviceId = true;
-        this.useAppSetIdForDeviceId = false;
+        deviceIdType = DeviceIdType.ADID;
         return this;
     }
 
@@ -477,8 +475,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAppSetIdForDeviceId() {
-        this.useAppSetIdForDeviceId = true;
-        this.useAdvertisingIdForDeviceId = false;
+        deviceIdType = DeviceIdType.APP_SET_ID;
         return this;
     }
 
@@ -2200,7 +2197,7 @@ public class AmplitudeClient {
             return deviceId;
         }
 
-        if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId && !deviceInfo.isLimitAdTrackingEnabled()) {
+        if (!newDeviceIdPerInstall && deviceIdType == DeviceIdType.ADID && !deviceInfo.isLimitAdTrackingEnabled()) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
 
@@ -2211,9 +2208,10 @@ public class AmplitudeClient {
             }
         }
 
-        if (useAppSetIdForDeviceId) {
+        if (deviceIdType == DeviceIdType.APP_SET_ID) {
             String appSetId = deviceInfo.getAppSetId();
             if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
+                // Suffix with S for app set id so in future we can tell if device id is from app set id
                 String appSetDeviceId = appSetId + "S";
                 saveDeviceId(appSetDeviceId);
                 return appSetDeviceId;
