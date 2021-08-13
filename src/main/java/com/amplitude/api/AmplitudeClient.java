@@ -121,7 +121,7 @@ public class AmplitudeClient {
      */
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
-    private boolean useAdvertisingIdForDeviceId = false;
+    private DeviceIdType deviceIdType = null;
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
@@ -465,7 +465,17 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
-        this.useAdvertisingIdForDeviceId = true;
+        deviceIdType = DeviceIdType.ADVERTISING_ID;
+        return this;
+    }
+
+    /**
+     * Use Android app set id as the user's device ID.
+     *
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient useAppSetIdForDeviceId() {
+        deviceIdType = DeviceIdType.APP_SET_ID;
         return this;
     }
 
@@ -1161,6 +1171,9 @@ public class AmplitudeClient {
             if (appliedTrackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
+            if (appliedTrackingOptions.shouldTrackAppSetId() && deviceInfo.getAppSetId() != null) {
+                apiProperties.put("android_app_set_id", deviceInfo.getAppSetId());
+            }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
             apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
 
@@ -1172,7 +1185,6 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-
             result = saveEvent(eventType, event);
         } catch (JSONException e) {
             logger.e(TAG, String.format(
@@ -2181,11 +2193,11 @@ public class AmplitudeClient {
 
         // see if device id already stored in db
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
+        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId) || deviceId.endsWith("S"))) {
             return deviceId;
         }
 
-        if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId && !deviceInfo.isLimitAdTrackingEnabled()) {
+        if (!newDeviceIdPerInstall && deviceIdType == DeviceIdType.ADVERTISING_ID && !deviceInfo.isLimitAdTrackingEnabled()) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
 
@@ -2193,6 +2205,16 @@ public class AmplitudeClient {
             if (!(Utils.isEmptyString(advertisingId) || invalidIds.contains(advertisingId))) {
                 saveDeviceId(advertisingId);
                 return advertisingId;
+            }
+        }
+
+        if (deviceIdType == DeviceIdType.APP_SET_ID) {
+            String appSetId = deviceInfo.getAppSetId();
+            if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
+                // Suffix with S for app set id so in future we can tell if device id is from app set id
+                String appSetDeviceId = appSetId + "S";
+                saveDeviceId(appSetDeviceId);
+                return appSetDeviceId;
             }
         }
 

@@ -39,6 +39,9 @@ public class AmplitudePlugin {
         if (trackingOptionsDict.optBoolean("disableADID", false)) {
             trackingOptions.disableAdid();
         }
+        if (trackingOptionsDict.optBoolean("disableAppSetId", false)) {
+            trackingOptions.disableAppSetId();
+        }
         if (trackingOptionsDict.optBoolean("disableCarrier", false)) {
             trackingOptions.disableCarrier();
         }
@@ -138,6 +141,10 @@ public class AmplitudePlugin {
 
     public static void useAdvertisingIdForDeviceId(String instanceName) {
         Amplitude.getInstance(instanceName).useAdvertisingIdForDeviceId();
+    }
+
+    public static void useAppSetIdForDeviceId(String instanceName) {
+        Amplitude.getInstance(instanceName).useAppSetIdForDeviceId();
     }
 
     public static void setOffline(String instanceName, boolean offline) {
