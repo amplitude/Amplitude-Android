@@ -1172,7 +1172,7 @@ public class AmplitudeClient {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
             if (appliedTrackingOptions.shouldTrackAppSetId() && deviceInfo.getAppSetId() != null) {
-                apiProperties.put("androidAppSetId", deviceInfo.getAppSetId());
+                apiProperties.put("android_app_set_id", deviceInfo.getAppSetId());
             }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
             apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
