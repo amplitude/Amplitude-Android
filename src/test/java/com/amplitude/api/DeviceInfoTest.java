@@ -51,7 +51,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "javax.management.*" })
-@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class, UUID.class, DeviceInfo.class})
+@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class, DeviceInfo.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
     private DeviceInfo deviceInfo;
@@ -314,28 +314,7 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
-    public void testAppSetId() {
-        PowerMockito.mockStatic(AdvertisingIdClient.class);
-        String advertisingId = "advertisingId";
-        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
-                advertisingId,
-                true
-        );
-        try {
-            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
-        } catch (Exception e) {
-            fail(e.toString());
-        }
-
-        PowerMockito.mockStatic(UUID.class);
-        String mockUUIDString = "a74d2fb3-7c64-4d60-b0ca-b633aa7a4dbc";
-        UUID mockUUID = UUID.fromString(mockUUIDString);
-        try {
-            Mockito.when(UUID.randomUUID()).thenReturn(mockUUID);
-        } catch (Exception e) {
-            fail(e.toString());
-        }
-
+    public void testDeviceIdEqualsToAppSetId() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
         PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
                 .toReturn(mockAppSetId);
@@ -348,9 +327,7 @@ public class DeviceInfoTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
         looper.runToEndOfTasks();
 
-        assertNotEquals(advertisingId, client.getDeviceId());
-        assertNotEquals(mockUUIDString, client.getDeviceId());
-        assertTrue(client.getDeviceId().endsWith("S"));
+        assertEquals(mockAppSetId + "S", client.getDeviceId());
     }
 
     @Test
@@ -377,8 +354,7 @@ public class DeviceInfoTest extends BaseTest {
             String appSetId = apiProps.getString("android_app_set_id");
             assertEquals(mockAppSetId, appSetId);
         } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
+            Assert.fail(e.toString());
         }
 
         TrackingOptions options = new TrackingOptions();
@@ -394,8 +370,7 @@ public class DeviceInfoTest extends BaseTest {
             JSONObject apiProps = event.getJSONObject("api_properties");
             assertFalse(apiProps.has("android_app_set_id"));
         } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
+            Assert.fail(e.toString());
         }
     }
 }
