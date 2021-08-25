@@ -51,7 +51,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "javax.management.*" })
-@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class, DeviceInfo.class})
+@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
     private DeviceInfo deviceInfo;
@@ -314,6 +314,7 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
+    @PrepareForTest(DeviceInfo.class)
     public void testDeviceIdEqualsToAppSetId() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
         PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
@@ -331,6 +332,7 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
+    @PrepareForTest(DeviceInfo.class)
     public void testDoNotSendAppSetId() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
         PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
