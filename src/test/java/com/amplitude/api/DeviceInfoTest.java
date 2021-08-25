@@ -332,7 +332,7 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
-    @PrepareForTest(DeviceInfo.class)
+    @PrepareForTest(DeviceInfo.class) 
     public void testDoNotSendAppSetId() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
         PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
