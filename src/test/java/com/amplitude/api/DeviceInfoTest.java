@@ -51,7 +51,7 @@ import static org.junit.Assert.fail;
 
 
 @RunWith(AndroidJUnit4.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "javax.management.*" })
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*" })
 @PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
@@ -321,7 +321,7 @@ public class DeviceInfoTest extends BaseTest {
         DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
         try {
             Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
-            Mockito.when(client.publicInitiailizeDeviceInfo()).thenReturn(mockDeviceInfo);
+            Mockito.when(client.publicInitializeDeviceInfo()).thenReturn(mockDeviceInfo);
         } catch (Exception e) {
             Assert.fail(e.toString());
         }
@@ -342,7 +342,7 @@ public class DeviceInfoTest extends BaseTest {
         DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
         try {
             Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
-            Mockito.when(client.publicInitiailizeDeviceInfo()).thenReturn(mockDeviceInfo);
+            Mockito.when(client.publicInitializeDeviceInfo()).thenReturn(mockDeviceInfo);
         } catch (Exception e) {
             Assert.fail(e.toString());
         }
@@ -387,9 +387,9 @@ public class DeviceInfoTest extends BaseTest {
 
     public static class DeviceInfoAmplitudeClient extends AmplitudeClient {
         protected DeviceInfo initializeDeviceInfo() {
-            return this.publicInitiailizeDeviceInfo();
+            return this.publicInitializeDeviceInfo();
         }
-        public DeviceInfo publicInitiailizeDeviceInfo() {
+        public DeviceInfo publicInitializeDeviceInfo() {
             return new DeviceInfo(context, true);
         }
         public DeviceInfoAmplitudeClient(String instance) {
