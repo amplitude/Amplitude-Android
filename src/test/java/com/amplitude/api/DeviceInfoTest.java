@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.CallsRealMethods;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -51,7 +52,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "javax.management.*" })
-@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class, DeviceInfo.class})
+@PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
     private DeviceInfo deviceInfo;
@@ -316,12 +317,15 @@ public class DeviceInfoTest extends BaseTest {
     @Test
     public void testDeviceIdEqualsToAppSetId() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
-        PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
-                .toReturn(mockAppSetId);
+        DeviceInfoAmplitudeClient client = Mockito.spy(new DeviceInfoAmplitudeClient("AppSetId"));
+        DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
+        try {
+            Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
+            Mockito.when(client.publicInitiailizeDeviceInfo()).thenReturn(mockDeviceInfo);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
 
-        Robolectric.getForegroundThreadScheduler().advanceTo(1);
-
-        AmplitudeClient client = Amplitude.getInstance("UseAppSetId");
         client.useAppSetIdForDeviceId();
         client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
         ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
@@ -331,19 +335,26 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
-    public void testDoNotSendAppSetId() {
+    public void testToggleAppSetIdInEvents() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
-        PowerMockito.stub(PowerMockito.method(DeviceInfo.class, "getAppSetId"))
-                .toReturn(mockAppSetId);
+        amplitude = new DeviceInfoAmplitudeClient("");
+        DeviceInfoAmplitudeClient client = Mockito.spy((DeviceInfoAmplitudeClient) amplitude);
+        DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
+        try {
+            Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
+            Mockito.when(client.publicInitiailizeDeviceInfo()).thenReturn(mockDeviceInfo);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
 
-        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
 
-        amplitude.useAppSetIdForDeviceId();
-        amplitude.initialize(context, apiKey);
+        client.useAppSetIdForDeviceId();
+        client.initialize(context, apiKey);
         looper.runToEndOfTasks();
-        assertEquals(mockAppSetId + "S", amplitude.getDeviceId());
+        assertEquals(mockAppSetId + "S", client.getDeviceId());
 
-        amplitude.logEvent("testSendAppSetIdInJson");
+        client.logEvent("testSendAppSetIdInJson");
         looper.runToEndOfTasks();
 
         JSONObject event = getLastEvent();
@@ -359,8 +370,8 @@ public class DeviceInfoTest extends BaseTest {
 
         TrackingOptions options = new TrackingOptions();
         options.disableAppSetId();
-        amplitude.setTrackingOptions(options);
-        amplitude.logEvent("testSendAppSetIdInJson-2");
+        client.setTrackingOptions(options);
+        client.logEvent("testSendAppSetIdInJson-2");
         looper.runToEndOfTasks();
 
         event = getLastEvent();
@@ -373,4 +384,17 @@ public class DeviceInfoTest extends BaseTest {
             Assert.fail(e.toString());
         }
     }
+
+    public static class DeviceInfoAmplitudeClient extends AmplitudeClient {
+        protected DeviceInfo initializeDeviceInfo() {
+            return this.publicInitiailizeDeviceInfo();
+        }
+        public DeviceInfo publicInitiailizeDeviceInfo() {
+            return new DeviceInfo(context, true);
+        }
+        public DeviceInfoAmplitudeClient(String instance) {
+            super(instance);
+        }
+    }
+
 }
