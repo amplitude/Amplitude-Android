@@ -51,7 +51,7 @@ import static org.junit.Assert.fail;
 
 
 @RunWith(AndroidJUnit4.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*" })
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*" })
 @PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
@@ -227,18 +227,6 @@ public class DeviceInfoTest extends BaseTest {
             fail(e.toString());
         }
         assertFalse(deviceInfo.isGooglePlayServicesEnabled());
-    }
-
-    @Test
-    public void testGPSEnabled() {
-        PowerMockito.mockStatic(GooglePlayServicesUtil.class);
-        try {
-            Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
-                    .thenReturn(ConnectionResult.SUCCESS);
-        } catch (Exception e) {
-            fail(e.toString());
-        }
-        assert(deviceInfo.isGooglePlayServicesEnabled());
     }
 
     // TODO: Consider move this test to android specific tests.
