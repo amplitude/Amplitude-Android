@@ -236,7 +236,7 @@ public class DeviceInfoTest extends BaseTest {
             Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
                     .thenReturn(ConnectionResult.SUCCESS);
         } catch (Exception e) {
-            fail(e.toString());
+            fail(e.toString()); 
         }
         assertTrue(deviceInfo.isGooglePlayServicesEnabled());
     }
