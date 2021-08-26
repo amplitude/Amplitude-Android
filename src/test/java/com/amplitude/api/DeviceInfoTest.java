@@ -174,7 +174,26 @@ public class DeviceInfoTest extends BaseTest {
         assertEquals(TEST_LANGUAGE, deviceInfo.getLanguage());
     }
 
-    
+    @Test
+    public void testGetAdvertisingIdFromGoogleDevice() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "advertisingId";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+                advertisingId,
+                false
+        );
+
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+
+        // still get advertisingId even if limit ad tracking disabled
+        assertEquals(advertisingId, deviceInfo.getAdvertisingId());
+        assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+    }
 
     @Test
     public void testGetAdvertisingIdFromAmazonDevice() {
@@ -210,17 +229,7 @@ public class DeviceInfoTest extends BaseTest {
         assertFalse(deviceInfo.isGooglePlayServicesEnabled());
     }
 
-    @Test
-    public void testGPSEnabled() {
-        PowerMockito.mockStatic(GooglePlayServicesUtil.class);
-        try {
-            Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
-                    .thenReturn(ConnectionResult.SUCCESS);
-        } catch (Exception e) {
-            fail(e.toString());
-        }
-        assertTrue(deviceInfo.isGooglePlayServicesEnabled());
-    }
+    
 
     // TODO: Consider move this test to android specific tests.
 //    @Test
