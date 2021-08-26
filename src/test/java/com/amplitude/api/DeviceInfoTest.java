@@ -334,58 +334,9 @@ public class DeviceInfoTest extends BaseTest {
         assertEquals(mockAppSetId + "S", client.getDeviceId());
     }
 
-    @Test
-    public void testToggleAppSetIdInEvents() {
-        String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
-        amplitude = new DeviceInfoAmplitudeClient("");
-        DeviceInfoAmplitudeClient client = Mockito.spy((DeviceInfoAmplitudeClient) amplitude);
-        DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
-        try {
-            Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
-            Mockito.when(client.publicInitializeDeviceInfo()).thenReturn(mockDeviceInfo);
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
+    
 
-        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
-
-        client.useAppSetIdForDeviceId();
-        client.initialize(context, apiKey);
-        looper.runToEndOfTasks();
-        assertEquals(mockAppSetId + "S", client.getDeviceId());
-
-        client.logEvent("testSendAppSetIdInJson");
-        looper.runToEndOfTasks();
-
-        JSONObject event = getLastEvent();
-        assertNotNull(event);
-        try {
-            assertEquals("testSendAppSetIdInJson", event.getString("event_type"));
-            JSONObject apiProps = event.getJSONObject("api_properties");
-            String appSetId = apiProps.getString("android_app_set_id");
-            assertEquals(mockAppSetId, appSetId);
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-
-        TrackingOptions options = new TrackingOptions();
-        options.disableAppSetId();
-        client.setTrackingOptions(options);
-        client.logEvent("testSendAppSetIdInJson-2");
-        looper.runToEndOfTasks();
-
-        event = getLastEvent();
-        assertNotNull(event);
-        try {
-            assertEquals("testSendAppSetIdInJson-2", event.getString("event_type"));
-            JSONObject apiProps = event.getJSONObject("api_properties");
-            assertFalse(apiProps.has("android_app_set_id"));
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-
-    public static class DeviceInfoAmplitudeClient extends AmplitudeClient {
+    private class DeviceInfoAmplitudeClient extends AmplitudeClient {
         protected DeviceInfo initializeDeviceInfo() {
             return this.publicInitializeDeviceInfo();
         }
