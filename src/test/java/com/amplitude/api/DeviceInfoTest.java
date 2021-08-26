@@ -315,9 +315,10 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
-    public void testDeviceIdEqualsToAppSetId() {
+    public void testToggleAppSetIdInEvents() {
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
-        DeviceInfoAmplitudeClient client = Mockito.spy(new DeviceInfoAmplitudeClient("AppSetId"));
+        amplitude = new DeviceInfoAmplitudeClient("");
+        DeviceInfoAmplitudeClient client = Mockito.spy((DeviceInfoAmplitudeClient) amplitude);
         DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
         try {
             Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
@@ -326,15 +327,43 @@ public class DeviceInfoTest extends BaseTest {
             Assert.fail(e.toString());
         }
 
-        client.useAppSetIdForDeviceId();
-        client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
         ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
+
+        client.useAppSetIdForDeviceId();
+        client.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        assertEquals(mockAppSetId + "S", client.getDeviceId());
+
+        client.logEvent("testSendAppSetIdInJson");
         looper.runToEndOfTasks();
 
-        assertEquals(mockAppSetId + "S", client.getDeviceId());
-    }
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            assertEquals("testSendAppSetIdInJson", event.getString("event_type"));
+            JSONObject apiProps = event.getJSONObject("api_properties");
+            String appSetId = apiProps.getString("android_app_set_id");
+            assertEquals(mockAppSetId, appSetId);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
 
-    
+        TrackingOptions options = new TrackingOptions();
+        options.disableAppSetId();
+        client.setTrackingOptions(options);
+        client.logEvent("testSendAppSetIdInJson-2");
+        looper.runToEndOfTasks();
+
+        event = getLastEvent();
+        assertNotNull(event);
+        try {
+            assertEquals("testSendAppSetIdInJson-2", event.getString("event_type"));
+            JSONObject apiProps = event.getJSONObject("api_properties");
+            assertFalse(apiProps.has("android_app_set_id"));
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
 
     private class DeviceInfoAmplitudeClient extends AmplitudeClient {
         protected DeviceInfo initializeDeviceInfo() {
