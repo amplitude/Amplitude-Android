@@ -229,7 +229,17 @@ public class DeviceInfoTest extends BaseTest {
         assertFalse(deviceInfo.isGooglePlayServicesEnabled());
     }
 
-    
+    @Test
+    public void testGPSEnabled() {
+        PowerMockito.mockStatic(GooglePlayServicesUtil.class);
+        try {
+            Mockito.when(GooglePlayServicesUtil.isGooglePlayServicesAvailable(context))
+                    .thenReturn(ConnectionResult.SUCCESS);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+        assertTrue(deviceInfo.isGooglePlayServicesEnabled());
+    }
 
     // TODO: Consider move this test to android specific tests.
 //    @Test
