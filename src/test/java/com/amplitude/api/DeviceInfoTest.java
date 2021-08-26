@@ -238,7 +238,7 @@ public class DeviceInfoTest extends BaseTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        assertTrue(deviceInfo.isGooglePlayServicesEnabled());
+        assertTrue(deviceInfo.isGooglePlayServicesEnabled()); 
     }
 
     // TODO: Consider move this test to android specific tests.
