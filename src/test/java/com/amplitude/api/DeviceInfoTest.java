@@ -139,7 +139,7 @@ public class DeviceInfoTest extends BaseTest {
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
 
         DeviceInfo deviceInfo = new DeviceInfo(context, true);
-        assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());  
+        assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
     }
 
     // TODO: Consider move this test to android specific tests.
