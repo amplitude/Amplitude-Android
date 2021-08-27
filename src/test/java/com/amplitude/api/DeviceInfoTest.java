@@ -240,8 +240,7 @@ public class DeviceInfoTest extends BaseTest {
         }
         assertTrue(deviceInfo.isGooglePlayServicesEnabled());
     }
-
-    // TODO: Consider move this test to android specific tests.
+//    TODO: Consider move this test to android specific tests.
 //    @Test
 //    public void testGetMostRecentLocation() {
 //        DeviceInfo deviceInfo = new DeviceInfo(context);
