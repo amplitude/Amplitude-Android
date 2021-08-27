@@ -351,7 +351,7 @@ public class AmplitudeClient {
                         });
                     }
 
-                    deviceInfo = new DeviceInfo(context, this.locationListening);
+                    deviceInfo = initializeDeviceInfo();
                     deviceId = initializeDeviceId();
                     deviceInfo.prefetch();
 
@@ -2163,6 +2163,10 @@ public class AmplitudeClient {
             uploadingCurrently.set(false);
         }
 
+    }
+
+    protected DeviceInfo initializeDeviceInfo() {
+        return new DeviceInfo(context, this.locationListening);
     }
 
     /**
