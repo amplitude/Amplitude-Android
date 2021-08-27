@@ -470,7 +470,7 @@ public class AmplitudeClient {
     }
 
     /**
-     * Use Android app set id as the user's device ID.
+     * Use Android app set id as the user's  device ID.
      *
      * @return the AmplitudeClient
      */
