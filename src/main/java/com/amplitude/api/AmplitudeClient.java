@@ -121,7 +121,8 @@ public class AmplitudeClient {
      */
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
-    private DeviceIdType deviceIdType = null;
+    private boolean useAdvertisingIdForDeviceId = false;
+    private boolean useAppSetIdForDeviceId = false;
     protected boolean initialized = false;
     private boolean optOut = false;
     private boolean offline = false;
@@ -465,7 +466,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
-        deviceIdType = DeviceIdType.ADVERTISING_ID;
+        useAdvertisingIdForDeviceId = true;
         return this;
     }
 
@@ -475,7 +476,7 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAppSetIdForDeviceId() {
-        deviceIdType = DeviceIdType.APP_SET_ID;
+        useAppSetIdForDeviceId = true;
         return this;
     }
 
@@ -2201,7 +2202,7 @@ public class AmplitudeClient {
             return deviceId;
         }
 
-        if (!newDeviceIdPerInstall && deviceIdType == DeviceIdType.ADVERTISING_ID && !deviceInfo.isLimitAdTrackingEnabled()) {
+        if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId && !deviceInfo.isLimitAdTrackingEnabled()) {
             // Android ID is deprecated by Google.
             // We are required to use Advertising ID, and respect the advertising ID preference
 
@@ -2212,7 +2213,7 @@ public class AmplitudeClient {
             }
         }
 
-        if (deviceIdType == DeviceIdType.APP_SET_ID) {
+        if (useAppSetIdForDeviceId) {
             String appSetId = deviceInfo.getAppSetId();
             if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
                 // Suffix with S for app set id so in future we can tell if device id is from app set id

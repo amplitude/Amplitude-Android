@@ -315,6 +315,19 @@ public class DeviceInfoTest extends BaseTest {
 
     @Test
     public void testDeviceIdEqualsToAppSetId() {
+        //Set Advertising ID to be invalid to fallback to app set id
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "00000000-0000-0000-0000-000000000000";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+                advertisingId,
+                true
+        );
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+
         String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
         DeviceInfoAmplitudeClient client = Mockito.spy(new DeviceInfoAmplitudeClient("AppSetId"));
         DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
@@ -325,6 +338,7 @@ public class DeviceInfoTest extends BaseTest {
             Assert.fail(e.toString());
         }
 
+        client.useAdvertisingIdForDeviceId();
         client.useAppSetIdForDeviceId();
         client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
         ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
