@@ -5,6 +5,7 @@ import android.util.Log;
 public class AmplitudeLog {
     private volatile boolean enableLogging = true;
     private volatile int logLevel = Log.INFO; // default log level
+    private AmplitudeErrorCallback amplitudeErrorCallback = null;
 
     protected static AmplitudeLog instance = new AmplitudeLog();
 
@@ -35,12 +36,22 @@ public class AmplitudeLog {
     }
 
     int e(String tag, String msg) {
-        if (enableLogging && logLevel <= Log.ERROR) return Log.e(tag, msg);
+        if (enableLogging && logLevel <= Log.ERROR) {
+            if (this.amplitudeErrorCallback != null) {
+                this.amplitudeErrorCallback.onError(tag, msg);
+            }
+            return Log.e(tag, msg);
+        }
         return 0;
     }
 
     int e(String tag, String msg, Throwable tr) {
-        if (enableLogging && logLevel <= Log.ERROR) return Log.e(tag, msg, tr);
+        if (enableLogging && logLevel <= Log.ERROR) {
+            if (this.amplitudeErrorCallback != null) {
+                this.amplitudeErrorCallback.onError(tag, msg);
+            }
+            return Log.e(tag, msg, tr);
+        }
         return 0;
     }
 
@@ -105,5 +116,9 @@ public class AmplitudeLog {
     int wtf(String tag, String msg, Throwable tr) {
         if (enableLogging && logLevel <= Log.ASSERT) return Log.wtf(tag, msg, tr);
         return 0;
+    }
+
+    void setAmplitudeErrorCallback(AmplitudeErrorCallback errorCallback) {
+        this.amplitudeErrorCallback = errorCallback;
     }
 }

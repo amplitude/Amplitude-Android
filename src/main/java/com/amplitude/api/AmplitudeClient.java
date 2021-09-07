@@ -722,6 +722,17 @@ public class AmplitudeClient {
     }
 
     /**
+     * Set error callback, it can help read and collect error message from sdk
+     *
+     * @param errorCallback
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setErrorCallback(AmplitudeErrorCallback errorCallback) {
+        logger.setAmplitudeErrorCallback(errorCallback);
+        return this;
+    }
+
+    /**
      * Sets offline. If offline is true, then the SDK will not upload events to Amplitude servers;
      * however, it will still log events.
      *
