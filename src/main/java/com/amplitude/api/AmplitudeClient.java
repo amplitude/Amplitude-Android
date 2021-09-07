@@ -722,13 +722,13 @@ public class AmplitudeClient {
     }
 
     /**
-     * Set error callback, it can help read and collect error message from sdk
+     * Set log callback, it can help read and collect error message from sdk
      *
-     * @param errorCallback
+     * @param callback
      * @return the AmplitudeClient
      */
-    public AmplitudeClient setErrorCallback(AmplitudeErrorCallback errorCallback) {
-        logger.setAmplitudeErrorCallback(errorCallback);
+    public AmplitudeClient setLogCallback(AmplitudeLogCallback callback) {
+        logger.setAmplitudeLogCallback(callback);
         return this;
     }
 

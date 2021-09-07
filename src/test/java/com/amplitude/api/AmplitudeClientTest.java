@@ -1952,8 +1952,8 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
-    public void testSetErrorCallback() {
-        class TestErrorCallback implements AmplitudeErrorCallback {
+    public void testSetLogCallback() {
+        class TestLogCallback implements AmplitudeLogCallback {
             String errorMsg = null;
 
             @Override
@@ -1965,11 +1965,10 @@ public class AmplitudeClientTest extends BaseTest {
                 return this.errorMsg;
             }
         }
-        TestErrorCallback callback = new TestErrorCallback();
-        amplitude.setErrorCallback(callback);
+        TestLogCallback callback = new TestLogCallback();
+        amplitude.setLogCallback(callback);
         assertNull(callback.getErrorMsg());
         amplitude.validateLogEvent("");
-        assertNotNull(callback.getErrorMsg());
         assertEquals("Argument eventType cannot be null or blank in logEvent()", callback.getErrorMsg());
     }
 }

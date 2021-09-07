@@ -1,5 +1,5 @@
 package com.amplitude.api;
 
-public interface AmplitudeErrorCallback {
+public interface AmplitudeLogCallback {
     void onError(String tag, String message);
 }
