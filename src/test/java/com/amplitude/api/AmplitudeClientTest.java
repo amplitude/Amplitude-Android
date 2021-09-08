@@ -1950,4 +1950,25 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         assertTrue(Utils.compareJSONObjects(groupProperties, expected));
     }
+
+    @Test
+    public void testSetLogCallback() {
+        class TestLogCallback implements AmplitudeLogCallback {
+            String errorMsg = null;
+
+            @Override
+            public void onError(String tag, String message) {
+                this.errorMsg = message;
+            }
+
+            private String getErrorMsg() {
+                return this.errorMsg;
+            }
+        }
+        TestLogCallback callback = new TestLogCallback();
+        amplitude.setLogCallback(callback);
+        assertNull(callback.getErrorMsg());
+        amplitude.validateLogEvent("");
+        assertEquals("Argument eventType cannot be null or blank in logEvent()", callback.getErrorMsg());
+    }
 }
