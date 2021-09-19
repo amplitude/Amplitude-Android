@@ -1971,4 +1971,25 @@ public class AmplitudeClientTest extends BaseTest {
         amplitude.validateLogEvent("");
         assertEquals("Argument eventType cannot be null or blank in logEvent()", callback.getErrorMsg());
     }
+
+    @Test
+    public void testSetPlan() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        String branch = "main";
+        String version = "1.0.0";
+        Plan plan = new Plan().setBranch(branch).setVersion(version);
+        amplitude.setPlan(plan);
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            JSONObject planJsonObject = event.getJSONObject("plan");
+            assertEquals(branch, planJsonObject.getString("branch"));
+            assertEquals(version, planJsonObject.getString("version"));
+        } catch (Exception e) {
+            Assert.fail();
+        }
+    }
 }

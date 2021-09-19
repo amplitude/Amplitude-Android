@@ -80,4 +80,8 @@ public class Constants {
     public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";
     public static final String AMP_TRACKING_OPTION_REGION = "region";
     public static final String AMP_TRACKING_OPTION_VERSION_NAME = "version_name";
+
+    public static final String AMP_PLAN_BRANCH = "branch";
+    public static final String AMP_PLAN_SOURCE = "source";
+    public static final String AMP_PLAN_VERSION = "version";
 }
