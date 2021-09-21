@@ -132,6 +132,7 @@ public class AmplitudeClient {
     private boolean coppaControlEnabled = false;
     private boolean locationListening = true;
     private EventExplorer eventExplorer;
+    private Plan plan;
 
     /**
      * The device's Platform value.
@@ -1165,6 +1166,10 @@ public class AmplitudeClient {
             library.put("name", this.libraryName == null ? Constants.LIBRARY_UNKNOWN : this.libraryName);
             library.put("version", this.libraryVersion == null ? Constants.VERSION_UNKNOWN : this.libraryVersion);
             event.put("library", library);
+
+            if (plan != null) {
+                event.put("plan", plan.toJSONObject());
+            }
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
             if (apiPropertiesTrackingOptions != null && apiPropertiesTrackingOptions.length() > 0) {
@@ -2309,4 +2314,14 @@ public class AmplitudeClient {
      * @return the current time millis
      */
     protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
+
+    /**
+     * Set tracking plan information.
+     * @param plan Plan object
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setPlan(Plan plan) {
+        this.plan = plan;
+        return this;
+    }
 }
