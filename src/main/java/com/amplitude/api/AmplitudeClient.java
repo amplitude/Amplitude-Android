@@ -356,11 +356,10 @@ public class AmplitudeClient {
 
                     deviceInfo = initializeDeviceInfo();
                     deviceId = initializeDeviceId();
-                    deviceInfo.prefetch();
-
                     if (this.deviceIdCallback != null) {
                         this.deviceIdCallback.onDeviceIdReady(deviceId);
                     }
+                    deviceInfo.prefetch();
 
                     if (userId != null) {
                         client.userId = userId;
