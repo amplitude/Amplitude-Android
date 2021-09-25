@@ -124,6 +124,7 @@ public class AmplitudeClient {
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean useAppSetIdForDeviceId = false;
     protected boolean initialized = false;
+    private AmplitudeDeviceIdCallback deviceIdCallback;
     private boolean optOut = false;
     private boolean offline = false;
     TrackingOptions inputTrackingOptions = new TrackingOptions();
@@ -355,6 +356,9 @@ public class AmplitudeClient {
 
                     deviceInfo = initializeDeviceInfo();
                     deviceId = initializeDeviceId();
+                    if (this.deviceIdCallback != null) {
+                        this.deviceIdCallback.onDeviceIdReady(deviceId);
+                    }
                     deviceInfo.prefetch();
 
                     if (userId != null) {
@@ -2248,6 +2252,11 @@ public class AmplitudeClient {
 
     private void saveDeviceId(String deviceId) {
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
+    }
+
+    public AmplitudeClient setDeviceIdCallback(AmplitudeDeviceIdCallback callback) {
+        this.deviceIdCallback = callback;
+        return this;
     }
 
     protected void runOnLogThread(Runnable r) {
