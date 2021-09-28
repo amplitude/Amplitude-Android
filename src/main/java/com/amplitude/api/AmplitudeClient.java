@@ -3,7 +3,6 @@ package com.amplitude.api;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Build;
@@ -120,7 +119,9 @@ public class AmplitudeClient {
     protected String deviceId;
     private boolean newDeviceIdPerInstall = false;
     private boolean useAdvertisingIdForDeviceId = false;
+    private boolean useAppSetIdForDeviceId = false;
     protected boolean initialized = false;
+    private AmplitudeDeviceIdCallback deviceIdCallback;
     private boolean optOut = false;
     private boolean offline = false;
     TrackingOptions inputTrackingOptions = new TrackingOptions();
@@ -129,6 +130,7 @@ public class AmplitudeClient {
     private boolean coppaControlEnabled = false;
     private boolean locationListening = true;
     private EventExplorer eventExplorer;
+    private Plan plan;
 
     /**
      * The device's Platform value.
@@ -299,11 +301,7 @@ public class AmplitudeClient {
             if (!initialized) {
                 // this try block is idempotent, so it's safe to retry initialize if failed
                 try {
-                    if (instanceName.equals(Constants.DEFAULT_INSTANCE)) {
-                        AmplitudeClient.upgradePrefs(context);
-                        AmplitudeClient.upgradeSharedPrefsToDB(context);
-                    }
-
+                    
                     if (useDynamicConfig) {
                         ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
                             @Override
@@ -313,8 +311,11 @@ public class AmplitudeClient {
                         });
                     }
 
-                    deviceInfo = new DeviceInfo(context, this.locationListening);
+                    deviceInfo = initializeDeviceInfo();
                     deviceId = initializeDeviceId();
+                    if (this.deviceIdCallback != null) {
+                        this.deviceIdCallback.onDeviceIdReady(deviceId);
+                    }
                     deviceInfo.prefetch();
 
                     if (userId != null) {
@@ -427,7 +428,17 @@ public class AmplitudeClient {
      * @return the AmplitudeClient
      */
     public AmplitudeClient useAdvertisingIdForDeviceId() {
-        this.useAdvertisingIdForDeviceId = true;
+        useAdvertisingIdForDeviceId = true;
+        return this;
+    }
+
+    /**
+     * Use Android app set id as the user's device ID.
+     *
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient useAppSetIdForDeviceId() {
+        useAppSetIdForDeviceId = true;
         return this;
     }
 
@@ -669,6 +680,17 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setLogLevel(int logLevel) {
         logger.setLogLevel(logLevel);
+        return this;
+    }
+
+    /**
+     * Set log callback, it can help read and collect error message from sdk
+     *
+     * @param callback
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setLogCallback(AmplitudeLogCallback callback) {
+        logger.setAmplitudeLogCallback(callback);
         return this;
     }
 
@@ -1106,6 +1128,10 @@ public class AmplitudeClient {
             library.put("version", this.libraryVersion == null ? Constants.VERSION_UNKNOWN : this.libraryVersion);
             event.put("library", library);
 
+            if (plan != null) {
+                event.put("plan", plan.toJSONObject());
+            }
+
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
             if (apiPropertiesTrackingOptions != null && apiPropertiesTrackingOptions.length() > 0) {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
@@ -1123,6 +1149,9 @@ public class AmplitudeClient {
             if (appliedTrackingOptions.shouldTrackAdid() && deviceInfo.getAdvertisingId() != null) {
                 apiProperties.put("androidADID", deviceInfo.getAdvertisingId());
             }
+            if (appliedTrackingOptions.shouldTrackAppSetId() && deviceInfo.getAppSetId() != null) {
+                apiProperties.put("android_app_set_id", deviceInfo.getAppSetId());
+            }
             apiProperties.put("limit_ad_tracking", deviceInfo.isLimitAdTrackingEnabled());
             apiProperties.put("gps_enabled", deviceInfo.isGooglePlayServicesEnabled());
 
@@ -1134,7 +1163,6 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-
             result = saveEvent(eventType, event);
         } catch (JSONException e) {
             logger.e(TAG, String.format(
@@ -2147,6 +2175,10 @@ public class AmplitudeClient {
 
     }
 
+    protected DeviceInfo initializeDeviceInfo() {
+        return new DeviceInfo(context, this.locationListening);
+    }
+
     /**
      * Get the current device id. Can be null if deviceId hasn't been initialized yet.
      *
@@ -2175,20 +2207,8 @@ public class AmplitudeClient {
 
         // see if device id already stored in db
         String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        String sharedPrefDeviceId = Utils.getStringFromSharedPreferences(context, instanceName, DEVICE_ID_KEY);
-        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId))) {
-            // compare against device id stored in backup storage and update if necessary
-            if (!deviceId.equals(sharedPrefDeviceId)) {
-                saveDeviceId(deviceId);
-            }
-
+        if (!(Utils.isEmptyString(deviceId) || invalidIds.contains(deviceId) || deviceId.endsWith("S"))) {
             return deviceId;
-        }
-
-        // backup #1: check if device id is stored in shared preferences
-        if (!(Utils.isEmptyString(sharedPrefDeviceId) || invalidIds.contains(sharedPrefDeviceId))) {
-            saveDeviceId(sharedPrefDeviceId);
-            return sharedPrefDeviceId;
         }
 
         if (!newDeviceIdPerInstall && useAdvertisingIdForDeviceId && !deviceInfo.isLimitAdTrackingEnabled()) {
@@ -2202,6 +2222,16 @@ public class AmplitudeClient {
             }
         }
 
+        if (useAppSetIdForDeviceId) {
+            String appSetId = deviceInfo.getAppSetId();
+            if (!(Utils.isEmptyString(appSetId) || invalidIds.contains(appSetId))) {
+                // Suffix with S for app set id so in future we can tell if device id is from app set id
+                String appSetDeviceId = appSetId + "S";
+                saveDeviceId(appSetDeviceId);
+                return appSetDeviceId;
+            }
+        }
+
         // If this still fails, generate random identifier that does not persist
         // across installations. Append R to distinguish as randomly generated
         String randomId = deviceInfo.generateUUID() + "R";
@@ -2211,7 +2241,11 @@ public class AmplitudeClient {
 
     private void saveDeviceId(String deviceId) {
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
-        Utils.writeStringToSharedPreferences(context, instanceName, DEVICE_ID_KEY, deviceId);
+    }
+
+    public AmplitudeClient setDeviceIdCallback(AmplitudeDeviceIdCallback callback) {
+        this.deviceIdCallback = callback;
+        return this;
     }
 
     protected void runOnLogThread(Runnable r) {
@@ -2273,204 +2307,19 @@ public class AmplitudeClient {
     }
 
     /**
-     * Move all preference data from the legacy name to the new, static name if needed.
-     * <p/>
-     * Constants.PACKAGE_NAME used to be set using {@code Constants.class.getPackage().getName()}
-     * Some aggressive proguard optimizations broke the reflection and caused apps
-     * to crash on startup.
-     * <p/>
-     * Now that Constants.PACKAGE_NAME is changed, old data on devices needs to be
-     * moved over to the new location so that device ids remain consistent.
-     * <p/>
-     * This should only happen once -- the first time a user loads the app after updating.
-     * This logic needs to remain in place for quite a long time. It was first introduced in
-     * April 2015 in version 1.6.0.
-     *
-     * @param context the context
-     * @return the boolean
-     */
-    static boolean upgradePrefs(Context context) {
-        return upgradePrefs(context, null, null);
-    }
-
-    /**
-     * Upgrade prefs boolean.
-     *
-     * @param context       the context
-     * @param sourcePkgName the source pkg name
-     * @param targetPkgName the target pkg name
-     * @return the boolean
-     */
-    static boolean upgradePrefs(Context context, String sourcePkgName, String targetPkgName) {
-        try {
-            if (sourcePkgName == null) {
-                // Try to load the package name using the old reflection strategy.
-                sourcePkgName = Constants.PACKAGE_NAME;
-                try {
-                    sourcePkgName = Constants.class.getPackage().getName();
-                } catch (Exception e) { }
-            }
-
-            if (targetPkgName == null) {
-                targetPkgName = Constants.PACKAGE_NAME;
-            }
-
-            // No need to copy if the source and target are the same.
-            if (targetPkgName.equals(sourcePkgName)) {
-                return false;
-            }
-
-            // Copy over any preferences that may exist in a source preference store.
-            String sourcePrefsName = sourcePkgName + "." + context.getPackageName();
-            SharedPreferences source =
-                    context.getSharedPreferences(sourcePrefsName, Context.MODE_PRIVATE);
-
-            // Nothing left in the source store to copy
-            if (source.getAll().size() == 0) {
-                return false;
-            }
-
-            String prefsName = targetPkgName + "." + context.getPackageName();
-            SharedPreferences targetPrefs =
-                    context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-            SharedPreferences.Editor target = targetPrefs.edit();
-
-            // Copy over all existing data.
-            if (source.contains(sourcePkgName + ".previousSessionId")) {
-                target.putLong(Constants.PREFKEY_PREVIOUS_SESSION_ID,
-                        source.getLong(sourcePkgName + ".previousSessionId", -1));
-            }
-            if (source.contains(sourcePkgName + ".deviceId")) {
-                target.putString(Constants.PREFKEY_DEVICE_ID,
-                        source.getString(sourcePkgName + ".deviceId", null));
-            }
-            if (source.contains(sourcePkgName + ".userId")) {
-                target.putString(Constants.PREFKEY_USER_ID,
-                        source.getString(sourcePkgName + ".userId", null));
-            }
-            if (source.contains(sourcePkgName + ".optOut")) {
-                target.putBoolean(Constants.PREFKEY_OPT_OUT,
-                        source.getBoolean(sourcePkgName + ".optOut", false));
-            }
-
-            // Commit the changes and clear the source store so we don't recopy.
-            target.apply();
-            source.edit().clear().apply();
-
-            logger.i(TAG, "Upgraded shared preferences from " + sourcePrefsName + " to " + prefsName);
-            return true;
-
-        } catch (Exception e) {
-            logger.e(TAG, "Error upgrading shared preferences", e);
-            return false;
-        }
-    }
-
-    /**
-     * Upgrade shared prefs to db boolean.
-     *
-     * @param context the context
-     * @return the boolean
-     */
-    static boolean upgradeSharedPrefsToDB(Context context) {
-        // Move all data from sharedPrefs to sqlite key value store to support multi-process apps.
-        // sharedPrefs is known to not be process-safe.
-        return upgradeSharedPrefsToDB(context, null);
-    }
-
-    /**
-     * Upgrade shared prefs to db boolean.
-     *
-     * @param context       the context
-     * @param sourcePkgName the source pkg name
-     * @return the boolean
-     */
-    static boolean upgradeSharedPrefsToDB(Context context, String sourcePkgName) {
-        if (sourcePkgName == null) {
-            sourcePkgName = Constants.PACKAGE_NAME;
-        }
-
-        // check if upgrade needed
-        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        String deviceId = dbHelper.getValue(DEVICE_ID_KEY);
-        Long previousSessionId = dbHelper.getLongValue(PREVIOUS_SESSION_ID_KEY);
-        Long lastEventTime = dbHelper.getLongValue(LAST_EVENT_TIME_KEY);
-        if (!Utils.isEmptyString(deviceId) && previousSessionId != null && lastEventTime != null) {
-            return true;
-        }
-
-        String prefsName = sourcePkgName + "." + context.getPackageName();
-        SharedPreferences preferences =
-                context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-
-        migrateStringValue(
-            preferences, Constants.PREFKEY_DEVICE_ID, null, dbHelper, DEVICE_ID_KEY
-        );
-
-        migrateLongValue(
-            preferences, Constants.PREFKEY_LAST_EVENT_TIME, -1, dbHelper, LAST_EVENT_TIME_KEY
-        );
-
-        migrateLongValue(
-            preferences, Constants.PREFKEY_LAST_EVENT_ID, -1, dbHelper, LAST_EVENT_ID_KEY
-        );
-
-        migrateLongValue(
-            preferences, Constants.PREFKEY_LAST_IDENTIFY_ID, -1, dbHelper, LAST_IDENTIFY_ID_KEY
-        );
-
-        migrateLongValue(
-            preferences, Constants.PREFKEY_PREVIOUS_SESSION_ID, -1,
-            dbHelper, PREVIOUS_SESSION_ID_KEY
-        );
-
-        migrateStringValue(
-            preferences, Constants.PREFKEY_USER_ID, null, dbHelper, USER_ID_KEY
-        );
-
-        migrateBooleanValue(
-            preferences, Constants.PREFKEY_OPT_OUT, false, dbHelper, OPT_OUT_KEY
-        );
-
-        return true;
-    }
-
-    private static void migrateLongValue(SharedPreferences prefs, String prefKey, long defValue, DatabaseHelper dbHelper, String dbKey) {
-        Long value = dbHelper.getLongValue(dbKey);
-        if (value != null) { // If value already exists, it doesn't need to migrate.
-            return;
-        }
-        long oldValue = prefs.getLong(prefKey, defValue);
-        dbHelper.insertOrReplaceKeyLongValue(dbKey, oldValue);
-        prefs.edit().remove(prefKey).apply();
-    }
-
-    private static void migrateStringValue(SharedPreferences prefs, String prefKey, String defValue, DatabaseHelper dbHelper, String dbKey) {
-        String value = dbHelper.getValue(dbKey);
-        if (!Utils.isEmptyString(value)) {
-            return;
-        }
-        String oldValue = prefs.getString(prefKey, defValue);
-        if (!Utils.isEmptyString(oldValue)) {
-            dbHelper.insertOrReplaceKeyValue(dbKey, oldValue);
-            prefs.edit().remove(prefKey).apply();
-        }
-    }
-
-    private static void migrateBooleanValue(SharedPreferences prefs, String prefKey, boolean defValue, DatabaseHelper dbHelper, String dbKey) {
-        Long value = dbHelper.getLongValue(dbKey);
-        if (value != null) {
-            return;
-        }
-        boolean oldValue = prefs.getBoolean(prefKey, defValue);
-        dbHelper.insertOrReplaceKeyLongValue(dbKey, oldValue ? 1L : 0L);
-        prefs.edit().remove(prefKey).apply();
-    }
-
-    /**
      * Internal method to fetch the current time millis. Used for testing.
      *
      * @return the current time millis
      */
     protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
+
+    /**
+     * Set tracking plan information.
+     * @param plan Plan object
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setPlan(Plan plan) {
+        this.plan = plan;
+        return this;
+    }
 }

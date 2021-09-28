@@ -63,6 +63,7 @@ public class Constants {
     public static final String AMP_REVENUE_RECEIPT_SIG = "$receiptSig";
 
     public static final String AMP_TRACKING_OPTION_ADID = "adid";
+    public static final String AMP_TRACKING_OPTION_APP_SET_ID = "app_set_id";
     public static final String AMP_TRACKING_OPTION_CARRIER = "carrier";
     public static final String AMP_TRACKING_OPTION_CITY = "city";
     public static final String AMP_TRACKING_OPTION_COUNTRY = "country";
@@ -79,4 +80,8 @@ public class Constants {
     public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";
     public static final String AMP_TRACKING_OPTION_REGION = "region";
     public static final String AMP_TRACKING_OPTION_VERSION_NAME = "version_name";
+
+    public static final String AMP_PLAN_BRANCH = "branch";
+    public static final String AMP_PLAN_SOURCE = "source";
+    public static final String AMP_PLAN_VERSION = "version";
 }

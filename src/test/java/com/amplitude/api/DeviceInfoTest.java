@@ -13,16 +13,23 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
+import org.json.JSONObject;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.CallsRealMethods;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
@@ -32,17 +39,19 @@ import org.robolectric.shadows.ShadowTelephonyManager;
 import org.robolectric.util.ReflectionHelpers;
 
 import java.util.Locale;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 
 @RunWith(AndroidJUnit4.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*" })
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "javax.net.ssl.*", "jdk.internal.reflect.*" })
 @PrepareForTest({AdvertisingIdClient.class, GooglePlayServicesUtil.class})
 @Config(manifest = Config.NONE)
 public class DeviceInfoTest extends BaseTest {
@@ -229,10 +238,9 @@ public class DeviceInfoTest extends BaseTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        assert(deviceInfo.isGooglePlayServicesEnabled());
+        assertTrue(deviceInfo.isGooglePlayServicesEnabled());
     }
-
-    // TODO: Consider move this test to android specific tests.
+//    TODO: Consider move this test to android specific tests.
 //    @Test
 //    public void testGetMostRecentLocation() {
 //        DeviceInfo deviceInfo = new DeviceInfo(context);
@@ -304,4 +312,107 @@ public class DeviceInfoTest extends BaseTest {
         assertNotEquals(advertisingId, client.getDeviceId());
         assertTrue(client.getDeviceId().endsWith("R"));
     }
+
+    @Test
+    public void testDeviceIdEqualsToAppSetId() {
+        //Set Advertising ID to be invalid to fallback to app set id
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+        String advertisingId = "00000000-0000-0000-0000-000000000000";
+        AdvertisingIdClient.Info info = new AdvertisingIdClient.Info(
+                advertisingId,
+                true
+        );
+        try {
+            Mockito.when(AdvertisingIdClient.getAdvertisingIdInfo(context)).thenReturn(info);
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+
+        String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
+        DeviceInfoAmplitudeClient client = Mockito.spy(new DeviceInfoAmplitudeClient("AppSetId"));
+        DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
+        try {
+            Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
+            Mockito.when(client.publicInitializeDeviceInfo()).thenReturn(mockDeviceInfo);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+
+        client.useAdvertisingIdForDeviceId();
+        client.useAppSetIdForDeviceId();
+
+        final String[] deviceIdCallbackResult = new String[1];
+        client.setDeviceIdCallback(deviceId -> deviceIdCallbackResult[0] = deviceId);
+
+        client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
+        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
+        looper.runToEndOfTasks();
+
+        assertEquals(mockAppSetId + "S", client.getDeviceId());
+        assertEquals(mockAppSetId + "S", deviceIdCallbackResult[0]);
+    }
+
+    @Test
+    public void testToggleAppSetIdInEvents() {
+        String mockAppSetId = "5a8f0fd1-31a9-4a1f-bfad-cd5439ce533b";
+        amplitude = new DeviceInfoAmplitudeClient("");
+        DeviceInfoAmplitudeClient client = Mockito.spy((DeviceInfoAmplitudeClient) amplitude);
+        DeviceInfo mockDeviceInfo = Mockito.mock(DeviceInfo.class, Mockito.CALLS_REAL_METHODS);
+        try {
+            Mockito.when(mockDeviceInfo.getAppSetId()).thenReturn(mockAppSetId);
+            Mockito.when(client.publicInitializeDeviceInfo()).thenReturn(mockDeviceInfo);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+
+        ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
+
+        client.useAppSetIdForDeviceId();
+        client.initialize(context, apiKey);
+        looper.runToEndOfTasks();
+        assertEquals(mockAppSetId + "S", client.getDeviceId());
+
+        client.logEvent("testSendAppSetIdInJson");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            assertEquals("testSendAppSetIdInJson", event.getString("event_type"));
+            JSONObject apiProps = event.getJSONObject("api_properties");
+            String appSetId = apiProps.getString("android_app_set_id");
+            assertEquals(mockAppSetId, appSetId);
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+
+        TrackingOptions options = new TrackingOptions();
+        options.disableAppSetId();
+        client.setTrackingOptions(options);
+        client.logEvent("testSendAppSetIdInJson-2");
+        looper.runToEndOfTasks();
+
+        event = getLastEvent();
+        assertNotNull(event);
+        try {
+            assertEquals("testSendAppSetIdInJson-2", event.getString("event_type"));
+            JSONObject apiProps = event.getJSONObject("api_properties");
+            assertFalse(apiProps.has("android_app_set_id"));
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+
+    private class DeviceInfoAmplitudeClient extends AmplitudeClient {
+        protected DeviceInfo initializeDeviceInfo() {
+            return this.publicInitializeDeviceInfo();
+        }
+        public DeviceInfo publicInitializeDeviceInfo() {
+            return new DeviceInfo(context, true);
+        }
+        public DeviceInfoAmplitudeClient(String instance) {
+            super(instance);
+        }
+    }
+
 }

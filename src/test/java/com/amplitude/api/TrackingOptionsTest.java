@@ -75,18 +75,20 @@ public class TrackingOptionsTest extends BaseTest {
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
+        assertFalse(options.shouldTrackLatLng());
     }
 
     @Test
     public void testMerging() {
         TrackingOptions options1 = TrackingOptions.forCoppaControl();
-        TrackingOptions options2 = new TrackingOptions().disableCountry().disableLanguage();
+        TrackingOptions options2 = new TrackingOptions().disableCountry().disableLanguage().disableAppSetId();
         options1.mergeIn(options2);
         assertFalse(options1.shouldTrackAdid());
         assertFalse(options1.shouldTrackCity());
         assertFalse(options1.shouldTrackIpAddress());
         assertFalse(options1.shouldTrackCountry());
         assertFalse(options1.shouldTrackLanguage());
+        assertFalse(options1.shouldTrackAppSetId());
     }
 
     @Test
@@ -95,14 +97,15 @@ public class TrackingOptionsTest extends BaseTest {
         assertFalse(options.shouldTrackAdid());
         assertFalse(options.shouldTrackCity());
         assertFalse(options.shouldTrackIpAddress());
+        assertFalse(options.shouldTrackLatLng());
     }
 
     @Test
     public void testEquals() {
         TrackingOptions options1 = new TrackingOptions();
-        options1.disableAdid().disableCarrier();
+        options1.disableAdid().disableCarrier().disableAppSetId();
         TrackingOptions options2 = new TrackingOptions();
-        options2.disableAdid().disableCarrier();
+        options2.disableAdid().disableCarrier().disableAppSetId();
         assertEquals(options1, options2);
     }
 }
