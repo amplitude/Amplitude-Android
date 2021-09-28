@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2045,12 +2046,12 @@ public class AmplitudeClient {
         HttpsURLConnection connection = null;
 
         try {
-            JSONObject bodyJson = new JSONObject();
-            bodyJson.put("v", apiVersionString);
-            bodyJson.put("client", apiKey);
-            bodyJson.put("e", events);
-            bodyJson.put("upload_time", timestampString);
-            bodyJson.put("checksum", checksumString);
+            String bodyString = "";
+            bodyString += "v=" + apiVersionString + "&";
+            bodyString += "client=" + apiKey + "&";
+            bodyString += "e=" + events + "&";
+            bodyString += "upload_time=" + timestampString + "&";
+            bodyString += "checksum=" + checksumString;
 
             connection = getNewConnection(url);
             connection.setRequestMethod("POST");
@@ -2063,15 +2064,13 @@ public class AmplitudeClient {
 
             connection.setDoOutput(true);
             OutputStream os = connection.getOutputStream();
-            byte[] input = bodyJson.toString().getBytes("UTF-8");
+            byte[] input = bodyString.getBytes("UTF-8"); //bodyJson.toString().getBytes("UTF-8");
             os.write(input, 0, input.length);
         } catch (IllegalArgumentException | MalformedURLException e) {
             logger.e(TAG, e.toString());
             uploadingCurrently.set(false);
             return;
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
             e.printStackTrace();
         }
 
