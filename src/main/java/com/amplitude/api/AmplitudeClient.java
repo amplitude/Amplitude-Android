@@ -2003,10 +2003,10 @@ public class AmplitudeClient {
         return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
     }
 
-    protected HttpsURLConnection getNewConnection(String httpsConnectionUrl) {
+    protected HttpURLConnection getNewConnection(String httpConnectionUrl) {
         try {
-            URL urlObject = new URL(httpsConnectionUrl);
-            return (HttpsURLConnection) urlObject.openConnection();
+            URL urlObject = new URL(httpConnectionUrl);
+            return (HttpURLConnection) urlObject.openConnection();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -2043,7 +2043,7 @@ public class AmplitudeClient {
             logger.e(TAG, e.toString());
         }
 
-        HttpsURLConnection connection = null;
+        HttpURLConnection connection = null;
 
         try {
             String bodyString = "";
@@ -2083,12 +2083,17 @@ public class AmplitudeClient {
             } else {
                 inputStream = connection.getErrorStream();
             }
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+            BufferedReader br = null;
+            if (inputStream != null) {
+                br = new BufferedReader(new InputStreamReader(inputStream));
+            }
 
             StringBuilder sb = new StringBuilder();
-            String output;
-            while ((output = br.readLine()) != null) {
-                sb.append(output);
+            String output = "";
+            if (br != null) {
+                while ((output = br.readLine()) != null) {
+                    sb.append(output);
+                }
             }
             String stringResponse = sb.toString();
 

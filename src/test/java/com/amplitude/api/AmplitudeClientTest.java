@@ -2,6 +2,7 @@ package com.amplitude.api;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.apache.tools.ant.taskdefs.condition.Http;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,6 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.Robolectric;
@@ -18,7 +21,9 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -1525,17 +1530,31 @@ public class AmplitudeClientTest extends BaseTest {
         IOException error = new IOException("test IO Exception");
 
         // mock out client
+        /*
         OkHttpClient mockClient = PowerMockito.mock(OkHttpClient.class);
         // need to have mock client return mock call that throws exception
         Call mockCall = PowerMockito.mock(Call.class);
         PowerMockito.when(mockCall.execute()).thenThrow(error);
         PowerMockito.when(mockClient.newCall(Matchers.any(Request.class))).thenReturn(mockCall);
+        */
 
-        //TODO
+        HttpURLConnection mockHttp = PowerMockito.mock(HttpURLConnection.class);
+        PowerMockito.when(mockHttp.getResponseCode()).thenThrow(error);
+        PowerMockito.when(mockHttp.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+        //TODO Mockito.when(mockHttp.get)
+
+        AmplitudeClient mockAmplitude = Mockito.spy(amplitude);
+        Mockito.doReturn(mockHttp).when(mockAmplitude).getNewConnection(Matchers.anyString());
+
         String events = "{}";
-        amplitude.makeEventUploadPostRequest(events, 1000, 1000);
+        mockAmplitude.makeEventUploadPostRequest(events, 1000, 1000);
 
-        //assertEquals(amplitude.lastError, error);
+        logLooper.runToEndOfTasks();
+        httpLooper.runToEndOfTasks();
+
+        Mockito.when(mockAmplitude.getNewConnection(Constants.EVENT_LOG_URL)).thenCallRealMethod();
+
+        assertEquals(mockAmplitude.lastError, error);
     }
 
     @Test

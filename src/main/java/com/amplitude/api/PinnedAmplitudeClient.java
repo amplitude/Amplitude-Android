@@ -226,12 +226,16 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         return sslSocketFactory;
     }
 
+    @Override
     protected HttpsURLConnection getNewConnection(String httpsConnectionUrl) {
         try {
             URL urlObject = new URL(httpsConnectionUrl);
             HttpsURLConnection connection = (HttpsURLConnection) urlObject.openConnection();
             connection.setSSLSocketFactory(getPinnedCertSslSocketFactory());
             return connection;
+        } catch (ClassCastException e) {
+            logger.e(TAG, "Invalid URL, must establish HTTPS connection on PinnedAmplitudeClient for SSL features");
+            e.printStackTrace();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
