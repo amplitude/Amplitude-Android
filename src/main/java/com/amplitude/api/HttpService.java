@@ -12,9 +12,9 @@ import java.util.function.Function;
 public class HttpService {
 
     private String apiKey, url, bearerToken;
-    private RequestListenerCallback reqListener; //fire this after HTTP request completes
+    private RequestListenerCallback reqListener;
     HandlerThread httpThread;
-    private MessageHandler messageHandler; //pass httpThread.looper() into this handler
+    private MessageHandler messageHandler;
     private HttpClient httpClient;
 
     public HttpService(String apiKey, String url, String bearerToken, RequestListenerCallback reqListener, boolean secure) {
@@ -39,7 +39,7 @@ public class HttpService {
     }
 
     //Actually calls HttpClient, the callback
-    public void flushEvents(SendEventsMessageData data) {
+    private void flushEvents(SendEventsMessageData data) {
         messageHandler.post(new Runnable() {
             public void run() {
                 HttpResponse response = httpClient.getResponse(apiKey, url, bearerToken, data.events);
@@ -48,8 +48,7 @@ public class HttpService {
         });
     }
 
-    public static class MessageHandler extends Handler {
-
+    private static class MessageHandler extends Handler {
         static final int REQUEST_FLUSH = 1;
         private final HttpService httpService;
 
@@ -68,14 +67,13 @@ public class HttpService {
                     throw new AssertionError("Unknown dispatcher message: " + msg.what);
             }
         }
-
     }
 
     public interface RequestListenerCallback {
         void onRequestFinished(HttpResponse response, long maxEventId, long maxIdentifyId);
     }
 
-    public static class SendEventsMessageData {
+    private static class SendEventsMessageData {
         public String events;
         public long maxEventId, maxIdentifyId;
         public SendEventsMessageData(String events, long maxEventId, long maxIdentifyId) {

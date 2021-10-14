@@ -1909,7 +1909,7 @@ public class AmplitudeClient {
                 final long maxIdentifyId = merged.first.second;
                 final String mergedEventsString = merged.second.toString();
 
-                makeEventUploadPostRequest(mergedEventsString, maxEventId, maxIdentifyId);
+                httpService.submitSendEvents(mergedEventsString, maxEventId, maxIdentifyId);
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
@@ -1983,17 +1983,6 @@ public class AmplitudeClient {
         }
 
         return new Pair<Pair<Long, Long>, JSONArray>(new Pair<Long,Long>(maxEventId, maxIdentifyId), merged);
-    }
-
-    /**
-     * Internal method to generate the event upload post request.
-     *
-     * @param events        the events
-     * @param maxEventId    the max event id
-     * @param maxIdentifyId the max identify id
-     */
-    protected void makeEventUploadPostRequest(String events, final long maxEventId, final long maxIdentifyId) {
-        httpService.submitSendEvents(events, maxEventId, maxIdentifyId);
     }
 
     protected DeviceInfo initializeDeviceInfo() {
