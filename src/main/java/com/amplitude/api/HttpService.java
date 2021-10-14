@@ -7,17 +7,15 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
-import java.util.function.Function;
-
 public class HttpService {
 
     private String apiKey, url, bearerToken;
-    private RequestListenerCallback reqListener;
+    private RequestListener reqListener;
     HandlerThread httpThread;
     private MessageHandler messageHandler;
     private HttpClient httpClient;
 
-    public HttpService(String apiKey, String url, String bearerToken, RequestListenerCallback reqListener, boolean secure) {
+    public HttpService(String apiKey, String url, String bearerToken, RequestListener reqListener, boolean secure) {
         this.apiKey = apiKey;
         this.url = url;
         this.bearerToken = bearerToken;
@@ -69,7 +67,7 @@ public class HttpService {
         }
     }
 
-    public interface RequestListenerCallback {
+    public interface RequestListener {
         void onRequestFinished(HttpResponse response, long maxEventId, long maxIdentifyId);
     }
 

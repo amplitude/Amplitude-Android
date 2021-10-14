@@ -2,25 +2,10 @@ package com.amplitude.api;
 
 import android.content.Context;
 
-import com.amplitude.util.DoubleCheck;
-import com.amplitude.util.Provider;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * <h1>PinnedAmplitudeClient</h1>
@@ -137,7 +122,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     }
 
     protected HttpService initHttpServiceWithCallback() {
-        return new HttpService(apiKey, url, bearerToken, this.getRequestListenerCallback(), true);
+        return new HttpService(apiKey, url, bearerToken, this.getRequestListener(), true);
     }
 
 }

@@ -178,7 +178,9 @@ public class AmplitudeClient {
      * The background event logging worker thread instance.
      */
     WorkerThread logThread = new WorkerThread("logThread");
-
+    /**
+     * A handler architecture for sending async HTTP requests of batched events to Amplitude
+     */
     HttpService httpService;
 
     /**
@@ -2058,8 +2060,8 @@ public class AmplitudeClient {
         return this;
     }
 
-    protected HttpService.RequestListenerCallback getRequestListenerCallback() {
-        return new HttpService.RequestListenerCallback() {
+    protected HttpService.RequestListener getRequestListener() {
+        return new HttpService.RequestListener() {
             @Override
             public void onRequestFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
                 boolean uploadSuccess = false;
@@ -2152,7 +2154,7 @@ public class AmplitudeClient {
     }
 
     protected HttpService initHttpServiceWithCallback() {
-        return new HttpService(apiKey, url, bearerToken, this.getRequestListenerCallback(), false);
+        return new HttpService(apiKey, url, bearerToken, this.getRequestListener(), false);
     }
 
     protected void runOnLogThread(Runnable r) {
