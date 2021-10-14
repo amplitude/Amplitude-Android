@@ -22,10 +22,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import okhttp3.OkHttpClient;
-import okio.Buffer;
-import okio.ByteString;
-
 /**
  * <h1>PinnedAmplitudeClient</h1>
  * This is a version of the AmplitudeClient that supports SSL pinning for encrypted requests.
@@ -78,65 +74,6 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
 
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    /**
-     * Pinned certificate chain for api.amplitude.com.
-     */
-    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM =
-            new SSLContextBuilder().addCertificate(CERTIFICATE_1);
-
-    /**
-     * SSl context builder, used to generate the SSL context.
-     */
-    protected static class SSLContextBuilder {
-        private final List<String> certificateBase64s = new ArrayList<String>();
-
-        /**
-         * Add certificate ssl context builder.
-         *
-         * @param certificateBase64 the certificate base 64
-         * @return the ssl context builder
-         */
-        public SSLContextBuilder addCertificate(String certificateBase64) {
-            certificateBase64s.add(certificateBase64);
-            return this;
-        }
-
-        /**
-         * Build ssl context.
-         *
-         * @return the ssl context
-         */
-        public SSLContext build() {
-            try {
-                CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                        TrustManagerFactory.getDefaultAlgorithm());
-                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                keyStore.load(null, null); // Use a null input stream + password to create an empty key store.
-
-                // Decode the certificates and add 'em to the key store.
-                int nextName = 1;
-                for (String certificateBase64 : certificateBase64s) {
-                    Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
-                    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
-                            certificateBuffer.inputStream());
-                    keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
-                }
-
-                // Create an SSL context that uses these certificates as its trust store.
-                trustManagerFactory.init(keyStore);
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-                return sslContext;
-            } catch (GeneralSecurityException e) {
-                logger.e(TAG, e.getMessage(), e);
-            } catch (IOException e) {
-                logger.e(TAG, e.getMessage(), e);
-            }
-            return null;
-        }
-    }
-
     static Map<String, PinnedAmplitudeClient> instances = new HashMap<String, PinnedAmplitudeClient>();
 
     /**
@@ -185,112 +122,22 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     public synchronized AmplitudeClient initializeInternal(
             Context context,
             String apiKey,
-            String userId,
-            Provider<OkHttpClient> clientProvider
+            String userId
     ) {
         super.initialize(context, apiKey, userId);
         final PinnedAmplitudeClient client = this;
-        runOnLogThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!client.initializedSSLSocketFactory) {
-                    SSLSocketFactory factory = getPinnedCertSslSocketFactory();
-                    if (factory != null) {
-                        try {
-                            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-                            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                                    TrustManagerFactory.getDefaultAlgorithm());
-                            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                            keyStore.load(null, null); // Use a null input stream + password to create an empty key store.
-
-                            List<String> certificateBase64s = new ArrayList<String>();
-                            certificateBase64s.add(CERTIFICATE_1);
-
-                            // Decode the certificates and add 'em to the key store.
-                            int nextName = 1;
-                            for (String certificateBase64 : certificateBase64s) {
-                                Buffer certificateBuffer = new Buffer().write(ByteString.decodeBase64(certificateBase64));
-                                X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(
-                                        certificateBuffer.inputStream());
-                                keyStore.setCertificateEntry(Integer.toString(nextName++), certificate);
-                            }
-
-                            // Create an SSL context that uses these certificates as its trust store.
-                            trustManagerFactory.init(keyStore);
-
-                            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-                            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-                                throw new IllegalStateException("Unexpected default trust managers:"
-                                        + Arrays.toString(trustManagers));
-                            }
-                            X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-                            final Provider<OkHttpClient> finalClientProvider = DoubleCheck.provider(() -> {
-                                final OkHttpClient.Builder builder;
-                                if (clientProvider != null) {
-                                    builder = clientProvider.get().newBuilder();
-                                } else {
-                                    builder = new OkHttpClient.Builder();
-                                }
-                                return builder.sslSocketFactory(factory, trustManager).build();
-                            });
-
-                            client.callFactory = request -> finalClientProvider.get().newCall(request);
-                        } catch (GeneralSecurityException e) {
-                            logger.e(TAG, e.getMessage(), e);
-                        } catch (IOException e) {
-                            logger.e(TAG, e.getMessage(), e);
-                        }
-                    } else {
-                        logger.e(TAG, "Unable to pin SSL as requested. Will send data without SSL pinning.");
-                    }
-                    client.initializedSSLSocketFactory = true;
-                }
-            }
-        });
         return this;
-    }
-
-    // why not override base method?
-    @Override
-    public synchronized AmplitudeClient initialize(Context context, String apiKey, String userId) {
-        return initializeInternal(context, apiKey, userId, null);
     }
 
     public synchronized AmplitudeClient initialize(
             Context context,
             String apiKey,
-            String userId,
-            Provider<OkHttpClient> clientProvider) {
-        return initializeInternal(context, apiKey, userId, clientProvider);
+            String userId) {
+        return initializeInternal(context, apiKey, userId);
     }
 
-    /**
-     * Gets pinned cert ssl socket factory.
-     *
-     * @return the pinned cert ssl socket factory
-     */
-    protected SSLSocketFactory getPinnedCertSslSocketFactory() {
-        return getPinnedCertSslSocketFactory(SSL_CONTEXT_API_AMPLITUDE_COM);
+    protected HttpService initHttpServiceWithCallback() {
+        return new HttpService(apiKey, url, bearerToken, this.getRequestListenerCallback(), true);
     }
 
-    /**
-     * Gets pinned cert ssl socket factory.
-     *
-     * @param context the context
-     * @return the pinned cert ssl socket factory
-     */
-    protected SSLSocketFactory getPinnedCertSslSocketFactory(SSLContextBuilder context) {
-        if (context == null) {
-            return null;
-        }
-        if (sslSocketFactory == null) {
-            try {
-                sslSocketFactory = context.build().getSocketFactory();
-                logger.i(TAG, "Pinning SSL session using Comodo CA Cert");
-            } catch (Exception e) {
-                logger.e(TAG, e.getMessage(), e);
-            }
-        }
-        return sslSocketFactory;
-    }
 }

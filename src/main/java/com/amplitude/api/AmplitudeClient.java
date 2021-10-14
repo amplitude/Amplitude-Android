@@ -9,29 +9,18 @@ import android.os.Build;
 import android.util.Pair;
 
 import com.amplitude.eventexplorer.EventExplorer;
-import com.amplitude.security.MD5;
-import com.amplitude.util.DoubleCheck;
-import com.amplitude.util.Provider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import okhttp3.Call;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * <h1>AmplitudeClient</h1>
@@ -96,10 +85,6 @@ public class AmplitudeClient {
      * The Android App Context.
      */
     protected Context context;
-    /**
-     * The shared OkHTTPClient instance.
-     */
-    protected Call.Factory callFactory;
     /**
      * The shared Amplitude database helper instance.
      */
@@ -193,10 +178,8 @@ public class AmplitudeClient {
      * The background event logging worker thread instance.
      */
     WorkerThread logThread = new WorkerThread("logThread");
-    /**
-     * The background event uploading worker thread instance.
-     */
-    WorkerThread httpThread = new WorkerThread("httpThread");
+
+    HttpService httpService;
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -212,7 +195,6 @@ public class AmplitudeClient {
     public AmplitudeClient(String instance) {
         this.instanceName = Utils.normalizeInstanceName(instance);
         logThread.start();
-        httpThread.start();
     }
 
     /**
@@ -265,36 +247,7 @@ public class AmplitudeClient {
                 apiKey,
                 userId,
                 platform,
-                enableDiagnosticLogging,
-                null);
-    }
-
-    /**
-     * Initialize the Amplitude SDK with the Android application context, your Amplitude App API
-     * key, a user ID for the current user, and a custom platform value.
-     * <b>Note:</b> initialization is required before you log events and modify user properties.
-     *
-     * @param context the Android application context
-     * @param apiKey  your Amplitude App API key
-     * @param userId  the user id to set
-     * @param callFactory the call factory that used by Amplitude to make http request
-     * @return the AmplitudeClient
-     */
-    public synchronized AmplitudeClient initialize(
-            final Context context,
-            final String apiKey,
-            final String userId,
-            final String platform,
-            final boolean enableDiagnosticLogging,
-            final Call.Factory callFactory
-    ) {
-        return this.initializeInternal(
-                context,
-                apiKey,
-                userId,
-                platform,
-                enableDiagnosticLogging,
-                callFactory);
+                enableDiagnosticLogging);
     }
 
     /**
@@ -313,8 +266,7 @@ public class AmplitudeClient {
             final String apiKey,
             final String userId,
             final String platform,
-            final boolean enableDiagnosticLogging,
-            final Call.Factory callFactory
+            final boolean enableDiagnosticLogging
     ) {
         if (context == null) {
             logger.e(TAG, "Argument context cannot be null in initialize()");
@@ -336,15 +288,6 @@ public class AmplitudeClient {
             if (!initialized) {
                 // this try block is idempotent, so it's safe to retry initialize if failed
                 try {
-                    if (callFactory == null) {
-                        // defer OkHttp client to first call
-                        final Provider<Call.Factory> callProvider
-                                = DoubleCheck.provider(OkHttpClient::new);
-                        this.callFactory = request -> callProvider.get().newCall(request);
-                    } else {
-                        this.callFactory = callFactory;
-                    }
-
                     if (useDynamicConfig) {
                         ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
                             @Override
@@ -393,6 +336,8 @@ public class AmplitudeClient {
                             dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
                         }
                     });
+
+                    httpService = initHttpServiceWithCallback();
 
                     initialized = true;
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
@@ -1964,12 +1909,7 @@ public class AmplitudeClient {
                 final long maxIdentifyId = merged.first.second;
                 final String mergedEventsString = merged.second.toString();
 
-                httpThread.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        makeEventUploadPostRequest(callFactory, mergedEventsString, maxEventId, maxIdentifyId);
-                    }
-                });
+                makeEventUploadPostRequest(mergedEventsString, maxEventId, maxIdentifyId);
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
@@ -2048,142 +1988,12 @@ public class AmplitudeClient {
     /**
      * Internal method to generate the event upload post request.
      *
-     * @param client        the client
      * @param events        the events
      * @param maxEventId    the max event id
      * @param maxIdentifyId the max identify id
      */
-    protected void makeEventUploadPostRequest(Call.Factory client, String events, final long maxEventId, final long maxIdentifyId) {
-        String apiVersionString = "" + Constants.API_VERSION;
-        String timestampString = "" + getCurrentTimeMillis();
-
-        String checksumString = "";
-        try {
-            String preimage = apiVersionString + apiKey + events + timestampString;
-
-            // MessageDigest.getInstance(String) is not threadsafe on Android.
-            // See https://code.google.com/p/android/issues/detail?id=37937
-            // Use MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java
-            // This implementation does not throw NoSuchAlgorithm exceptions.
-            MessageDigest messageDigest = new MD5();
-            checksumString = bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            // According to
-            // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
-            // this will never be thrown
-            logger.e(TAG, e.toString());
-        }
-
-        FormBody body = new FormBody.Builder()
-            .add("v", apiVersionString)
-            .add("client", apiKey)
-            .add("e", events)
-            .add("upload_time", timestampString)
-            .add("checksum", checksumString)
-            .build();
-
-        Request request;
-        try {
-             Request.Builder builder = new Request.Builder()
-                     .url(url)
-                     .post(body);
-
-             if (!Utils.isEmptyString(bearerToken)) {
-                builder.addHeader("Authorization", "Bearer " + bearerToken);
-             }
-
-             request = builder.build();
-        } catch (IllegalArgumentException e) {
-            logger.e(TAG, e.toString());
-            uploadingCurrently.set(false);
-            return;
-        }
-
-        boolean uploadSuccess = false;
-
-        try {
-            Response response = client.newCall(request).execute();
-            String stringResponse = response.body().string();
-            if (stringResponse.equals("success")) {
-                uploadSuccess = true;
-                logThread.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
-                        if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
-                        uploadingCurrently.set(false);
-                        if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
-                            logThread.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateServer(backoffUpload);
-                                }
-                            });
-                        }
-                        else {
-                            backoffUpload = false;
-                            backoffUploadBatchSize = eventUploadMaxBatchSize;
-                        }
-                    }
-                });
-            } else if (stringResponse.equals("invalid_api_key")) {
-                logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-            } else if (stringResponse.equals("bad_checksum")) {
-                logger.w(TAG,
-                        "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-            } else if (stringResponse.equals("request_db_write_failed")) {
-                logger.w(TAG,
-                        "Couldn't write to request database on server, will attempt to reupload later");
-            } else if (response.code() == 413) {
-
-                // If blocked by one massive event, drop it
-                if (backoffUpload && backoffUploadBatchSize == 1) {
-                    if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
-                    if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
-                    // maybe we want to reset backoffUploadBatchSize after dropping massive event
-                }
-
-                // Server complained about length of request, backoff and try again
-                backoffUpload = true;
-                int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
-                backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
-                logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
-                logThread.post(new Runnable() {
-                   @Override
-                    public void run() {
-                       uploadingCurrently.set(false);
-                       updateServer(true);
-                   }
-                });
-            } else {
-                logger.w(TAG, "Upload failed, " + stringResponse
-                        + ", will attempt to reupload later");
-            }
-        } catch (java.net.ConnectException e) {
-            // logger.w(TAG,
-            // "No internet connection found, unable to upload events");
-            lastError = e;
-        } catch (java.net.UnknownHostException e) {
-            // logger.w(TAG,
-            // "No internet connection found, unable to upload events");
-            lastError = e;
-        } catch (IOException e) {
-            logger.e(TAG, e.toString());
-            lastError = e;
-        } catch (AssertionError e) {
-            // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
-            logger.e(TAG, "Exception:", e);
-            lastError = e;
-        } catch (Exception e) {
-            // Just log any other exception so things don't crash on upload
-            logger.e(TAG, "Exception:", e);
-            lastError = e;
-        }
-
-        if (!uploadSuccess) {
-            uploadingCurrently.set(false);
-        }
-
+    protected void makeEventUploadPostRequest(String events, final long maxEventId, final long maxIdentifyId) {
+        httpService.submitSendEvents(events, maxEventId, maxIdentifyId);
     }
 
     protected DeviceInfo initializeDeviceInfo() {
@@ -2257,6 +2067,103 @@ public class AmplitudeClient {
     public AmplitudeClient setDeviceIdCallback(AmplitudeDeviceIdCallback callback) {
         this.deviceIdCallback = callback;
         return this;
+    }
+
+    protected HttpService.RequestListenerCallback getRequestListenerCallback() {
+        return new HttpService.RequestListenerCallback() {
+            @Override
+            public void onRequestFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
+                boolean uploadSuccess = false;
+                try {
+                    if (response.error != null) {
+                        throw response.error;
+                    }
+                    String stringResponse = response.responseMessage;
+                    if (stringResponse.equals("success")) {
+                        uploadSuccess = true;
+                        logThread.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
+                                if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
+                                uploadingCurrently.set(false);
+                                if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
+                                    logThread.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            updateServer(backoffUpload);
+                                        }
+                                    });
+                                }
+                                else {
+                                    backoffUpload = false;
+                                    backoffUploadBatchSize = eventUploadMaxBatchSize;
+                                }
+                            }
+                        });
+                    } else if (stringResponse.equals("invalid_api_key")) {
+                        logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+                    } else if (stringResponse.equals("bad_checksum")) {
+                        logger.w(TAG,
+                                "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+                    } else if (stringResponse.equals("request_db_write_failed")) {
+                        logger.w(TAG,
+                                "Couldn't write to request database on server, will attempt to reupload later");
+                    } else if (response.responseCode == 413) {
+
+                        // If blocked by one massive event, drop it
+                        if (backoffUpload && backoffUploadBatchSize == 1) {
+                            if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
+                            if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
+                            // maybe we want to reset backoffUploadBatchSize after dropping massive event
+                        }
+
+                        // Server complained about length of request, backoff and try again
+                        backoffUpload = true;
+                        int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
+                        backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
+                        logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
+                        logThread.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                uploadingCurrently.set(false);
+                                updateServer(true);
+                            }
+                        });
+                    } else {
+                        logger.w(TAG, "Upload failed, " + stringResponse
+                                + ", will attempt to reupload later");
+                    }
+                } catch (java.net.ConnectException e) {
+                    // logger.w(TAG,
+                    // "No internet connection found, unable to upload events");
+                    lastError = e;
+                } catch (java.net.UnknownHostException e) {
+                    // logger.w(TAG,
+                    // "No internet connection found, unable to upload events");
+                    lastError = e;
+                } catch (IOException e) {
+                    logger.e(TAG, e.toString());
+                    lastError = e;
+                } catch (AssertionError e) {
+                    // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
+                    logger.e(TAG, "Exception:", e);
+                    lastError = e;
+                } catch (Exception e) {
+                    // Just log any other exception so things don't crash on upload
+                    logger.e(TAG, "Exception:", e);
+                    lastError = e;
+                }
+
+                if (!uploadSuccess) {
+                    uploadingCurrently.set(false);
+                }
+            }
+        };
+    }
+
+    protected HttpService initHttpServiceWithCallback() {
+        return new HttpService(apiKey, url, bearerToken, this.getRequestListenerCallback(), false);
     }
 
     protected void runOnLogThread(Runnable r) {
