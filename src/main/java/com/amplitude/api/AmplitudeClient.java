@@ -163,10 +163,6 @@ public class AmplitudeClient {
     AtomicBoolean uploadingCurrently = new AtomicBoolean(false);
 
     /**
-     * The last SDK error - used for testing.
-     */
-    Throwable lastError;
-    /**
      * The url for Amplitude API endpoint
      */
     String url = Constants.EVENT_LOG_URL;
@@ -2063,92 +2059,69 @@ public class AmplitudeClient {
     protected HttpService.RequestListener getRequestListener() {
         return new HttpService.RequestListener() {
             @Override
-            public void onRequestFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
-                boolean uploadSuccess = false;
-                try {
-                    if (response.error != null) {
-                        throw response.error;
-                    }
-                    String stringResponse = response.responseMessage;
-                    if (stringResponse.equals("success")) {
-                        uploadSuccess = true;
-                        logThread.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
-                                if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
-                                uploadingCurrently.set(false);
-                                if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
-                                    logThread.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            updateServer(backoffUpload);
-                                        }
-                                    });
+            public void onSuccessFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
+                logThread.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
+                        if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
+                        uploadingCurrently.set(false);
+                        if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
+                            logThread.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateServer(backoffUpload);
                                 }
-                                else {
-                                    backoffUpload = false;
-                                    backoffUploadBatchSize = eventUploadMaxBatchSize;
-                                }
-                            }
-                        });
-                    } else if (stringResponse.equals("invalid_api_key")) {
-                        logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-                    } else if (stringResponse.equals("bad_checksum")) {
-                        logger.w(TAG,
-                                "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-                    } else if (stringResponse.equals("request_db_write_failed")) {
-                        logger.w(TAG,
-                                "Couldn't write to request database on server, will attempt to reupload later");
-                    } else if (response.responseCode == 413) {
-
-                        // If blocked by one massive event, drop it
-                        if (backoffUpload && backoffUploadBatchSize == 1) {
-                            if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
-                            if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
-                            // maybe we want to reset backoffUploadBatchSize after dropping massive event
+                            });
                         }
-
-                        // Server complained about length of request, backoff and try again
-                        backoffUpload = true;
-                        int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
-                        backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
-                        logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
-                        logThread.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                uploadingCurrently.set(false);
-                                updateServer(true);
-                            }
-                        });
-                    } else {
-                        logger.w(TAG, "Upload failed, " + stringResponse
-                                + ", will attempt to reupload later");
+                        else {
+                            backoffUpload = false;
+                            backoffUploadBatchSize = eventUploadMaxBatchSize;
+                        }
                     }
-                } catch (java.net.ConnectException e) {
-                    // logger.w(TAG,
-                    // "No internet connection found, unable to upload events");
-                    lastError = e;
-                } catch (java.net.UnknownHostException e) {
-                    // logger.w(TAG,
-                    // "No internet connection found, unable to upload events");
-                    lastError = e;
-                } catch (IOException e) {
-                    logger.e(TAG, e.toString());
-                    lastError = e;
-                } catch (AssertionError e) {
-                    // This can be caused by a NoSuchAlgorithmException thrown by DefaultHttpClient
-                    logger.e(TAG, "Exception:", e);
-                    lastError = e;
-                } catch (Exception e) {
-                    // Just log any other exception so things don't crash on upload
-                    logger.e(TAG, "Exception:", e);
-                    lastError = e;
-                }
+                });
+            }
 
-                if (!uploadSuccess) {
-                    uploadingCurrently.set(false);
+            @Override
+            public void onErrorFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
+                String stringResponse = response.responseMessage;
+                if (stringResponse.equals("invalid_api_key")) {
+                    logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+                } else if (stringResponse.equals("bad_checksum")) {
+                    logger.w(TAG,
+                            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+                } else if (stringResponse.equals("request_db_write_failed")) {
+                    logger.w(TAG,
+                            "Couldn't write to request database on server, will attempt to reupload later");
+                } else if (response.responseCode == 413) {
+                    // If blocked by one massive event, drop it
+                    if (backoffUpload && backoffUploadBatchSize == 1) {
+                        if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
+                        if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
+                        // maybe we want to reset backoffUploadBatchSize after dropping massive event
+                    }
+
+                    // Server complained about length of request, backoff and try again
+                    backoffUpload = true;
+                    int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
+                    backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
+                    logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
+                    logThread.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            uploadingCurrently.set(false);
+                            updateServer(true);
+                        }
+                    });
+                } else {
+                    logger.w(TAG, "Upload failed, " + stringResponse
+                            + ", will attempt to reupload later");
                 }
+            }
+
+            @Override
+            public void onException(String exceptionString) {
+                logger.e(TAG, exceptionString);
             }
         };
     }

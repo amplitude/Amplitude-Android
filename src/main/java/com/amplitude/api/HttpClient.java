@@ -30,7 +30,8 @@ public class HttpClient {
 
     protected static long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 
-    public static HttpResponse getResponse(String apiKey, String url, String bearerToken, String events) {
+    public static HttpResponse getSyncHttpResponse(String apiKey, String url, String bearerToken, String events)
+            throws IllegalArgumentException, IOException {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
 
@@ -50,60 +51,48 @@ public class HttpClient {
             // this will never be thrown
         }
 
-        HttpURLConnection connection = null;
+        StringBuilder sb = new StringBuilder();
+        sb.append("v=" + apiVersionString + "&");
+        sb.append("client=" + apiKey + "&");
+        sb.append("e=" + events + "&");
+        sb.append("upload_time=" + timestampString + "&");
+        sb.append("checksum=" + checksumString);
+        String bodyString = sb.toString();
 
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("v=" + apiVersionString + "&");
-            sb.append("client=" + apiKey + "&");
-            sb.append("e=" + events + "&");
-            sb.append("upload_time=" + timestampString + "&");
-            sb.append("checksum=" + checksumString);
-            String bodyString = sb.toString();
+        HttpURLConnection connection = getNewConnection(url);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        connection.setRequestProperty("Accept", "application/json");
 
-            connection = getNewConnection(url);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            connection.setRequestProperty("Accept", "application/json");
-
-            if (!Utils.isEmptyString(bearerToken)) {
-                connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
-            }
-
-            connection.setDoOutput(true);
-            OutputStream os = connection.getOutputStream();
-            byte[] input = bodyString.getBytes("UTF-8"); //bodyJson.toString().getBytes("UTF-8");
-            os.write(input, 0, input.length);
-        } catch (IllegalArgumentException | MalformedURLException e) {
-            return new HttpResponse("", 500, e);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!Utils.isEmptyString(bearerToken)) {
+            connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
         }
 
-        try {
-            InputStream inputStream;
-            if (100 <= connection.getResponseCode() && connection.getResponseCode() <= 399) {
-                inputStream = connection.getInputStream();
-            } else {
-                inputStream = connection.getErrorStream();
-            }
-            BufferedReader br = null;
-            if (inputStream != null) {
-                br = new BufferedReader(new InputStreamReader(inputStream));
-            }
+        connection.setDoOutput(true);
+        OutputStream os = connection.getOutputStream();
+        byte[] input = bodyString.getBytes("UTF-8"); //bodyJson.toString().getBytes("UTF-8");
+        os.write(input, 0, input.length);
 
-            StringBuilder sb = new StringBuilder();
-            String output = "";
-            if (br != null) {
-                while ((output = br.readLine()) != null) {
-                    sb.append(output);
-                }
-            }
-            String stringResponse = sb.toString();
-            return new HttpResponse(stringResponse, connection.getResponseCode(), null);
-        } catch (IOException e) {
-            return new HttpResponse("", 500, e);
+        InputStream inputStream;
+        if (100 <= connection.getResponseCode() && connection.getResponseCode() <= 399) {
+            inputStream = connection.getInputStream();
+        } else {
+            inputStream = connection.getErrorStream();
         }
+        BufferedReader br = null;
+        if (inputStream != null) {
+            br = new BufferedReader(new InputStreamReader(inputStream));
+        }
+
+        sb = new StringBuilder();
+        String output = "";
+        if (br != null) {
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
+        }
+        String stringResponse = sb.toString();
+        return new HttpResponse(stringResponse, connection.getResponseCode());
     }
 
     public static HttpURLConnection getNewConnection(String url) throws IOException {
