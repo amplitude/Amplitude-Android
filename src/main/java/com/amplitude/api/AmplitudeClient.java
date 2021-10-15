@@ -2059,7 +2059,7 @@ public class AmplitudeClient {
     protected HttpService.RequestListener getRequestListener() {
         return new HttpService.RequestListener() {
             @Override
-            public void onSuccessFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
+            public void onSuccess(long maxEventId, long maxIdentifyId) {
                 logThread.post(new Runnable() {
                     @Override
                     public void run() {
@@ -2083,45 +2083,26 @@ public class AmplitudeClient {
             }
 
             @Override
-            public void onErrorFinished(HttpResponse response, long maxEventId, long maxIdentifyId) {
-                String stringResponse = response.responseMessage;
-                if (stringResponse.equals("invalid_api_key")) {
-                    logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-                } else if (stringResponse.equals("bad_checksum")) {
-                    logger.w(TAG,
-                            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-                } else if (stringResponse.equals("request_db_write_failed")) {
-                    logger.w(TAG,
-                            "Couldn't write to request database on server, will attempt to reupload later");
-                } else if (response.responseCode == 413) {
-                    // If blocked by one massive event, drop it
-                    if (backoffUpload && backoffUploadBatchSize == 1) {
-                        if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
-                        if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
-                        // maybe we want to reset backoffUploadBatchSize after dropping massive event
-                    }
-
-                    // Server complained about length of request, backoff and try again
-                    backoffUpload = true;
-                    int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
-                    backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
-                    logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
-                    logThread.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            uploadingCurrently.set(false);
-                            updateServer(true);
-                        }
-                    });
-                } else {
-                    logger.w(TAG, "Upload failed, " + stringResponse
-                            + ", will attempt to reupload later");
+            public void onError(long maxEventId, long maxIdentifyId) {
+                // If blocked by one massive event, drop it
+                if (backoffUpload && backoffUploadBatchSize == 1) {
+                    if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);
+                    if (maxIdentifyId >= 0) dbHelper.removeIdentify(maxIdentifyId);
+                    // maybe we want to reset backoffUploadBatchSize after dropping massive event
                 }
-            }
 
-            @Override
-            public void onException(String exceptionString) {
-                logger.e(TAG, exceptionString);
+                // Server complained about length of request, backoff and try again
+                backoffUpload = true;
+                int numEvents = Math.min((int)dbHelper.getEventCount(), backoffUploadBatchSize);
+                backoffUploadBatchSize = (int)Math.ceil(numEvents / 2.0);
+                logger.w(TAG, "Request too large, will decrease size and attempt to reupload");
+                logThread.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        uploadingCurrently.set(false);
+                        updateServer(true);
+                    }
+                });
             }
         };
     }

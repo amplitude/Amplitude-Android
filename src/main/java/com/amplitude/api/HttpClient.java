@@ -15,6 +15,14 @@ import java.security.MessageDigest;
 
 public class HttpClient {
 
+    private String apiKey, url, bearerToken;
+
+    public HttpClient(String apiKey, String url, String bearerToken) {
+        this.apiKey = apiKey;
+        this.url = url;
+        this.bearerToken = bearerToken;
+    }
+
     protected static String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
@@ -30,7 +38,7 @@ public class HttpClient {
 
     protected static long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 
-    public static HttpResponse getSyncHttpResponse(String apiKey, String url, String bearerToken, String events)
+    public HttpResponse getSyncHttpResponse(String events)
             throws IllegalArgumentException, IOException {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
