@@ -10,12 +10,17 @@ public class MessageHandler extends Handler {
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     static final int REQUEST_FLUSH = 1;
-    private final HttpClient httpClient;
-    private final HttpService.RequestListener requestListener;
+    private HttpClient httpClient;
+    private HttpService.RequestListener requestListener;
 
-    public MessageHandler(Looper looper, HttpClient httpClient, HttpService.RequestListener requestListener) {
+    public MessageHandler(Looper looper, boolean secure, String apiKey, String url, String bearerToken,
+                          HttpService.RequestListener requestListener) {
         super(looper);
-        this.httpClient = httpClient;
+        if (secure) {
+            httpClient = new SSLHttpsClient(apiKey, url, bearerToken);
+        } else {
+            httpClient = new HttpClient(apiKey, url, bearerToken);
+        }
         this.requestListener = requestListener;
     }
 

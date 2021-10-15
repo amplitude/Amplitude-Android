@@ -14,14 +14,7 @@ public class HttpService {
                         boolean secure) {
         this.httpThread = new HandlerThread("httpThread", THREAD_PRIORITY_BACKGROUND);
         httpThread.start();
-
-        HttpClient httpClient;
-        if (secure) {
-            httpClient = new SSLHttpsClient(apiKey, url, bearerToken);
-        } else {
-            httpClient = new HttpClient(apiKey, url, bearerToken);
-        }
-        this.messageHandler = new MessageHandler(httpThread.getLooper(), httpClient, requestListener);
+        this.messageHandler = new MessageHandler(httpThread.getLooper(), secure, apiKey, url, bearerToken, requestListener);
     }
 
     //sends a message to our MessageHandler
