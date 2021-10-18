@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 
@@ -60,11 +59,11 @@ public class HttpClient {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("v=" + apiVersionString + "&");
-        sb.append("client=" + apiKey + "&");
-        sb.append("e=" + events + "&");
-        sb.append("upload_time=" + timestampString + "&");
-        sb.append("checksum=" + checksumString);
+        sb.append("v="); sb.append(apiVersionString); sb.append("&");
+        sb.append("client="); sb.append(apiKey); sb.append("&");
+        sb.append("e="); sb.append(events); sb.append("&");
+        sb.append("upload_time="); sb.append(timestampString); sb.append("&");
+        sb.append("checksum="); sb.append(checksumString);
         String bodyString = sb.toString();
 
         HttpURLConnection connection = getNewConnection(url);
@@ -78,7 +77,7 @@ public class HttpClient {
 
         connection.setDoOutput(true);
         OutputStream os = connection.getOutputStream();
-        byte[] input = bodyString.getBytes("UTF-8"); //bodyJson.toString().getBytes("UTF-8");
+        byte[] input = bodyString.getBytes("UTF-8");
         os.write(input, 0, input.length);
 
         InputStream inputStream;
@@ -103,7 +102,7 @@ public class HttpClient {
         return new HttpResponse(stringResponse, connection.getResponseCode());
     }
 
-    public static HttpURLConnection getNewConnection(String url) throws IOException {
+    public HttpURLConnection getNewConnection(String url) throws IOException {
         URL urlObject = new URL(url);
         return (HttpURLConnection) urlObject.openConnection();
     }
