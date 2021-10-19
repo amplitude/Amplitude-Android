@@ -59,11 +59,11 @@ public class HttpClient {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("v="); sb.append(apiVersionString); sb.append("&");
-        sb.append("client="); sb.append(apiKey); sb.append("&");
-        sb.append("e="); sb.append(events); sb.append("&");
-        sb.append("upload_time="); sb.append(timestampString); sb.append("&");
-        sb.append("checksum="); sb.append(checksumString);
+        sb.append("v="); sb.append(apiVersionString);
+        sb.append("&client="); sb.append(apiKey);
+        sb.append("&e="); sb.append(events);
+        sb.append("&upload_time="); sb.append(timestampString);
+        sb.append("&checksum="); sb.append(checksumString);
         String bodyString = sb.toString();
 
         HttpURLConnection connection = getNewConnection(url);

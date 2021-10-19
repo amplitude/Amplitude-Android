@@ -10,7 +10,7 @@ public class MessageHandler extends Handler {
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     static final int REQUEST_FLUSH = 1;
-    private HttpClient httpClient;
+    HttpClient httpClient;
     private HttpService.RequestListener requestListener;
 
     public MessageHandler(Looper looper, boolean secure, String apiKey, String url, String bearerToken,
@@ -38,7 +38,9 @@ public class MessageHandler extends Handler {
 
     private void flushEvents(SendEventsData data) {
         try {
+            System.err.println("Attempted flush 2");
             HttpResponse response = httpClient.getSyncHttpResponse(data.events);
+            System.err.println(response.responseCode + " " + response.responseMessage);
             if (response.responseCode == 200 && response.responseMessage.equals("success")) {
                 requestListener.onSuccess(data.maxEventId, data.maxIdentifyId);
             } else {
@@ -59,6 +61,7 @@ public class MessageHandler extends Handler {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             logger.e(TAG, e.toString());
         }
     }

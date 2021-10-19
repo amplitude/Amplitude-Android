@@ -1,7 +1,5 @@
 package com.amplitude.api;
 
-import android.content.Context;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.json.JSONArray;
@@ -13,8 +11,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
-
-import okhttp3.mockwebserver.RecordedRequest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -121,6 +117,7 @@ public class InitializeTest extends BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         RecordedRequest request = runRequest(amplitude);
+        System.err.println(request.getBody());
         JSONArray events = getEventsFromRequest(request);
 
         assertEquals(events.getJSONObject(0).getLong("event_id"), 1L);

@@ -14,8 +14,6 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
-import okhttp3.mockwebserver.RecordedRequest;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;

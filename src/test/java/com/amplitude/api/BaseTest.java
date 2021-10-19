@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -13,21 +12,31 @@ import androidx.test.core.app.ApplicationProvider;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
+import java.net.UnknownServiceException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
 import static org.robolectric.Shadows.shadowOf;
 
@@ -55,6 +64,49 @@ public class BaseTest {
 
         public AmplitudeClientWithTime(MockClock mockClock) { this.mockClock = mockClock; }
 
+        public synchronized AmplitudeClient initializeInternal(
+                final Context context,
+                final String apiKey,
+                final String userId,
+                final String platform,
+                final boolean enableDiagnosticLogging
+        ) {
+            super.initializeInternal(context, apiKey, userId, platform, enableDiagnosticLogging);
+            ShadowLooper looper = shadowOf(amplitude.logThread.getLooper());
+            looper.runToEndOfTasks();
+            try {
+                HttpClient spyClient = Mockito.spy(amplitude.httpService.messageHandler.httpClient);
+
+                System.err.println("here1");
+                Mockito.when(spyClient.getNewConnection(amplitude.url)).thenAnswer(new Answer<HttpURLConnection>() {
+                            @Override
+                            public HttpURLConnection answer(InvocationOnMock invocation) throws Throwable {
+                                System.err.println("Sent request mock extra");
+                                HttpURLConnection conn = Mockito.spy(server.getNextResponse());
+                                System.err.println(conn);
+                                return conn;
+                            }
+                        });
+
+                System.err.println("here2");
+
+                Mockito.doAnswer(new Answer<HttpResponse>() {
+                    @Override
+                    public HttpResponse answer(InvocationOnMock invocation) throws Throwable {
+                        System.err.println("Sent request mock extra 2");
+                        String eventsSent = invocation.getArgumentAt(0, String.class);
+                        server.sendRequest(new RecordedRequest(eventsSent));
+                        return (HttpResponse) invocation.callRealMethod();
+                    }
+                }).when(spyClient).getSyncHttpResponse(Mockito.anyString());
+
+                amplitude.httpService.messageHandler.httpClient = spyClient;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
         @Override
         protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
     }
@@ -68,8 +120,8 @@ public class BaseTest {
 
         @Override
         Cursor queryDb(
-            SQLiteDatabase db, String table, String[] columns, String selection,
-            String[] selectionArgs, String groupBy, String having, String orderBy, String limit
+                SQLiteDatabase db, String table, String[] columns, String selection,
+                String[] selectionArgs, String groupBy, String having, String orderBy, String limit
         ) {
             // cannot import CursorWindowAllocationException, so we throw the base class instead
             throw new RuntimeException("Cursor window allocation of 2048 kb failed.");
@@ -81,8 +133,8 @@ public class BaseTest {
 
     protected AmplitudeClient amplitude;
     protected Context context;
-    protected MockWebServer server;
     protected MockClock clock;
+    protected MockWebServer server;
     protected String apiKey = "1cc2c1978ebab0f6451112a8f5df4f4e";
     protected String[] instanceNames = {Constants.DEFAULT_INSTANCE, "app1", "app2", "newApp1", "newApp2", "new_app"};
 
@@ -118,36 +170,32 @@ public class BaseTest {
         Amplitude.instances.clear();
         DatabaseHelper.instances.clear();
 
-        if (withServer) {
-            server = new MockWebServer();
-            server.start();
-        }
-
         if (clock == null) {
             clock = new MockClock();
         }
 
-        if (amplitude == null) {
-            amplitude = new AmplitudeClientWithTime(clock);
-            // this sometimes deadlocks with lock contention by logThread and httpThread for
-            // a ShadowWrangler instance and the ShadowLooper class
-            // Might be a sign of a bug, or just Robolectric's bug.
-        }
-
-        if (server != null) {
-            amplitude.url = server.url("/").toString();
+        if (withServer) {
+            server = new MockWebServer();
+            if (amplitude == null) {
+                amplitude = Mockito.spy(new AmplitudeClientWithTime(clock));
+            }
+        } else {
+            if (amplitude == null) {
+                // this sometimes deadlocks with lock contention by logThread and httpThread for
+                // a ShadowWrangler instance and the ShadowLooper class
+                // Might be a sign of a bug, or just Robolectric's bug.
+                amplitude = new AmplitudeClientWithTime(clock);
+            }
         }
     }
 
     public void tearDown() throws Exception {
         if (amplitude != null) {
             amplitude.logThread.getLooper().quit();
-            amplitude.httpThread.getLooper().quit();
+            if (amplitude.httpService != null) {
+                amplitude.httpService.shutdown();
+            }
             amplitude = null;
-        }
-
-        if (server != null) {
-            server.shutdown();
         }
 
         Amplitude.instances.clear();
@@ -155,15 +203,21 @@ public class BaseTest {
     }
 
     public RecordedRequest runRequest(AmplitudeClient amplitude) {
-        server.enqueue(new MockResponse().setBody("success"));
-        ShadowLooper httpLooper = shadowOf(amplitude.httpThread.getLooper());
-        httpLooper.runToEndOfTasks();
-
         try {
-            return server.takeRequest(1, SECONDS);
-        } catch (InterruptedException e) {
-            return null;
+            MockHttpUrlConnection response = new MockHttpUrlConnection(amplitude.url).setBody("success");
+            server.enqueueResponse(response);
+
+            ShadowLooper httpLooper = shadowOf(amplitude.httpService.getHttpThreadLooper());
+            httpLooper.runToEndOfTasks();
+
+            shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+
+            System.err.println(server.requests.size());
+            return server.takeRequest();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     public RecordedRequest sendEvent(AmplitudeClient amplitude, String name, JSONObject props) {
@@ -251,11 +305,7 @@ public class BaseTest {
     }
 
     public JSONArray getEventsFromRequest(RecordedRequest request) throws JSONException {
-        Map<String, String> parsedBody = parseRequest(request.getUtf8Body());
-        if (parsedBody == null && !parsedBody.containsKey("e")) {
-            return null;
-        }
-        return new JSONArray(parsedBody.get("e"));
+        return new JSONArray(request.getBody());
     }
 
     // parse request string into a key:value map
@@ -273,4 +323,95 @@ public class BaseTest {
         }
         return null;
     }
+
+    public class RecordedRequest {
+        public String body;
+        public String getBody() { return body; }
+        public RecordedRequest(String body) {
+            this.body = body;
+        }
+    }
+
+    public class MockWebServer {
+        private Queue<RecordedRequest> requests;
+        private Queue<MockHttpUrlConnection> queue;
+        private int numRequestsMade = 0;
+
+        public MockWebServer() {
+            this.requests = new LinkedList<>();
+            this.queue = new LinkedList<>();
+        }
+
+        public void sendRequest(RecordedRequest requesto) {
+            requests.add(requesto);
+            numRequestsMade++;
+        }
+
+        public void enqueueResponse(MockHttpUrlConnection res) { queue.add(res); }
+        public MockHttpUrlConnection getNextResponse() { return queue.poll(); }
+        public RecordedRequest takeRequest() {
+            return requests.poll();
+        }
+
+        public int getRequestCount() {
+            return numRequestsMade;
+        }
+    }
+
+    public static class MockHttpUrlConnection extends HttpURLConnection {
+
+        public MockHttpUrlConnection(String str) throws MalformedURLException {
+            this(new URL(str));
+        }
+
+        protected MockHttpUrlConnection(URL u) {
+            super(u);
+            this.responseCode = 200;
+            this.responseMessage = "";
+        }
+
+        public static MockHttpUrlConnection defaultReq() {
+            try {
+                MockHttpUrlConnection request = new MockHttpUrlConnection(Constants.EVENT_LOG_URL);
+                return request;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public MockHttpUrlConnection setBody(String body) {
+            responseMessage = body;
+            return this;
+        }
+        public String getBody() {
+            return responseMessage;
+        }
+
+        public MockHttpUrlConnection setResponseCode(int code) {
+            this.responseCode = code;
+            return this;
+        }
+
+        public OutputStream getOutputStream() {
+            return new ByteArrayOutputStream();
+        }
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(this.responseMessage.getBytes(StandardCharsets.UTF_8));
+        }
+
+        @Override
+        public void disconnect() {
+
+        }
+        @Override
+        public boolean usingProxy() {
+            return false;
+        }
+        @Override
+        public void connect() throws IOException {
+
+        }
+    }
+
 }
