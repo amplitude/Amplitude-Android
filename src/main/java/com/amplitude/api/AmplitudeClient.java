@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -335,7 +334,7 @@ public class AmplitudeClient {
                         }
                     });
 
-                    httpService = initHttpServiceWithCallback();
+                    httpService = initHttpService();
 
                     initialized = true;
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
@@ -2105,7 +2104,7 @@ public class AmplitudeClient {
         };
     }
 
-    protected HttpService initHttpServiceWithCallback() {
+    protected HttpService initHttpService() {
         return new HttpService(apiKey, url, bearerToken, this.getRequestListener(), false);
     }
 

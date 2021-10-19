@@ -14,7 +14,9 @@ import java.security.MessageDigest;
 
 public class HttpClient {
 
-    private String apiKey, url, bearerToken;
+    private String apiKey;
+    private String url;
+    private String bearerToken;
 
     public HttpClient(String apiKey, String url, String bearerToken) {
         this.apiKey = apiKey;
@@ -22,7 +24,7 @@ public class HttpClient {
         this.bearerToken = bearerToken;
     }
 
-    protected static String bytesToHexString(byte[] bytes) {
+    private String bytesToHexString(byte[] bytes) {
         final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                 'c', 'd', 'e', 'f' };
         char[] hexChars = new char[bytes.length * 2];
@@ -35,7 +37,7 @@ public class HttpClient {
         return new String(hexChars);
     }
 
-    protected static long getCurrentTimeMillis() { return System.currentTimeMillis(); }
+    private long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 
     public HttpResponse getSyncHttpResponse(String events)
             throws IllegalArgumentException, IOException {

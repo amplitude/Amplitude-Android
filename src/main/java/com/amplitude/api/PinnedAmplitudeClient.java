@@ -65,7 +65,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         return initializeInternal(context, apiKey, userId);
     }
 
-    protected HttpService initHttpServiceWithCallback() {
+    protected HttpService initHttpService() {
         return new HttpService(apiKey, url, bearerToken, this.getRequestListener(), true);
     }
 
