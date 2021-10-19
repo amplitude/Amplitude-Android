@@ -43,19 +43,22 @@ public class MessageHandler extends Handler {
                 requestListener.onSuccess(data.maxEventId, data.maxIdentifyId);
             } else {
                 String stringResponse = response.responseMessage;
-                if (stringResponse.equals("invalid_api_key")) {
-                    logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-                } else if (stringResponse.equals("bad_checksum")) {
-                    logger.w(TAG,
-                            "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-                } else if (stringResponse.equals("request_db_write_failed")) {
-                    logger.w(TAG,
-                            "Couldn't write to request database on server, will attempt to reupload later");
-                } else if (response.responseCode == 413) {
-                    requestListener.onError(data.maxEventId, data.maxIdentifyId);
+                if (response.responseCode == 413) {
+                    requestListener.onError(data.maxEventId, data.maxIdentifyId, true);
                 } else {
-                    logger.w(TAG, "Upload failed, " + stringResponse
-                            + ", will attempt to reupload later");
+                    if (stringResponse.equals("invalid_api_key")) {
+                        logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
+                    } else if (stringResponse.equals("bad_checksum")) {
+                        logger.w(TAG,
+                                "Bad checksum, post request was mangled in transit, will attempt to reupload later");
+                    } else if (stringResponse.equals("request_db_write_failed")) {
+                        logger.w(TAG,
+                                "Couldn't write to request database on server, will attempt to reupload later");
+                    } else {
+                        logger.w(TAG, "Upload failed, " + stringResponse
+                                + ", will attempt to reupload later");
+                    }
+                    requestListener.onError(data.maxEventId, data.maxIdentifyId, false);
                 }
             }
         } catch (Exception e) {

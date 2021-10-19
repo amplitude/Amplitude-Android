@@ -2059,25 +2059,34 @@ public class AmplitudeClient {
         return new HttpService.RequestListener() {
             @Override
             public void onSuccess(long maxEventId, long maxIdentifyId) {
-                if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
-                if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
-                uploadingCurrently.set(false);
-                if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
-                    logThread.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            updateServer(backoffUpload);
+                logThread.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (maxEventId >= 0) dbHelper.removeEvents(maxEventId);
+                        if (maxIdentifyId >= 0) dbHelper.removeIdentifys(maxIdentifyId);
+                        uploadingCurrently.set(false);
+                        if (dbHelper.getTotalEventCount() > eventUploadThreshold) {
+                            logThread.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateServer(backoffUpload);
+                                }
+                            });
+                        } else {
+                            backoffUpload = false;
+                            backoffUploadBatchSize = eventUploadMaxBatchSize;
                         }
-                    });
-                }
-                else {
-                    backoffUpload = false;
-                    backoffUploadBatchSize = eventUploadMaxBatchSize;
-                }
+                    }
+                });
             }
 
             @Override
-            public void onError(long maxEventId, long maxIdentifyId) {
+            public void onError(long maxEventId, long maxIdentifyId, boolean needsRetry) {
+                if (!needsRetry) {
+                    uploadingCurrently.set(false);
+                    return;
+                }
+
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);

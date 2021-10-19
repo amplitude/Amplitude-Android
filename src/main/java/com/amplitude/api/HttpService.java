@@ -25,7 +25,7 @@ public class HttpService {
 
     public interface RequestListener {
         void onSuccess(long maxEventId, long maxIdentifyId);
-        void onError(long maxEventId, long maxIdentifyId);
+        void onError(long maxEventId, long maxIdentifyId, boolean needsRetry);
     }
 
     public Looper getHttpThreadLooper() {
