@@ -59,7 +59,6 @@ public class MessageHandler extends Handler {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             logger.e(TAG, e.toString());
         }
     }

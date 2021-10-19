@@ -95,7 +95,7 @@ public class BaseTest {
 
                 amplitude.httpService.messageHandler.httpClient = spyClient;
             } catch (IOException e) {
-                e.printStackTrace();
+                fail(e.toString());
             }
             return this;
         }
@@ -207,7 +207,7 @@ public class BaseTest {
 
             return server.takeRequest();
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            fail(e.toString());
         }
         return null;
     }
@@ -367,7 +367,7 @@ public class BaseTest {
                 MockHttpUrlConnection request = new MockHttpUrlConnection(Constants.EVENT_LOG_URL);
                 return request;
             } catch (MalformedURLException e) {
-                e.printStackTrace();
+                fail(e.toString());
             }
             return null;
         }

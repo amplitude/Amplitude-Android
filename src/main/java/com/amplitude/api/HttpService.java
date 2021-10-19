@@ -23,9 +23,9 @@ public class HttpService {
         messageHandler.sendMessage(messageHandler.obtainMessage(MessageHandler.REQUEST_FLUSH, data));
     }
 
-    public static class RequestListener {
-        public void onSuccess(long maxEventId, long maxIdentifyId) {}
-        public void onError(long maxEventId, long maxIdentifyId) {}
+    public interface RequestListener {
+        void onSuccess(long maxEventId, long maxIdentifyId);
+        void onError(long maxEventId, long maxIdentifyId);
     }
 
     public Looper getHttpThreadLooper() {
