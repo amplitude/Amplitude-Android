@@ -76,24 +76,17 @@ public class BaseTest {
             looper.runToEndOfTasks();
             try {
                 HttpClient spyClient = Mockito.spy(amplitude.httpService.messageHandler.httpClient);
-
-                System.err.println("here1");
                 Mockito.when(spyClient.getNewConnection(amplitude.url)).thenAnswer(new Answer<HttpURLConnection>() {
                             @Override
                             public HttpURLConnection answer(InvocationOnMock invocation) throws Throwable {
-                                System.err.println("Sent request mock extra");
                                 HttpURLConnection conn = Mockito.spy(server.getNextResponse());
-                                System.err.println(conn);
                                 return conn;
                             }
                         });
 
-                System.err.println("here2");
-
                 Mockito.doAnswer(new Answer<HttpResponse>() {
                     @Override
                     public HttpResponse answer(InvocationOnMock invocation) throws Throwable {
-                        System.err.println("Sent request mock extra 2");
                         String eventsSent = invocation.getArgumentAt(0, String.class);
                         server.sendRequest(new RecordedRequest(eventsSent));
                         return (HttpResponse) invocation.callRealMethod();
@@ -212,7 +205,6 @@ public class BaseTest {
 
             shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
-            System.err.println(server.requests.size());
             return server.takeRequest();
         } catch (MalformedURLException e) {
             e.printStackTrace();

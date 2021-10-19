@@ -117,7 +117,6 @@ public class InitializeTest extends BaseTest {
         Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
 
         RecordedRequest request = runRequest(amplitude);
-        System.err.println(request.getBody());
         JSONArray events = getEventsFromRequest(request);
 
         assertEquals(events.getJSONObject(0).getLong("event_id"), 1L);

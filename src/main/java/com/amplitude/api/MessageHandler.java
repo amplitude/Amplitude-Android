@@ -38,9 +38,7 @@ public class MessageHandler extends Handler {
 
     private void flushEvents(SendEventsData data) {
         try {
-            System.err.println("Attempted flush 2");
             HttpResponse response = httpClient.getSyncHttpResponse(data.events);
-            System.err.println(response.responseCode + " " + response.responseMessage);
             if (response.responseCode == 200 && response.responseMessage.equals("success")) {
                 requestListener.onSuccess(data.maxEventId, data.maxIdentifyId);
             } else {
