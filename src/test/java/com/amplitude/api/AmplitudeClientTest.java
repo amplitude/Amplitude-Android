@@ -1995,10 +1995,11 @@ public class AmplitudeClientTest extends BaseTest {
 
     @Test
     public void testSetServerZoneWithoutUpdateServerUrl() {
+        String urlBeforeChange = amplitude.url;
         AmplitudeServerZone euZone = AmplitudeServerZone.EU;
         amplitude.setServerZone(euZone, false);
         assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
-        assertEquals(Constants.EVENT_LOG_URL, amplitude.url);
+        assertEquals(urlBeforeChange, amplitude.url);
     }
 
     @Test
