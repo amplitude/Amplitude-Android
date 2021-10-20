@@ -24,9 +24,10 @@ public class ConfigManager {
     private ConfigManager() {
     }
 
-    public void refresh(RefreshListener listener) {
+    public void refresh(RefreshListener listener, AmplitudeServerZone serverZone) {
         try {
-            URL obj = new URL(Constants.DYNAMIC_CONFIG_URL);
+            String dynamicConfigUrl = AmplitudeServerZone.getDynamicConfigApi(serverZone);
+            URL obj = new URL(dynamicConfigUrl);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
             int responseCode = con.getResponseCode();

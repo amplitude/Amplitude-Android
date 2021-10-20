@@ -17,7 +17,9 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -269,6 +271,19 @@ public class BaseTest {
             }
             return query_pairs;
         } catch (UnsupportedEncodingException e) {
+            fail(e.toString());
+        }
+        return null;
+    }
+
+    protected Object getPrivateFieldValueFromClient(AmplitudeClient client, String field) {
+        try {
+            Field privateField = AmplitudeClient.class.getDeclaredField(field);
+            privateField.setAccessible(true);
+            return privateField.get(client);
+        } catch (IllegalAccessException e) {
+            fail(e.toString());
+        } catch (NoSuchFieldException e) {
             fail(e.toString());
         }
         return null;
