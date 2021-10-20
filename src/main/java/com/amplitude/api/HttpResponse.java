@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
-public class HttpResponse {
-
+class HttpResponse {
     public String responseMessage;
     public int responseCode;
 
@@ -9,5 +8,4 @@ public class HttpResponse {
         this.responseMessage = responseMessage;
         this.responseCode = responseCode;
     }
-
 }

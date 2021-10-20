@@ -2082,12 +2082,12 @@ public class AmplitudeClient {
             }
 
             @Override
-            public void onError(long maxEventId, long maxIdentifyId, boolean needsRetry) {
-                if (!needsRetry) {
-                    uploadingCurrently.set(false);
-                    return;
-                }
+            public void onError() {
+                uploadingCurrently.set(false);
+            }
 
+            @Override
+            public void onErrorRetry(long maxEventId, long maxIdentifyId) {
                 // If blocked by one massive event, drop it
                 if (backoffUpload && backoffUploadBatchSize == 1) {
                     if (maxEventId >= 0) dbHelper.removeEvent(maxEventId);

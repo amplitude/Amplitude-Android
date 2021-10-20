@@ -12,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 
-public class HttpClient {
+class HttpClient {
 
     private String apiKey;
     private String url;
@@ -39,7 +39,7 @@ public class HttpClient {
 
     private long getCurrentTimeMillis() { return System.currentTimeMillis(); }
 
-    public HttpResponse getSyncHttpResponse(String events)
+    protected HttpResponse getSyncHttpResponse(String events)
             throws IllegalArgumentException, IOException {
         String apiVersionString = "" + Constants.API_VERSION;
         String timestampString = "" + getCurrentTimeMillis();
@@ -104,7 +104,7 @@ public class HttpClient {
         return new HttpResponse(stringResponse, connection.getResponseCode());
     }
 
-    public HttpURLConnection getNewConnection(String url) throws IOException {
+    protected HttpURLConnection getNewConnection(String url) throws IOException {
         URL urlObject = new URL(url);
         return (HttpURLConnection) urlObject.openConnection();
     }

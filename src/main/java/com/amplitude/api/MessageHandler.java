@@ -4,7 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
-public class MessageHandler extends Handler {
+class MessageHandler extends Handler {
 
     private static final String TAG = MessageHandler.class.getName();
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
@@ -32,7 +32,8 @@ public class MessageHandler extends Handler {
                 flushEvents(data);
                 break;
             default:
-                throw new AssertionError("Unknown dispatcher message: " + msg.what);
+                logger.e(TAG, "Unknown dispatcher message: " + msg.what);
+                break;
         }
     }
 
@@ -44,7 +45,7 @@ public class MessageHandler extends Handler {
             } else {
                 String stringResponse = response.responseMessage;
                 if (response.responseCode == 413) {
-                    requestListener.onError(data.maxEventId, data.maxIdentifyId, true);
+                    requestListener.onErrorRetry(data.maxEventId, data.maxIdentifyId);
                 } else {
                     if (stringResponse.equals("invalid_api_key")) {
                         logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
@@ -58,12 +59,12 @@ public class MessageHandler extends Handler {
                         logger.w(TAG, "Upload failed, " + stringResponse
                                 + ", will attempt to reupload later");
                     }
-                    requestListener.onError(data.maxEventId, data.maxIdentifyId, false);
+                    requestListener.onError();
                 }
             }
         } catch (Exception e) {
             logger.e(TAG, e.toString());
-            requestListener.onError(data.maxEventId, data.maxIdentifyId, false);
+            requestListener.onError();
         }
     }
 

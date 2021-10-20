@@ -5,9 +5,9 @@ import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 import android.os.HandlerThread;
 import android.os.Looper;
 
-public class HttpService {
+class HttpService {
 
-    HandlerThread httpThread;
+    private HandlerThread httpThread;
     MessageHandler messageHandler;
 
     public HttpService(String apiKey, String url, String bearerToken, RequestListener requestListener,
@@ -24,7 +24,8 @@ public class HttpService {
 
     public interface RequestListener {
         void onSuccess(long maxEventId, long maxIdentifyId);
-        void onError(long maxEventId, long maxIdentifyId, boolean needsRetry);
+        void onError();
+        void onErrorRetry(long maxEventId, long maxIdentifyId);
     }
 
     public Looper getHttpThreadLooper() {

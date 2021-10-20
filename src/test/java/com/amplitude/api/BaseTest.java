@@ -132,8 +132,8 @@ public class BaseTest {
 
         @Override
         Cursor queryDb(
-                SQLiteDatabase db, String table, String[] columns, String selection,
-                String[] selectionArgs, String groupBy, String having, String orderBy, String limit
+            SQLiteDatabase db, String table, String[] columns, String selection,
+            String[] selectionArgs, String groupBy, String having, String orderBy, String limit
         ) {
             // cannot import CursorWindowAllocationException, so we throw the base class instead
             throw new RuntimeException("Cursor window allocation of 2048 kb failed.");
@@ -392,9 +392,6 @@ public class BaseTest {
         public MockHttpUrlConnection setBody(String body) {
             responseMessage = body;
             return this;
-        }
-        public String getBody() {
-            return responseMessage;
         }
 
         public MockHttpUrlConnection setResponseCode(int code) {
