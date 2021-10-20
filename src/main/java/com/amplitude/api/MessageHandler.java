@@ -28,7 +28,7 @@ class MessageHandler extends Handler {
     public void handleMessage(final Message msg) {
         switch (msg.what) {
             case REQUEST_FLUSH:
-                SendEventsData data = (SendEventsData) msg.obj;
+                EventsPayload data = (EventsPayload) msg.obj;
                 flushEvents(data);
                 break;
             default:
@@ -37,7 +37,7 @@ class MessageHandler extends Handler {
         }
     }
 
-    private void flushEvents(SendEventsData data) {
+    private void flushEvents(EventsPayload data) {
         try {
             HttpResponse response = httpClient.getSyncHttpResponse(data.events);
             if (response.responseCode == 200 && response.responseMessage.equals("success")) {

@@ -18,7 +18,7 @@ class HttpService {
     }
 
     public void submitSendEvents(String events, long maxEventId, long maxIdentifyId) {
-        SendEventsData data = new SendEventsData(events, maxEventId, maxIdentifyId);
+        EventsPayload data = new EventsPayload(events, maxEventId, maxIdentifyId);
         messageHandler.sendMessage(messageHandler.obtainMessage(MessageHandler.REQUEST_FLUSH, data));
     }
 
