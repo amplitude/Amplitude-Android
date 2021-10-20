@@ -17,7 +17,6 @@ public class HttpService {
         this.messageHandler = new MessageHandler(httpThread.getLooper(), secure, apiKey, url, bearerToken, requestListener);
     }
 
-    //sends a message to our MessageHandler
     public void submitSendEvents(String events, long maxEventId, long maxIdentifyId) {
         SendEventsData data = new SendEventsData(events, maxEventId, maxIdentifyId);
         messageHandler.sendMessage(messageHandler.obtainMessage(MessageHandler.REQUEST_FLUSH, data));

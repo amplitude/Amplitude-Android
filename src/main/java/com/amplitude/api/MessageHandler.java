@@ -63,6 +63,7 @@ public class MessageHandler extends Handler {
             }
         } catch (Exception e) {
             logger.e(TAG, e.toString());
+            requestListener.onError(data.maxEventId, data.maxIdentifyId, false);
         }
     }
 
