@@ -11,7 +11,9 @@ public class Constants {
     public static final String PLATFORM = "Android";
 
     public static final String EVENT_LOG_URL = "https://api2.amplitude.com/";
+    public static final String EVENT_LOG_EU_URL = "https://api.eu.amplitude.com";
     public static final String DYNAMIC_CONFIG_URL = "https://regionconfig.amplitude.com/";
+    public static final String DYNAMIC_CONFIG_EU_URL = "https://regionconfig.eu.amplitude.com/";
 
     public static final String PACKAGE_NAME = "com.amplitude.api";
 

@@ -1992,4 +1992,20 @@ public class AmplitudeClientTest extends BaseTest {
             Assert.fail();
         }
     }
+
+    @Test
+    public void testSetServerZoneWithoutUpdateServerUrl() {
+        AmplitudeServerZone euZone = AmplitudeServerZone.EU;
+        amplitude.setServerZone(euZone, false);
+        assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
+        assertEquals(Constants.EVENT_LOG_URL, amplitude.url);
+    }
+
+    @Test
+    public void testSetServerZoneAndUpdateServerUrl() {
+        AmplitudeServerZone euZone = AmplitudeServerZone.EU;
+        amplitude.setServerZone(euZone);
+        assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
+        assertEquals(Constants.EVENT_LOG_EU_URL, amplitude.url);
+    }
 }
