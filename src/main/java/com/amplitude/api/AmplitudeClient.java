@@ -587,6 +587,10 @@ public class AmplitudeClient {
 
     /**
      * Sets a custom server url for event upload.
+     *
+     * We now have a new method setServerZone. To send data to Amplitude's EU servers, recommend to
+     * use setServerZone method like client.setServerZone(AmplitudeServerZone.EU);
+     *
      * @param serverUrl - a string url for event upload.
      * @return the AmplitudeClient
      */
@@ -2340,7 +2344,10 @@ public class AmplitudeClient {
 
     /**
      * Set Amplitude Server Zone, switch to zone related configuration,
-     * including dynamic configuration and server url
+     * including dynamic configuration and server url.
+     *
+     * To send data to Amplitude's EU servers, you need to configure the serverZone to EU like
+     * client.setServerZone(AmplitudeServerZone.EU);
      *
      * @param serverZone AmplitudeServerZone, US or EU, default is US
      * @return the AmplitudeClient
@@ -2352,6 +2359,7 @@ public class AmplitudeClient {
     /**
      * Set Amplitude Server Zone, switch to zone related configuration,
      * including dynamic configuration. If updateServerUrl is true, including server url as well.
+     * Recommend to keep updateServerUrl to be true for alignment.
      *
      * @param serverZone AmplitudeServerZone, US or EU, default is US
      * @param updateServerUrl if update server url when update server zone, recommend setting true

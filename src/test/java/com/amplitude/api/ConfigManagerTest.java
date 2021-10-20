@@ -37,7 +37,7 @@ public class ConfigManagerTest {
         ConfigManager.getInstance().refresh(new ConfigManager.RefreshListener() {
             @Override
             public void onFinished() {
-                assertEquals(Constants.EVENT_LOG_EU_URL, ConfigManager.getInstance().getIngestionEndpoint());
+                assertEquals(Constants.EVENT_LOG_EU_URL, ConfigManager.getInstance().getIngestionEndpoint() + "/");
             }
         }, euZone);
     }

@@ -3,6 +3,13 @@ package com.amplitude.api;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * AmplitudeServerZone is for Data Residency and handling server zone related properties.
+ * The server zones now are US and EU.
+ *
+ * For usage like sending data to Amplitude's EU servers, you need to configure the serverZone
+ * property after initializing the client with setServerZone method.
+ */
 public enum AmplitudeServerZone {
     US, EU;
 
