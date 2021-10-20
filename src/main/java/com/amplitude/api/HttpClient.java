@@ -109,4 +109,8 @@ public class HttpClient {
         return (HttpURLConnection) urlObject.openConnection();
     }
 
+    public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+    public void setUrl(String url) { this.url = url; }
+    public void setBearerToken(String bearerToken) { this.bearerToken = bearerToken; }
+
 }

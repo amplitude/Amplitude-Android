@@ -67,4 +67,8 @@ public class MessageHandler extends Handler {
         }
     }
 
+    public void setApiKey(String apiKey) { httpClient.setApiKey(apiKey); }
+    public void setUrl(String url) { httpClient.setUrl(url); }
+    public void setBearerToken(String bearerToken) { httpClient.setBearerToken(bearerToken); }
+
 }

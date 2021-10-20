@@ -176,7 +176,7 @@ public class AmplitudeClient {
     /**
      * A handler architecture for sending async HTTP requests of batched events to Amplitude
      */
-    HttpService httpService;
+    HttpService httpService = initHttpService();
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -277,6 +277,7 @@ public class AmplitudeClient {
 
         this.context = context.getApplicationContext();
         this.apiKey = apiKey;
+        httpService.setApiKey(apiKey);
         this.dbHelper = DatabaseHelper.getDatabaseHelper(this.context, this.instanceName);
         this.platform = Utils.isEmptyString(platform) ? Constants.PLATFORM : platform;
 
@@ -333,8 +334,6 @@ public class AmplitudeClient {
                             dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
                         }
                     });
-
-                    httpService = initHttpService();
 
                     initialized = true;
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
@@ -531,6 +530,7 @@ public class AmplitudeClient {
     public AmplitudeClient setServerUrl(String serverUrl) {
         if (!Utils.isEmptyString(serverUrl)) {
             url = serverUrl;
+            httpService.setUrl(serverUrl);
         }
         return this;
     }
@@ -542,6 +542,7 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setBearerToken(String token) {
         this.bearerToken = token;
+        httpService.setBearerToken(token);
         return this;
     }
 

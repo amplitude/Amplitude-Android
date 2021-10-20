@@ -36,4 +36,8 @@ public class HttpService {
         this.httpThread.quit();
     }
 
+    public void setApiKey(String apiKey) { messageHandler.setApiKey(apiKey); }
+    public void setUrl(String url) { messageHandler.setUrl(url); }
+    public void setBearerToken(String bearerToken) { messageHandler.setBearerToken(bearerToken); }
+
 }

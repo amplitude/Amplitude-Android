@@ -850,7 +850,7 @@ public class AmplitudeClientTest extends BaseTest {
 
         looper.runToEndOfTasks();
 
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq());
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes());
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpService.getHttpThreadLooper());
         httplooper.runToEndOfTasks();
 
@@ -885,8 +885,8 @@ public class AmplitudeClientTest extends BaseTest {
         // unsent events will be threshold (+1 for start session)
         assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
 
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(400).setBody("invalid_api_key"));
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(400).setBody("bad_checksum"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(400).setBody("invalid_api_key"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(400).setBody("bad_checksum"));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpService.getHttpThreadLooper());
         httpLooper.runToEndOfTasks();
 
@@ -919,7 +919,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 2); // 2 events: start session + test
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(413));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(413));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpService.getHttpThreadLooper());
         httpLooper.runToEndOfTasks();
 
@@ -928,7 +928,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 3);
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(413));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(413));
         httpLooper.runToEndOfTasks();
 
         // verify only start session event removed
@@ -938,7 +938,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(events.optJSONObject(1).optString("event_type"), "test");
 
         // upload limit persists until event count below threshold
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setBody("success"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setBody("success"));
         looper.runToEndOfTasks(); // retry uploading after removing large event
         httpLooper.runToEndOfTasks(); // send success --> 1 event sent
         looper.runToEndOfTasks(); // event count below threshold --> disable backoff
@@ -951,7 +951,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 3);
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setBody("success"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setBody("success"));
         httpLooper.runToEndOfTasks();
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
@@ -991,7 +991,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(dbHelper.getTotalEventCount(), 7);
 
         // server response
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setBody("success"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setBody("success"));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpService.getHttpThreadLooper());
         httpLooper.runToEndOfTasks();
 
@@ -1003,7 +1003,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(dbHelper.getTotalEventCount(), 5);
 
         // 2nd server response
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setBody("success"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setBody("success"));
         httpLooper.runToEndOfTasks();
         looper.runToEndOfTasks(); // remove uploaded events
         assertEquals(dbHelper.getEventCount(), 3);
@@ -1011,7 +1011,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(dbHelper.getTotalEventCount(), 3);
 
         // 3rd server response
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setBody("success"));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setBody("success"));
         httpLooper.runToEndOfTasks();
         looper.runToEndOfTasks(); // remove uploaded events
         looper.runToEndOfTasks();
@@ -1040,7 +1040,7 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(getUnsentIdentifyCount(), 1);
         assertEquals(getUnsentEventCount(), 1);
 
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(413));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(413));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpService.getHttpThreadLooper());
         httpLooper.runToEndOfTasks();
 
@@ -1050,7 +1050,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 2);
         assertEquals(getUnsentIdentifyCount(), 1);
-        server.enqueueResponse(MockHttpUrlConnection.defaultReq().setResponseCode(413));
+        server.enqueueResponse(MockHttpUrlConnection.defaultRes().setResponseCode(413));
         httpLooper.runToEndOfTasks();
 
         // verify only identify removed

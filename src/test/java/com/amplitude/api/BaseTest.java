@@ -60,11 +60,17 @@ public class BaseTest {
     }
 
     // override getCurrentTimeMillis to enforce time progression in tests
-    protected class AmplitudeClientWithTime extends AmplitudeClient {
+    protected class TestingAmplitudeClient extends AmplitudeClient {
         MockClock mockClock;
 
-        public AmplitudeClientWithTime(MockClock mockClock) { this.mockClock = mockClock; }
+        HttpService.RequestListener requestListener = null;
 
+        public TestingAmplitudeClient(MockClock mockClock) { this.mockClock = mockClock; }
+
+        @Override
+        protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
+
+        @Override
         public synchronized AmplitudeClient initializeInternal(
                 final Context context,
                 final String apiKey,
@@ -75,10 +81,14 @@ public class BaseTest {
             super.initializeInternal(context, apiKey, userId, platform, enableDiagnosticLogging);
             ShadowLooper looper = shadowOf(amplitude.logThread.getLooper());
             looper.runToEndOfTasks();
+            //re-initialize httpService because we want to pass a custom request listener into this
+            amplitude.httpService = amplitude.initHttpService();
             try {
                 HttpClient origClient = amplitude.httpService.messageHandler.httpClient;
                 if (!(new MockUtil().isMock(origClient))) {
                     HttpClient spyClient = Mockito.spy(origClient);
+
+                    //mock server responses, needed for tests enqueueing a series of responses
                     Mockito.when(spyClient.getNewConnection(amplitude.url)).thenAnswer(new Answer<HttpURLConnection>() {
                         @Override
                         public HttpURLConnection answer(InvocationOnMock invocation) throws Throwable {
@@ -87,6 +97,8 @@ public class BaseTest {
                         }
                     });
 
+                    //send a record of the request call containing the events string
+                    //to be inspected later in tests
                     Mockito.doAnswer(new Answer<HttpResponse>() {
                         @Override
                         public HttpResponse answer(InvocationOnMock invocation) throws Throwable {
@@ -105,7 +117,10 @@ public class BaseTest {
         }
 
         @Override
-        protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
+        protected HttpService.RequestListener getRequestListener() {
+            if (requestListener != null) return requestListener;
+            return super.getRequestListener();
+        }
     }
 
     // override AmplitudeDatabaseHelper to throw Cursor Allocation Exception
@@ -179,7 +194,7 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude = new AmplitudeClientWithTime(clock);
+            amplitude = new TestingAmplitudeClient(clock);
         }
     }
 
@@ -363,9 +378,10 @@ public class BaseTest {
             this.responseMessage = "";
         }
 
-        public static MockHttpUrlConnection defaultReq() {
+        public static MockHttpUrlConnection defaultRes() {
             try {
                 MockHttpUrlConnection request = new MockHttpUrlConnection(Constants.EVENT_LOG_URL);
+                request.setBody("success");
                 return request;
             } catch (MalformedURLException e) {
                 fail(e.toString());
