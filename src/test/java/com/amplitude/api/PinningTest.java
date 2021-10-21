@@ -21,5 +21,19 @@ import javax.net.ssl.SSLSocketFactory;
 @RunWith(AndroidJUnit4.class)
 @Config(manifest = Config.NONE)
 public class PinningTest extends BaseTest {
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp(false);
+        PinnedAmplitudeClient.instances.clear();
+        // need to set clock > 0 so that logThread posts in order
+        SystemClock.setCurrentTimeMillis(1000);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        PinnedAmplitudeClient.instances.clear();
+    }
     
 }
