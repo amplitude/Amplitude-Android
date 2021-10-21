@@ -8,7 +8,7 @@ import android.os.Looper;
 class HttpService {
 
     private HandlerThread httpThread;
-    MessageHandler messageHandler;
+    protected MessageHandler messageHandler;
 
     public HttpService(String apiKey, String url, String bearerToken, RequestListener requestListener,
                         boolean secure) {

@@ -9,8 +9,8 @@ class MessageHandler extends Handler {
     private static final String TAG = MessageHandler.class.getName();
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
-    static final int REQUEST_FLUSH = 1;
-    HttpClient httpClient;
+    public static final int REQUEST_FLUSH = 1;
+    protected HttpClient httpClient;
     private HttpService.RequestListener requestListener;
 
     public MessageHandler(Looper looper, boolean secure, String apiKey, String url, String bearerToken,
@@ -77,5 +77,4 @@ class MessageHandler extends Handler {
     public void setBearerToken(String bearerToken) {
         httpClient.setBearerToken(bearerToken);
     }
-
 }
