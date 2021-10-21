@@ -30,7 +30,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.net.UnknownServiceException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -60,12 +59,12 @@ public class BaseTest {
     }
 
     // override getCurrentTimeMillis to enforce time progression in tests
-    protected class TestingAmplitudeClient extends AmplitudeClient {
+    protected class AmplitudeTestHelperClient extends AmplitudeClient {
         MockClock mockClock;
 
         HttpService.RequestListener requestListener = null;
 
-        public TestingAmplitudeClient(MockClock mockClock) { this.mockClock = mockClock; }
+        public AmplitudeTestHelperClient(MockClock mockClock) { this.mockClock = mockClock; }
 
         @Override
         protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
@@ -194,7 +193,7 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude = new TestingAmplitudeClient(clock);
+            amplitude = new AmplitudeTestHelperClient(clock);
         }
     }
 
