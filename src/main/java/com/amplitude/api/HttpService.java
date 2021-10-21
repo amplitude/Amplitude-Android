@@ -46,5 +46,4 @@ class HttpService {
     public void setBearerToken(String bearerToken) {
         messageHandler.setBearerToken(bearerToken);
     }
-
 }

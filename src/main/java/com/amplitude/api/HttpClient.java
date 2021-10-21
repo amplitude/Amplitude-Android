@@ -41,32 +41,7 @@ class HttpClient {
 
     protected HttpResponse getSyncHttpResponse(String events)
             throws IllegalArgumentException, IOException {
-        String apiVersionString = "" + Constants.API_VERSION;
-        String timestampString = "" + getCurrentTimeMillis();
-
-        String checksumString = "";
-        try {
-            String preimage = apiVersionString + apiKey + events + timestampString;
-
-            // MessageDigest.getInstance(String) is not threadsafe on Android.
-            // See https://code.google.com/p/android/issues/detail?id=37937
-            // Use MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java
-            // This implementation does not throw NoSuchAlgorithm exceptions.
-            MessageDigest messageDigest = new MD5();
-            checksumString = bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            // According to
-            // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
-            // this will never be thrown
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("v="); sb.append(apiVersionString);
-        sb.append("&client="); sb.append(apiKey);
-        sb.append("&e="); sb.append(events);
-        sb.append("&upload_time="); sb.append(timestampString);
-        sb.append("&checksum="); sb.append(checksumString);
-        String bodyString = sb.toString();
+        String bodyString = generateBodyString(events);
 
         HttpURLConnection connection = getNewConnection(url);
         connection.setRequestMethod("POST");
@@ -93,7 +68,7 @@ class HttpClient {
             br = new BufferedReader(new InputStreamReader(inputStream));
         }
 
-        sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         String output = "";
         if (br != null) {
             while ((output = br.readLine()) != null) {
@@ -102,6 +77,35 @@ class HttpClient {
         }
         String stringResponse = sb.toString();
         return new HttpResponse(stringResponse, connection.getResponseCode());
+    }
+
+    public String generateBodyString(String events) {
+        String apiVersionString = "" + Constants.API_VERSION;
+        String timestampString = "" + getCurrentTimeMillis();
+
+        String checksumString = "";
+        try {
+            String preimage = apiVersionString + apiKey + events + timestampString;
+
+            // MessageDigest.getInstance(String) is not threadsafe on Android.
+            // See https://code.google.com/p/android/issues/detail?id=37937
+            // Use MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java
+            // This implementation does not throw NoSuchAlgorithm exceptions.
+            MessageDigest messageDigest = new MD5();
+            checksumString = bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            // According to
+            // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
+            // this will never be thrown
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("v="); sb.append(apiVersionString);
+        sb.append("&client="); sb.append(apiKey);
+        sb.append("&e="); sb.append(events);
+        sb.append("&upload_time="); sb.append(timestampString);
+        sb.append("&checksum="); sb.append(checksumString);
+        return sb.toString();
     }
 
     protected HttpURLConnection getNewConnection(String url) throws IOException {
@@ -118,5 +122,4 @@ class HttpClient {
     public void setBearerToken(String bearerToken) {
         this.bearerToken = bearerToken;
     }
-
 }
