@@ -11,6 +11,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 class HttpClient {
 
@@ -37,7 +40,9 @@ class HttpClient {
         return new String(hexChars);
     }
 
-    private long getCurrentTimeMillis() { return System.currentTimeMillis(); }
+    private long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
+    }
 
     protected HttpResponse getSyncHttpResponse(String events)
             throws IllegalArgumentException, IOException {
@@ -99,12 +104,21 @@ class HttpClient {
             // this will never be thrown
         }
 
+        Map<String, String> dataToAppend = new LinkedHashMap<>();
+        dataToAppend.put("v", apiVersionString);
+        dataToAppend.put("client", apiKey);
+        dataToAppend.put("e", events);
+        dataToAppend.put("upload_time", timestampString);
+        dataToAppend.put("checksum", checksumString);
+
         StringBuilder sb = new StringBuilder();
-        sb.append("v="); sb.append(apiVersionString);
-        sb.append("&client="); sb.append(apiKey);
-        sb.append("&e="); sb.append(events);
-        sb.append("&upload_time="); sb.append(timestampString);
-        sb.append("&checksum="); sb.append(checksumString);
+        int i = 0;
+        for (Map.Entry<String, String> entry : dataToAppend.entrySet()) {
+            sb.append(entry.getKey() + "=" + entry.getValue());
+            if (i != dataToAppend.size() - 1) {
+                sb.append("&");
+            }
+        }
         return sb.toString();
     }
 

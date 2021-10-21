@@ -176,7 +176,7 @@ public class AmplitudeClient {
     /**
      * A handler architecture for sending async HTTP requests of batched events to Amplitude
      */
-    HttpService httpService = initHttpService();
+    protected HttpService httpService = initHttpService();
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.

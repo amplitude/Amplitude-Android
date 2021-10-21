@@ -333,7 +333,9 @@ public class BaseTest {
 
     public class RecordedRequest {
         public String body;
-        public String getBody() { return body; }
+        public String getBody() {
+            return body;
+        }
         public RecordedRequest(String body) {
             this.body = body;
         }
@@ -349,13 +351,18 @@ public class BaseTest {
             this.queue = new LinkedList<>();
         }
 
-        public void sendRequest(RecordedRequest requesto) {
-            requests.add(requesto);
+        public void sendRequest(RecordedRequest request) {
+            requests.add(request);
             numRequestsMade++;
         }
 
-        public void enqueueResponse(MockHttpUrlConnection res) { queue.add(res); }
-        public MockHttpUrlConnection getNextResponse() { return queue.poll(); }
+        public void enqueueResponse(MockHttpUrlConnection res) {
+            queue.add(res);
+        }
+        public MockHttpUrlConnection getNextResponse() {
+            return queue.poll();
+        }
+
         public RecordedRequest takeRequest() {
             return requests.poll();
         }
@@ -371,8 +378,8 @@ public class BaseTest {
             this(new URL(str));
         }
 
-        protected MockHttpUrlConnection(URL u) {
-            super(u);
+        protected MockHttpUrlConnection(URL url) {
+            super(url);
             this.responseCode = 200;
             this.responseMessage = "";
         }
