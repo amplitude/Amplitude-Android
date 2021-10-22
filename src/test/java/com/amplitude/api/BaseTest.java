@@ -12,17 +12,11 @@ import androidx.test.core.app.ApplicationProvider;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mockito.Mockito;
-import org.mockito.internal.util.MockUtil;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
@@ -47,70 +41,6 @@ public class BaseTest {
                 return System.currentTimeMillis();
             }
             return timestamps[index++];
-        }
-    }
-
-    // override getCurrentTimeMillis to enforce time progression in tests
-    protected class AmplitudeTestHelperClient extends AmplitudeClient {
-        MockClock mockClock;
-
-        HttpService.RequestListener requestListener = null;
-
-        public AmplitudeTestHelperClient(MockClock mockClock) { this.mockClock = mockClock; }
-
-        @Override
-        protected long getCurrentTimeMillis() { return mockClock.currentTimeMillis(); }
-
-        @Override
-        public synchronized AmplitudeClient initializeInternal(
-                final Context context,
-                final String apiKey,
-                final String userId,
-                final String platform,
-                final boolean enableDiagnosticLogging
-        ) {
-            super.initializeInternal(context, apiKey, userId, platform, enableDiagnosticLogging);
-            ShadowLooper looper = shadowOf(amplitude.logThread.getLooper());
-            looper.runToEndOfTasks();
-            //re-initialize httpService because we want to pass a custom request listener into this
-            amplitude.httpService = amplitude.initHttpService();
-            try {
-                HttpClient origClient = amplitude.httpService.messageHandler.httpClient;
-                if (!(new MockUtil().isMock(origClient))) {
-                    HttpClient spyClient = Mockito.spy(origClient);
-
-                    //mock server responses, needed for tests enqueueing a series of responses
-                    Mockito.when(spyClient.getNewConnection(amplitude.url)).thenAnswer(new Answer<HttpURLConnection>() {
-                        @Override
-                        public HttpURLConnection answer(InvocationOnMock invocation) throws Throwable {
-                            HttpURLConnection conn = Mockito.spy(server.getNextResponse());
-                            return conn;
-                        }
-                    });
-
-                    //send a record of the request call containing the events string
-                    //to be inspected later in tests
-                    Mockito.doAnswer(new Answer<HttpResponse>() {
-                        @Override
-                        public HttpResponse answer(InvocationOnMock invocation) throws Throwable {
-                            String eventsSent = invocation.getArgumentAt(0, String.class);
-                            server.sendRequest(new RecordedRequest(eventsSent));
-                            return (HttpResponse) invocation.callRealMethod();
-                        }
-                    }).when(spyClient).makeRequest(Mockito.anyString());
-
-                    amplitude.httpService.messageHandler.httpClient = spyClient;
-                }
-            } catch (IOException e) {
-                fail(e.toString());
-            }
-            return this;
-        }
-
-        @Override
-        protected HttpService.RequestListener getRequestListener() {
-            if (requestListener != null) return requestListener;
-            return super.getRequestListener();
         }
     }
 
@@ -185,7 +115,7 @@ public class BaseTest {
             // this sometimes deadlocks with lock contention by logThread and httpThread for
             // a ShadowWrangler instance and the ShadowLooper class
             // Might be a sign of a bug, or just Robolectric's bug.
-            amplitude = new AmplitudeTestHelperClient(clock);
+            amplitude = new AmplitudeTestHelperClient(this, clock);
         }
     }
 
