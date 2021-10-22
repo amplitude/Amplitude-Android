@@ -11,15 +11,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 class HttpClient {
 
-    private String apiKey;
-    private String url;
-    private String bearerToken;
+    protected String apiKey;
+    protected String url;
+    protected String bearerToken;
 
     public HttpClient(String apiKey, String url, String bearerToken) {
         this.apiKey = apiKey;
@@ -27,24 +24,11 @@ class HttpClient {
         this.bearerToken = bearerToken;
     }
 
-    private String bytesToHexString(byte[] bytes) {
-        final char[] hexArray = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
-                'c', 'd', 'e', 'f' };
-        char[] hexChars = new char[bytes.length * 2];
-        int v;
-        for (int j = 0; j < bytes.length; j++) {
-            v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
     private long getCurrentTimeMillis() {
         return System.currentTimeMillis();
     }
 
-    protected HttpResponse getSyncHttpResponse(String events)
+    protected HttpResponse makeRequest(String events)
             throws IllegalArgumentException, IOException {
         String bodyString = generateBodyString(events);
 
@@ -63,7 +47,7 @@ class HttpClient {
         os.write(input, 0, input.length);
 
         InputStream inputStream;
-        if (100 <= connection.getResponseCode() && connection.getResponseCode() <= 399) {
+        if (connection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
             inputStream = connection.getInputStream();
         } else {
             inputStream = connection.getErrorStream();
@@ -74,7 +58,7 @@ class HttpClient {
         }
 
         StringBuilder sb = new StringBuilder();
-        String output = "";
+        String output;
         if (br != null) {
             while ((output = br.readLine()) != null) {
                 sb.append(output);
@@ -97,29 +81,21 @@ class HttpClient {
             // Use MD5 implementation from http://org.rodage.com/pub/java/security/MD5.java
             // This implementation does not throw NoSuchAlgorithm exceptions.
             MessageDigest messageDigest = new MD5();
-            checksumString = bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
+            checksumString = Utils.bytesToHexString(messageDigest.digest(preimage.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             // According to
             // http://stackoverflow.com/questions/5049524/is-java-utf-8-charset-exception-possible,
             // this will never be thrown
         }
 
-        Map<String, String> dataToAppend = new LinkedHashMap<>();
-        dataToAppend.put("v", apiVersionString);
-        dataToAppend.put("client", apiKey);
-        dataToAppend.put("e", events);
-        dataToAppend.put("upload_time", timestampString);
-        dataToAppend.put("checksum", checksumString);
-
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (Map.Entry<String, String> entry : dataToAppend.entrySet()) {
-            sb.append(entry.getKey() + "=" + entry.getValue());
-            if (i != dataToAppend.size() - 1) {
-                sb.append("&");
-            }
-        }
-        return sb.toString();
+        return String.format(
+                "v=%1$s&client=%2$s&e=%3$s&upload_time=%4$s&checksum=%5$s",
+                apiVersionString,
+                apiKey,
+                events,
+                timestampString,
+                checksumString
+        );
     }
 
     protected HttpURLConnection getNewConnection(String url) throws IOException {
@@ -130,9 +106,11 @@ class HttpClient {
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
+
     public void setBearerToken(String bearerToken) {
         this.bearerToken = bearerToken;
     }

@@ -20,22 +20,14 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 import static org.junit.Assert.fail;
 import static org.robolectric.Shadows.shadowOf;
@@ -105,7 +97,7 @@ public class BaseTest {
                             server.sendRequest(new RecordedRequest(eventsSent));
                             return (HttpResponse) invocation.callRealMethod();
                         }
-                    }).when(spyClient).getSyncHttpResponse(Mockito.anyString());
+                    }).when(spyClient).makeRequest(Mockito.anyString());
 
                     amplitude.httpService.messageHandler.httpClient = spyClient;
                 }
@@ -330,100 +322,4 @@ public class BaseTest {
         }
         return null;
     }
-
-    public class RecordedRequest {
-        public String body;
-        public String getBody() {
-            return body;
-        }
-        public RecordedRequest(String body) {
-            this.body = body;
-        }
-    }
-
-    public class MockWebServer {
-        private Queue<RecordedRequest> requests;
-        private Queue<MockHttpUrlConnection> queue;
-        private int numRequestsMade = 0;
-
-        public MockWebServer() {
-            this.requests = new LinkedList<>();
-            this.queue = new LinkedList<>();
-        }
-
-        public void sendRequest(RecordedRequest request) {
-            requests.add(request);
-            numRequestsMade++;
-        }
-
-        public void enqueueResponse(MockHttpUrlConnection res) {
-            queue.add(res);
-        }
-        public MockHttpUrlConnection getNextResponse() {
-            return queue.poll();
-        }
-
-        public RecordedRequest takeRequest() {
-            return requests.poll();
-        }
-
-        public int getRequestCount() {
-            return numRequestsMade;
-        }
-    }
-
-    public static class MockHttpUrlConnection extends HttpURLConnection {
-
-        public MockHttpUrlConnection(String str) throws MalformedURLException {
-            this(new URL(str));
-        }
-
-        protected MockHttpUrlConnection(URL url) {
-            super(url);
-            this.responseCode = 200;
-            this.responseMessage = "";
-        }
-
-        public static MockHttpUrlConnection defaultRes() {
-            try {
-                MockHttpUrlConnection request = new MockHttpUrlConnection(Constants.EVENT_LOG_URL);
-                request.setBody("success");
-                return request;
-            } catch (MalformedURLException e) {
-                fail(e.toString());
-            }
-            return null;
-        }
-
-        public MockHttpUrlConnection setBody(String body) {
-            responseMessage = body;
-            return this;
-        }
-
-        public MockHttpUrlConnection setResponseCode(int code) {
-            this.responseCode = code;
-            return this;
-        }
-
-        public OutputStream getOutputStream() {
-            return new ByteArrayOutputStream();
-        }
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(this.responseMessage.getBytes(StandardCharsets.UTF_8));
-        }
-
-        @Override
-        public void disconnect() {
-
-        }
-        @Override
-        public boolean usingProxy() {
-            return false;
-        }
-        @Override
-        public void connect() throws IOException {
-
-        }
-    }
-
 }

@@ -20,9 +20,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-class SSLHttpsClient extends HttpClient {
+class SSLPinningClient extends HttpClient {
 
-    private static final String TAG = SSLHttpsClient.class.getName();
+    private static final String TAG = SSLPinningClient.class.getName();
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
 
     private SSLSocketFactory sslSocketFactory;
@@ -61,7 +61,10 @@ class SSLHttpsClient extends HttpClient {
             + "N5AplBlGGSW4gNfL1IYoakRwJiNiqZ+Gb7+6kHDSVneFeO/qJakXzlByjAA6quPbYz"
             + "Sf+AZxAeKCINT+b72x";
 
-    public SSLHttpsClient(String apiKey, String url, String bearerToken) {
+    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM =
+            new SSLContextBuilder().addCertificate(CERTIFICATE_1);
+
+    public SSLPinningClient(String apiKey, String url, String bearerToken) {
         super(apiKey, url, bearerToken);
     }
 
@@ -106,9 +109,6 @@ class SSLHttpsClient extends HttpClient {
         }
         return sslSocketFactory;
     }
-
-    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM =
-            new SSLContextBuilder().addCertificate(CERTIFICATE_1);
 
     /**
      * SSl context builder, used to generate the SSL context.

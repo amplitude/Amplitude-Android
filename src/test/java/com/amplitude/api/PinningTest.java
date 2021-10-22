@@ -65,7 +65,7 @@ public class PinningTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
 
-        amplitude.httpService.messageHandler.httpClient = new InvalidSSLHttpsClient();
+        amplitude.httpService.messageHandler.httpClient = new InvalidSSLPinningClient();
 
         amplitude.logEvent("pinned_test_event_invalid", null);
         looper.runToEndOfTasks();
@@ -96,8 +96,8 @@ public class PinningTest extends BaseTest {
         assertEquals(getUnsentEventCount(), 1);
     }
 
-    private static class InvalidSSLHttpsClient extends SSLHttpsClient {
-        public static final SSLHttpsClient.SSLContextBuilder INVALID_SSL_CONTEXT = new SSLHttpsClient.SSLContextBuilder()
+    private static class InvalidSSLPinningClient extends SSLPinningClient {
+        public static final SSLPinningClient.SSLContextBuilder INVALID_SSL_CONTEXT = new SSLPinningClient.SSLContextBuilder()
           .addCertificate(""
               + "MIIFVjCCBD6gAwIBAgIRAObsedhCFsMHaYL156gA4XAwDQYJKoZIhvcNAQELBQAwgZ"
               + "AxCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNV"
@@ -128,7 +128,7 @@ public class PinningTest extends BaseTest {
               + "H1mWAYpFPJ7rOmpCReC6brxCho/7jg+fBqEUfCGyrMtYSRejCc9aZGBQmuz5v5iT6P"
               + "XCBeVmjEX3kh4bkRPHJ5vyASNXUkF3nwVAe4cwOoLHN8o=");
 
-        public InvalidSSLHttpsClient() {
+        public InvalidSSLPinningClient() {
             super("fake-key", Constants.EVENT_LOG_URL, null);
         }
 

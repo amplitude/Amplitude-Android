@@ -40,5 +40,4 @@ public class MessageHandlerTest extends BaseTest {
         Message message = msgHandler.obtainMessage(badMessageCode, null);
         msgHandler.handleMessage(message);
     }
-
 }

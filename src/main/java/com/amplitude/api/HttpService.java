@@ -17,15 +17,21 @@ class HttpService {
         this.messageHandler = new MessageHandler(httpThread.getLooper(), secure, apiKey, url, bearerToken, requestListener);
     }
 
-    public void submitSendEvents(String events, long maxEventId, long maxIdentifyId) {
-        EventsPayload data = new EventsPayload(events, maxEventId, maxIdentifyId);
-        messageHandler.sendMessage(messageHandler.obtainMessage(MessageHandler.REQUEST_FLUSH, data));
+    public void setApiKey(String apiKey) {
+        messageHandler.setApiKey(apiKey);
     }
 
-    public interface RequestListener {
-        void onSuccess(long maxEventId, long maxIdentifyId);
-        void onError();
-        void onErrorRetry(long maxEventId, long maxIdentifyId);
+    public void setUrl(String url) {
+        messageHandler.setUrl(url);
+    }
+
+    public void setBearerToken(String bearerToken) {
+        messageHandler.setBearerToken(bearerToken);
+    }
+
+    public void sendEvents(String events, long maxEventId, long maxIdentifyId) {
+        EventsPayload data = new EventsPayload(events, maxEventId, maxIdentifyId);
+        messageHandler.sendMessage(messageHandler.obtainMessage(MessageHandler.REQUEST_FLUSH, data));
     }
 
     public Looper getHttpThreadLooper() {
@@ -37,13 +43,9 @@ class HttpService {
         this.httpThread.quit();
     }
 
-    public void setApiKey(String apiKey) {
-        messageHandler.setApiKey(apiKey);
-    }
-    public void setUrl(String url) {
-        messageHandler.setUrl(url);
-    }
-    public void setBearerToken(String bearerToken) {
-        messageHandler.setBearerToken(bearerToken);
+    public interface RequestListener {
+        void onSuccess(long maxEventId, long maxIdentifyId);
+        void onError();
+        void onErrorRetry(long maxEventId, long maxIdentifyId);
     }
 }

@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import java.net.HttpURLConnection;
+
 class MessageHandler extends Handler {
 
     private static final String TAG = MessageHandler.class.getName();
@@ -17,11 +19,23 @@ class MessageHandler extends Handler {
                           HttpService.RequestListener requestListener) {
         super(looper);
         if (secure) {
-            httpClient = new SSLHttpsClient(apiKey, url, bearerToken);
+            httpClient = new SSLPinningClient(apiKey, url, bearerToken);
         } else {
             httpClient = new HttpClient(apiKey, url, bearerToken);
         }
         this.requestListener = requestListener;
+    }
+
+    public void setApiKey(String apiKey) {
+        httpClient.setApiKey(apiKey);
+    }
+
+    public void setUrl(String url) {
+        httpClient.setUrl(url);
+    }
+
+    public void setBearerToken(String bearerToken) {
+        httpClient.setBearerToken(bearerToken);
     }
 
     @Override
@@ -39,12 +53,12 @@ class MessageHandler extends Handler {
 
     private void flushEvents(EventsPayload data) {
         try {
-            HttpResponse response = httpClient.getSyncHttpResponse(data.events);
-            if (response.responseCode == 200 && response.responseMessage.equals("success")) {
+            HttpResponse response = httpClient.makeRequest(data.events);
+            if (response.responseCode == HttpURLConnection.HTTP_OK && response.responseMessage.equals("success")) {
                 requestListener.onSuccess(data.maxEventId, data.maxIdentifyId);
             } else {
                 String stringResponse = response.responseMessage;
-                if (response.responseCode == 413) {
+                if (response.responseCode == HttpURLConnection.HTTP_ENTITY_TOO_LARGE) {
                     requestListener.onErrorRetry(data.maxEventId, data.maxIdentifyId);
                 } else {
                     if (stringResponse.equals("invalid_api_key")) {
@@ -66,15 +80,5 @@ class MessageHandler extends Handler {
             logger.e(TAG, e.toString());
             requestListener.onError();
         }
-    }
-
-    public void setApiKey(String apiKey) {
-        httpClient.setApiKey(apiKey);
-    }
-    public void setUrl(String url) {
-        httpClient.setUrl(url);
-    }
-    public void setBearerToken(String bearerToken) {
-        httpClient.setBearerToken(bearerToken);
     }
 }

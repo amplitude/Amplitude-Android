@@ -1907,7 +1907,7 @@ public class AmplitudeClient {
                 final long maxIdentifyId = merged.first.second;
                 final String mergedEventsString = merged.second.toString();
 
-                httpService.submitSendEvents(mergedEventsString, maxEventId, maxIdentifyId);
+                httpService.sendEvents(mergedEventsString, maxEventId, maxIdentifyId);
             } catch (JSONException e) {
                 uploadingCurrently.set(false);
                 logger.e(TAG, e.toString());
