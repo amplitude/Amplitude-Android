@@ -123,6 +123,10 @@ public class AmplitudePlugin {
         Amplitude.getInstance(instanceName).setServerZone(amplitudeServerZone, updateServerUrl);
     }
 
+    public static void setUseDynamicConfig(String instanceName, boolean useDynamicConfig) {
+        Amplitude.getInstance(instanceName).setUseDynamicConfig(useDynamicConfig);
+    }
+
     @Deprecated
     public static void startSession() { return; }
 
