@@ -39,4 +39,19 @@ public enum AmplitudeServerZone {
         }
         return Constants.DYNAMIC_CONFIG_URL;
     }
+
+    public static AmplitudeServerZone getServerZone(String serverZone) {
+        AmplitudeServerZone amplitudeServerZone = AmplitudeServerZone.US;
+        switch (serverZone) {
+            case "EU":
+                amplitudeServerZone = AmplitudeServerZone.EU;
+                break;
+            case "US":
+                amplitudeServerZone = AmplitudeServerZone.US;
+                break;
+            default:
+                break;
+        }
+        return amplitudeServerZone;
+    }
 }
