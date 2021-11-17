@@ -1212,6 +1212,8 @@ public class AmplitudeClient {
                 : truncate(groupProperties));
             result = saveEvent(eventType, event);
 
+            // If the the event is an identify, update the user properties to the core identity
+            // for experiment SDK to consume.
             if (eventType.equals(Constants.IDENTIFY_EVENT) && userProperties != null) {
                 core.getIdentityStore().editIdentity()
                     .updateUserProperties(JSONUtil.toUpdateUserPropertiesMap(userProperties))
