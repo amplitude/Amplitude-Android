@@ -22,6 +22,7 @@ ext {
 
 repositories {
     // The order in which you list these repositories matter.
+    mavenLocal()
     google()
     jcenter()
 }
@@ -64,6 +65,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.amplitude:amplitude-core:0.0.4'
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.2.2'
     testImplementation 'org.robolectric:robolectric:4.3.1'

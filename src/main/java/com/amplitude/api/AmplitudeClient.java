@@ -8,6 +8,9 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
 
+import com.amplitude.core.AmplitudeCore;
+import com.amplitude.core.Identity;
+import com.amplitude.core.util.JSONUtil;
 import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
 import com.amplitude.util.DoubleCheck;
@@ -20,6 +23,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import kotlin.Unit;
 import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -195,6 +200,10 @@ public class AmplitudeClient {
      * The background event uploading worker thread instance.
      */
     WorkerThread httpThread = new WorkerThread("httpThread");
+    /**
+     * The core package for integrating with the Experiment SDK.
+     */
+    final AmplitudeCore core;
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -211,6 +220,7 @@ public class AmplitudeClient {
         this.instanceName = Utils.normalizeInstanceName(instance);
         logThread.start();
         httpThread.start();
+        this.core = AmplitudeCore.getInstance(this.instanceName);
     }
 
     /**
@@ -389,7 +399,21 @@ public class AmplitudeClient {
                         }
                     });
 
+                    // set up listener to core package to receive exposure events from Experiment
+                    core.getAnalyticsConnector().addEventListener(analyticsEvent -> {
+                        String eventType = analyticsEvent.getEventType();
+                        JSONObject eventProperties = JSONUtil.toJSONObject(analyticsEvent.getEventProperties());
+                        JSONObject userProperties = JSONUtil.toJSONObject(analyticsEvent.getUserProperties());
+                        logEventAsync(eventType, eventProperties, null, userProperties,
+                            null, null, getCurrentTimeMillis(), false);
+                        return Unit.INSTANCE;
+                    });
+
+                    // Set user ID and device ID in core identity store for use in Experiment SDK
+                    core.getIdentityStore().setIdentity(new Identity(userId, deviceId, new HashMap<>()));
+
                     initialized = true;
+
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
                     logger.e(TAG, String.format(
                             "Failed to initialize Amplitude SDK due to: %s", e.getMessage()
@@ -1187,6 +1211,12 @@ public class AmplitudeClient {
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
             result = saveEvent(eventType, event);
+
+            if (eventType.equals(Constants.IDENTIFY_EVENT) && userProperties != null) {
+                core.getIdentityStore().editIdentity()
+                    .updateUserProperties(JSONUtil.toUpdateUserPropertiesMap(userProperties))
+                    .commit();
+            }
         } catch (JSONException e) {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
@@ -1808,6 +1838,10 @@ public class AmplitudeClient {
                         sendSessionEvent(START_SESSION_EVENT);
                     }
                 }
+
+                // update the user in the core identity store to notify
+                // experiment to re-fetch variants with the new identity
+                client.core.getIdentityStore().editIdentity().setUserId(userId).commit();
             }
         });
         return this;
@@ -1835,6 +1869,10 @@ public class AmplitudeClient {
                 }
                 client.deviceId = deviceId;
                 saveDeviceId(deviceId);
+
+                // update the user in the core identity store to notify
+                // experiment to re-fetch variants with the new identity
+                client.core.getIdentityStore().editIdentity().setUserId(deviceId).commit();
             }
         });
         return this;
