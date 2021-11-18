@@ -1874,7 +1874,7 @@ public class AmplitudeClient {
 
                 // update the user in the core identity store to notify
                 // experiment to re-fetch variants with the new identity
-                client.core.getIdentityStore().editIdentity().setUserId(deviceId).commit();
+                client.core.getIdentityStore().editIdentity().setDeviceId(deviceId).commit();
             }
         });
         return this;
