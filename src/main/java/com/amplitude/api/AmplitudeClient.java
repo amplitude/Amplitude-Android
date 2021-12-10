@@ -204,7 +204,7 @@ public class AmplitudeClient {
     /**
      * The runner for middleware
      * */
-    MiddllewareRunner middlewareRunner = new MiddllewareRunner();
+    MiddlewareRunner middlewareRunner = new MiddlewareRunner();
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -831,6 +831,13 @@ public class AmplitudeClient {
     boolean isUsingForegroundTracking() { return usingForegroundTracking; }
 
     /**
+     * Add middleware to the middleware runner
+     */
+    void addEventMiddleware(Middleware middleware) {
+        middlewareRunner.add(middleware);
+    }
+
+    /**
      * Whether app is in the foreground.
      *
      * @return whether app is in the foreground
@@ -1131,18 +1138,9 @@ public class AmplitudeClient {
             JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
             long timestamp, boolean outOfSession, MiddlewareExtra extra) {
 
-        final boolean[] middlewareComplemeted = {false};
-        middlewareRunner.run(new MiddlewarePayload(eventProperties, extra),  new MiddlewareNext() {
-
-          @Override
-          public void middlewareNext(MiddlewarePayload curPayload) {
-            middlewareComplemeted[0] = true;
-          }
-        });
-
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
-        if (optOut || !middlewareComplemeted[0]) {
+        if (optOut) {
             return -1;
         }
 
@@ -1244,7 +1242,7 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-            result = saveEvent(eventType, event);
+            result = saveEvent(eventType, event, extra);
         } catch (JSONException e) {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
@@ -1261,7 +1259,18 @@ public class AmplitudeClient {
      * @param event     the event
      * @return the event ID if succeeded, else -1
      */
-    protected long saveEvent(String eventType, JSONObject event) {
+    protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
+
+        final boolean[] middlewareComplemeted = {false};
+        middlewareRunner.run(new MiddlewarePayload(event, extra),  new MiddlewareNext() {
+            @Override
+            public void run(MiddlewarePayload curPayload) {
+                middlewareComplemeted[0] = true;
+            }
+        });
+
+        if (!middlewareComplemeted[0]) return -1;
+
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
@@ -1627,6 +1636,18 @@ public class AmplitudeClient {
      * @param userProperties the user properties
      */
     public void setUserProperties(final JSONObject userProperties) {
+        setUserProperties(userProperties, null);
+    }
+
+    /**
+     * Sets user properties. This is a convenience wrapper around the
+     * {@link Identify} API to set multiple user properties with a single
+     * command.
+     *
+     * @param userProperties the user properties
+     * @param extra the middleware extra object
+     */
+    public void setUserProperties(final JSONObject userProperties, MiddlewareExtra extra) {
         if (userProperties == null || userProperties.length() == 0 ||
                 !contextAndApiKeySet("setUserProperties")) {
             return;
@@ -1648,7 +1669,7 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
             }
         }
-        identify(identify);
+        identify(identify,false, extra);
     }
 
     /**

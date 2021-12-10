@@ -3,10 +3,10 @@ package com.amplitude.api;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MiddllewareRunner {
+public class MiddlewareRunner {
     private final List<Middleware> middlewares;
 
-    public MiddllewareRunner() {
+    public MiddlewareRunner() {
         middlewares = new ArrayList<>();
     }
 
@@ -14,14 +14,14 @@ public class MiddllewareRunner {
         this.middlewares.add(middleware);
     }
 
-    public void runMiddlewares(List<Middleware> middlewares, MiddlewarePayload payload, MiddlewareNext next) {
+    private void runMiddlewares(List<Middleware> middlewares, MiddlewarePayload payload, MiddlewareNext next) {
         if (middlewares.size() == 0 ){
-            next.middlewareNext(payload);
+            next.run(payload);
             return;
         }
         middlewares.get(0).run(payload, new MiddlewareNext() {
             @Override
-            public void middlewareNext(MiddlewarePayload curPayload) {
+            public void run(MiddlewarePayload curPayload) {
                 runMiddlewares(middlewares.subList(1, middlewares.size()), curPayload, next);
             }
         });
