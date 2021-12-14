@@ -1683,7 +1683,7 @@ public class AmplitudeClient {
     }
 
     public void identify(Identify identify, boolean outOfSession) {
-        identify(identify, false, null);
+        identify(identify, outOfSession, null);
     }
 
     /**
