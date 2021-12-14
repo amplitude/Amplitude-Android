@@ -17,17 +17,15 @@ public class MiddlewareRunner {
         this.middlewares.add(middleware);
     }
 
-    private void runMiddlewares(ConcurrentLinkedQueue<Middleware> middlewares, MiddlewarePayload payload, MiddlewareNext next) {
+    private void runMiddlewares(List<Middleware> middlewares, MiddlewarePayload payload, MiddlewareNext next) {
         if (middlewares.size() == 0 ){
             next.run(payload);
             return;
         }
-        Middleware[] middlewareArray = middlewares.toArray(new Middleware[0]);
-        List<Middleware> middlewareList = Arrays.asList(middlewareArray);
-        middlewareList.get(0).run(payload, new MiddlewareNext() {
+        middlewares.get(0).run(payload, new MiddlewareNext() {
             @Override
             public void run(MiddlewarePayload curPayload) {
-                runMiddlewares(new ConcurrentLinkedQueue<>(middlewareList.subList(1, middlewares.size())), curPayload, next);
+                runMiddlewares((middlewares.subList(1, middlewares.size())), curPayload, next);
             }
         });
     }
@@ -44,6 +42,7 @@ public class MiddlewareRunner {
     }
 
     public void run(MiddlewarePayload payload, MiddlewareNext next) {
-        runMiddlewares(this.middlewares, payload, next);
+        List<Middleware> middlewareList = new ArrayList<>(this.middlewares);
+        runMiddlewares(middlewareList, payload, next);
     }
 }

@@ -10,4 +10,8 @@ public class MiddlewarePayload {
         this.event = event;
         this.extra = extra;
     }
+
+    public MiddlewarePayload(JSONObject event) {
+        this(event, null);
+    }
 }

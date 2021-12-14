@@ -94,8 +94,7 @@ public class MiddlewareRunnerTest extends BaseTest {
         amplitude.addEventMiddleware(swallowMiddleware);
 
         JSONObject event = new JSONObject().put("device_model", "sample_device").put("user_id", "sample_user");
-        MiddlewareExtra extra = new MiddlewareExtra();
-        boolean middlewareCompleted = amplitude.middlewareRunner.run(new MiddlewarePayload(event, (MiddlewareExtra) extra));
+        boolean middlewareCompleted = amplitude.middlewareRunner.run(new MiddlewarePayload(event));
 
         assertFalse(middlewareCompleted);
         assertEquals(event.getString("device_model"), middlewareDevice);

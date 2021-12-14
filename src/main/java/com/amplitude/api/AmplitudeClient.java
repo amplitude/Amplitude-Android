@@ -1660,7 +1660,7 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
             }
         }
-        identify(identify,false, extra);
+        identify(identify, false, extra);
     }
 
     /**
