@@ -1260,16 +1260,7 @@ public class AmplitudeClient {
      * @return the event ID if succeeded, else -1
      */
     protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
-
-        final boolean[] middlewareComplemeted = {false};
-        middlewareRunner.run(new MiddlewarePayload(event, extra),  new MiddlewareNext() {
-            @Override
-            public void run(MiddlewarePayload curPayload) {
-                middlewareComplemeted[0] = true;
-            }
-        });
-
-        if (!middlewareComplemeted[0]) return -1;
+        if (!middlewareRunner.run(new MiddlewarePayload(event, extra))) return -1;
 
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
