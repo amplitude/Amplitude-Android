@@ -2009,4 +2009,51 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
         assertEquals(Constants.EVENT_LOG_EU_URL, amplitude.url);
     }
+
+    @Test
+    public void testMiddlewareSupport() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        MiddlewareExtra extra = new MiddlewareExtra();
+        extra.put("description", "extra description");
+        Middleware middleware = new Middleware() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+                try {
+                    payload.event.optJSONObject("event_properties").put("description", "extra description");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                next.run(payload);
+            }
+        };
+        amplitude.addEventMiddleware(middleware);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), null, System.currentTimeMillis(), false, extra);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 1);
+        JSONArray eventObject = getUnsentEvents(1);;
+        assertEquals(eventObject.optJSONObject(0).optString("event_type"), "middleware_event_type");
+        assertEquals(eventObject.optJSONObject(0).optJSONObject("event_properties").getString("description"), "extra description");
+        assertEquals(eventObject.optJSONObject(0).optJSONObject("event_properties").optString("user_id"), "middleware_user");
+    }
+
+    @Test
+    public void testWithSwallowMiddleware() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        Middleware middleware = new Middleware() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+            }
+        };
+        amplitude.addEventMiddleware(middleware);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), null, System.currentTimeMillis(), false, null);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 0);
+    }
 }

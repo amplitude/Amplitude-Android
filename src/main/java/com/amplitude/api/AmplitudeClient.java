@@ -201,6 +201,10 @@ public class AmplitudeClient {
      * The background event uploading worker thread instance.
      */
     WorkerThread httpThread = new WorkerThread("httpThread");
+    /**
+     * The runner for middleware
+     * */
+    MiddlewareRunner middlewareRunner = new MiddlewareRunner();
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -633,7 +637,7 @@ public class AmplitudeClient {
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
-    
+
     /**
      * Enable COPPA (Children's Online Privacy Protection Act) restrictions on ADID, city, IP address and location tracking.
      * This can be used by any customer that does not want to collect ADID, city, IP address and location tracking.
@@ -827,6 +831,13 @@ public class AmplitudeClient {
     boolean isUsingForegroundTracking() { return usingForegroundTracking; }
 
     /**
+     * Add middleware to the middleware runner
+     */
+    void addEventMiddleware(Middleware middleware) {
+        middlewareRunner.add(middleware);
+    }
+
+    /**
      * Whether app is in the foreground.
      *
      * @return whether app is in the foreground
@@ -919,11 +930,15 @@ public class AmplitudeClient {
      *     Tracking Sessions</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
+        logEvent(eventType, eventProperties, groups,
+                timestamp, outOfSession, null);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession, MiddlewareExtra extra) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
                 eventType, eventProperties, null, null, groups, null,
-                timestamp, outOfSession
-            );
+                timestamp, outOfSession, extra);
         }
     }
 
@@ -1048,8 +1063,14 @@ public class AmplitudeClient {
      * @param outOfSession    the out of session
      */
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
+           JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
+           JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
+        logEventAsync(eventType,eventProperties, apiProperties, userProperties, groups,groupProperties, timestamp, outOfSession, null);
+    };
+
+    protected void logEventAsync(final String eventType, JSONObject eventProperties,
             JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
-            JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
+            JSONObject groupProperties, final long timestamp, final boolean outOfSession, MiddlewareExtra extra) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -1088,7 +1109,7 @@ public class AmplitudeClient {
                 }
                 logEvent(
                     eventType, copyEventProperties, copyApiProperties,
-                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession
+                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession, extra
                 );
             }
         });
@@ -1108,8 +1129,15 @@ public class AmplitudeClient {
      * @return the event ID if succeeded, else -1.
      */
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
+                            JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
+                            long timestamp, boolean outOfSession) {
+        return logEvent(eventType, eventProperties, apiProperties, userProperties, groups, groupProperties, timestamp,outOfSession, null);
+    }
+
+    protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
             JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
-            long timestamp, boolean outOfSession) {
+            long timestamp, boolean outOfSession, MiddlewareExtra extra) {
+
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -1214,7 +1242,7 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-            result = saveEvent(eventType, event);
+            result = saveEvent(eventType, event, extra);
         } catch (JSONException e) {
             logger.e(TAG, String.format(
                 "JSON Serialization of event type %s failed, skipping: %s", eventType, e.toString()
@@ -1231,7 +1259,9 @@ public class AmplitudeClient {
      * @param event     the event
      * @return the event ID if succeeded, else -1
      */
-    protected long saveEvent(String eventType, JSONObject event) {
+    protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
+        if (!middlewareRunner.run(new MiddlewarePayload(event, extra))) return -1;
+
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
@@ -1518,6 +1548,10 @@ public class AmplitudeClient {
         logRevenue(productId, quantity, price, null, null);
     }
 
+    public void logRevenue(String productId, int quantity, double price, String receipt,
+                           String receiptSignature) {
+        logRevenue(productId, quantity, price, receipt, receiptSignature, null);
+    }
     /**
      * Log revenue with a productId, quantity, price, and receipt data for revenue verification.
      *
@@ -1531,7 +1565,7 @@ public class AmplitudeClient {
      *     Tracking Revenue</a>
      */
     public void logRevenue(String productId, int quantity, double price, String receipt,
-            String receiptSignature) {
+            String receiptSignature, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("logRevenue()")) {
             return;
         }
@@ -1550,7 +1584,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, null, getCurrentTimeMillis(), false, extra
         );
     }
 
@@ -1561,11 +1595,15 @@ public class AmplitudeClient {
      * @param revenue a {@link Revenue} object
      */
     public void logRevenueV2(Revenue revenue) {
+        logRevenueV2(revenue, null);
+    }
+
+    public void logRevenueV2(Revenue revenue, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("logRevenueV2()") || revenue == null || !revenue.isValidRevenue()) {
             return;
         }
 
-        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject());
+        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject(), null, null, null, null, getCurrentTimeMillis(), false, extra);
     }
 
     /**
@@ -1589,6 +1627,18 @@ public class AmplitudeClient {
      * @param userProperties the user properties
      */
     public void setUserProperties(final JSONObject userProperties) {
+        setUserProperties(userProperties, null);
+    }
+
+    /**
+     * Sets user properties. This is a convenience wrapper around the
+     * {@link Identify} API to set multiple user properties with a single
+     * command.
+     *
+     * @param userProperties the user properties
+     * @param extra the middleware extra object
+     */
+    public void setUserProperties(final JSONObject userProperties, MiddlewareExtra extra) {
         if (userProperties == null || userProperties.length() == 0 ||
                 !contextAndApiKeySet("setUserProperties")) {
             return;
@@ -1610,7 +1660,7 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
             }
         }
-        identify(identify);
+        identify(identify, false, extra);
     }
 
     /**
@@ -1632,6 +1682,10 @@ public class AmplitudeClient {
         identify(identify, false);
     }
 
+    public void identify(Identify identify, boolean outOfSession) {
+        identify(identify, outOfSession, null);
+    }
+
     /**
      * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
      * user property operations to Amplitude server. If outOfSession is true, then the identify
@@ -1640,14 +1694,14 @@ public class AmplitudeClient {
      * @param identify an {@link Identify} object
      * @param outOfSession whther to log the identify event out of session
      */
-    public void identify(Identify identify, boolean outOfSession) {
+    public void identify(Identify identify, boolean outOfSession, MiddlewareExtra extra) {
         if (
             identify == null || identify.userPropertiesOperations.length() == 0 ||
             !contextAndApiKeySet("identify()")
         ) return;
         logEventAsync(
             Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-            null, null, getCurrentTimeMillis(), outOfSession
+            null, null, getCurrentTimeMillis(), outOfSession, extra
         );
     }
 
@@ -1658,6 +1712,10 @@ public class AmplitudeClient {
      * @param groupName the group name (ex: 15)
      */
     public void setGroup(String groupType, Object groupName) {
+        setGroup(groupType, groupName, null);
+    }
+
+    public void setGroup(String groupType, Object groupName, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
             return;
         }
@@ -1671,7 +1729,7 @@ public class AmplitudeClient {
 
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-                group, null, getCurrentTimeMillis(), false);
+                group, null, getCurrentTimeMillis(), false, extra);
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify) {
@@ -1679,6 +1737,10 @@ public class AmplitudeClient {
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession) {
+        groupIdentify(groupType, groupName, groupIdentify, false, null);
+    }
+
+    public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession, MiddlewareExtra extra) {
         if (groupIdentify == null || groupIdentify.userPropertiesOperations.length() == 0 ||
             !contextAndApiKeySet("groupIdentify()") || Utils.isEmptyString(groupType)) {
 
