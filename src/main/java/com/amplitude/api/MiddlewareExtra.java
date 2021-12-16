@@ -1,7 +1,7 @@
 package com.amplitude.api;
 
-import org.json.JSONObject;
+import java.util.HashMap;
 
-public class MiddlewareExtra extends JSONObject {
+public class MiddlewareExtra extends HashMap<String, Object> {
 
 }

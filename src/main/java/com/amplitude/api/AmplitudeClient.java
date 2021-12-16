@@ -874,6 +874,21 @@ public class AmplitudeClient {
      *
      * @param eventType       the event type
      * @param eventProperties the event properties
+     * @param extra    the middleware extra payload
+     */
+    public void logEvent(String eventType, JSONObject eventProperties, MiddlewareExtra extra) {
+        logEvent(eventType, eventProperties, null, getCurrentTimeMillis(), false, extra);
+    }
+
+    /**
+     * Log an event with the specified event type, event properties, with optional out of session
+     * flag. If out of session is true, then the sessionId will be -1 for the event, indicating
+     * that it is not part of the current session. Note: this might be useful when logging events
+     * for notifications received.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
      * @param outOfSession    the out of session
      */
     public void logEvent(String eventType, JSONObject eventProperties, boolean outOfSession) {
@@ -1257,6 +1272,7 @@ public class AmplitudeClient {
      *
      * @param eventType the event type
      * @param event     the event
+     * @param extra     the middleware extra payload
      * @return the event ID if succeeded, else -1
      */
     protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
@@ -1560,6 +1576,7 @@ public class AmplitudeClient {
      * @param price            the price
      * @param receipt          the receipt
      * @param receiptSignature the receipt signature
+     * @params extra           the middleware extra payload
      * @deprecated - use {@code logRevenueV2} instead
      * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
      *     Tracking Revenue</a>
@@ -1636,7 +1653,7 @@ public class AmplitudeClient {
      * command.
      *
      * @param userProperties the user properties
-     * @param extra the middleware extra object
+     * @param extra the middleware extra payload
      */
     public void setUserProperties(final JSONObject userProperties, MiddlewareExtra extra) {
         if (userProperties == null || userProperties.length() == 0 ||
@@ -1693,6 +1710,7 @@ public class AmplitudeClient {
      *
      * @param identify an {@link Identify} object
      * @param outOfSession whther to log the identify event out of session
+     * @param extra the middleware extra payload
      */
     public void identify(Identify identify, boolean outOfSession, MiddlewareExtra extra) {
         if (
@@ -1715,6 +1733,13 @@ public class AmplitudeClient {
         setGroup(groupType, groupName, null);
     }
 
+    /**
+     * Sets the user's group(s).
+     *
+     * @param groupType the group type (ex: orgId)
+     * @param groupName the group name (ex: 15)
+     * @param extra the middleware extra payload
+     */
     public void setGroup(String groupType, Object groupName, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
             return;
