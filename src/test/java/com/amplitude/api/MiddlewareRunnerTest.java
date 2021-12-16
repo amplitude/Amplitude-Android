@@ -34,8 +34,7 @@ public class MiddlewareRunnerTest {
         middlewareRunner.add(updateDeviceIdMiddleware);
 
         JSONObject event = new JSONObject().put("device_model", "sample_device");
-        MiddlewareExtra extra = new MiddlewareExtra();
-        boolean middlewareCompleted = middlewareRunner.run(new MiddlewarePayload(event, (MiddlewareExtra) extra));
+        boolean middlewareCompleted = middlewareRunner.run(new MiddlewarePayload(event, new MiddlewareExtra()));
 
         assertTrue(middlewareCompleted);
         assertEquals(event.getString("device_model"), middlewareDevice);

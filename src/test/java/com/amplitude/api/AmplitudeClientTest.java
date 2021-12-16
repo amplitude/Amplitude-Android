@@ -2029,7 +2029,7 @@ public class AmplitudeClientTest extends BaseTest {
             }
         };
         amplitude.addEventMiddleware(middleware);
-        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), null, System.currentTimeMillis(), false, extra);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), extra);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 
@@ -2050,7 +2050,7 @@ public class AmplitudeClientTest extends BaseTest {
             }
         };
         amplitude.addEventMiddleware(middleware);
-        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), null, System.currentTimeMillis(), false, null);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"));
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 
