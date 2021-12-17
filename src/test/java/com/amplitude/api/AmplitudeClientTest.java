@@ -20,7 +20,9 @@ import org.robolectric.shadows.ShadowLooper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import okhttp3.Call;
@@ -2014,8 +2016,9 @@ public class AmplitudeClientTest extends BaseTest {
     public void testMiddlewareSupport() throws JSONException {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runToEndOfTasks();
-        MiddlewareExtra extra = new MiddlewareExtra();
-        extra.put("description", "extra description");
+        Map<String, Object> extraMap = new HashMap<>();
+        extraMap.put("description", "extra description");
+        MiddlewareExtra extra = new MiddlewareExtra(extraMap);
         Middleware middleware = new Middleware() {
             @Override
             public void run(MiddlewarePayload payload, MiddlewareNext next) {
