@@ -833,7 +833,7 @@ public class AmplitudeClient {
     /**
      * Add middleware to the middleware runner
      */
-    void addEventMiddleware(Middleware middleware) {
+    public void addEventMiddleware(Middleware middleware) {
         middlewareRunner.add(middleware);
     }
 
