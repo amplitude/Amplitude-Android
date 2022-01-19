@@ -400,7 +400,7 @@ public class AmplitudeClient {
                     });
 
                     // set up listener to core package to receive exposure events from Experiment
-                    core.getAnalyticsConnector().addEventListener(analyticsEvent -> {
+                    core.getAnalyticsConnector().setEventReceiver(analyticsEvent -> {
                         String eventType = analyticsEvent.getEventType();
                         JSONObject eventProperties = JSONUtil.toJSONObject(analyticsEvent.getEventProperties());
                         JSONObject userProperties = JSONUtil.toJSONObject(analyticsEvent.getUserProperties());
