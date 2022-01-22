@@ -207,9 +207,9 @@ public class DeviceInfo {
                 Class AppSet = Class
                         .forName("com.google.android.gms.appset.AppSet");
                 Method getClient = AppSet.getMethod("getClient", Context.class);
-                Object appSetClient = getClient.invoke(null, context);
-                Method getAppSetInfo = appSetClient.getClass().getMethod("getAppSetInfo");
-                Object taskWithAppSetInfo = getAppSetInfo.invoke(appSetClient);
+                Object appSetIdClient = getClient.invoke(null, context);
+                Method getAppSetIdInfo = appSetIdClient.getClass().getMethod("getAppSetIdInfo");
+                Object taskWithAppSetInfo = getAppSetIdInfo.invoke(appSetIdClient);
                 Class Tasks = Class.forName("com.google.android.gms.tasks.Tasks");
                 Method await = Tasks.getMethod("await", Class.forName("com.google.android.gms.tasks.Task"));
                 Object appSetInfo = await.invoke(null, taskWithAppSetInfo);
