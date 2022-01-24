@@ -129,6 +129,7 @@ public class AmplitudeClient {
     private boolean useAdvertisingIdForDeviceId = false;
     private boolean useAppSetIdForDeviceId = false;
     protected boolean initialized = false;
+    private AmplitudeDeviceIdCallback deviceIdCallback;
     private boolean optOut = false;
     private boolean offline = false;
     TrackingOptions inputTrackingOptions = new TrackingOptions();
@@ -137,6 +138,11 @@ public class AmplitudeClient {
     private boolean coppaControlEnabled = false;
     private boolean locationListening = true;
     private EventExplorer eventExplorer;
+    private Plan plan;
+    /**
+     * Amplitude Server Zone
+     */
+    private AmplitudeServerZone serverZone = AmplitudeServerZone.US;
 
     /**
      * The device's Platform value.
@@ -204,6 +210,10 @@ public class AmplitudeClient {
      * The core package for integrating with the Experiment SDK.
      */
     final AmplitudeCore core;
+    /**
+     * The runner for middleware
+     */
+    MiddlewareRunner middlewareRunner = new MiddlewareRunner();
 
     /**
      * Instantiates a new default instance AmplitudeClient and starts worker threads.
@@ -359,11 +369,14 @@ public class AmplitudeClient {
                             public void onFinished() {
                                 url = ConfigManager.getInstance().getIngestionEndpoint();
                             }
-                        });
+                        }, serverZone);
                     }
 
                     deviceInfo = initializeDeviceInfo();
                     deviceId = initializeDeviceId();
+                    if (this.deviceIdCallback != null) {
+                        this.deviceIdCallback.onDeviceIdReady(deviceId);
+                    }
                     deviceInfo.prefetch();
 
                     if (userId != null) {
@@ -602,6 +615,10 @@ public class AmplitudeClient {
 
     /**
      * Sets a custom server url for event upload.
+     *
+     * We now have a new method setServerZone. To send data to Amplitude's EU servers, recommend to
+     * use setServerZone method like client.setServerZone(AmplitudeServerZone.EU);
+     *
      * @param serverUrl - a string url for event upload.
      * @return the AmplitudeClient
      */
@@ -644,7 +661,7 @@ public class AmplitudeClient {
         apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
         return this;
     }
-    
+
     /**
      * Enable COPPA (Children's Online Privacy Protection Act) restrictions on ADID, city, IP address and location tracking.
      * This can be used by any customer that does not want to collect ADID, city, IP address and location tracking.
@@ -746,6 +763,17 @@ public class AmplitudeClient {
     }
 
     /**
+     * Set log callback, it can help read and collect error message from sdk
+     *
+     * @param callback
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setLogCallback(AmplitudeLogCallback callback) {
+        logger.setAmplitudeLogCallback(callback);
+        return this;
+    }
+
+    /**
      * Sets offline. If offline is true, then the SDK will not upload events to Amplitude servers;
      * however, it will still log events.
      *
@@ -827,6 +855,13 @@ public class AmplitudeClient {
     boolean isUsingForegroundTracking() { return usingForegroundTracking; }
 
     /**
+     * Add middleware to the middleware runner
+     */
+    public void addEventMiddleware(Middleware middleware) {
+        middlewareRunner.add(middleware);
+    }
+
+    /**
      * Whether app is in the foreground.
      *
      * @return whether app is in the foreground
@@ -852,6 +887,21 @@ public class AmplitudeClient {
      */
     public void logEvent(String eventType, JSONObject eventProperties) {
         logEvent(eventType, eventProperties, false);
+    }
+
+    /**
+     * Log an event with the specified event type, event properties, with optional out of session
+     * flag. If out of session is true, then the sessionId will be -1 for the event, indicating
+     * that it is not part of the current session. Note: this might be useful when logging events
+     * for notifications received.
+     * <b>Note:</b> this is asynchronous and happens on a background thread.
+     *
+     * @param eventType       the event type
+     * @param eventProperties the event properties
+     * @param extra           the extra unstructured data for middleware
+     */
+    public void logEvent(String eventType, JSONObject eventProperties, MiddlewareExtra extra) {
+        logEvent(eventType, eventProperties, null, getCurrentTimeMillis(), false, extra);
     }
 
     /**
@@ -919,11 +969,15 @@ public class AmplitudeClient {
      *     Tracking Sessions</a>
      */
     public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
+        logEvent(eventType, eventProperties, groups,
+                timestamp, outOfSession, null);
+    }
+
+    public void logEvent(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession, MiddlewareExtra extra) {
         if (validateLogEvent(eventType)) {
             logEventAsync(
                 eventType, eventProperties, null, null, groups, null,
-                timestamp, outOfSession
-            );
+                timestamp, outOfSession, extra);
         }
     }
 
@@ -1048,8 +1102,14 @@ public class AmplitudeClient {
      * @param outOfSession    the out of session
      */
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
+           JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
+           JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
+        logEventAsync(eventType,eventProperties, apiProperties, userProperties, groups,groupProperties, timestamp, outOfSession, null);
+    };
+
+    protected void logEventAsync(final String eventType, JSONObject eventProperties,
             JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
-            JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
+            JSONObject groupProperties, final long timestamp, final boolean outOfSession, MiddlewareExtra extra) {
         // Clone the incoming eventProperties object before sending over
         // to the log thread. Helps avoid ConcurrentModificationException
         // if the caller starts mutating the object they passed in.
@@ -1088,7 +1148,7 @@ public class AmplitudeClient {
                 }
                 logEvent(
                     eventType, copyEventProperties, copyApiProperties,
-                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession
+                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession, extra
                 );
             }
         });
@@ -1108,8 +1168,15 @@ public class AmplitudeClient {
      * @return the event ID if succeeded, else -1.
      */
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
+                            JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
+                            long timestamp, boolean outOfSession) {
+        return logEvent(eventType, eventProperties, apiProperties, userProperties, groups, groupProperties, timestamp,outOfSession, null);
+    }
+
+    protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
             JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
-            long timestamp, boolean outOfSession) {
+            long timestamp, boolean outOfSession, MiddlewareExtra extra) {
+
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
         if (optOut) {
@@ -1179,6 +1246,10 @@ public class AmplitudeClient {
             library.put("version", this.libraryVersion == null ? Constants.VERSION_UNKNOWN : this.libraryVersion);
             event.put("library", library);
 
+            if (plan != null) {
+                event.put("plan", plan.toJSONObject());
+            }
+
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
             if (apiPropertiesTrackingOptions != null && apiPropertiesTrackingOptions.length() > 0) {
                 apiProperties.put("tracking_options", apiPropertiesTrackingOptions);
@@ -1210,7 +1281,7 @@ public class AmplitudeClient {
             event.put("groups", (groups == null) ? new JSONObject() : truncate(groups));
             event.put("group_properties", (groupProperties == null) ? new JSONObject()
                 : truncate(groupProperties));
-            result = saveEvent(eventType, event);
+            result = saveEvent(eventType, event, extra);
 
             // If the the event is an identify, update the user properties to the core identity
             // for experiment SDK to consume.
@@ -1233,9 +1304,12 @@ public class AmplitudeClient {
      *
      * @param eventType the event type
      * @param event     the event
+     * @param extra     the extra unstructured data for middleware
      * @return the event ID if succeeded, else -1
      */
-    protected long saveEvent(String eventType, JSONObject event) {
+    protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
+        if (!middlewareRunner.run(new MiddlewarePayload(event, extra))) return -1;
+
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
@@ -1486,7 +1560,7 @@ public class AmplitudeClient {
                         public void onFinished() {
                             url = ConfigManager.getInstance().getIngestionEndpoint();
                         }
-                    });
+                    }, serverZone);
                 }
                 startNewSessionIfNeeded(timestamp);
                 inForeground = true;
@@ -1522,6 +1596,10 @@ public class AmplitudeClient {
         logRevenue(productId, quantity, price, null, null);
     }
 
+    public void logRevenue(String productId, int quantity, double price, String receipt,
+                           String receiptSignature) {
+        logRevenue(productId, quantity, price, receipt, receiptSignature, null);
+    }
     /**
      * Log revenue with a productId, quantity, price, and receipt data for revenue verification.
      *
@@ -1530,12 +1608,13 @@ public class AmplitudeClient {
      * @param price            the price
      * @param receipt          the receipt
      * @param receiptSignature the receipt signature
+     * @param extra            the extra unstructured data for middleware
      * @deprecated - use {@code logRevenueV2} instead
      * @see <a href="https://github.com/amplitude/Amplitude-Android#tracking-revenue">
      *     Tracking Revenue</a>
      */
     public void logRevenue(String productId, int quantity, double price, String receipt,
-            String receiptSignature) {
+            String receiptSignature, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("logRevenue()")) {
             return;
         }
@@ -1554,7 +1633,7 @@ public class AmplitudeClient {
         }
 
         logEventAsync(
-            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, null, getCurrentTimeMillis(), false
+            Constants.AMP_REVENUE_EVENT, null, apiProperties, null, null, null, getCurrentTimeMillis(), false, extra
         );
     }
 
@@ -1565,11 +1644,15 @@ public class AmplitudeClient {
      * @param revenue a {@link Revenue} object
      */
     public void logRevenueV2(Revenue revenue) {
+        logRevenueV2(revenue, null);
+    }
+
+    public void logRevenueV2(Revenue revenue, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("logRevenueV2()") || revenue == null || !revenue.isValidRevenue()) {
             return;
         }
 
-        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject());
+        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject(), null, null, null, null, getCurrentTimeMillis(), false, extra);
     }
 
     /**
@@ -1593,6 +1676,18 @@ public class AmplitudeClient {
      * @param userProperties the user properties
      */
     public void setUserProperties(final JSONObject userProperties) {
+        setUserProperties(userProperties, null);
+    }
+
+    /**
+     * Sets user properties. This is a convenience wrapper around the
+     * {@link Identify} API to set multiple user properties with a single
+     * command.
+     *
+     * @param userProperties the user properties
+     * @param extra          the extra unstructured data for middleware
+     */
+    public void setUserProperties(final JSONObject userProperties, MiddlewareExtra extra) {
         if (userProperties == null || userProperties.length() == 0 ||
                 !contextAndApiKeySet("setUserProperties")) {
             return;
@@ -1614,7 +1709,7 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
             }
         }
-        identify(identify);
+        identify(identify, false, extra);
     }
 
     /**
@@ -1636,22 +1731,27 @@ public class AmplitudeClient {
         identify(identify, false);
     }
 
+    public void identify(Identify identify, boolean outOfSession) {
+        identify(identify, outOfSession, null);
+    }
+
     /**
      * Identify. Use this to send an {@link com.amplitude.api.Identify} object containing
      * user property operations to Amplitude server. If outOfSession is true, then the identify
      * event is sent with a session id of -1, and does not trigger any session-handling logic.
      *
-     * @param identify an {@link Identify} object
-     * @param outOfSession whther to log the identify event out of session
+     * @param identify      an {@link Identify} object
+     * @param outOfSession  whther to log the identify event out of session
+     * @param extra         the extra unstructured data for middleware
      */
-    public void identify(Identify identify, boolean outOfSession) {
+    public void identify(Identify identify, boolean outOfSession, MiddlewareExtra extra) {
         if (
             identify == null || identify.userPropertiesOperations.length() == 0 ||
             !contextAndApiKeySet("identify()")
         ) return;
         logEventAsync(
             Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-            null, null, getCurrentTimeMillis(), outOfSession
+            null, null, getCurrentTimeMillis(), outOfSession, extra
         );
     }
 
@@ -1662,6 +1762,17 @@ public class AmplitudeClient {
      * @param groupName the group name (ex: 15)
      */
     public void setGroup(String groupType, Object groupName) {
+        setGroup(groupType, groupName, null);
+    }
+
+    /**
+     * Sets the user's group(s).
+     *
+     * @param groupType the group type (ex: orgId)
+     * @param groupName the group name (ex: 15)
+     * @param extra     the extra unstructured data for middleware
+     */
+    public void setGroup(String groupType, Object groupName, MiddlewareExtra extra) {
         if (!contextAndApiKeySet("setGroup()") || Utils.isEmptyString(groupType)) {
             return;
         }
@@ -1675,7 +1786,7 @@ public class AmplitudeClient {
 
         Identify identify = new Identify().setUserProperty(groupType, groupName);
         logEventAsync(Constants.IDENTIFY_EVENT, null, null, identify.userPropertiesOperations,
-                group, null, getCurrentTimeMillis(), false);
+                group, null, getCurrentTimeMillis(), false, extra);
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify) {
@@ -1683,6 +1794,10 @@ public class AmplitudeClient {
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession) {
+        groupIdentify(groupType, groupName, groupIdentify, false, null);
+    }
+
+    public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession, MiddlewareExtra extra) {
         if (groupIdentify == null || groupIdentify.userPropertiesOperations.length() == 0 ||
             !contextAndApiKeySet("groupIdentify()") || Utils.isEmptyString(groupType)) {
 
@@ -2274,6 +2389,11 @@ public class AmplitudeClient {
         dbHelper.insertOrReplaceKeyValue(DEVICE_ID_KEY, deviceId);
     }
 
+    public AmplitudeClient setDeviceIdCallback(AmplitudeDeviceIdCallback callback) {
+        this.deviceIdCallback = callback;
+        return this;
+    }
+
     protected void runOnLogThread(Runnable r) {
         if (Thread.currentThread() != logThread) {
             logThread.post(r);
@@ -2338,4 +2458,48 @@ public class AmplitudeClient {
      * @return the current time millis
      */
     protected long getCurrentTimeMillis() { return System.currentTimeMillis(); }
+
+    /**
+     * Set tracking plan information.
+     * @param plan Plan object
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setPlan(Plan plan) {
+        this.plan = plan;
+        return this;
+    }
+
+    /**
+     * Set Amplitude Server Zone, switch to zone related configuration,
+     * including dynamic configuration and server url.
+     *
+     * To send data to Amplitude's EU servers, you need to configure the serverZone to EU like
+     * client.setServerZone(AmplitudeServerZone.EU);
+     *
+     * @param serverZone AmplitudeServerZone, US or EU, default is US
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setServerZone(AmplitudeServerZone serverZone) {
+        return setServerZone(serverZone, true);
+    }
+
+    /**
+     * Set Amplitude Server Zone, switch to zone related configuration,
+     * including dynamic configuration. If updateServerUrl is true, including server url as well.
+     * Recommend to keep updateServerUrl to be true for alignment.
+     *
+     * @param serverZone AmplitudeServerZone, US or EU, default is US
+     * @param updateServerUrl if update server url when update server zone, recommend setting true
+     * @return
+     */
+    public AmplitudeClient setServerZone(AmplitudeServerZone serverZone, boolean updateServerUrl) {
+        if (serverZone == null) {
+            return null;
+        }
+        this.serverZone = serverZone;
+        if (updateServerUrl) {
+            setServerUrl(AmplitudeServerZone.getEventLogApiForZone(serverZone));
+        }
+        return this;
+    }
 }

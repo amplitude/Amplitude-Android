@@ -340,11 +340,16 @@ public class DeviceInfoTest extends BaseTest {
 
         client.useAdvertisingIdForDeviceId();
         client.useAppSetIdForDeviceId();
+
+        final String[] deviceIdCallbackResult = new String[1];
+        client.setDeviceIdCallback(deviceId -> deviceIdCallbackResult[0] = deviceId);
+
         client.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
         ShadowLooper looper = Shadows.shadowOf(client.logThread.getLooper());
         looper.runToEndOfTasks();
 
         assertEquals(mockAppSetId + "S", client.getDeviceId());
+        assertEquals(mockAppSetId + "S", deviceIdCallbackResult[0]);
     }
 
     @Test

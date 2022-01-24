@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import com.amplitude.api.Amplitude;
+import com.amplitude.api.AmplitudeServerZone;
 import com.amplitude.api.Identify;
 import com.amplitude.api.Revenue;
 import com.amplitude.api.TrackingOptions;
@@ -115,6 +116,15 @@ public class AmplitudePlugin {
 
     public static void setServerUrl(String instanceName, String serverUrl) {
         Amplitude.getInstance(instanceName).setServerUrl(serverUrl);
+    }
+
+    public static void setServerZone(String instanceName, String serverZone, boolean updateServerUrl) {
+        AmplitudeServerZone amplitudeServerZone = AmplitudeServerZone.getServerZone(serverZone);
+        Amplitude.getInstance(instanceName).setServerZone(amplitudeServerZone, updateServerUrl);
+    }
+
+    public static void setUseDynamicConfig(String instanceName, boolean useDynamicConfig) {
+        Amplitude.getInstance(instanceName).setUseDynamicConfig(useDynamicConfig);
     }
 
     @Deprecated

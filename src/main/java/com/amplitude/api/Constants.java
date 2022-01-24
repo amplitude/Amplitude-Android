@@ -11,7 +11,9 @@ public class Constants {
     public static final String PLATFORM = "Android";
 
     public static final String EVENT_LOG_URL = "https://api2.amplitude.com/";
+    public static final String EVENT_LOG_EU_URL = "https://api.eu.amplitude.com/";
     public static final String DYNAMIC_CONFIG_URL = "https://regionconfig.amplitude.com/";
+    public static final String DYNAMIC_CONFIG_EU_URL = "https://regionconfig.eu.amplitude.com/";
 
     public static final String PACKAGE_NAME = "com.amplitude.api";
 
@@ -80,4 +82,8 @@ public class Constants {
     public static final String AMP_TRACKING_OPTION_PLATFORM = "platform";
     public static final String AMP_TRACKING_OPTION_REGION = "region";
     public static final String AMP_TRACKING_OPTION_VERSION_NAME = "version_name";
+
+    public static final String AMP_PLAN_BRANCH = "branch";
+    public static final String AMP_PLAN_SOURCE = "source";
+    public static final String AMP_PLAN_VERSION = "version";
 }

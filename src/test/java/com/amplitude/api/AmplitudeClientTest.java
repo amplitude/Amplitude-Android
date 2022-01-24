@@ -20,7 +20,9 @@ import org.robolectric.shadows.ShadowLooper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import okhttp3.Call;
@@ -1949,5 +1951,112 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put(Constants.AMP_OP_SET, new JSONObject().put(property3, value3));
         expected.put(Constants.AMP_OP_UNSET, new JSONObject().put(property4, "-"));
         assertTrue(Utils.compareJSONObjects(groupProperties, expected));
+    }
+
+    @Test
+    public void testSetLogCallback() {
+        class TestLogCallback implements AmplitudeLogCallback {
+            String errorMsg = null;
+
+            @Override
+            public void onError(String tag, String message) {
+                this.errorMsg = message;
+            }
+
+            private String getErrorMsg() {
+                return this.errorMsg;
+            }
+        }
+        TestLogCallback callback = new TestLogCallback();
+        amplitude.setLogCallback(callback);
+        assertNull(callback.getErrorMsg());
+        amplitude.validateLogEvent("");
+        assertEquals("Argument eventType cannot be null or blank in logEvent()", callback.getErrorMsg());
+    }
+
+    @Test
+    public void testSetPlan() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        String branch = "main";
+        String version = "1.0.0";
+        Plan plan = new Plan().setBranch(branch).setVersion(version);
+        amplitude.setPlan(plan);
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            JSONObject planJsonObject = event.getJSONObject("plan");
+            assertEquals(branch, planJsonObject.getString("branch"));
+            assertEquals(version, planJsonObject.getString("version"));
+        } catch (Exception e) {
+            Assert.fail();
+        }
+    }
+
+    @Test
+    public void testSetServerZoneWithoutUpdateServerUrl() {
+        String urlBeforeChange = amplitude.url;
+        AmplitudeServerZone euZone = AmplitudeServerZone.EU;
+        amplitude.setServerZone(euZone, false);
+        assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
+        assertEquals(urlBeforeChange, amplitude.url);
+    }
+
+    @Test
+    public void testSetServerZoneAndUpdateServerUrl() {
+        AmplitudeServerZone euZone = AmplitudeServerZone.EU;
+        amplitude.setServerZone(euZone);
+        assertEquals(euZone, getPrivateFieldValueFromClient(amplitude, "serverZone"));
+        assertEquals(Constants.EVENT_LOG_EU_URL, amplitude.url);
+    }
+
+    @Test
+    public void testMiddlewareSupport() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        Map<String, Object> extraMap = new HashMap<>();
+        extraMap.put("description", "extra description");
+        MiddlewareExtra extra = new MiddlewareExtra(extraMap);
+        Middleware middleware = new Middleware() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+                try {
+                    payload.event.optJSONObject("event_properties").put("description", "extra description");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                next.run(payload);
+            }
+        };
+        amplitude.addEventMiddleware(middleware);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"), extra);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 1);
+        JSONArray eventObject = getUnsentEvents(1);;
+        assertEquals(eventObject.optJSONObject(0).optString("event_type"), "middleware_event_type");
+        assertEquals(eventObject.optJSONObject(0).optJSONObject("event_properties").getString("description"), "extra description");
+        assertEquals(eventObject.optJSONObject(0).optJSONObject("event_properties").optString("user_id"), "middleware_user");
+    }
+
+    @Test
+    public void testWithSwallowMiddleware() throws JSONException {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        Middleware middleware = new Middleware() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+            }
+        };
+        amplitude.addEventMiddleware(middleware);
+        amplitude.logEvent("middleware_event_type", new JSONObject().put("user_id", "middleware_user"));
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        assertEquals(getUnsentEventCount(), 0);
     }
 }
