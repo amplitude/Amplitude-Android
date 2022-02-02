@@ -8,9 +8,10 @@ import android.location.Location;
 import android.os.Build;
 import android.util.Pair;
 
-import com.amplitude.core.AmplitudeCore;
-import com.amplitude.core.Identity;
-import com.amplitude.core.util.JSONUtil;
+
+import com.amplitude.analytics.connector.AnalyticsConnector;
+import com.amplitude.analytics.connector.Identity;
+import com.amplitude.analytics.connector.util.JSONUtil;
 import com.amplitude.eventexplorer.EventExplorer;
 import com.amplitude.security.MD5;
 import com.amplitude.util.DoubleCheck;
@@ -209,7 +210,7 @@ public class AmplitudeClient {
     /**
      * The core package for integrating with the Experiment SDK.
      */
-    final AmplitudeCore core;
+    final AnalyticsConnector connector;
     /**
      * The runner for middleware
      */
@@ -230,7 +231,7 @@ public class AmplitudeClient {
         this.instanceName = Utils.normalizeInstanceName(instance);
         logThread.start();
         httpThread.start();
-        this.core = AmplitudeCore.getInstance(this.instanceName);
+        this.connector = AnalyticsConnector.getInstance(this.instanceName);
     }
 
     /**
@@ -413,7 +414,7 @@ public class AmplitudeClient {
                     });
 
                     // set up listener to core package to receive exposure events from Experiment
-                    core.getAnalyticsConnector().setEventReceiver(analyticsEvent -> {
+                    connector.getEventBridge().setEventReceiver(analyticsEvent -> {
                         String eventType = analyticsEvent.getEventType();
                         JSONObject eventProperties = JSONUtil.toJSONObject(analyticsEvent.getEventProperties());
                         JSONObject userProperties = JSONUtil.toJSONObject(analyticsEvent.getUserProperties());
@@ -423,7 +424,7 @@ public class AmplitudeClient {
                     });
 
                     // Set user ID and device ID in core identity store for use in Experiment SDK
-                    core.getIdentityStore().setIdentity(new Identity(userId, deviceId, new HashMap<>()));
+                    connector.getIdentityStore().setIdentity(new Identity(userId, deviceId, new HashMap<>()));
 
                     initialized = true;
 
@@ -1286,7 +1287,7 @@ public class AmplitudeClient {
             // If the the event is an identify, update the user properties to the core identity
             // for experiment SDK to consume.
             if (eventType.equals(Constants.IDENTIFY_EVENT) && userProperties != null) {
-                core.getIdentityStore().editIdentity()
+                connector.getIdentityStore().editIdentity()
                     .updateUserProperties(JSONUtil.toUpdateUserPropertiesMap(userProperties))
                     .commit();
             }
@@ -1958,7 +1959,7 @@ public class AmplitudeClient {
 
                 // update the user in the core identity store to notify
                 // experiment to re-fetch variants with the new identity
-                client.core.getIdentityStore().editIdentity().setUserId(userId).commit();
+                client.connector.getIdentityStore().editIdentity().setUserId(userId).commit();
             }
         });
         return this;
@@ -1989,7 +1990,7 @@ public class AmplitudeClient {
 
                 // update the user in the core identity store to notify
                 // experiment to re-fetch variants with the new identity
-                client.core.getIdentityStore().editIdentity().setDeviceId(deviceId).commit();
+                client.connector.getIdentityStore().editIdentity().setDeviceId(deviceId).commit();
             }
         });
         return this;
