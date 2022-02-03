@@ -15,6 +15,8 @@ import java.util.Map;
  * Please call those methods on the AmplitudeClient instance instead, for example:
  * {@code Amplitude.getInstance().logEvent();}
  *
+ * asdf
+ *
  * @see com.amplitude.api.AmplitudeClient AmplitudeClient
  */
 public class Amplitude {
