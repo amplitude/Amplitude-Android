@@ -1106,7 +1106,7 @@ public class AmplitudeClient {
            JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
            JSONObject groupProperties, final long timestamp, final boolean outOfSession) {
         logEventAsync(eventType,eventProperties, apiProperties, userProperties, groups,groupProperties, timestamp, outOfSession, null);
-    };
+    }
 
     protected void logEventAsync(final String eventType, JSONObject eventProperties,
             JSONObject apiProperties, JSONObject userProperties, JSONObject groups,
@@ -1694,10 +1694,21 @@ public class AmplitudeClient {
             return;
         }
 
+        Identify identify = convertPropertiesToIdentify(userProperties);
+        if (identify != null) {
+            identify(identify, false, extra);
+        }
+    }
+
+    private Identify convertPropertiesToIdentify(final JSONObject properties) {
+        if (properties == null) {
+            return null;
+        }
+
         // sanitize and truncate properties before trying to convert to identify
-        JSONObject sanitized = truncate(userProperties);
+        JSONObject sanitized = truncate(properties);
         if (sanitized.length() == 0) {
-            return;
+            return null;
         }
 
         Identify identify = new Identify();
@@ -1710,7 +1721,7 @@ public class AmplitudeClient {
                 logger.e(TAG, e.toString());
             }
         }
-        identify(identify, false, extra);
+        return identify;
     }
 
     /**
@@ -1795,7 +1806,14 @@ public class AmplitudeClient {
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession) {
-        groupIdentify(groupType, groupName, groupIdentify, false, null);
+        groupIdentify(groupType, groupName, groupIdentify, outOfSession, null);
+    }
+
+    public void groupIdentify(String groupType, Object groupName, JSONObject groupProperties, boolean outOfSession, MiddlewareExtra extra) {
+        Identify identify = convertPropertiesToIdentify(groupProperties);
+        if (identify != null) {
+            groupIdentify(groupType, groupName, identify, outOfSession, extra);
+        }
     }
 
     public void groupIdentify(String groupType, Object groupName, Identify groupIdentify, boolean outOfSession, MiddlewareExtra extra) {
@@ -1814,7 +1832,7 @@ public class AmplitudeClient {
 
         logEventAsync(
             Constants.GROUP_IDENTIFY_EVENT, null, null, null, group,
-            groupIdentify.userPropertiesOperations, getCurrentTimeMillis(), outOfSession
+            groupIdentify.userPropertiesOperations, getCurrentTimeMillis(), outOfSession, extra
         );
     }
 
