@@ -1954,6 +1954,52 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testGroupIdentifyPropertiesObject() throws JSONException {
+        String groupType = "test group type";
+        String groupName = "test group name";
+
+        String property1 = "string value";
+        String value1 = "testValue";
+
+        String property2 = "double value";
+        double value2 = 0.123;
+
+        String property3 = "boolean value";
+        boolean value3 = true;
+
+        String property4 = "json value";
+
+        JSONObject properties = new JSONObject()
+                .put(property1, value1)
+                .put(property2, value2)
+                .put(property3, value3)
+                .put(property4, null);
+
+        amplitude.groupIdentify(groupType, groupName, properties, false, null);
+        Shadows.shadowOf(amplitude.logThread.getLooper()).runToEndOfTasks();
+        assertEquals(getUnsentIdentifyCount(), 1);
+        assertEquals(getUnsentEventCount(), 0);
+        JSONObject event = getLastUnsentIdentify();
+        assertEquals(Constants.GROUP_IDENTIFY_EVENT, event.optString("event_type"));
+
+        assertTrue(Utils.compareJSONObjects(event.optJSONObject("event_properties"), new JSONObject()));
+        assertTrue(Utils.compareJSONObjects(event.optJSONObject("user_properties"), new JSONObject()));
+
+        JSONObject groups = event.optJSONObject("groups");
+        JSONObject expectedGroups = new JSONObject();
+        expectedGroups.put(groupType, groupName);
+        assertTrue(Utils.compareJSONObjects(groups, expectedGroups));
+
+        JSONObject groupProperties = event.optJSONObject("group_properties");
+        JSONObject expected = new JSONObject();
+        expected.put(Constants.AMP_OP_SET, new JSONObject()
+                .put(property1, value1)
+                .put(property2, value2)
+                .put(property3, value3));
+        assertTrue(Utils.compareJSONObjects(groupProperties, expected));
+    }
+
+    @Test
     public void testSetLogCallback() {
         class TestLogCallback implements AmplitudeLogCallback {
             String errorMsg = null;
