@@ -164,6 +164,8 @@ public class DeviceInfo {
                     // Bad lat / lon values can cause Geocoder to throw IllegalArgumentExceptions
                 } catch (IllegalStateException e) {
                     // sometimes the location manager is unavailable
+                } catch (SecurityException e) {
+                    // Customized Android System without Google Play Service Installed
                 }
             }
             return null;

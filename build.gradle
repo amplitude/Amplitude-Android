@@ -134,6 +134,9 @@ uploadArchives {
 
         pom.whenConfigured { pom ->
             pom.dependencies*.optional = true
+            pom.dependencies.find { dep ->
+                dep.groupId == 'com.amplitude' && dep.artifactId == 'analytics-connector'
+            }.optional = false
         }
 
         repository(url: RELEASE_REPOSITORY_URL) {
