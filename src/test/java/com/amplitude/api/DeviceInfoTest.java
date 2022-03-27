@@ -3,8 +3,10 @@ package com.amplitude.api;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.location.Location;
 import android.os.Build;
+import android.os.LocaleList;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 
@@ -89,7 +91,7 @@ public class DeviceInfoTest extends BaseTest {
         ReflectionHelpers.setStaticField(Build.class, "MODEL", TEST_MODEL);
 
         Configuration c = context.getResources().getConfiguration();
-        Locale.setDefault(TEST_LOCALE);
+        Resources.getSystem().getConfiguration().setLocales(LocaleList.forLanguageTags(TEST_LOCALE.toLanguageTag()));
 
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));

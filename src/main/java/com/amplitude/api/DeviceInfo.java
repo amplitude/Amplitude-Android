@@ -4,11 +4,14 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.LocaleList;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 
@@ -187,12 +190,26 @@ public class DeviceInfo {
             return null;
         }
 
+        private Locale getLocale() {
+            final Configuration configuration = Resources.getSystem().getConfiguration();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                final LocaleList localeList = configuration.getLocales();
+                if (localeList.isEmpty()) {
+                    return Locale.getDefault();
+                } else {
+                    return localeList.get(0);
+                }
+            } else {
+                return configuration.locale;
+            }
+        }
+
         private String getCountryFromLocale() {
-            return Locale.getDefault().getCountry();
+            return getLocale().getCountry();
         }
 
         private String getLanguage() {
-            return Locale.getDefault().getLanguage();
+            return getLocale().getLanguage();
         }
 
         private String getAdvertisingId() {
