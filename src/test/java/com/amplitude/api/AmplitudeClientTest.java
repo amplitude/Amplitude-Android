@@ -2025,7 +2025,8 @@ public class AmplitudeClientTest extends BaseTest {
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         String branch = "main";
         String version = "1.0.0";
-        Plan plan = new Plan().setBranch(branch).setVersion(version);
+        String versionId = "9ec23ba0-275f-468f-80d1-66b88bff9529";
+        Plan plan = new Plan().setBranch(branch).setVersion(version).setVersionId(versionId);
         amplitude.setPlan(plan);
         amplitude.logEvent("test");
         looper.runToEndOfTasks();
@@ -2036,6 +2037,7 @@ public class AmplitudeClientTest extends BaseTest {
             JSONObject planJsonObject = event.getJSONObject("plan");
             assertEquals(branch, planJsonObject.getString("branch"));
             assertEquals(version, planJsonObject.getString("version"));
+            assertEquals(versionId, planJsonObject.getString("versionId"));
         } catch (Exception e) {
             Assert.fail();
         }
