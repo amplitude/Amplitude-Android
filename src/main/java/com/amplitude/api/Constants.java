@@ -86,4 +86,5 @@ public class Constants {
     public static final String AMP_PLAN_BRANCH = "branch";
     public static final String AMP_PLAN_SOURCE = "source";
     public static final String AMP_PLAN_VERSION = "version";
+    public static final String AMP_PLAN_VERSION_ID = "versionId";
 }

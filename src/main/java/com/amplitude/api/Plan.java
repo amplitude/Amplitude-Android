@@ -17,6 +17,10 @@ public class Plan {
      * The tracking plan version e.g. "1", "15"
      */
     private String version;
+    /**
+     * The tracking plan version Id e.g. "9ec23ba0-275f-468f-80d1-66b88bff9529"
+     */
+    private String versionId;
 
     /**
      * Set the tracking plan branch information.
@@ -49,6 +53,16 @@ public class Plan {
     }
 
     /**
+     * Set the tracking plan version Id.
+     * @param version The tracking plan version e.g. "9ec23ba0-275f-468f-80d1-66b88bff9529"
+     * @return the same Plan object
+     */
+    public Plan setVersionId(String versionId) {
+        this.versionId = versionId;
+        return this;
+    }
+
+    /**
      * Get JSONObject of current tacking plan
      * @return JSONObject including plan information
      */
@@ -63,6 +77,9 @@ public class Plan {
             }
             if (!Utils.isEmptyString(version)) {
                 plan.put(Constants.AMP_PLAN_VERSION, version);
+            }
+            if (!Utils.isEmptyString(versionId)) {
+                plan.put(Constants.AMP_PLAN_VERSION_ID, versionId);
             }
         } catch (JSONException e) {
             AmplitudeLog.getLogger().e(TAG, "JSON Serialization of tacking plan object failed");
