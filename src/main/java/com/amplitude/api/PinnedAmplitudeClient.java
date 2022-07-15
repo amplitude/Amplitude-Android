@@ -333,4 +333,13 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         }
         return sslSocketFactory;
     }
+
+    @Override
+    public AmplitudeClient setServerZone(AmplitudeServerZone serverZone) {
+        super.setServerZone(serverZone);
+        this.initializedSSLSocketFactory = false;
+        this.sslSocketFactory = null;
+        this.initialize(this.context, this.apiKey, this.userId);
+        return this;
+    }
 }
