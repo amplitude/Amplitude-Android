@@ -34,14 +34,53 @@ public class PinningTest extends BaseTest {
     }
 
     @Test
-    public void testSslPinning() {
+    public void testSslPinningUS() {
         amplitude = PinnedAmplitudeClient.getInstance();
         amplitude.initialize(context, "1cc2c1978ebab0f6451112a8f5df4f4e");
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
         looper.runOneTask();
         looper.runOneTask();
 
-        amplitude.logEvent("pinned_test_event", null);
+        amplitude.logEvent("us_pinned_test_event", null);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httplooper.runToEndOfTasks();
+
+        assertNull(amplitude.lastError);
+    }
+
+    @Test
+    public void testSslPinningEU() {
+        amplitude = PinnedAmplitudeClient.getInstance();
+        amplitude.setServerZone(AmplitudeServerZone.EU);
+        amplitude.initialize(context, "361e4558bb359e288ef75d1ae31437a0");
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runOneTask();
+        looper.runOneTask();
+
+        amplitude.logEvent("eu_pinned_test_event", null);
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+
+        ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
+        httplooper.runToEndOfTasks();
+
+        assertNull(amplitude.lastError);
+    }
+
+    @Test
+    public void testSslPinningSwitch() {
+        amplitude = PinnedAmplitudeClient.getInstance();
+        amplitude.initialize(context, "361e4558bb359e288ef75d1ae31437a0");
+
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runOneTask();
+        looper.runOneTask();
+
+        amplitude.setServerZone(AmplitudeServerZone.EU);
+        amplitude.logEvent("eu_pinned_test_event", null);
         looper.runToEndOfTasks();
         looper.runToEndOfTasks();
 

@@ -2521,4 +2521,13 @@ public class AmplitudeClient {
         }
         return this;
     }
+
+    /**
+     * Get Amplitude Server Zone
+     *
+     * @return the current Amplitude Server Zone
+     */
+    public AmplitudeServerZone getServerZone() {
+        return this.serverZone;
+    }
 }

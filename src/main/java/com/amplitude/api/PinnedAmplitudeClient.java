@@ -42,7 +42,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
 
     // CN=COMODO RSA Domain Validation Secure Server CA, O=COMODO CA Limited,
     // L=Salford, ST=Greater Manchester, C=GB
-    private static final String CERTIFICATE_1 = ""
+    private static final String CERTIFICATE_US = ""
             + "MIIGCDCCA/CgAwIBAgIQKy5u6tl1NmwUim7bo3yMBzANBgkqhkiG9w0BAQwFADCBhT"
             + "ELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE"
             + "BxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIk"
@@ -76,19 +76,53 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             + "N5AplBlGGSW4gNfL1IYoakRwJiNiqZ+Gb7+6kHDSVneFeO/qJakXzlByjAA6quPbYz"
             + "Sf+AZxAeKCINT+b72x";
 
+    private static final String CERTIFICATE_EU = ""
+            + "MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF\n"
+            + "ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6\n"
+            + "b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL\n"
+            + "MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv\n"
+            + "b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj\n"
+            + "ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM\n"
+            + "9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw\n"
+            + "IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6\n"
+            + "VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L\n"
+            + "93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm\n"
+            + "jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+            + "AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA\n"
+            + "A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI\n"
+            + "U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs\n"
+            + "N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv\n"
+            + "o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU\n"
+            + "5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\n"
+            + "rqXRfboQnoZsG4q5WTP468SQvvG5";
+
     private static final AmplitudeLog logger = AmplitudeLog.getLogger();
+
+    protected static String getCertificate(AmplitudeServerZone serverZone) {
+        return (serverZone == AmplitudeServerZone.EU) ? CERTIFICATE_EU : CERTIFICATE_US;
+    }
 
     /**
      * Pinned certificate chain for api.amplitude.com.
      */
-    protected static final SSLContextBuilder SSL_CONTEXT_API_AMPLITUDE_COM =
-            new SSLContextBuilder().addCertificate(CERTIFICATE_1);
+    protected static SSLContextBuilder getPinnedCertificateChain(AmplitudeServerZone serverZone) {
+        String CERTIFICATE = getCertificate(serverZone);
+        return new SSLContextBuilder(serverZone).addCertificate(CERTIFICATE);
+    }
 
     /**
      * SSl context builder, used to generate the SSL context.
      */
     protected static class SSLContextBuilder {
         private final List<String> certificateBase64s = new ArrayList<String>();
+        protected AmplitudeServerZone serverZone;
+
+        public SSLContextBuilder() {
+            this.serverZone = AmplitudeServerZone.US;
+        }
+        public SSLContextBuilder(AmplitudeServerZone serverZone) {
+            this.serverZone = serverZone;
+        }
 
         /**
          * Add certificate ssl context builder.
@@ -194,7 +228,7 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
             @Override
             public void run() {
                 if (!client.initializedSSLSocketFactory) {
-                    SSLSocketFactory factory = getPinnedCertSslSocketFactory();
+                    SSLSocketFactory factory = getPinnedCertSslSocketFactory(client.getServerZone());
                     if (factory != null) {
                         try {
                             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
@@ -204,7 +238,8 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
                             keyStore.load(null, null); // Use a null input stream + password to create an empty key store.
 
                             List<String> certificateBase64s = new ArrayList<String>();
-                            certificateBase64s.add(CERTIFICATE_1);
+                            String CERTIFICATE = getCertificate(client.getServerZone());
+                            certificateBase64s.add(CERTIFICATE);
 
                             // Decode the certificates and add 'em to the key store.
                             int nextName = 1;
@@ -267,10 +302,11 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
     /**
      * Gets pinned cert ssl socket factory.
      *
+     * @param serverZone the current server zone
      * @return the pinned cert ssl socket factory
      */
-    protected SSLSocketFactory getPinnedCertSslSocketFactory() {
-        return getPinnedCertSslSocketFactory(SSL_CONTEXT_API_AMPLITUDE_COM);
+    protected SSLSocketFactory getPinnedCertSslSocketFactory(AmplitudeServerZone serverZone) {
+        return getPinnedCertSslSocketFactory(getPinnedCertificateChain(serverZone));
     }
 
     /**
@@ -286,11 +322,24 @@ public class PinnedAmplitudeClient extends AmplitudeClient {
         if (sslSocketFactory == null) {
             try {
                 sslSocketFactory = context.build().getSocketFactory();
-                logger.i(TAG, "Pinning SSL session using Comodo CA Cert");
+                if (context.serverZone == AmplitudeServerZone.EU) {
+                    logger.i(TAG, "Pinning SSL session using AWS Root CA Cert");
+                } else {
+                    logger.i(TAG, "Pinning SSL session using Comodo CA Cert");
+                }
             } catch (Exception e) {
                 logger.e(TAG, e.getMessage(), e);
             }
         }
         return sslSocketFactory;
+    }
+
+    @Override
+    public AmplitudeClient setServerZone(AmplitudeServerZone serverZone) {
+        super.setServerZone(serverZone);
+        this.initializedSSLSocketFactory = false;
+        this.sslSocketFactory = null;
+        this.initialize(this.context, this.apiKey, this.userId);
+        return this;
     }
 }
