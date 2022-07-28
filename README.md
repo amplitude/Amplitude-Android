@@ -5,8 +5,12 @@
   <br />
 </p>
 
+<div align="center">
+
 [![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)](https://mvnrepository.com/artifact/com.amplitude/android-sdk/latest)
 [![Legacy SDK](https://img.shields.io/badge/state-legacy-red)](https://github.com/amplitude/Amplitude-Kotlin)
+
+</div>
 
 # Announcement 📣
 
