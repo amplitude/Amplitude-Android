@@ -7,7 +7,7 @@
 
 <div align="center">
 
-[![Legacy SDK](https://img.shields.io/badge/state-legacy-red)](https://github.com/amplitude/Amplitude-Kotlin)
+[![Legacy SDK](https://img.shields.io/badge/state-legacy-yellow)](https://github.com/amplitude/Amplitude-Kotlin)
 [![Maven Central](https://img.shields.io/maven-central/v/com.amplitude/android-sdk)](https://mvnrepository.com/artifact/com.amplitude/android-sdk/latest)
 
 </div>
