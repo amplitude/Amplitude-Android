@@ -378,7 +378,6 @@ public class AmplitudeClient {
                     if (this.deviceIdCallback != null) {
                         this.deviceIdCallback.onDeviceIdReady(deviceId);
                     }
-                    deviceInfo.prefetch();
 
                     if (userId != null) {
                         client.userId = userId;
@@ -386,6 +385,23 @@ public class AmplitudeClient {
                     } else {
                         client.userId = dbHelper.getValue(USER_ID_KEY);
                     }
+
+                    // set up listener to core package to receive exposure events from Experiment
+                    connector.getEventBridge().setEventReceiver(analyticsEvent -> {
+                        String eventType = analyticsEvent.getEventType();
+                        JSONObject eventProperties = JSONUtil.toJSONObject(analyticsEvent.getEventProperties());
+                        JSONObject userProperties = JSONUtil.toJSONObject(analyticsEvent.getUserProperties());
+                        logEventAsync(eventType, eventProperties, null, userProperties,
+                            null, null, getCurrentTimeMillis(), false);
+                        return Unit.INSTANCE;
+                    });
+
+                    // Set user ID and device ID in core identity store for use in Experiment SDK
+                    connector.getIdentityStore().setIdentity(new Identity(userId, deviceId, new HashMap<>()));
+
+                    // May take some time...
+                    deviceInfo.prefetch();
+
                     final Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
                     optOut = optOutLong != null && optOutLong == 1;
 
@@ -412,19 +428,6 @@ public class AmplitudeClient {
                             dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
                         }
                     });
-
-                    // set up listener to core package to receive exposure events from Experiment
-                    connector.getEventBridge().setEventReceiver(analyticsEvent -> {
-                        String eventType = analyticsEvent.getEventType();
-                        JSONObject eventProperties = JSONUtil.toJSONObject(analyticsEvent.getEventProperties());
-                        JSONObject userProperties = JSONUtil.toJSONObject(analyticsEvent.getUserProperties());
-                        logEventAsync(eventType, eventProperties, null, userProperties,
-                            null, null, getCurrentTimeMillis(), false);
-                        return Unit.INSTANCE;
-                    });
-
-                    // Set user ID and device ID in core identity store for use in Experiment SDK
-                    connector.getIdentityStore().setIdentity(new Identity(userId, deviceId, new HashMap<>()));
 
                     initialized = true;
 
