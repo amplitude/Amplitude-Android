@@ -402,7 +402,6 @@ public class AmplitudeClient {
                     // May take some time...
                     deviceInfo.prefetch();
 
-
                     final Long optOutLong = dbHelper.getLongValue(OPT_OUT_KEY);
                     optOut = optOutLong != null && optOutLong == 1;
 
