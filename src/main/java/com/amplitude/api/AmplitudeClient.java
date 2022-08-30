@@ -140,6 +140,12 @@ public class AmplitudeClient {
     private boolean locationListening = true;
     private EventExplorer eventExplorer;
     private Plan plan;
+
+    /**
+     * The ingestion metadata.
+     */
+    private IngestionMetadata ingestionMetadata;
+
     /**
      * Amplitude Server Zone
      */
@@ -1252,6 +1258,10 @@ public class AmplitudeClient {
 
             if (plan != null) {
                 event.put("plan", plan.toJSONObject());
+            }
+
+            if (ingestionMetadata != null) {
+                event.put("ingestion_metadata", ingestionMetadata.toJSONObject());
             }
 
             apiProperties = (apiProperties == null) ? new JSONObject() : apiProperties;
@@ -2488,6 +2498,16 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setPlan(Plan plan) {
         this.plan = plan;
+        return this;
+    }
+
+    /**
+     * Set ingestion metadata information.
+     * @param ingestionMetadata IngestionMetadata object
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setIngestionMetadata(IngestionMetadata ingestionMetadata) {
+        this.ingestionMetadata = ingestionMetadata;
         return this;
     }
 
