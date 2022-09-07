@@ -2044,6 +2044,29 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testSetIngestionMetadata() {
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        String sourceName = "ampli";
+        String sourceVersion = "1.0.0";
+        IngestionMetadata ingestionMetadata = new IngestionMetadata()
+                .setSourceName(sourceName)
+                .setSourceVersion(sourceVersion);
+        amplitude.setIngestionMetadata(ingestionMetadata);
+        amplitude.logEvent("test");
+        looper.runToEndOfTasks();
+
+        JSONObject event = getLastEvent();
+        assertNotNull(event);
+        try {
+            JSONObject jsonObject = event.getJSONObject("ingestion_metadata");
+            assertEquals(sourceName, jsonObject.getString("source_name"));
+            assertEquals(sourceVersion, jsonObject.getString("source_version"));
+        } catch (Exception e) {
+            Assert.fail();
+        }
+    }
+
+    @Test
     public void testSetServerZoneWithoutUpdateServerUrl() {
         String urlBeforeChange = amplitude.url;
         AmplitudeServerZone euZone = AmplitudeServerZone.EU;
