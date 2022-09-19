@@ -10,6 +10,7 @@ import com.amplitude.api.Revenue;
 import com.amplitude.api.TrackingOptions;
 import com.amplitude.api.Utils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +24,14 @@ public class AmplitudePlugin {
             e.printStackTrace();
         }
         return properties;
+    }
+
+    public static JSONArray ToJSONArray(String[] values) {
+        JSONArray result = new JSONArray();
+        for (String value : values) {
+            result.put(value);
+        }
+        return result;
     }
 
     public static void init(String instanceName, Context context, String apiKey) {
@@ -179,6 +188,14 @@ public class AmplitudePlugin {
 
     public static void setUserProperties(String instanceName, String jsonProperties) {
         Amplitude.getInstance(instanceName).setUserProperties(ToJSONObject(jsonProperties));
+    }
+
+    public static void setGroup(String instanceName, String groupType, String groupName) {
+        Amplitude.getInstance(instanceName).setGroup(groupType, groupName);
+    }
+
+    public static void setGroup(String instanceName, String groupType, String[] groupName) {
+        Amplitude.getInstance(instanceName).setGroup(groupType, ToJSONArray(groupName));
     }
 
     public static void logRevenue(String instanceName, double amount) {
