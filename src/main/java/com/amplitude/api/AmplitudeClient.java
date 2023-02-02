@@ -2271,7 +2271,7 @@ public class AmplitudeClient {
         try {
             Response response = client.newCall(request).execute();
             String stringResponse = response.body().string();
-            if (stringResponse.equals("success")) {
+            if (response.code() == 200 || stringResponse.equals("success")) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
                     @Override
