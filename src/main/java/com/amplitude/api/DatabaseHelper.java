@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +31,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String EVENT_TABLE_NAME = "events";
     protected static final String IDENTIFY_TABLE_NAME = "identifys";
+    protected static final String IDENTIFY_INTERCEPTOR_TABLE_NAME = "identify_interceptor";
     private static final String ID_FIELD = "id";
     private static final String EVENT_FIELD = "event";
 
@@ -44,6 +46,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             + EVENT_FIELD + " TEXT);";
     private static final String CREATE_IDENTIFYS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + IDENTIFY_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + EVENT_FIELD + " TEXT);";
+    private static final String CREATE_IDENTIFY_INTERCEPTOR_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + IDENTIFY_INTERCEPTOR_TABLE_NAME + " (" + ID_FIELD + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + EVENT_FIELD + " TEXT);";
 
     File file;
@@ -95,6 +100,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         // lifetime of the table, even if rows get removed
         db.execSQL(CREATE_EVENTS_TABLE);
         db.execSQL(CREATE_IDENTIFYS_TABLE);
+        db.execSQL(CREATE_IDENTIFY_INTERCEPTOR_TABLE);
 
         // NOTE: the database file can become corrupted between interactions
         // getWriteableDatabase and getReadableDatabase will test for corruption
@@ -133,6 +139,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             case 2:
                 db.execSQL(CREATE_IDENTIFYS_TABLE);
                 db.execSQL(CREATE_LONG_STORE_TABLE);
+                db.execSQL(CREATE_IDENTIFY_INTERCEPTOR_TABLE);
                 if (newVersion <= 3) break;
 
             case 3:
@@ -149,6 +156,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + LONG_STORE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + IDENTIFY_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + IDENTIFY_INTERCEPTOR_TABLE_NAME);
         onCreate(db);
     }
 
@@ -236,6 +244,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return addEventToTable(IDENTIFY_TABLE_NAME, identifyEvent);
     }
 
+    synchronized long addIdentifyInterceptor(String identifyEvent) {
+        return addEventToTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, identifyEvent);
+    }
+
     private synchronized long addEventToTable(String table, String event) {
         long result = -1;
         try {
@@ -315,6 +327,17 @@ class DatabaseHelper extends SQLiteOpenHelper {
                                         long upToId, long limit) throws JSONException {
         return getEventsFromTable(IDENTIFY_TABLE_NAME, upToId, limit);
     }
+
+    synchronized List<JSONObject> getIdentifyInterceptors(
+            long upToId,
+            long limit
+    ) throws JSONException {
+        return getEventsFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, upToId, limit);
+    }
+
+//    synchronized List<JSONObject> getAllIdentifyInterceptors() throws JSONException {
+//        return getEventsFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, 0, 0);
+//    }
 
     protected synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
@@ -403,13 +426,21 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getNthEventIdFromTable(IDENTIFY_TABLE_NAME, n);
     }
 
+    synchronized long getLastIdentifyInterceptorId() {
+        return getNthEventIdFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, 1, "DESC");
+    }
+
     private synchronized long getNthEventIdFromTable(String table, long n) {
+        return getNthEventIdFromTable(table, n, "ASC");
+    }
+
+    private synchronized long getNthEventIdFromTable(String table, long n, String orderBy) {
         long nthEventId = -1;
         SQLiteStatement statement = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String query = "SELECT " + ID_FIELD + " FROM " + table + " LIMIT 1 OFFSET "
-                    + (n - 1);
+            String query = "SELECT " + ID_FIELD + " FROM " + table + " ORDER BY " + ID_FIELD +
+                    " " + orderBy + " LIMIT 1 OFFSET " + (n - 1);
             statement = db.compileStatement(query);
             nthEventId = -1;
             try {
@@ -442,6 +473,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
         removeEventsFromTable(IDENTIFY_TABLE_NAME, maxId);
     }
 
+    synchronized void removeIdentifyInterceptors(long maxId) {
+        removeEventsFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, maxId);
+    }
+
     private synchronized void removeEventsFromTable(String table, long maxId) {
         try {
             SQLiteDatabase db = getWritableDatabase();
@@ -463,6 +498,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized void removeIdentify(long id) {
         removeEventFromTable(IDENTIFY_TABLE_NAME, id);
+    }
+
+    synchronized void removeIdentifyIntercept(long id) {
+        removeEventFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, id);
     }
 
     private synchronized void removeEventFromTable(String table, long id) {

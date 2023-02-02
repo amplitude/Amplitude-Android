@@ -57,6 +57,19 @@ public class DatabaseHelperTest extends BaseTest {
         return addEventToTable(DatabaseHelper.IDENTIFY_TABLE_NAME, identifyEvent, new JSONObject());
     }
 
+    protected long addIdentifyInterceptor(String property) {
+        try {
+            JSONObject props = new JSONObject();
+            props.put("user_properties", new JSONObject());
+            props.getJSONObject("user_properties").put("test_prop", property);
+            props.put("event_type", Constants.IDENTIFY_EVENT);
+            return dbInstance.addIdentifyInterceptor(props.toString());
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+        return -1;
+    }
+
     protected long insertOrReplaceKeyValue(String key, String value) {
         return dbInstance.insertOrReplaceKeyValue(key, value);
     }
@@ -78,6 +91,7 @@ public class DatabaseHelperTest extends BaseTest {
         assertEquals(1, insertOrReplaceKeyLongValue("test_key", 1L));
         assertEquals(1, addEvent("test_create"));
         assertEquals(1, addIdentify("test_create"));
+        assertEquals(1, addIdentifyInterceptor("test_create"));
     }
 
     // need separate tests for different version to version upgrades since insertion failure
@@ -547,6 +561,19 @@ public class DatabaseHelperTest extends BaseTest {
         assertEquals(dbHelper1.getIdentifyCount(), 0);
         assertEquals(dbHelper2.getIdentifyCount(), 0);
         assertEquals(dbHelper3.getIdentifyCount(), 1);
+    }
+
+    @Test
+    public void testGetLastIdentifyInterceptorId() {
+        assertEquals(1, addIdentifyInterceptor("test_get_last_identify_id_1"));
+        assertEquals(2, addIdentifyInterceptor("test_get_last_identify_id_2"));
+
+        assertEquals(2, dbInstance.getLastIdentifyInterceptorId());
+        dbInstance.removeIdentifyInterceptors(2);
+        assertEquals(-1, dbInstance.getLastIdentifyInterceptorId());
+
+        assertEquals(3, addIdentifyInterceptor("test_get_last_identify_id_3"));
+        assertEquals(3, dbInstance.getLastIdentifyInterceptorId());
     }
 }
 

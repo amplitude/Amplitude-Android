@@ -252,6 +252,17 @@ public class BaseTest {
         return null;
     }
 
+    public JSONObject getLastIdentifyInterceptor() {
+        try {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            List<JSONObject> events = dbHelper.getIdentifyInterceptors(-1, -1);
+            return events.get(events.size() - 1);
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+        return null;
+    }
+
     public JSONArray getEventsFromRequest(RecordedRequest request) throws JSONException {
         Map<String, String> parsedBody = parseRequest(request.getUtf8Body());
         if (parsedBody == null && !parsedBody.containsKey("e")) {

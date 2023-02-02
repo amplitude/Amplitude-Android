@@ -956,12 +956,13 @@ public class SessionTest extends BaseTest {
         looper.runToEndOfTasks();
         // trackSessions is true, start_session event is added
         assertEquals(getUnsentEventCount(), 1);
-        assertEquals(getUnsentIdentifyCount(), 1);
+        assertEquals(getUnsentIdentifyCount(), 0);
 
         JSONArray events = getUnsentEvents(1);
         assertEquals(
             events.getJSONObject(0).optString("event_type"), AmplitudeClient.START_SESSION_EVENT
         );
+        looper.runToEndOfTasks();
         JSONArray identifies = getUnsentIdentifys(1);
         JSONObject expected = new JSONObject().put("$set", new JSONObject().put("key", "value"));
         assertTrue(Utils.compareJSONObjects(
@@ -985,6 +986,8 @@ public class SessionTest extends BaseTest {
         amplitude.identify(identify, true);
         looper.runToEndOfTasks();
         assertEquals(getUnsentEventCount(), 0);  // out of session, start session is not added
+        assertEquals(getUnsentIdentifyCount(), 0);
+        looper.runToEndOfTasks();
         assertEquals(getUnsentIdentifyCount(), 1);
 
         JSONArray identifies = getUnsentIdentifys(1);

@@ -140,6 +140,7 @@ public class AmplitudeClient {
     private boolean locationListening = true;
     private EventExplorer eventExplorer;
     private Plan plan;
+    private IdentifyInterceptor identifyInterceptor;
 
     /**
      * The ingestion metadata.
@@ -176,6 +177,7 @@ public class AmplitudeClient {
     private int eventMaxCount = Constants.EVENT_MAX_COUNT;
     private long eventUploadPeriodMillis = Constants.EVENT_UPLOAD_PERIOD_MILLIS;
     private long minTimeBetweenSessionsMillis = Constants.MIN_TIME_BETWEEN_SESSIONS_MILLIS;
+    private long identifyBatchIntervalMillis= Constants.IDENTIFY_BATCH_INTERVAL_MILLIS;
     private long sessionTimeoutMillis = Constants.SESSION_TIMEOUT_MILLIS;
     private boolean backoffUpload = false;
     private int backoffUploadBatchSize = eventUploadMaxBatchSize;
@@ -435,6 +437,8 @@ public class AmplitudeClient {
                         }
                     });
 
+                    identifyInterceptor = new IdentifyInterceptor(dbHelper, logThread, identifyBatchIntervalMillis, this);
+
                     initialized = true;
 
                 } catch (CursorWindowAllocationException e) {  // treat as uninitialized SDK
@@ -620,6 +624,22 @@ public class AmplitudeClient {
      */
     public AmplitudeClient setMinTimeBetweenSessionsMillis(long minTimeBetweenSessionsMillis) {
         this.minTimeBetweenSessionsMillis = minTimeBetweenSessionsMillis;
+        return this;
+    }
+
+    /**
+     * Sets min time for identify batch millis.
+     *
+     * @param identifyBatchIntervalMillis the time interval for identify batch interval
+     * @return the AmplitudeClient
+     */
+    public AmplitudeClient setIdentifyBatchIntervalMillis(long identifyBatchIntervalMillis) {
+        if (identifyBatchIntervalMillis < eventUploadPeriodMillis) {
+            logger.w(TAG, "Warning: minimum batch interval is event upload period.");
+            return this;
+        }
+        this.identifyBatchIntervalMillis = identifyBatchIntervalMillis;
+        identifyInterceptor.setIdentifyBatchIntervalMillis(identifyBatchIntervalMillis);
         return this;
     }
 
@@ -1324,10 +1344,27 @@ public class AmplitudeClient {
     protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
         if (!middlewareRunner.run(new MiddlewarePayload(event, extra))) return -1;
 
+        // Intercept event
+        event = identifyInterceptor.intercept(eventType, event);
+        if (event == null) {
+            return -1;
+        }
+
+        return saveEvent(eventType, event);
+    }
+
+    /**
+     * Save event. Internal method to save an event.
+     *
+     * @param eventType the event type
+     * @param event     the event
+     * @return the event ID if succeeded, else -1
+     */
+    protected long saveEvent(String eventType, JSONObject event) {
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
-                "Detected empty event string for event type %s, skipping", eventType
+                    "Detected empty event string for event type %s, skipping", eventType
             ));
             return -1;
         }
@@ -1360,8 +1397,8 @@ public class AmplitudeClient {
         }
 
         return (
-            eventType.equals(Constants.IDENTIFY_EVENT) ||
-            eventType.equals(Constants.GROUP_IDENTIFY_EVENT)
+                eventType.equals(Constants.IDENTIFY_EVENT) ||
+                        eventType.equals(Constants.GROUP_IDENTIFY_EVENT)
         ) ? lastIdentifyId : lastEventId;
     }
 
@@ -1543,6 +1580,7 @@ public class AmplitudeClient {
                 refreshSessionTime(timestamp);
                 inForeground = false;
                 if (flushEventsOnClose) {
+                    identifyInterceptor.transferInterceptedIdentify();
                     updateServer();
                 }
 
@@ -2066,6 +2104,7 @@ public class AmplitudeClient {
                 if (Utils.isEmptyString(apiKey)) {  // in case initialization failed
                     return;
                 }
+                identifyInterceptor.transferInterceptedIdentify();
                 updateServer();
             }
         });
