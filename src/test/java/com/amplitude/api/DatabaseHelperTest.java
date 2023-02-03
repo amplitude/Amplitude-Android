@@ -576,4 +576,3 @@ public class DatabaseHelperTest extends BaseTest {
         assertEquals(3, dbInstance.getLastIdentifyInterceptorId());
     }
 }
-

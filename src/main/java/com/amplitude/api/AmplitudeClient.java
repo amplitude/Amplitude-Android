@@ -639,7 +639,9 @@ public class AmplitudeClient {
             return this;
         }
         this.identifyBatchIntervalMillis = identifyBatchIntervalMillis;
-        identifyInterceptor.setIdentifyBatchIntervalMillis(identifyBatchIntervalMillis);
+        if (this.identifyInterceptor != null) {
+            identifyInterceptor.setIdentifyBatchIntervalMillis(identifyBatchIntervalMillis);
+        }
         return this;
     }
 
@@ -1344,6 +1346,13 @@ public class AmplitudeClient {
     protected long saveEvent(String eventType, JSONObject event, MiddlewareExtra extra) {
         if (!middlewareRunner.run(new MiddlewarePayload(event, extra))) return -1;
 
+        if (Utils.isEmptyString(event.toString())) {
+            logger.e(TAG, String.format(
+                    "Detected empty event string for event type %s, skipping", eventType
+            ));
+            return -1;
+        }
+
         // Intercept event
         event = identifyInterceptor.intercept(eventType, event);
         if (event == null) {
@@ -1362,12 +1371,6 @@ public class AmplitudeClient {
      */
     protected long saveEvent(String eventType, JSONObject event) {
         String eventString = event.toString();
-        if (Utils.isEmptyString(eventString)) {
-            logger.e(TAG, String.format(
-                "Detected empty event string for event type %s, skipping", eventType
-            ));
-            return -1;
-        }
 
         if (eventType.equals(Constants.IDENTIFY_EVENT) || eventType.equals(Constants.GROUP_IDENTIFY_EVENT)) {
             lastIdentifyId = dbHelper.addIdentify(eventString);

@@ -36,7 +36,9 @@ class IdentifyInterceptor {
         this.dbHelper = dbHelper;
         this.logThread = logThread;
         this.identifyBatchIntervalMillis = identifyBatchIntervalMillis;
-        lastIdentifyInterceptorId = dbHelper.getLastIdentifyInterceptorId();
+        if (dbHelper.getIdentifyCInterceptorCount() > 0) {
+            lastIdentifyInterceptorId = dbHelper.getLastIdentifyInterceptorId();
+        }
         this.client = client;
     }
 
