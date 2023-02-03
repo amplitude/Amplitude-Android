@@ -7,7 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class IdentifyInterceptor {
+/**
+ * IdentifyInterceptor
+ * This is the internal class for handling identify events intercept and  optimize identify volumes.
+ */
+class IdentifyInterceptor {
 
     private static final String TAG = IdentifyInterceptor.class.getName();
 
@@ -36,6 +40,13 @@ public class IdentifyInterceptor {
         this.client = client;
     }
 
+    /**
+     * Intercept the event if it is identify with set action.
+     *
+     * @param eventType the event type
+     * @param event full event data after middleware run
+     * @return event with potentially more information or null if intercepted
+     */
     public JSONObject intercept(String eventType, JSONObject event) {
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             if (isSetOnly(event)) {
@@ -60,6 +71,11 @@ public class IdentifyInterceptor {
         }
     }
 
+    /**
+     * Sets min time for identify batch millis.
+     *
+     * @param identifyBatchIntervalMillis the time interval for identify batch interval
+     */
     public void setIdentifyBatchIntervalMillis(long identifyBatchIntervalMillis) {
         this.identifyBatchIntervalMillis = identifyBatchIntervalMillis;
     }

@@ -1364,7 +1364,7 @@ public class AmplitudeClient {
         String eventString = event.toString();
         if (Utils.isEmptyString(eventString)) {
             logger.e(TAG, String.format(
-                    "Detected empty event string for event type %s, skipping", eventType
+                "Detected empty event string for event type %s, skipping", eventType
             ));
             return -1;
         }
