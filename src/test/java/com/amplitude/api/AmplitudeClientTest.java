@@ -2329,7 +2329,7 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         amplitude.identify(new Identify().set("key1", "key1-value1").set("key2", "key2-value1").set("key3", "key3-value1"));
         amplitude.identify(new Identify().set("key1", "key1-value2").set("key4", "key4-value1"));
-        amplitude.identify(new Identify().set("key2", "key2-value2"));
+        amplitude.setUserProperties(new JSONObject().put("key2", "key2-value2"));
         amplitude.identify(new Identify().set("key3", "key3-value2").set("key4", "key4-value2"));
         looper.runToEndOfTasks();
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
