@@ -335,10 +335,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventsFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, upToId, limit);
     }
 
-//    synchronized List<JSONObject> getAllIdentifyInterceptors() throws JSONException {
-//        return getEventsFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME, 0, 0);
-//    }
-
     protected synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
         List<JSONObject> events = new LinkedList<JSONObject>();
@@ -391,6 +387,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     synchronized long getTotalEventCount() {
         return getEventCount() + getIdentifyCount();
+    }
+
+    synchronized long getIdentifyCInterceptorCount() {
+        return getEventCountFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME);
     }
 
     private synchronized long getEventCountFromTable(String table) {

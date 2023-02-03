@@ -194,6 +194,9 @@ public class BaseTest {
         return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
     }
 
+    public long getIdentifyInterceptorCount() {
+        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCInterceptorCount();
+    }
 
     public JSONObject getLastUnsentEvent() {
         JSONArray events = getUnsentEventsFromTable(DatabaseHelper.EVENT_TABLE_NAME, 1);

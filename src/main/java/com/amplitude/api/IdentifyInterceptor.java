@@ -17,7 +17,7 @@ public class IdentifyInterceptor {
 
     private long identifyBatchIntervalMillis;
 
-    private AtomicBoolean transferScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean transferScheduled = new AtomicBoolean(false);
 
     private long lastIdentifyInterceptorId = -1;
 
@@ -45,7 +45,7 @@ public class IdentifyInterceptor {
                 return null;
             } else if(isClearAll(event)){
                 // clear existing and return event
-                dbHelper.removeEvents(lastIdentifyInterceptorId);
+                dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
                 return event;
             } else {
                 // Fetch and merge event
@@ -71,18 +71,9 @@ public class IdentifyInterceptor {
                 return event;
             }
             JSONObject identifyEventUserProperties = event.getJSONObject("user_properties");
-            JSONObject userProperties = identifyEventUserProperties.has(Constants.AMP_OP_SET) ?
-                    identifyEventUserProperties.getJSONObject(Constants.AMP_OP_SET) :
-                    new JSONObject();
-            for (int i = 0; i < identifys.size(); i++) {
-                JSONObject identify = identifys.get(i);
-                JSONObject setUserProperties = identify.getJSONObject("user_properties")
-                        .getJSONObject(Constants.AMP_OP_SET);
-                Iterator<?> keys = setUserProperties.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    userProperties.put(key, setUserProperties.get(key));
-                }
+            JSONObject userProperties = mergeIdentifyInterceptList(identifys);
+            if (identifyEventUserProperties.has(Constants.AMP_OP_SET)) {
+                mergeUserProperties(userProperties, identifyEventUserProperties.getJSONObject(Constants.AMP_OP_SET));
             }
             identifyEventUserProperties.put(Constants.AMP_OP_SET, userProperties);
             event.put("user_properties", identifyEventUserProperties);
@@ -101,20 +92,10 @@ public class IdentifyInterceptor {
                 return null;
             }
             JSONObject identifyEvent = identifys.get(0);
-            JSONObject identifyEventUserProperties = identifyEvent.getJSONObject("user_properties");
-            JSONObject userProperties = identifyEventUserProperties .getJSONObject(Constants.AMP_OP_SET);
-            for (int i = 1; i < identifys.size(); i++) {
-                JSONObject identify = identifys.get(i);
-                JSONObject setUserProperties = identify.getJSONObject("user_properties")
-                        .getJSONObject(Constants.AMP_OP_SET);
-                Iterator<?> keys = setUserProperties.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    userProperties.put(key, setUserProperties.get(key));
-                }
-            }
-            identifyEventUserProperties.put(Constants.AMP_OP_SET, userProperties);
-            identifyEvent.put("user_properties", identifyEventUserProperties);
+            JSONObject identifyEventUserProperties = identifyEvent.getJSONObject("user_properties").getJSONObject(Constants.AMP_OP_SET);
+            JSONObject userProperties = mergeIdentifyInterceptList(identifys.subList(1, identifys.size()));
+            mergeUserProperties(identifyEventUserProperties, userProperties);
+            identifyEvent.getJSONObject("user_properties").put(Constants.AMP_OP_SET, identifyEventUserProperties);
             dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
             return identifyEvent;
         } catch (JSONException e) {
@@ -151,16 +132,8 @@ public class IdentifyInterceptor {
             if (identifys.isEmpty()) {
                 return event;
             }
-            JSONObject userProperties = event.getJSONObject("user_properties");
-            for (JSONObject identify : identifys) {
-                JSONObject setUserProperties = identify.getJSONObject("user_properties")
-                        .getJSONObject(Constants.AMP_OP_SET);
-                Iterator<?> keys = setUserProperties.keys();
-                while (keys.hasNext()) {
-                    String key = (String) keys.next();
-                    userProperties.put(key, setUserProperties.get(key));
-                }
-            }
+            JSONObject userProperties = mergeIdentifyInterceptList(identifys);
+            mergeUserProperties(userProperties, event.getJSONObject("user_properties"));
             event.put("user_properties", userProperties);
             dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
         } catch (JSONException e) {
@@ -169,6 +142,23 @@ public class IdentifyInterceptor {
         return event;
     }
 
+    private JSONObject mergeIdentifyInterceptList(List<JSONObject> identifys) throws JSONException {
+        JSONObject userProperties = new JSONObject();
+        for (JSONObject identify : identifys) {
+            JSONObject setUserProperties = identify.getJSONObject("user_properties")
+                    .getJSONObject(Constants.AMP_OP_SET);
+            mergeUserProperties(userProperties, setUserProperties);
+        }
+        return userProperties;
+    }
+
+    private void mergeUserProperties(JSONObject userProperties, JSONObject userPropertiesToMerge) throws JSONException {
+        Iterator<?> keys = userPropertiesToMerge.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            userProperties.put(key, userPropertiesToMerge.get(key));
+        }
+    }
 
     private boolean isSetOnly(JSONObject event) {
         return isActionOnly(event, Constants.AMP_OP_SET);

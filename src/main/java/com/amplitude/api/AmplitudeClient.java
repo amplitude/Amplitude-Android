@@ -1397,8 +1397,8 @@ public class AmplitudeClient {
         }
 
         return (
-                eventType.equals(Constants.IDENTIFY_EVENT) ||
-                        eventType.equals(Constants.GROUP_IDENTIFY_EVENT)
+            eventType.equals(Constants.IDENTIFY_EVENT) ||
+            eventType.equals(Constants.GROUP_IDENTIFY_EVENT)
         ) ? lastIdentifyId : lastEventId;
     }
 
