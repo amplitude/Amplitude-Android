@@ -906,8 +906,8 @@ public class AmplitudeClientTest extends BaseTest {
         // unsent events will be threshold (+1 for start session)
         assertEquals(getUnsentEventCount(), Constants.EVENT_UPLOAD_THRESHOLD + 1);
 
-        server.enqueue(new MockResponse().setBody("invalid_api_key"));
-        server.enqueue(new MockResponse().setBody("bad_checksum"));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody("invalid_api_key"));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody("bad_checksum"));
         ShadowLooper httpLooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httpLooper.runToEndOfTasks();
 
