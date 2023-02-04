@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -17,7 +16,6 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URLDecoder;
@@ -195,7 +193,7 @@ public class BaseTest {
     }
 
     public long getIdentifyInterceptorCount() {
-        return DatabaseHelper.getDatabaseHelper(context).getIdentifyCInterceptorCount();
+        return DatabaseHelper.getDatabaseHelper(context).getIdentifyInterceptorCount();
     }
 
     public JSONObject getLastUnsentEvent() {

@@ -389,7 +389,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
         return getEventCount() + getIdentifyCount();
     }
 
-    synchronized long getIdentifyCInterceptorCount() {
+    synchronized long getIdentifyInterceptorCount() {
         return getEventCountFromTable(IDENTIFY_INTERCEPTOR_TABLE_NAME);
     }
 
