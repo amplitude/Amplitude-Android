@@ -2242,6 +2242,78 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
+    public void testMultipleIdentifyWithSetActionOAndOneEventAndIdentify() throws JSONException {
+        long [] timestamps = {1000, 1001, 1002, 1003, 1004, 1005};
+        clock.setTimestamps(timestamps);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        Middleware middleware = new Middleware() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+                try {
+                    if (!payload.event.getString("event_type").equals(Constants.IDENTIFY_EVENT)) {
+                        payload.event.optJSONObject("user_properties").put("key1", "key1-value3")
+                                .put("key2", "key2-value3");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                next.run(payload);
+            }
+        };
+        amplitude.addEventMiddleware(middleware);
+        amplitude.identify(new Identify().set("key1", "key1-value1").set("key2", "key2-value1").set("key3", "key3-value1"));
+        amplitude.identify(new Identify().set("key1", "key1-value2").set("key4", "key4-value1"));
+        amplitude.identify(new Identify().set("key2", "key2-value2"));
+        amplitude.identify(new Identify().set("key3", "key3-value2").set("key4", "key4-value2"));
+        amplitude.logEvent("test_event", new JSONObject().put("test_event_prop_key", "test_event_prop_value"));
+        amplitude.setUserProperties(new JSONObject().put("key1", "key1-value4"));
+        looper.runToEndOfTasks();
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertEquals(0, getUnsentIdentifyCount());
+        assertEquals(1L, getUnsentEventCount());
+        assertNull(dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY));
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 6L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[5]);
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 2);
+        JSONObject event = events.getJSONObject(0);
+        assertEquals(event.getString("event_type"), "test_event");
+        assertEquals(event.getLong("event_id"), 1);
+        assertEquals(event.getLong("timestamp"), timestamps[4]);
+        assertEquals(event.getLong("sequence_number"), 5);
+        JSONObject userProperties = event.getJSONObject("user_properties");
+        assertEquals(userProperties.length(), 4);
+        JSONObject expected = new JSONObject();
+        expected.put("key1", "key1-value3");
+        expected.put("key2", "key2-value3");
+        expected.put("key3", "key3-value2");
+        expected.put("key4", "key4-value2");
+        assertTrue(Utils.compareJSONObjects(userProperties, expected));
+
+        JSONObject event2 = events.getJSONObject(1);
+        assertEquals(event2.getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(event2.getLong("event_id"), 1);
+        assertEquals(event2.getLong("timestamp"), timestamps[5]);
+        assertEquals(event2.getLong("sequence_number"), 6);
+        JSONObject userProperties2 = event2.getJSONObject("user_properties");
+        assertEquals(userProperties2.length(), 1);
+        JSONObject expected2 = new JSONObject();
+        expected2.put("key1", "key1-value4");
+        assertTrue(Utils.compareJSONObjects(userProperties2.getJSONObject(Constants.AMP_OP_SET), expected2));
+
+        assertEquals(0, getIdentifyInterceptorCount());
+        assertEquals((long)dbHelper.getLastIdentifyInterceptorId(), -1L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 1L);
+    }
+
+    @Test
     public void testIdentifyInterceptWithSetAndClearAll() throws JSONException {
         long [] timestamps = {1000, 1001, 1002, 1003, 1004};
         clock.setTimestamps(timestamps);
