@@ -2242,7 +2242,7 @@ public class AmplitudeClientTest extends BaseTest {
     }
 
     @Test
-    public void testMultipleIdentifyWithSetActionOAndOneEventAndIdentify() throws JSONException {
+    public void testMultipleIdentifyWithSetActionAndOneEventAndIdentify() throws JSONException {
         long [] timestamps = {1000, 1001, 1002, 1003, 1004, 1005};
         clock.setTimestamps(timestamps);
         ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());

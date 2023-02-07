@@ -20,7 +20,7 @@ public class Constants {
     public static final int API_VERSION = 2;
 
     public static final String DATABASE_NAME = PACKAGE_NAME;
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
 
     public static final String DEFAULT_INSTANCE = "$default_instance";
 

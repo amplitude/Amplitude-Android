@@ -139,10 +139,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
             case 2:
                 db.execSQL(CREATE_IDENTIFYS_TABLE);
                 db.execSQL(CREATE_LONG_STORE_TABLE);
-                db.execSQL(CREATE_IDENTIFY_INTERCEPTOR_TABLE);
                 if (newVersion <= 3) break;
 
             case 3:
+                db.execSQL(CREATE_IDENTIFY_INTERCEPTOR_TABLE);
+                if (newVersion <= 4) break;
+
+            case 4:
                 break;
 
             default:
