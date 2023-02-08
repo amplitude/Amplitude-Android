@@ -2271,7 +2271,7 @@ public class AmplitudeClient {
         try {
             Response response = client.newCall(request).execute();
             String stringResponse = response.body().string();
-            if (response.code() == 200 || stringResponse.equals("success")) {
+            if (response.code() == 200) {
                 uploadSuccess = true;
                 logThread.post(new Runnable() {
                     @Override
@@ -2293,14 +2293,11 @@ public class AmplitudeClient {
                         }
                     }
                 });
-            } else if (stringResponse.equals("invalid_api_key")) {
+            } else if (response.code() == 400 && stringResponse.equals("invalid_api_key")) {
                 logger.e(TAG, "Invalid API key, make sure your API key is correct in initialize()");
-            } else if (stringResponse.equals("bad_checksum")) {
+            } else if (response.code() == 400 && stringResponse.equals("bad_checksum")) {
                 logger.w(TAG,
                         "Bad checksum, post request was mangled in transit, will attempt to reupload later");
-            } else if (stringResponse.equals("request_db_write_failed")) {
-                logger.w(TAG,
-                        "Couldn't write to request database on server, will attempt to reupload later");
             } else if (response.code() == 413) {
 
                 // If blocked by one massive event, drop it
