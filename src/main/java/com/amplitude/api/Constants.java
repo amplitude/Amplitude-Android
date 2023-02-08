@@ -20,7 +20,7 @@ public class Constants {
     public static final int API_VERSION = 2;
 
     public static final String DATABASE_NAME = PACKAGE_NAME;
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
 
     public static final String DEFAULT_INSTANCE = "$default_instance";
 
@@ -31,6 +31,7 @@ public class Constants {
     public static final long EVENT_UPLOAD_PERIOD_MILLIS = 30 * 1000; // 30s
     public static final long MIN_TIME_BETWEEN_SESSIONS_MILLIS = 5 * 60 * 1000; // 5m
     public static final long SESSION_TIMEOUT_MILLIS = 30 * 60 * 1000; // 30m
+    public static final long IDENTIFY_BATCH_INTERVAL_MILLIS = 30 * 1000; // 30s
     public static final int MAX_STRING_LENGTH = 1024;
     public static final int MAX_PROPERTY_KEYS = 1000;
 

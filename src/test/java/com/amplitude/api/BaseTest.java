@@ -1,7 +1,6 @@
 package com.amplitude.api;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -17,7 +16,6 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowPackageManager;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URLDecoder;
@@ -194,6 +192,9 @@ public class BaseTest {
         return DatabaseHelper.getDatabaseHelper(context).getIdentifyCount();
     }
 
+    public long getIdentifyInterceptorCount() {
+        return DatabaseHelper.getDatabaseHelper(context).getIdentifyInterceptorCount();
+    }
 
     public JSONObject getLastUnsentEvent() {
         JSONArray events = getUnsentEventsFromTable(DatabaseHelper.EVENT_TABLE_NAME, 1);
@@ -245,6 +246,17 @@ public class BaseTest {
             DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
             List<JSONObject> events = table.equals(DatabaseHelper.IDENTIFY_TABLE_NAME) ?
                     dbHelper.getIdentifys(-1, -1) : dbHelper.getEvents(-1, -1);
+            return events.get(events.size() - 1);
+        } catch (JSONException e) {
+            fail(e.toString());
+        }
+        return null;
+    }
+
+    public JSONObject getLastIdentifyInterceptor() {
+        try {
+            DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+            List<JSONObject> events = dbHelper.getIdentifyInterceptors(-1, -1);
             return events.get(events.size() - 1);
         } catch (JSONException e) {
             fail(e.toString());
