@@ -51,7 +51,7 @@ class IdentifyInterceptor {
      */
     public JSONObject intercept(String eventType, JSONObject event) {
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
-            if (isSetOnly(event)) {
+            if (isSetOnly(event) && !isSetGroups(event)) {
                 // intercept and  save user properties
                 lastIdentifyInterceptorId = saveIdentifyProperties(event);
                 scheduleTransfer();
@@ -184,6 +184,14 @@ class IdentifyInterceptor {
 
     private boolean isClearAll(JSONObject event) {
         return isActionOnly(event, Constants.AMP_OP_CLEAR_ALL);
+    }
+
+    private boolean isSetGroups(JSONObject event) {
+        try {
+            return event.getJSONObject("groups").length() > 0;
+        } catch (JSONException e) {
+            return false;
+        }
     }
 
     private boolean isActionOnly(JSONObject event, String action) {
