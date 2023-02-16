@@ -2434,4 +2434,63 @@ public class AmplitudeClientTest extends BaseTest {
         assertEquals((long)dbHelper.getLastIdentifyInterceptorId(), -1L);
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
     }
+
+    @Test
+    public void testMultipleIdentifyWithSetActionAndSetGroup() throws JSONException {
+        long [] timestamps = {1000, 1001, 1002, 1003, 1004, 1005};
+        clock.setTimestamps(timestamps);
+        ShadowLooper looper = Shadows.shadowOf(amplitude.logThread.getLooper());
+        looper.runToEndOfTasks();
+        amplitude.identify(new Identify().set("key1", "key1-value1").set("key2", "key2-value1").set("key3", "key3-value1"));
+        amplitude.identify(new Identify().set("key1", "key1-value2").set("key4", "key4-value1"));
+        amplitude.identify(new Identify().set("key2", "key2-value2"));
+        amplitude.identify(new Identify().set("key3", "key3-value2").set("key4", "key4-value2"));
+        amplitude.setGroup("test-group-type", "test-group-value");
+        amplitude.identify(new Identify().set("key3", "key3-value3").set("key4", "key4-value3"));
+        looper.runToEndOfTasks();
+        DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
+        assertEquals(1L, getUnsentIdentifyCount());
+        assertEquals(1L, getIdentifyInterceptorCount());
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 6L);
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[5]);
+
+        looper.runToEndOfTasks();
+        looper.runToEndOfTasks();
+        RecordedRequest request = runRequest(amplitude);
+        JSONArray events = getEventsFromRequest(request);
+        assertEquals(events.length(), 2);
+        JSONObject event = events.getJSONObject(0);
+        assertEquals(event.getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(event.getLong("event_id"), 1);
+        assertEquals(event.getLong("timestamp"), timestamps[4]);
+        assertEquals(event.getLong("sequence_number"), 5);
+        JSONObject userProperties = event.getJSONObject("user_properties");
+        assertEquals(userProperties.length(), 1);
+        JSONObject expected = new JSONObject();
+        expected.put("key1", "key1-value2");
+        expected.put("key2", "key2-value2");
+        expected.put("key3", "key3-value2");
+        expected.put("key4", "key4-value2");
+        expected.put("test-group-type", "test-group-value");
+        JSONObject expectedGroups = new JSONObject();
+        expectedGroups.put("test-group-type", "test-group-value");
+        assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
+        assertTrue(Utils.compareJSONObjects(event.getJSONObject("groups"), expectedGroups));
+
+        JSONObject event2 = events.getJSONObject(1);
+        assertEquals(event2.getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(event2.getLong("event_id"), 2);
+        assertEquals(event2.getLong("timestamp"), timestamps[5]);
+        assertEquals(event2.getLong("sequence_number"), 6);
+        JSONObject userProperties2 = event2.getJSONObject("user_properties");
+        assertEquals(userProperties2.length(), 1);
+        JSONObject expected2 = new JSONObject();
+        expected2.put("key3", "key3-value3");
+        expected2.put("key4", "key4-value3");
+        assertTrue(Utils.compareJSONObjects(userProperties2.getJSONObject(Constants.AMP_OP_SET), expected2));
+
+        assertEquals(0, getIdentifyInterceptorCount());
+        assertEquals((long)dbHelper.getLastIdentifyInterceptorId(), -1L);
+    }
 }
