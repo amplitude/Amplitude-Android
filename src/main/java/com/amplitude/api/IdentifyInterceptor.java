@@ -27,6 +27,10 @@ class IdentifyInterceptor {
 
     private final AmplitudeClient client;
 
+    private String userId;
+    private String deviceId;
+    private final AtomicBoolean identitySet = new AtomicBoolean(false);
+
     public  IdentifyInterceptor (
             DatabaseHelper dbHelper,
             WorkerThread logThread,
@@ -50,6 +54,10 @@ class IdentifyInterceptor {
      * @return event with potentially more information or null if intercepted
      */
     public JSONObject intercept(String eventType, JSONObject event) {
+        if (isIdentityUpdated(event)) {
+            // if userId or deviceId is updated, send out the identify for older identity
+            transferInterceptedIdentify();
+        }
         if (eventType.equals(Constants.IDENTIFY_EVENT)) {
             if (isSetOnly(event) && !isSetGroups(event)) {
                 // intercept and  save user properties
@@ -205,5 +213,37 @@ class IdentifyInterceptor {
 
     private long saveIdentifyProperties(JSONObject event) {
         return dbHelper.addIdentifyInterceptor(event.toString());
+    }
+
+    private boolean isIdentityUpdated(JSONObject event) {
+        try {
+            if (!identitySet.getAndSet(true)) {
+                userId = event.getString("user_id");
+                deviceId = event.getString("device_id");
+                return true;
+            }
+            boolean isUpdated = false;
+            if (isIdUpdated(userId, event.getString("user_id"))) {
+                userId = event.getString("user_id");
+                isUpdated = true;
+            }
+            if (isIdUpdated(deviceId, event.getString("device_id"))) {
+                deviceId = event.getString("device_id");
+                isUpdated = true;
+            }
+            return isUpdated;
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    private boolean isIdUpdated(String id, String updateId) {
+        if (id == null && updateId == null) {
+            return false;
+        }
+        if (id == null || updateId == null) {
+            return true;
+        }
+        return !id.equals(updateId);
     }
 }
