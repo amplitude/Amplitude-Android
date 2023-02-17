@@ -233,7 +233,7 @@ class IdentifyInterceptor {
             }
             return isUpdated;
         } catch (JSONException e) {
-            return false;
+            return true;
         }
     }
 

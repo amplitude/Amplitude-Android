@@ -2532,8 +2532,6 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put("key2", "key2-value2");
         expected.put("key3", "key3-value2");
         expected.put("key4", "key4-value2");
-        JSONObject expectedGroups = new JSONObject();
-        expectedGroups.put("test-group-type", "test-group-value");
         assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
 
         JSONObject event2 = events.getJSONObject(1);
