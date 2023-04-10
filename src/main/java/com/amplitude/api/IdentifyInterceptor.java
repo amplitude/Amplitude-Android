@@ -182,7 +182,9 @@ class IdentifyInterceptor {
         Iterator<?> keys = userPropertiesToMerge.keys();
         while (keys.hasNext()) {
             String key = (String) keys.next();
-            userProperties.put(key, userPropertiesToMerge.get(key));
+            if (userPropertiesToMerge.get(key) != null && userPropertiesToMerge.get(key) != JSONObject.NULL) {
+                userProperties.put(key, userPropertiesToMerge.get(key));
+            }
         }
     }
 
