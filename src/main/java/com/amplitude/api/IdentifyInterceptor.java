@@ -77,7 +77,8 @@ class IdentifyInterceptor {
             return event;
         } else {
             // fetch, merge and attach user properties
-            return fetchAndMergeToNormalEvent(event);
+            transferInterceptedIdentify();
+            return event;
         }
     }
 
