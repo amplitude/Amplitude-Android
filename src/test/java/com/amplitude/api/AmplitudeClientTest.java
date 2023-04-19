@@ -2236,6 +2236,7 @@ public class AmplitudeClientTest extends BaseTest {
         expected.put("key3", "key3-value2");
         expected.put("key4", "key4-value2");
         assertTrue(Utils.compareJSONObjects(userProperties, expected));
+
         JSONObject event2 = events.getJSONObject(1);
         assertEquals(event2.getString("event_type"), "test_event");
         assertEquals(event2.getLong("event_id"), 1);
