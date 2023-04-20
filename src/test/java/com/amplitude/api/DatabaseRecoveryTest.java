@@ -116,8 +116,6 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertNull(newSequenceNumber);
         assertEquals(newLastEventId, Long.valueOf(-1));  // insert event fails, and returns -1
         assertNull(newLastIdentifyId);
-
-        reset(mockDbHelper);
     }
 
     @Test
@@ -172,8 +170,6 @@ public class DatabaseRecoveryTest extends BaseTest {
         assertNull(newSequenceNumber);
         assertNull(newLastEventId);  // insert event fails, and returns -1
         assertNull(newLastIdentifyId);
-
-        reset(mockDbHelper);
     }
 
     @Test
