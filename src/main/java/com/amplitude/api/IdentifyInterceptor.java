@@ -69,10 +69,6 @@ class IdentifyInterceptor {
                 dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
                 return event;
             } else {
-                if (isSetGroups(event)) {
-                    // collapse with set group event
-                    return fetchAndMergeToIdentifyEvent(event);
-                }
                 // send out the identify for older identity and event
                 transferInterceptedIdentify();
                 return event;
