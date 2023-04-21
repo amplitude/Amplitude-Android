@@ -465,26 +465,33 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
 
         assertEquals(getUnsentEventCount(), 0);
-        assertEquals(getUnsentIdentifyCount(), 2);
-        JSONArray events = getUnsentIdentifys(2);
+        assertEquals(getUnsentIdentifyCount(), 3);
+        JSONArray events = getUnsentIdentifys(3);
 
         JSONObject expectedIdentify1 = new JSONObject();
         expectedIdentify1.put(Constants.AMP_OP_SET, new JSONObject().put("photo_count", 1));
-        expectedIdentify1.put(Constants.AMP_OP_ADD, new JSONObject().put("karma", 2));
         JSONObject expectedIdentify2 = new JSONObject();
-        expectedIdentify2.put(Constants.AMP_OP_UNSET, new JSONObject().put("gender", "-"));
+        expectedIdentify2.put(Constants.AMP_OP_ADD, new JSONObject().put("karma", 2));
+        JSONObject expectedIdentify3 = new JSONObject();
+        expectedIdentify3.put(Constants.AMP_OP_UNSET, new JSONObject().put("gender", "-"));
 
         assertEquals(events.optJSONObject(0).optString("event_type"), Constants.IDENTIFY_EVENT);
-        assertEquals(events.optJSONObject(0).optLong("timestamp"), timestamps[1]);
-        assertEquals(events.optJSONObject(0).optLong("sequence_number"), 2);
+        assertEquals(events.optJSONObject(0).optLong("timestamp"), timestamps[0]);
+        assertEquals(events.optJSONObject(0).optLong("sequence_number"), 1);
         assertTrue(Utils.compareJSONObjects(
                 events.optJSONObject(0).optJSONObject("user_properties"), expectedIdentify1
         ));
         assertEquals(events.optJSONObject(1).optString("event_type"), Constants.IDENTIFY_EVENT);
-        assertEquals(events.optJSONObject(1).optLong("timestamp"), timestamps[2]);
-        assertEquals(events.optJSONObject(1).optLong("sequence_number"), 3);
+        assertEquals(events.optJSONObject(1).optLong("timestamp"), timestamps[1]);
+        assertEquals(events.optJSONObject(1).optLong("sequence_number"), 2);
         assertTrue(Utils.compareJSONObjects(
                 events.optJSONObject(1).optJSONObject("user_properties"), expectedIdentify2
+        ));
+        assertEquals(events.optJSONObject(2).optString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.optJSONObject(2).optLong("timestamp"), timestamps[2]);
+        assertEquals(events.optJSONObject(2).optLong("sequence_number"), 3);
+        assertTrue(Utils.compareJSONObjects(
+                events.optJSONObject(2).optJSONObject("user_properties"), expectedIdentify3
         ));
 
         // send response and check that remove events works properly
@@ -566,18 +573,19 @@ public class AmplitudeClientTest extends BaseTest {
         // verify some internal counters
         assertEquals(getUnsentEventCount(), 4);
         assertEquals(amplitude.lastEventId, 4);
-        assertEquals(getUnsentIdentifyCount(), 2);
-        assertEquals(amplitude.lastIdentifyId, 2);
+        assertEquals(getUnsentIdentifyCount(), 3);
+        assertEquals(amplitude.lastIdentifyId, 3);
 
         RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
-        assertEquals(events.length(), 6);
+        assertEquals(events.length(), 7);
 
         JSONObject expectedIdentify1 = new JSONObject();
         expectedIdentify1.put(Constants.AMP_OP_ADD, new JSONObject().put("photo_count", 1));
         JSONObject expectedIdentify2 = new JSONObject();
         expectedIdentify2.put(Constants.AMP_OP_SET, new JSONObject().put("gender", "male"));
-        expectedIdentify2.put(Constants.AMP_OP_UNSET, new JSONObject().put("karma", "-"));
+        JSONObject expectedIdentify3 = new JSONObject();
+        expectedIdentify3.put(Constants.AMP_OP_UNSET, new JSONObject().put("karma", "-"));
 
         assertEquals(events.getJSONObject(0).getString("event_type"), "test_event1");
         assertEquals(events.getJSONObject(0).getLong("event_id"), 1);
@@ -610,10 +618,18 @@ public class AmplitudeClientTest extends BaseTest {
 
         assertEquals(events.getJSONObject(5).getString("event_type"), Constants.IDENTIFY_EVENT);
         assertEquals(events.getJSONObject(5).getLong("event_id"), 2);
-        assertEquals(events.getJSONObject(5).getLong("timestamp"), timestamps[6]);
-        assertEquals(events.getJSONObject(5).getLong("sequence_number"), 7);
+        assertEquals(events.getJSONObject(5).getLong("timestamp"), timestamps[5]);
+        assertEquals(events.getJSONObject(5).getLong("sequence_number"), 6);
         assertTrue(Utils.compareJSONObjects(
                 events.getJSONObject(5).getJSONObject("user_properties"), expectedIdentify2
+        ));
+
+        assertEquals(events.getJSONObject(6).getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(events.getJSONObject(6).getLong("event_id"), 3);
+        assertEquals(events.getJSONObject(6).getLong("timestamp"), timestamps[6]);
+        assertEquals(events.getJSONObject(6).getLong("sequence_number"), 7);
+        assertTrue(Utils.compareJSONObjects(
+                events.getJSONObject(6).getJSONObject("user_properties"), expectedIdentify3
         ));
 
         looper.runToEndOfTasks();
@@ -624,7 +640,7 @@ public class AmplitudeClientTest extends BaseTest {
         // verify db state
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
         assertNull(dbHelper.getValue(AmplitudeClient.USER_ID_KEY));
-        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 2L);
+        assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 3L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_ID_KEY), 4L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 7L);
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[6]);
@@ -2386,8 +2402,8 @@ public class AmplitudeClientTest extends BaseTest {
         amplitude.identify(new Identify().add("key5", 2));
         looper.runToEndOfTasks();
         DatabaseHelper dbHelper = DatabaseHelper.getDatabaseHelper(context);
-        assertEquals(1L, getUnsentIdentifyCount());
-        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 1L);
+        assertEquals(2L, getUnsentIdentifyCount());
+        assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_IDENTIFY_ID_KEY), 2L);
         assertEquals((long) dbHelper.getLongValue(AmplitudeClient.SEQUENCE_NUMBER_KEY), 5L);
         assertEquals((long)dbHelper.getLongValue(AmplitudeClient.LAST_EVENT_TIME_KEY), timestamps[4]);
 
@@ -2395,23 +2411,32 @@ public class AmplitudeClientTest extends BaseTest {
         looper.runToEndOfTasks();
         RecordedRequest request = runRequest(amplitude);
         JSONArray events = getEventsFromRequest(request);
-        assertEquals(events.length(), 1);
+        assertEquals(events.length(), 2);
         JSONObject event = events.getJSONObject(0);
         assertEquals(event.getString("event_type"), Constants.IDENTIFY_EVENT);
         assertEquals(event.getLong("event_id"), 1);
-        assertEquals(event.getLong("timestamp"), timestamps[4]);
-        assertEquals(event.getLong("sequence_number"), 5);
+        assertEquals(event.getLong("timestamp"), timestamps[0]);
+        assertEquals(event.getLong("sequence_number"), 1);
         JSONObject userProperties = event.getJSONObject("user_properties");
-        assertEquals(userProperties.length(), 2);
+        assertEquals(userProperties.length(), 1);
         JSONObject expected = new JSONObject();
         expected.put("key1", "key1-value2");
         expected.put("key2", "key2-value2");
         expected.put("key3", "key3-value2");
         expected.put("key4", "key4-value2");
+        assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
+
+        JSONObject event2 = events.getJSONObject(1);
+        assertEquals(event2.getString("event_type"), Constants.IDENTIFY_EVENT);
+        assertEquals(event2.getLong("event_id"), 2);
+        assertEquals(event2.getLong("timestamp"), timestamps[4]);
+        assertEquals(event2.getLong("sequence_number"), 5);
+        JSONObject userProperties2 = event2.getJSONObject("user_properties");
+        assertEquals(userProperties2.length(), 1);
         JSONObject expectedAdd = new JSONObject();
         expectedAdd.put("key5", 2);
-        assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_SET), expected));
-        assertTrue(Utils.compareJSONObjects(userProperties.getJSONObject(Constants.AMP_OP_ADD), expectedAdd));
+        assertTrue(Utils.compareJSONObjects(userProperties2.getJSONObject(Constants.AMP_OP_ADD), expectedAdd));
+
         assertEquals(0, getIdentifyInterceptorCount());
         assertEquals((long)dbHelper.getLastIdentifyInterceptorId(), -1L);
     }
