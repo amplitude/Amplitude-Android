@@ -69,15 +69,17 @@ class IdentifyInterceptor {
                 dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
                 return event;
             } else {
-                // Fetch and merge event
-                return fetchAndMergeToIdentifyEvent(event);
+                // send out the identify for older identity and event
+                transferInterceptedIdentify();
+                return event;
             }
         } else if (eventType.equals(Constants.GROUP_IDENTIFY_EVENT)) {
             // no op
             return event;
         } else {
-            // fetch, merge and attach user properties
-            return fetchAndMergeToNormalEvent(event);
+            // send out the identify for older identity and event
+            transferInterceptedIdentify();
+            return event;
         }
     }
 
