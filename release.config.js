@@ -28,7 +28,7 @@ module.exports = {
             "to": "ARTIFACT_VERSION=\'${nextRelease.version}\'",
             "results": [
               {
-                "file": "gradle.properties"",
+                "file": "gradle.properties",
                 "hasChanged": true,
                 "numMatches": 1,
                 "numReplacements": 1
