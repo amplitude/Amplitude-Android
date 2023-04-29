@@ -1,3 +1,11 @@
+## [2.39.3](https://github.com/amplitude/Amplitude-Android/compare/v2.39.2...v2.39.3) (2023-04-29)
+
+
+### Bug Fixes
+
+* filter null value in identify user properties ([#356](https://github.com/amplitude/Amplitude-Android/issues/356)) ([779b6b3](https://github.com/amplitude/Amplitude-Android/commit/779b6b3246e01b0c408ecae7437b7f40c7067f22))
+* update identify interceptor to identify only ([#357](https://github.com/amplitude/Amplitude-Android/issues/357)) ([afd3251](https://github.com/amplitude/Amplitude-Android/commit/afd3251f75c30b130a42805e49b31673916cedf1))
+
 ### As of September 21, 2020 CHANGELOG.md is no longer manually updated. 
 Please check the [releases page](https://github.com/amplitude/Amplitude-Android/releases) for up to date changes.
 
