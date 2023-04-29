@@ -56,10 +56,10 @@ jobs:
 
       - name: Configure Sonatype
         env:
-          GRADLE_PROP_FILE: local.properties
+          GRADLE_PROP_FILE: gradle.properties
         run: |
-          echo "ossrhUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
-          echo "ossrhPassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
+          echo "sonatypeUsername=${{ secrets.OSSRH_USERNAME }}" >> $GRADLE_PROP_FILE
+          echo "sonatypePassword=${{ secrets.OSSRH_PASSWORD }}" >> $GRADLE_PROP_FILE
           echo "sonatypeStagingProfileId=${{ secrets.SONATYPE_STAGING_PROFILE_ID }}" >> $GRADLE_PROP_FILE
           echo "signing.keyId=${{ secrets.SIGNING_KEY_ID }}" >> $GRADLE_PROP_FILE
           echo "signing.password=${{ secrets.SIGNING_PASSWORD }}" >> $GRADLE_PROP_FILE
