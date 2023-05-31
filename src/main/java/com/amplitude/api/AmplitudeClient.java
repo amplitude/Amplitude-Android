@@ -1102,7 +1102,7 @@ public class AmplitudeClient {
      */
     public void logEventSync(String eventType, JSONObject eventProperties, JSONObject groups, long timestamp, boolean outOfSession) {
         if (validateLogEvent(eventType)) {
-            logEvent(eventType, eventProperties, null, null, groups, null, timestamp, outOfSession);
+            logEvent(eventType, eventProperties, null, null, groups, null, timestamp, outOfSession, this.inForeground);
         }
     }
 
@@ -1172,6 +1172,7 @@ public class AmplitudeClient {
         final JSONObject copyUserProperties = userProperties;
         final JSONObject copyGroups = groups;
         final JSONObject copyGroupProperties = groupProperties;
+        final boolean isForeground = this.inForeground;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
@@ -1180,7 +1181,8 @@ public class AmplitudeClient {
                 }
                 logEvent(
                     eventType, copyEventProperties, copyApiProperties,
-                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession, extra
+                    copyUserProperties, copyGroups, copyGroupProperties, timestamp, outOfSession, extra,
+                    isForeground
                 );
             }
         });
@@ -1197,17 +1199,18 @@ public class AmplitudeClient {
      * @param groups          the groups
      * @param timestamp       the timestamp
      * @param outOfSession    the out of session
+     * @param inForeground    in foreground
      * @return the event ID if succeeded, else -1.
      */
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
                             JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
-                            long timestamp, boolean outOfSession) {
-        return logEvent(eventType, eventProperties, apiProperties, userProperties, groups, groupProperties, timestamp,outOfSession, null);
+                            long timestamp, boolean outOfSession, boolean inForeground) {
+        return logEvent(eventType, eventProperties, apiProperties, userProperties, groups, groupProperties, timestamp, outOfSession, null, inForeground);
     }
 
     protected long logEvent(String eventType, JSONObject eventProperties, JSONObject apiProperties,
             JSONObject userProperties, JSONObject groups, JSONObject groupProperties,
-            long timestamp, boolean outOfSession, MiddlewareExtra extra) {
+            long timestamp, boolean outOfSession, MiddlewareExtra extra, boolean inForeground) {
 
         logger.d(TAG, "Logged event to Amplitude: " + eventType);
 
@@ -1480,7 +1483,6 @@ public class AmplitudeClient {
      */
     public boolean startNewSessionIfNeeded(long timestamp) {
         if (inSession()) {
-
             if (isWithinMinTimeBetweenSessions(timestamp)) {
                 refreshSessionTime(timestamp);
                 return false;
@@ -1565,7 +1567,7 @@ public class AmplitudeClient {
             return;
         }
 
-        logEvent(sessionEvent, null, apiProperties, null, null, null, lastEventTime, false);
+        logEvent(sessionEvent, null, apiProperties, null, null, null, lastEventTime, false, false);
     }
 
     /**
@@ -1574,6 +1576,7 @@ public class AmplitudeClient {
      * @param timestamp the timestamp
      */
     void onExitForeground(final long timestamp) {
+        inForeground = false;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
@@ -1581,7 +1584,6 @@ public class AmplitudeClient {
                     return;
                 }
                 refreshSessionTime(timestamp);
-                inForeground = false;
                 if (flushEventsOnClose) {
                     identifyInterceptor.transferInterceptedIdentify();
                     updateServer();
@@ -1603,6 +1605,7 @@ public class AmplitudeClient {
      * @param timestamp the timestamp
      */
     void onEnterForeground(final long timestamp) {
+        inForeground = true;
         runOnLogThread(new Runnable() {
             @Override
             public void run() {
@@ -1618,7 +1621,6 @@ public class AmplitudeClient {
                     }, serverZone);
                 }
                 startNewSessionIfNeeded(timestamp);
-                inForeground = true;
             }
         });
     }
@@ -1707,7 +1709,7 @@ public class AmplitudeClient {
             return;
         }
 
-        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject(), null, null, null, null, getCurrentTimeMillis(), false, extra);
+        logEvent(Constants.AMP_REVENUE_EVENT, revenue.toJSONObject(), null, null, null, null, getCurrentTimeMillis(), false, extra, this.inForeground);
     }
 
     /**
