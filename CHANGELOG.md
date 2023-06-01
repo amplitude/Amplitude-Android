@@ -1,3 +1,10 @@
+## [2.39.4](https://github.com/amplitude/Amplitude-Android/compare/v2.39.3...v2.39.4) (2023-06-01)
+
+
+### Bug Fixes
+
+* move inForeground reads/writes to main thread ([#362](https://github.com/amplitude/Amplitude-Android/issues/362)) ([15b4b35](https://github.com/amplitude/Amplitude-Android/commit/15b4b35187da132adeeb35e6726e5b76bc48f75f))
+
 ## [2.39.3](https://github.com/amplitude/Amplitude-Android/compare/v2.39.2...v2.39.3) (2023-04-29)
 
 
