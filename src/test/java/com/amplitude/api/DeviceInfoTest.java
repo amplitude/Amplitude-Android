@@ -96,7 +96,7 @@ public class DeviceInfoTest extends BaseTest {
         ShadowTelephonyManager manager = Shadows.shadowOf((TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkOperatorName(TEST_CARRIER);
-        deviceInfo = new DeviceInfo(context, true);
+        deviceInfo = new DeviceInfo(context, true, false);
     }
 
     @After
@@ -140,7 +140,7 @@ public class DeviceInfoTest extends BaseTest {
                 .getSystemService(Context.TELEPHONY_SERVICE));
         manager.setNetworkCountryIso(TEST_NETWORK_COUNTRY);
 
-        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, false);
         assertEquals(TEST_NETWORK_COUNTRY, deviceInfo.getCountry());
     }
 
@@ -190,11 +190,23 @@ public class DeviceInfoTest extends BaseTest {
         } catch (Exception e) {
             fail(e.toString());
         }
-        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, true);
 
         // still get advertisingId even if limit ad tracking disabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
         assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+    }
+
+    @Test
+    public void testGetAdvertisingIdFromGoogleDeviceDisabledTrackAdid() {
+        PowerMockito.mockStatic(AdvertisingIdClient.class);
+
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, false);
+
+        assertNull(deviceInfo.getAdvertisingId());
+        assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+
+        PowerMockito.verifyStatic(Mockito.never());
     }
 
     @Test
@@ -207,7 +219,7 @@ public class DeviceInfoTest extends BaseTest {
         Secure.putInt(cr, "limit_ad_tracking", 1);
         Secure.putString(cr, "advertising_id", advertisingId);
 
-        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, true);
 
         // still get advertisingID even if limit ad tracking enabled
         assertEquals(advertisingId, deviceInfo.getAdvertisingId());
@@ -215,9 +227,25 @@ public class DeviceInfoTest extends BaseTest {
     }
 
     @Test
+    public void testGetAdvertisingIdFromAmazonDeviceDisabledTrackAdid() {
+        ReflectionHelpers.setStaticField(Build.class, "MANUFACTURER", "Amazon");
+
+        String advertisingId = "advertisingId";
+        ContentResolver cr = context.getContentResolver();
+
+        Secure.putInt(cr, "limit_ad_tracking", 1);
+        Secure.putString(cr, "advertising_id", advertisingId);
+
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, false);
+
+        assertNull(deviceInfo.getAdvertisingId());
+        assertFalse(deviceInfo.isLimitAdTrackingEnabled());
+    }
+
+    @Test
     public void testGPSDisabled() {
         // GPS not enabled
-        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, false);
         assertFalse(deviceInfo.isGooglePlayServicesEnabled());
 
         // GPS bundled but not enabled, GooglePlayUtils.isAvailable returns non-0 value
@@ -257,7 +285,7 @@ public class DeviceInfoTest extends BaseTest {
 
     @Test
     public void testNoLocation() {
-        DeviceInfo deviceInfo = new DeviceInfo(context, true);
+        DeviceInfo deviceInfo = new DeviceInfo(context, true, false);
         Location recent = deviceInfo.getMostRecentLocation();
         assertNull(recent);
     }
@@ -410,7 +438,7 @@ public class DeviceInfoTest extends BaseTest {
             return this.publicInitializeDeviceInfo();
         }
         public DeviceInfo publicInitializeDeviceInfo() {
-            return new DeviceInfo(context, true);
+            return new DeviceInfo(context, true, false);
         }
         public DeviceInfoAmplitudeClient(String instance) {
             super(instance);

@@ -33,7 +33,9 @@ public class DeviceInfo {
     private static final String SETTING_LIMIT_AD_TRACKING = "limit_ad_tracking";
     private static final String SETTING_ADVERTISING_ID = "advertising_id";
 
-    private boolean locationListening = true;
+    private boolean locationListening;
+
+    private boolean shouldTrackAdid;
 
     private Context context;
 
@@ -213,6 +215,10 @@ public class DeviceInfo {
         }
 
         private String getAdvertisingId() {
+            if (!shouldTrackAdid) {
+                return null;
+            }
+
             // This should not be called on the main thread.
             if ("Amazon".equals(getManufacturer())) {
                 return getAndCacheAmazonAdvertisingId();
@@ -308,9 +314,10 @@ public class DeviceInfo {
         }
     }
 
-    public DeviceInfo(Context context, boolean locationListening) {
+    public DeviceInfo(Context context, boolean locationListening, boolean shouldTrackAdid) {
         this.context = context;
         this.locationListening = locationListening;
+        this.shouldTrackAdid = shouldTrackAdid;
     }
 
     private CachedInfo getCachedInfo() {
