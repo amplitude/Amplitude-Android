@@ -2395,7 +2395,7 @@ public class AmplitudeClient {
     }
 
     protected DeviceInfo initializeDeviceInfo() {
-        return new DeviceInfo(context, this.locationListening);
+        return new DeviceInfo(context, this.locationListening, appliedTrackingOptions.shouldTrackAdid());
     }
 
     /**
