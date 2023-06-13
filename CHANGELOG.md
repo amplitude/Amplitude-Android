@@ -1,3 +1,10 @@
+## [2.39.5](https://github.com/amplitude/Amplitude-Android/compare/v2.39.4...v2.39.5) (2023-06-13)
+
+
+### Bug Fixes
+
+* do not fetch advertising Id if adid tracking is disabled ([#366](https://github.com/amplitude/Amplitude-Android/issues/366)) ([a1f8cc8](https://github.com/amplitude/Amplitude-Android/commit/a1f8cc80af0bbaf2b7edc3b47b87c3f518ea8433))
+
 ## [2.39.4](https://github.com/amplitude/Amplitude-Android/compare/v2.39.3...v2.39.4) (2023-06-01)
 
 
