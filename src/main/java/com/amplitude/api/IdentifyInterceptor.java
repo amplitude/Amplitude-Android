@@ -92,27 +92,6 @@ class IdentifyInterceptor {
         this.identifyBatchIntervalMillis = identifyBatchIntervalMillis;
     }
 
-    private JSONObject fetchAndMergeToIdentifyEvent(JSONObject event) {
-        try {
-            List<JSONObject> identifys = dbHelper.getIdentifyInterceptors(lastIdentifyInterceptorId, -1);
-            if (identifys.isEmpty()) {
-                return event;
-            }
-            JSONObject identifyEventUserProperties = event.getJSONObject("user_properties");
-            JSONObject userProperties = mergeIdentifyInterceptList(identifys);
-            if (identifyEventUserProperties.has(Constants.AMP_OP_SET)) {
-                mergeUserProperties(userProperties, identifyEventUserProperties.getJSONObject(Constants.AMP_OP_SET));
-            }
-            identifyEventUserProperties.put(Constants.AMP_OP_SET, userProperties);
-            event.put("user_properties", identifyEventUserProperties);
-            dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
-            return event;
-        } catch (JSONException e) {
-            AmplitudeLog.getLogger().w(TAG, "Identify Merge error: " + e.getMessage());
-        }
-        return event;
-    }
-
     private JSONObject getTransferIdentifyEvent() {
         try {
             List<JSONObject> identifys = dbHelper.getIdentifyInterceptors(lastIdentifyInterceptorId, -1);
@@ -152,22 +131,6 @@ class IdentifyInterceptor {
             return;
         }
         client.saveEvent(Constants.IDENTIFY_EVENT, identifyEvent);
-    }
-
-    private JSONObject fetchAndMergeToNormalEvent(JSONObject event) {
-        try {
-            List<JSONObject> identifys = dbHelper.getIdentifyInterceptors(lastIdentifyInterceptorId, -1);
-            if (identifys.isEmpty()) {
-                return event;
-            }
-            JSONObject userProperties = mergeIdentifyInterceptList(identifys);
-            mergeUserProperties(userProperties, event.getJSONObject("user_properties"));
-            event.put("user_properties", userProperties);
-            dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
-        } catch (JSONException e) {
-            AmplitudeLog.getLogger().w(TAG, "Identify Merge error: " + e.getMessage());
-        }
-        return event;
     }
 
     private JSONObject mergeIdentifyInterceptList(List<JSONObject> identifys) throws JSONException {

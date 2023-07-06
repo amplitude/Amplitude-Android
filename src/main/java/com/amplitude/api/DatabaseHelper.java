@@ -13,7 +13,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -340,26 +339,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
     protected synchronized List<JSONObject> getEventsFromTable(
                                     String table, long upToId, long limit) throws JSONException {
-        List<JSONObject> events = new LinkedList<JSONObject>();
+        List<Long> eventIds = new LinkedList<Long>();
         Cursor cursor = null;
         try {
             SQLiteDatabase db = getReadableDatabase();
             cursor = queryDb(
-                db, table, new String[] { ID_FIELD, EVENT_FIELD },
+                db, table, new String[] { ID_FIELD },
                 upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
                 ID_FIELD + " ASC", limit >= 0 ? "" + limit : null
             );
 
             while (cursor.moveToNext()) {
                 long eventId = cursor.getLong(0);
-                String event = cursor.getString(1);
-                if (Utils.isEmptyString(event)) {
-                    continue;
-                }
-
-                JSONObject obj = new JSONObject(event);
-                obj.put("event_id", eventId);
-                events.add(obj);
+                eventIds.add(eventId);
             }
         } catch (SQLiteException e) {
             logger.e(TAG, String.format("getEvents from %s failed", table), e);
@@ -377,7 +369,55 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
             close();
         }
-        return events;
+
+        try {
+            List<JSONObject> events = new LinkedList<JSONObject>();
+            for (Long eventId : eventIds) {
+                JSONObject event = getEventFromTable(table, eventId);
+                if (event != null) {
+                    events.add(event);
+                }
+            }
+            return events;
+        } finally {
+            close();
+        }
+    }
+
+    protected synchronized JSONObject getEventFromTable(String table, long eventId) throws JSONException {
+        JSONObject event = null;
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            cursor = queryDb(
+                db, table, new String[] { EVENT_FIELD },
+               ID_FIELD + " = " + eventId,
+                    null, null, null, null, null
+            );
+
+            if (cursor.moveToFirst()) {
+                String eventData = cursor.getString(0);
+                if (!Utils.isEmptyString(eventData)) {
+                    event = new JSONObject(eventData);
+                    event.put("event_id", eventId);
+                }
+            }
+        } catch (SQLiteException e) {
+            logger.e(TAG, String.format("getEvent from %s failed", table), e);
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("getEvent from %s failed", table), e);
+            delete();
+        } catch (IllegalStateException e) {  // put before Runtime since IllegalState extends
+            handleIfCursorRowTooLargeException(e);
+        } catch (RuntimeException e) {
+            convertIfCursorWindowException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return event;
     }
 
     synchronized long getEventCount() {
