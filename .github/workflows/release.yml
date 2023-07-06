@@ -33,7 +33,7 @@ jobs:
         with:
           java-version: '8'
           distribution: 'zulu'
-          
+
       - name: Setup Android Environment
         uses: maxim-lobanov/setup-android-tools@v1
         with:
@@ -97,6 +97,6 @@ jobs:
           -p semantic-release@17 \
           -p @semantic-release/changelog@5 \
           -p @semantic-release/git@9 \
-          -p @google/semantic-release-replace-plugin@1 \
+          -p @google/semantic-release-replace-plugin@1.20.0 \
           -p @semantic-release/exec@5 \
           semantic-release
