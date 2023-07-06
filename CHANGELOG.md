@@ -1,3 +1,10 @@
+## [2.39.6](https://github.com/amplitude/Amplitude-Android/compare/v2.39.5...v2.39.6) (2023-07-06)
+
+
+### Bug Fixes
+
+* remove md5 usage ([#372](https://github.com/amplitude/Amplitude-Android/issues/372)) ([c849590](https://github.com/amplitude/Amplitude-Android/commit/c84959086f9a645f87a3175caaec3022154ee6bb))
+
 ## [2.39.5](https://github.com/amplitude/Amplitude-Android/compare/v2.39.4...v2.39.5) (2023-06-13)
 
 
