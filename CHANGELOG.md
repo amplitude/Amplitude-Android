@@ -1,3 +1,10 @@
+## [2.39.7](https://github.com/amplitude/Amplitude-Android/compare/v2.39.6...v2.39.7) (2023-07-07)
+
+
+### Bug Fixes
+
+* try to reduce sqlite cursor memory usage ([#375](https://github.com/amplitude/Amplitude-Android/issues/375)) ([77e508d](https://github.com/amplitude/Amplitude-Android/commit/77e508d9b8cbaf36328f3176e89c04f502c606c6))
+
 ## [2.39.6](https://github.com/amplitude/Amplitude-Android/compare/v2.39.5...v2.39.6) (2023-07-06)
 
 
