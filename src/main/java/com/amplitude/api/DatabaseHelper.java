@@ -338,6 +338,57 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     protected synchronized List<JSONObject> getEventsFromTable(
+            String table, long upToId, long limit) throws JSONException {
+        try {
+            return getEventsBatchFromTable(table, upToId, limit);
+        } catch (CursorWindowAllocationException e) {
+            return getEventsRowByRowFromTable(table, upToId, limit);
+        }
+    }
+
+    private List<JSONObject> getEventsBatchFromTable(
+            String table, long upToId, long limit) throws JSONException {
+        List<JSONObject> events = new LinkedList<JSONObject>();
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            cursor = queryDb(
+                db, table, new String[] { ID_FIELD, EVENT_FIELD },
+                upToId >= 0 ? ID_FIELD + " <= " + upToId : null, null, null, null,
+                ID_FIELD + " ASC", limit >= 0 ? "" + limit : null
+            );
+
+            while (cursor.moveToNext()) {
+                long eventId = cursor.getLong(0);
+                String event = cursor.getString(1);
+                if (Utils.isEmptyString(event)) {
+                    continue;
+                }
+
+                JSONObject obj = new JSONObject(event);
+                obj.put("event_id", eventId);
+                events.add(obj);
+            }
+        } catch (SQLiteException e) {
+            logger.e(TAG, String.format("getEvents from %s failed", table), e);
+            delete();
+        } catch (StackOverflowError e) {
+            logger.e(TAG, String.format("getEvents from %s failed", table), e);
+            delete();
+        } catch (IllegalStateException e) {  // put before Runtime since IllegalState extends
+            handleIfCursorRowTooLargeException(e);
+        } catch (RuntimeException e) {
+            convertIfCursorWindowException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            close();
+        }
+        return events;
+    }
+
+    private List<JSONObject> getEventsRowByRowFromTable(
                                     String table, long upToId, long limit) throws JSONException {
         List<Long> eventIds = new LinkedList<Long>();
         Cursor cursor = null;
