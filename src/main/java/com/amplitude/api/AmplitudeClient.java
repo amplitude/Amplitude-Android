@@ -181,6 +181,7 @@ public class AmplitudeClient {
     private boolean usingForegroundTracking = false;
     private boolean trackingSessionEvents = false;
     private boolean inForeground = false;
+    private boolean isEnteringForeground = false;
     private boolean flushEventsOnClose = true;
     private String libraryName = Constants.LIBRARY;
     private String libraryVersion = Constants.VERSION;
@@ -1221,7 +1222,8 @@ public class AmplitudeClient {
 
         if (!loggingSessionEvent && !outOfSession) {
             // default case + corner case when async logEvent between onPause and onResume
-            if (!inForeground){
+            if (!inForeground || isEnteringForeground){
+                isEnteringForeground = false;
                 startNewSessionIfNeeded(timestamp);
             } else {
                 refreshSessionTime(timestamp);
@@ -1602,6 +1604,7 @@ public class AmplitudeClient {
      * @param timestamp the timestamp
      */
     void onEnterForeground(final long timestamp) {
+        isEnteringForeground = true;
         inForeground = true;
         runOnLogThread(new Runnable() {
             @Override
@@ -1617,7 +1620,13 @@ public class AmplitudeClient {
                         }
                     }, serverZone);
                 }
-                startNewSessionIfNeeded(timestamp);
+                // This should be true, unless somehow an event was tracked
+                // between here and the beginning of this method
+                // in that case the session is started in logEvent()
+                if (isEnteringForeground) {
+                    startNewSessionIfNeeded(timestamp);
+                }
+                isEnteringForeground = false;
             }
         });
     }
