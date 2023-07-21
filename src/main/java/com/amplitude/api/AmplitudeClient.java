@@ -1575,6 +1575,7 @@ public class AmplitudeClient {
      * @param timestamp the timestamp
      */
     void onExitForeground(final long timestamp) {
+        isEnteringForeground = false;
         inForeground = false;
         runOnLogThread(new Runnable() {
             @Override
