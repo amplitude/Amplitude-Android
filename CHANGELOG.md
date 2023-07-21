@@ -1,3 +1,10 @@
+## [2.39.8](https://github.com/amplitude/Amplitude-Android/compare/v2.39.7...v2.39.8) (2023-07-21)
+
+
+### Bug Fixes
+
+* try to correctly handle session change for race condition ([#382](https://github.com/amplitude/Amplitude-Android/issues/382)) ([b0f4fea](https://github.com/amplitude/Amplitude-Android/commit/b0f4fea58d808129c0bd46a7624f8a1e541bc6c6))
+
 ## [2.39.7](https://github.com/amplitude/Amplitude-Android/compare/v2.39.6...v2.39.7) (2023-07-07)
 
 
