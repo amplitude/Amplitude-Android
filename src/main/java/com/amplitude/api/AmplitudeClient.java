@@ -392,6 +392,8 @@ public class AmplitudeClient {
                         client.userId = dbHelper.getValue(USER_ID_KEY);
                     }
 
+                    identifyInterceptor = new IdentifyInterceptor(dbHelper, logThread, identifyBatchIntervalMillis, this);
+
                     // set up listener to core package to receive exposure events from Experiment
                     connector.getEventBridge().setEventReceiver(analyticsEvent -> {
                         String eventType = analyticsEvent.getEventType();
@@ -434,8 +436,6 @@ public class AmplitudeClient {
                             dbHelper.insertOrReplaceKeyValueToTable(db, DatabaseHelper.LONG_STORE_TABLE_NAME, LAST_EVENT_TIME_KEY, client.lastEventTime);
                         }
                     });
-
-                    identifyInterceptor = new IdentifyInterceptor(dbHelper, logThread, identifyBatchIntervalMillis, this);
 
                     initialized = true;
 
