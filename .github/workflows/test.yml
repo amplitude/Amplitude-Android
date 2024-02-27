@@ -22,13 +22,6 @@ jobs:
           java-version: '8'
           distribution: 'zulu'
 
-      - name: Setup Android Environment
-        uses: maxim-lobanov/setup-android-tools@v1
-        with:
-          packages: |
-            build-tools;28.0.3
-            platforms;android-28
-
       - name: Build
         run: ./gradlew build
 
