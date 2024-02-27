@@ -1,3 +1,10 @@
+## [2.39.9](https://github.com/amplitude/Amplitude-Android/compare/v2.39.8...v2.39.9) (2024-02-27)
+
+
+### Bug Fixes
+
+* move identifyInterceptor before eventBridge receiver is set ([#392](https://github.com/amplitude/Amplitude-Android/issues/392)) ([a6d4c9d](https://github.com/amplitude/Amplitude-Android/commit/a6d4c9d1ad8cfc99420e92ed39164feaf3e5eac1))
+
 ## [2.39.8](https://github.com/amplitude/Amplitude-Android/compare/v2.39.7...v2.39.8) (2023-07-21)
 
 
