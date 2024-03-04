@@ -19,7 +19,7 @@ module.exports = {
     }],
     "@semantic-release/github",
     [
-      "@google/semantic-release-replace-plugin",
+      "semantic-release-replace-plugin",
       {
         "replacements": [
           {
