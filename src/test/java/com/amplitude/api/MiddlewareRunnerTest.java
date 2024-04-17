@@ -79,4 +79,29 @@ public class MiddlewareRunnerTest {
         assertEquals(event.getString("user_id"), middlewareUser);
     }
 
+    @Test
+    public void testMiddlewareFlush() throws JSONException {
+        int flushCount = 0;
+        int runCount = 0;
+
+        MiddlewareExtended flushMiddleware = new MiddlewareExtended() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+                runCount += 1;
+            }
+
+            @Override
+            void flush() {
+                flushCount += 1;
+            }
+        };
+        middlewareRunner.add(flushMiddleware);
+
+        boolean middlewareCompleted = middlewareRunner.flush();
+
+        assertTrue(middlewareCompleted);
+        assertEquals(flushCount, 1);
+        assertEquals(runCount, 0);
+    }
+
 }

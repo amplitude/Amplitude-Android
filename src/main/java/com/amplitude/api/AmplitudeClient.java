@@ -2122,6 +2122,7 @@ public class AmplitudeClient {
                 }
                 identifyInterceptor.transferInterceptedIdentify();
                 updateServer();
+                middlewareRunner.flush();
             }
         });
     }
