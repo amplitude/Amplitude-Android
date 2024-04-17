@@ -2122,7 +2122,6 @@ public class AmplitudeClient {
                 }
                 identifyInterceptor.transferInterceptedIdentify();
                 updateServer();
-                middlewareRunner.flush();
             }
         });
     }
@@ -2158,6 +2157,9 @@ public class AmplitudeClient {
         if (optOut || offline) {
             return;
         }
+
+        // Flush middleware
+        middlewareRunner.flush();
 
         // if returning out of this block, always be sure to set uploadingCurrently to false!!
         if (!uploadingCurrently.getAndSet(true)) {
