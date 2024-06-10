@@ -105,7 +105,7 @@ class IdentifyInterceptor {
             identifyEvent.getJSONObject("user_properties").put(Constants.AMP_OP_SET, identifyEventUserProperties);
             dbHelper.removeIdentifyInterceptors(lastIdentifyInterceptorId);
             return identifyEvent;
-        } catch (JSONException e) {
+        } catch (Exception e) {
             AmplitudeLog.getLogger().w(TAG, "Identify Merge error: " + e.getMessage());
         }
         return null;
