@@ -12,6 +12,7 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -91,7 +92,7 @@ public class PinningTest extends BaseTest {
             amplitude.lastError.printStackTrace();
         }
 
-        assertNull(amplitude.lastError);
+        assertEquals("", amplitude.lastError);
     }
 
     @Test
