@@ -1,3 +1,17 @@
+## [2.40.1](https://github.com/amplitude/Amplitude-Android/compare/v2.40.0...v2.40.1) (2024-04-17)
+
+
+### Bug Fixes
+
+* always run middleware flush on updateServer ([#400](https://github.com/amplitude/Amplitude-Android/issues/400)) ([fbee357](https://github.com/amplitude/Amplitude-Android/commit/fbee357d6ba9eb540101cf09393f7eebafdfd49d))
+
+# [2.40.0](https://github.com/amplitude/Amplitude-Android/compare/v2.39.9...v2.40.0) (2024-04-17)
+
+
+### Features
+
+* middleware session replay integration ([#399](https://github.com/amplitude/Amplitude-Android/issues/399)) ([28bbbe6](https://github.com/amplitude/Amplitude-Android/commit/28bbbe6ad2d0a0fe6424645e6105ecb8c2be7a4f))
+
 ## [2.39.9](https://github.com/amplitude/Amplitude-Android/compare/v2.39.8...v2.39.9) (2024-02-27)
 
 

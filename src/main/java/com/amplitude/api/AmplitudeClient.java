@@ -738,6 +738,10 @@ public class AmplitudeClient {
         return this;
     }
 
+    public Boolean getOptOut() {
+        return optOut;
+    }
+
     /**
      * Library name is default as `amplitude-android`.
      * Notice: You will only want to set it when following conditions are met.
@@ -2153,6 +2157,9 @@ public class AmplitudeClient {
         if (optOut || offline) {
             return;
         }
+
+        // Flush middleware
+        middlewareRunner.flush();
 
         // if returning out of this block, always be sure to set uploadingCurrently to false!!
         if (!uploadingCurrently.getAndSet(true)) {

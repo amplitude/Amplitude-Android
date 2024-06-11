@@ -12,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @RunWith(AndroidJUnit4.class)
 @Config(manifest= Config.NONE)
 public class MiddlewareRunnerTest {
@@ -77,6 +79,31 @@ public class MiddlewareRunnerTest {
         assertFalse(middlewareCompleted);
         assertEquals(event.getString("device_model"), middlewareDevice);
         assertEquals(event.getString("user_id"), middlewareUser);
+    }
+
+    @Test
+    public void testMiddlewareFlush() throws JSONException {
+        AtomicInteger runCount = new AtomicInteger(0);
+        AtomicInteger flushCount = new AtomicInteger(0);
+
+        MiddlewareExtended flushMiddleware = new MiddlewareExtended() {
+            @Override
+            public void run(MiddlewarePayload payload, MiddlewareNext next) {
+                runCount.incrementAndGet();
+            }
+
+            @Override
+            public void flush() {
+                flushCount.incrementAndGet();
+            }
+        };
+
+        middlewareRunner.add(flushMiddleware);
+
+        middlewareRunner.flush();
+
+        assertEquals(flushCount.get(), 1);
+        assertEquals(runCount.get(), 0);
     }
 
 }

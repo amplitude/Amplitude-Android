@@ -44,4 +44,12 @@ public class MiddlewareRunner {
         List<Middleware> middlewareList = new ArrayList<>(this.middlewares);
         runMiddlewares(middlewareList, payload, next);
     }
+
+    void flush() {
+        for (Middleware middleware : middlewares) {
+            if (middleware instanceof MiddlewareExtended) {
+                ((MiddlewareExtended) middleware).flush();
+            }
+        }
+    }
 }
