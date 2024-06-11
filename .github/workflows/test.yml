@@ -22,8 +22,8 @@ jobs:
           java-version: '8'
           distribution: 'zulu'
 
-#      - name: Build
-#        run: ./gradlew build
+      - name: Build
+        run: ./gradlew build
 
       - name: Test
-        run: ./gradlew test --debug
+        run: ./gradlew test --info
