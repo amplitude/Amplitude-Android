@@ -86,6 +86,10 @@ public class PinningTest extends BaseTest {
 
         ShadowLooper httplooper = Shadows.shadowOf(amplitude.httpThread.getLooper());
         httplooper.runToEndOfTasks();
+        if (amplitude.lastError != null) {
+            System.out.println("Last Error - " + amplitude.lastError.getMessage());
+            amplitude.lastError.printStackTrace();
+        }
 
         assertNull(amplitude.lastError);
     }
