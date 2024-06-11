@@ -102,6 +102,7 @@ public class BaseTest {
         context = ApplicationProvider.getApplicationContext();
         packageManager = RuntimeEnvironment.application.getPackageManager();
         shadowPackageManager = shadowOf(packageManager);
+        System.out.println("Test");
 
         ApplicationInfo applicationInfo = new ApplicationInfo();
         applicationInfo.packageName = TEST_PACKAGE_NAME;
