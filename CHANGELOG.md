@@ -1,3 +1,10 @@
+## [2.40.2](https://github.com/amplitude/Amplitude-Android/compare/v2.40.1...v2.40.2) (2024-06-12)
+
+
+### Bug Fixes
+
+* catch all exceptions when trying to intercept identifies ([#402](https://github.com/amplitude/Amplitude-Android/issues/402)) ([f0350bf](https://github.com/amplitude/Amplitude-Android/commit/f0350bf5dff450fe34c1a9095b16082f2d6c5353))
+
 ## [2.40.1](https://github.com/amplitude/Amplitude-Android/compare/v2.40.0...v2.40.1) (2024-04-17)
 
 
