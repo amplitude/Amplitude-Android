@@ -1,3 +1,10 @@
+## [2.40.3](https://github.com/amplitude/Amplitude-Android/compare/v2.40.2...v2.40.3) (2025-04-29)
+
+
+### Bug Fixes
+
+* default location listening to false ([#407](https://github.com/amplitude/Amplitude-Android/issues/407)) ([27d3758](https://github.com/amplitude/Amplitude-Android/commit/27d3758fd8427d44e15813356ada2e3234ad62b8))
+
 ## [2.40.2](https://github.com/amplitude/Amplitude-Android/compare/v2.40.1...v2.40.2) (2024-06-12)
 
 
