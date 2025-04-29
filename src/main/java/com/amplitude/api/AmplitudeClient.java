@@ -134,7 +134,7 @@ public class AmplitudeClient {
     TrackingOptions appliedTrackingOptions = TrackingOptions.copyOf(inputTrackingOptions);
     JSONObject apiPropertiesTrackingOptions = appliedTrackingOptions.getApiPropertiesTrackingOptions();
     private boolean coppaControlEnabled = false;
-    private boolean locationListening = true;
+    private boolean locationListening = false;
     private EventExplorer eventExplorer;
     private Plan plan;
     private IdentifyInterceptor identifyInterceptor;
