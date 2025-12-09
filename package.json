@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "version": "0.0.0",
+  "main": "release.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amplitude/Amplitude-Swift.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/amplitude/Amplitude-Swift/issues"
+  },
+  "homepage": "https://github.com/amplitude/Amplitude-Swift#readme",
+  "devDependencies": {
+    "lodash": "4.17.21",
+    "semantic-release": "17.4.7",
+    "@semantic-release/changelog": "5.0.1",
+    "@semantic-release/git": "9.0.1",
+    "@google/semantic-release-replace-plugin": "1.2.0",
+    "@semantic-release/exec": "5.0.0"
+  },
+  "packageManager": "pnpm@10.20.0"
+}
