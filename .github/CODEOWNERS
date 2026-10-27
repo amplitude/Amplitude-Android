@@ -1,0 +1,3 @@
+# DX maintains this legacy SDK, including GitHub Actions, release automation,
+# Gradle build/signing configuration, package metadata, and this file.
+* @amplitude/dx
