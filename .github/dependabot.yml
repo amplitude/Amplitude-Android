@@ -1,0 +1,20 @@
+# Security-update PRs are triggered by alerts, independently of this schedule.
+# Keep routine version-update PRs disabled; enable security updates in repository settings.
+# Gradle security alerts also require dependency submission to the dependency graph.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
