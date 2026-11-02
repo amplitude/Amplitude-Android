@@ -10,7 +10,7 @@
   },
   "overrides": {
     "@semantic-release/npm": {
-      "npm": "8.19.3"
+      "npm": "8.19.4"
     }
   }
 }
