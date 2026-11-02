@@ -7,5 +7,10 @@
     "@semantic-release/git": "9.0.1",
     "@google/semantic-release-replace-plugin": "1.2.0",
     "@semantic-release/exec": "5.0.0"
+  },
+  "overrides": {
+    "@semantic-release/npm": {
+      "npm": "8.19.4"
+    }
   }
 }
