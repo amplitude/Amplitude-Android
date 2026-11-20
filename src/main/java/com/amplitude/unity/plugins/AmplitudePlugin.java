@@ -2,6 +2,7 @@ package com.amplitude.unity.plugins;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
 
 import com.amplitude.api.Amplitude;
 import com.amplitude.api.AmplitudeServerZone;
@@ -20,8 +21,8 @@ public class AmplitudePlugin {
         JSONObject properties = null;
         try {
             properties = new JSONObject(jsonString);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        } catch (JSONException ignored) {
+            Log.w("AmplitudePlugin", "Could not parse JSON.");
         }
         return properties;
     }
